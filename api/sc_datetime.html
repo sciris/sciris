@@ -1,0 +1,2516 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>sc_datetime – Sciris</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../api/sc_nested.html" rel="next">
+<link href="../api/sc_utils.html" rel="prev">
+<link href="..//assets/favicon.ico" rel="icon">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-dc16a9b152f85a9de5b03f2d2ad60ba1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../assets/sciris-logo.png" alt="" class="navbar-logo light-content">
+    <img src="../assets/sciris-logo.png" alt="" class="navbar-logo dark-content">
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../overview.html"> 
+<span class="menu-text">Overview</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../tutorials.html"> 
+<span class="menu-text">Tutorials</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../whatsnew.html"> 
+<span class="menu-text">What’s new</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../contributing.html"> 
+<span class="menu-text">Contributing</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../api/index.html"> 
+<span class="menu-text">API reference</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools tools-wide">
+    <a href="https://github.com/sciris/sciris" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+    <a href="mailto:info@sciris.org" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-envelope-at-fill"></i></a>
+    <a href="https://sciris.org" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-globe"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../api/sc_utils.html"><strong>Utilities</strong></a></li><li class="breadcrumb-item"><a href="../api/sc_datetime.html">sc_datetime</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>Home</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>API reference</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Math and arrays</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_math.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_math</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_asd.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_asd</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Containers</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_odict.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_odict</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_dataframe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_dataframe</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Files and versioning</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_fileio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_fileio</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_versioning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_versioning</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Printing and plotting</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_printing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_printing</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_plotting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_plotting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_colors.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_colors</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Parallelization and profiling</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_parallel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_parallel</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_profiling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_profiling</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Utilities</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_utils.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_utils</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_datetime.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">sc_datetime</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_nested.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_nested</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_settings.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_settings</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sciris.sc_datetime" id="toc-sciris.sc_datetime" class="nav-link active" data-scroll-target="#sciris.sc_datetime">sc_datetime</a>
+  <ul>
+  <li><a href="#highlights" id="toc-highlights" class="nav-link" data-scroll-target="#highlights">Highlights</a></li>
+  <li><a href="#classes" id="toc-classes" class="nav-link" data-scroll-target="#classes">Classes</a>
+  <ul>
+  <li><a href="#sciris.sc_datetime.timer" id="toc-sciris.sc_datetime.timer" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer">timer</a>
+  <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#attributes" id="toc-attributes" class="nav-link" data-scroll-target="#attributes">Attributes</a></li>
+  <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a>
+  <ul class="collapse">
+  <li><a href="#sciris.sc_datetime.timer.disp" id="toc-sciris.sc_datetime.timer.disp" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.disp">disp</a></li>
+  <li><a href="#sciris.sc_datetime.timer.max" id="toc-sciris.sc_datetime.timer.max" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.max">max</a></li>
+  <li><a href="#sciris.sc_datetime.timer.mean" id="toc-sciris.sc_datetime.timer.mean" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.mean">mean</a></li>
+  <li><a href="#sciris.sc_datetime.timer.min" id="toc-sciris.sc_datetime.timer.min" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.min">min</a></li>
+  <li><a href="#sciris.sc_datetime.timer.plot" id="toc-sciris.sc_datetime.timer.plot" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.plot">plot</a></li>
+  <li><a href="#sciris.sc_datetime.timer.start" id="toc-sciris.sc_datetime.timer.start" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.start">start</a></li>
+  <li><a href="#sciris.sc_datetime.timer.std" id="toc-sciris.sc_datetime.timer.std" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.std">std</a></li>
+  <li><a href="#sciris.sc_datetime.timer.stop" id="toc-sciris.sc_datetime.timer.stop" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.stop">stop</a></li>
+  <li><a href="#sciris.sc_datetime.timer.sum" id="toc-sciris.sc_datetime.timer.sum" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.sum">sum</a></li>
+  <li><a href="#sciris.sc_datetime.timer.tic" id="toc-sciris.sc_datetime.timer.tic" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.tic">tic</a></li>
+  <li><a href="#sciris.sc_datetime.timer.toc" id="toc-sciris.sc_datetime.timer.toc" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.toc">toc</a></li>
+  <li><a href="#sciris.sc_datetime.timer.tocout" id="toc-sciris.sc_datetime.timer.tocout" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.tocout">tocout</a></li>
+  <li><a href="#sciris.sc_datetime.timer.toctic" id="toc-sciris.sc_datetime.timer.toctic" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.toctic">toctic</a></li>
+  <li><a href="#sciris.sc_datetime.timer.toctotal" id="toc-sciris.sc_datetime.timer.toctotal" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.toctotal">toctotal</a></li>
+  <li><a href="#sciris.sc_datetime.timer.tt" id="toc-sciris.sc_datetime.timer.tt" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.tt">tt</a></li>
+  <li><a href="#sciris.sc_datetime.timer.tto" id="toc-sciris.sc_datetime.timer.tto" class="nav-link" data-scroll-target="#sciris.sc_datetime.timer.tto">tto</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions">Functions</a>
+  <ul>
+  <li><a href="#sciris.sc_datetime.date" id="toc-sciris.sc_datetime.date" class="nav-link" data-scroll-target="#sciris.sc_datetime.date">date</a>
+  <ul class="collapse">
+  <li><a href="#parameters-2" id="toc-parameters-2" class="nav-link" data-scroll-target="#parameters-2">Parameters</a></li>
+  <li><a href="#returns" id="toc-returns" class="nav-link" data-scroll-target="#returns">Returns</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.datedelta" id="toc-sciris.sc_datetime.datedelta" class="nav-link" data-scroll-target="#sciris.sc_datetime.datedelta">datedelta</a>
+  <ul class="collapse">
+  <li><a href="#parameters-3" id="toc-parameters-3" class="nav-link" data-scroll-target="#parameters-3">Parameters</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.daterange" id="toc-sciris.sc_datetime.daterange" class="nav-link" data-scroll-target="#sciris.sc_datetime.daterange">daterange</a>
+  <ul class="collapse">
+  <li><a href="#parameters-4" id="toc-parameters-4" class="nav-link" data-scroll-target="#parameters-4">Parameters</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.datetoyear" id="toc-sciris.sc_datetime.datetoyear" class="nav-link" data-scroll-target="#sciris.sc_datetime.datetoyear">datetoyear</a>
+  <ul class="collapse">
+  <li><a href="#parameters-5" id="toc-parameters-5" class="nav-link" data-scroll-target="#parameters-5">Parameters</a></li>
+  <li><a href="#returns-1" id="toc-returns-1" class="nav-link" data-scroll-target="#returns-1">Returns</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.day" id="toc-sciris.sc_datetime.day" class="nav-link" data-scroll-target="#sciris.sc_datetime.day">day</a>
+  <ul class="collapse">
+  <li><a href="#parameters-6" id="toc-parameters-6" class="nav-link" data-scroll-target="#parameters-6">Parameters</a></li>
+  <li><a href="#returns-2" id="toc-returns-2" class="nav-link" data-scroll-target="#returns-2">Returns</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.daydiff" id="toc-sciris.sc_datetime.daydiff" class="nav-link" data-scroll-target="#sciris.sc_datetime.daydiff">daydiff</a></li>
+  <li><a href="#sciris.sc_datetime.elapsedtimestr" id="toc-sciris.sc_datetime.elapsedtimestr" class="nav-link" data-scroll-target="#sciris.sc_datetime.elapsedtimestr">elapsedtimestr</a></li>
+  <li><a href="#sciris.sc_datetime.getdate" id="toc-sciris.sc_datetime.getdate" class="nav-link" data-scroll-target="#sciris.sc_datetime.getdate">getdate</a>
+  <ul class="collapse">
+  <li><a href="#parameters-7" id="toc-parameters-7" class="nav-link" data-scroll-target="#parameters-7">Parameters</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.now" id="toc-sciris.sc_datetime.now" class="nav-link" data-scroll-target="#sciris.sc_datetime.now">now</a>
+  <ul class="collapse">
+  <li><a href="#parameters-8" id="toc-parameters-8" class="nav-link" data-scroll-target="#parameters-8">Parameters</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.randsleep" id="toc-sciris.sc_datetime.randsleep" class="nav-link" data-scroll-target="#sciris.sc_datetime.randsleep">randsleep</a>
+  <ul class="collapse">
+  <li><a href="#parameters-9" id="toc-parameters-9" class="nav-link" data-scroll-target="#parameters-9">Parameters</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.readdate" id="toc-sciris.sc_datetime.readdate" class="nav-link" data-scroll-target="#sciris.sc_datetime.readdate">readdate</a>
+  <ul class="collapse">
+  <li><a href="#parameters-10" id="toc-parameters-10" class="nav-link" data-scroll-target="#parameters-10">Parameters</a></li>
+  <li><a href="#returns-3" id="toc-returns-3" class="nav-link" data-scroll-target="#returns-3">Returns</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.tic" id="toc-sciris.sc_datetime.tic" class="nav-link" data-scroll-target="#sciris.sc_datetime.tic">tic</a></li>
+  <li><a href="#sciris.sc_datetime.time" id="toc-sciris.sc_datetime.time" class="nav-link" data-scroll-target="#sciris.sc_datetime.time">time</a></li>
+  <li><a href="#sciris.sc_datetime.timedsleep" id="toc-sciris.sc_datetime.timedsleep" class="nav-link" data-scroll-target="#sciris.sc_datetime.timedsleep">timedsleep</a>
+  <ul class="collapse">
+  <li><a href="#parameters-11" id="toc-parameters-11" class="nav-link" data-scroll-target="#parameters-11">Parameters</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.toc" id="toc-sciris.sc_datetime.toc" class="nav-link" data-scroll-target="#sciris.sc_datetime.toc">toc</a>
+  <ul class="collapse">
+  <li><a href="#parameters-12" id="toc-parameters-12" class="nav-link" data-scroll-target="#parameters-12">Parameters</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_datetime.toctic" id="toc-sciris.sc_datetime.toctic" class="nav-link" data-scroll-target="#sciris.sc_datetime.toctic">toctic</a></li>
+  <li><a href="#sciris.sc_datetime.yeartodate" id="toc-sciris.sc_datetime.yeartodate" class="nav-link" data-scroll-target="#sciris.sc_datetime.yeartodate">yeartodate</a>
+  <ul class="collapse">
+  <li><a href="#parameters-13" id="toc-parameters-13" class="nav-link" data-scroll-target="#parameters-13">Parameters</a></li>
+  <li><a href="#returns-4" id="toc-returns-4" class="nav-link" data-scroll-target="#returns-4">Returns</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../api/sc_utils.html"><strong>Utilities</strong></a></li><li class="breadcrumb-item"><a href="../api/sc_datetime.html">sc_datetime</a></li></ol></nav></header>
+
+
+
+
+
+<section id="sciris.sc_datetime" class="level1">
+<h1>sc_datetime</h1>
+<p><a href="../api/sc_datetime.html#sciris.sc_datetime" title="0"><code>sc_datetime</code></a></p>
+<p>Time/date utilities.</p>
+<section id="highlights" class="level2 doc-section doc-section-highlights">
+<h2 class="doc-section doc-section-highlights anchored" data-anchor-id="highlights">Highlights</h2>
+<ul>
+<li><a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.timer" title="0"><code>sc.timer()</code></a>: simple methods for timing durations</li>
+<li><a href="../api/sc_datetime.html#sciris.sc_datetime.readdate" title="0"><code>sc.readdate()</code></a>: convert strings to dates using common formats</li>
+<li><a href="../api/sc_datetime.html#sciris.sc_datetime.daterange" title="0"><code>sc.daterange()</code></a>: create a list of dates</li>
+<li><a href="../api/sc_datetime.html#sciris.sc_datetime.datedelta" title="0"><code>sc.datedelta()</code></a>: perform calculations on date strings</li>
+</ul>
+</section>
+<section id="classes" class="level2">
+<h2 class="anchored" data-anchor-id="classes">Classes</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer">timer</a></td>
+<td>Simple timer class. Note: <a href="../api/sc_datetime.html#sciris.sc_datetime.timer" title="0"><code>sc.timer()</code></a> and <code>sc.Timer()</code> are aliases.</td>
+</tr>
+</tbody>
+</table>
+<section id="sciris.sc_datetime.timer" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.timer">timer</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    auto<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    start<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    unit<span class="op">=</span><span class="st">'auto'</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Simple timer class. Note: <a href="../api/sc_datetime.html#sciris.sc_datetime.timer" title="0"><code>sc.timer()</code></a> and <code>sc.Timer()</code> are aliases.</p>
+<p>This wraps <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a> and <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a> with the formatting arguments and the start time (at construction).</p>
+<p>Use this in a <code>with</code> block to automatically print elapsed time when the block finishes.</p>
+<p>By default, output is displayed in seconds. You can change this with the <code>unit</code> argument, which can be a string or a float:</p>
+<pre><code>- 'hr' or 3600
+- 'min' or 60
+- 's' or 1 (default)
+- 'ms' or 1e-3
+- 'us' or 1e-6
+- 'ns' or 1e-9
+- 'auto' to choose an appropriate unit</code></pre>
+<section id="parameters" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>label</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>label identifying this timer</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>auto</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to automatically increment the label</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
+<td>start</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to start timing from object creation (else, call <a href="../api/sc_datetime.html#sciris.sc_datetime.timer.tic" title="0"><code>timer.tic()</code></a> explicitly)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>unit</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td>the unit of time to display; see options above</td>
+<td><code>'auto'</code></td>
+</tr>
+<tr class="odd">
+<td>verbose</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to print output on each timing</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a> when invoked</td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p>Example making repeated calls to the same timer, using <code>auto</code> to keep track:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> T <span class="op">=</span> sc.timer(auto<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> T.toc()</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>(<span class="dv">0</span>): <span class="fl">2.63</span> s</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> T.toc()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>(<span class="dv">1</span>): <span class="fl">5.00</span> s</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Example wrapping code using with-as:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> <span class="cf">with</span> sc.timer(<span class="st">'mylabel'</span>):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span>     sc.timedsleep(<span class="fl">0.5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Example using a timer to collect data, using <a href="../api/sc_datetime.html#sciris.sc_datetime.timer.tt" title="0"><code>timer.tt()</code></a> as an alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.toctic" title="0"><code>sc.toctic()</code></a> to reset the time:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> sc.timer(verbose<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key <span class="kw">in</span> <span class="st">'abcde'</span>:</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    sc.timedsleep(np.random.rand())</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    T.tt(key)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(T.timings)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/</p>
+<ul>
+<li><em>New in version 1.3.0:</em> <a href="../api/sc_datetime.html#sciris.sc_datetime.timer" title="0"><code>sc.timer()</code></a> alias, and allowing the label as first argument</li>
+<li><em>New in version 1.3.2:</em> <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>toc()</code></a> passes label correctly; <code>tt()</code> method; <code>auto</code> argument</li>
+<li><em>New in version 2.0.0:</em> <code>plot()</code> method; <code>total()</code> method; <code>indivtimings</code> and <code>cumtimings</code> properties</li>
+<li><em>New in version 2.1.0:</em> <code>total</code> as property instead of method; updated repr; added disp() method</li>
+<li><em>New in version 3.0.0:</em> <code>unit</code> argument; <code>verbose</code> argument; <code>sum, min, max, mean, std</code> methods; <code>rawtimings</code> property</li>
+<li><em>New in version 3.1.0:</em> Timers can be combined by addition, including <a href="https://docs.python.org/3/library/functions.html#sum" title="1"><code>sum()</code></a></li>
+<li><em>New in version 3.1.5:</em> <code>T.timings</code> is now an <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> instead of an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a></li>
+<li><em>New in version 3.2.2:</em> <a href="../api/sc_datetime.html#sciris.sc_datetime.timer" title="0"><code>sc.timer()</code></a> can be used as a function decorator</li>
+<li><em>New in version 3.2.5:</em> <code>.string</code> attribute (e.g.&nbsp;‘3.25 s’)</li>
+<li><em>New in version 3.3.0:</em> <code>toctotal()</code> method</li>
+</ul>
+</section>
+<section id="attributes" class="level4">
+<h4 class="anchored" data-anchor-id="attributes">Attributes</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer.cumtimings">cumtimings</a></td>
+<td>Compute the cumulative time for each timing</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timer.indivtimings">indivtimings</a></td>
+<td>Compute the individual time between each timing</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer.rawtimings">rawtimings</a></td>
+<td>Return an array of timings</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timer.total">total</a></td>
+<td>Calculate total time</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="methods" class="level4">
+<h4 class="anchored" data-anchor-id="methods">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer.disp">disp</a></td>
+<td>Display the full representation of the object</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timer.max">max</a></td>
+<td>Maximum of timings</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer.mean">mean</a></td>
+<td>Mean of timings</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timer.min">min</a></td>
+<td>Minimum of timings</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer.plot">plot</a></td>
+<td>Create a plot of Timer.timings</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timer.start">start</a></td>
+<td>Alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a></td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer.std">std</a></td>
+<td>Standard deviation of timings</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timer.stop">stop</a></td>
+<td>Alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a></td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer.sum">sum</a></td>
+<td>Sum of timings; similar to <a href="../api/sc_datetime.html#sciris.sc_datetime.timer.total" title="0"><code>timer.total</code></a></td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timer.tic">tic</a></td>
+<td>Set start time</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer.toc">toc</a></td>
+<td>Print elapsed time; see <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a> for keyword arguments</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timer.tocout">tocout</a></td>
+<td>Alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a> with output=True</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer.toctic">toctic</a></td>
+<td>Like toc, but reset time between timings</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timer.toctotal">toctotal</a></td>
+<td>Like toc, but time from the first tic rather than the most recent one</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.timer.tt">tt</a></td>
+<td>Alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.toctic" title="0"><code>sc.toctic()</code></a></td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timer.tto">tto</a></td>
+<td>Alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.toctic" title="0"><code>sc.toctic()</code></a> with output=True</td>
+</tr>
+</tbody>
+</table>
+<section id="sciris.sc_datetime.timer.disp" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.disp">disp</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Display the full representation of the object</p>
+</section>
+<section id="sciris.sc_datetime.timer.max" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.max">max</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.<span class="bu">max</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Maximum of timings</p>
+<p><em>New in version 3.0.0.</em></p>
+</section>
+<section id="sciris.sc_datetime.timer.mean" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.mean">mean</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.mean()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Mean of timings</p>
+<p><em>New in version 3.0.0.</em></p>
+</section>
+<section id="sciris.sc_datetime.timer.min" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.min">min</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.<span class="bu">min</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Minimum of timings</p>
+<p><em>New in version 3.0.0.</em></p>
+</section>
+<section id="sciris.sc_datetime.timer.plot" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.plot">plot</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.plot(fig<span class="op">=</span><span class="va">None</span>, figkwargs<span class="op">=</span><span class="va">None</span>, grid<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Create a plot of Timer.timings</p>
+<section id="parameters-1" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>cumulative</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>how the timings will be presented, individual or cumulative</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>fig</td>
+<td><code>fig</code></td>
+<td>an existing figure to draw the plot in</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>figkwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <a href="https://matplotlib.org/stable/api/figure_api.html#module-plt.figure" title="1"><code>plt.figure()</code></a></td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>grid</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to show a grid</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <code>plt.bar()</code></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><em>New in version 2.0.0.</em></p>
+</section>
+</section>
+<section id="sciris.sc_datetime.timer.start" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.start">start</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.start()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a></p>
+</section>
+<section id="sciris.sc_datetime.timer.std" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.std">std</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.std()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Standard deviation of timings</p>
+<p><em>New in version 3.0.0.</em></p>
+</section>
+<section id="sciris.sc_datetime.timer.stop" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.stop">stop</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.stop(<span class="op">*</span>args, verbose<span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a></p>
+</section>
+<section id="sciris.sc_datetime.timer.sum" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.sum">sum</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.<span class="bu">sum</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Sum of timings; similar to <a href="../api/sc_datetime.html#sciris.sc_datetime.timer.total" title="0"><code>timer.total</code></a></p>
+<p><em>New in version 3.0.0.</em></p>
+</section>
+<section id="sciris.sc_datetime.timer.tic" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.tic">tic</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.tic()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Set start time</p>
+</section>
+<section id="sciris.sc_datetime.timer.toc" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.toc">toc</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.toc(label<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Print elapsed time; see <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a> for keyword arguments</p>
+</section>
+<section id="sciris.sc_datetime.timer.tocout" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.tocout">tocout</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.tocout(label<span class="op">=</span><span class="va">None</span>, output<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a> with output=True</p>
+</section>
+<section id="sciris.sc_datetime.timer.toctic" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.toctic">toctic</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.toctic(<span class="op">*</span>args, reset<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Like toc, but reset time between timings</p>
+</section>
+<section id="sciris.sc_datetime.timer.toctotal" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.toctotal">toctotal</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.toctotal(label<span class="op">=</span><span class="st">'Total'</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Like toc, but time from the first tic rather than the most recent one</p>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> sc.timer()</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>sc.timedsleep(<span class="fl">0.1</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>T.toctic()</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>sc.timedsleep(<span class="fl">0.1</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>T.toctic()</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>T.toctotal() <span class="co"># Time since the timer was created, not since the last tic</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 3.3.0.</em></p>
+</section>
+<section id="sciris.sc_datetime.timer.tt" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.tt">tt</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.tt(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.toctic" title="0"><code>sc.toctic()</code></a></p>
+</section>
+<section id="sciris.sc_datetime.timer.tto" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_datetime.timer.tto">tto</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timer.tto(<span class="op">*</span>args, output<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias for <a href="../api/sc_datetime.html#sciris.sc_datetime.toctic" title="0"><code>sc.toctic()</code></a> with output=True</p>
+</section>
+</section>
+</section>
+</section>
+<section id="functions" class="level2">
+<h2 class="anchored" data-anchor-id="functions">Functions</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.date">date</a></td>
+<td>Convert any reasonable object – a string, integer, or datetime object, or</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.datedelta">datedelta</a></td>
+<td>Perform calculations on a date string (or date object), returning a string (or a date).</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.daterange">daterange</a></td>
+<td>Return a list of dates from the start date to the end date. To convert a list</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.datetoyear">datetoyear</a></td>
+<td>Convert a date to decimal year.</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.day">day</a></td>
+<td>Convert a string, date/datetime object, or int to a day (int), the number of</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.daydiff">daydiff</a></td>
+<td>Convenience function to find the difference between two or more days. With</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.elapsedtimestr">elapsedtimestr</a></td>
+<td>Accepts a datetime object or a string in ISO 8601 format and returns a</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.getdate">getdate</a></td>
+<td>Alias for converting a date object to a formatted string.</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.now">now</a></td>
+<td>Get the current time as a datetime object, optionally in UTC time.</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.randsleep">randsleep</a></td>
+<td>Sleep for a nondeterminate period of time (useful for desynchronizing tasks)</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.readdate">readdate</a></td>
+<td>Convenience function for loading a date from a string. If dateformat is None,</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.tic">tic</a></td>
+<td>With <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a>, a little pair of functions to calculate a time difference:</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.time">time</a></td>
+<td>Get current time in seconds – alias to time.time()</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.timedsleep">timedsleep</a></td>
+<td>Pause for the specified amount of time, taking into account how long other</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.toc">toc</a></td>
+<td>With <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a>, a little pair of functions to calculate a time difference. See</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_datetime.toctic">toctic</a></td>
+<td>A convenience fuction for multiple timings. Can return the default output of</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_datetime.yeartodate">yeartodate</a></td>
+<td>Convert a decimal year to a date</td>
+</tr>
+</tbody>
+</table>
+<section id="sciris.sc_datetime.date" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.date">date</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.date(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    obj<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args,</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    start_date<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    readformat<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    to<span class="op">=</span><span class="st">'date'</span>,</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    as_date<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    outformat<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convert any reasonable object – a string, integer, or datetime object, or list/array of any of those – to a date object (or string, pandas, or numpy date).</p>
+<p>If the object is an integer, this is interpreted as follows:</p>
+<ul>
+<li>With readformat=‘posix’: treat as a POSIX timestamp, in seconds from 1970</li>
+<li>With readformat=‘ordinal’/‘matplotlib’: treat as an ordinal number of days from 1970 (Matplotlib default)</li>
+<li>With start_date provided: treat as a number of days from this date</li>
+</ul>
+<p>Note: in this and other date functions, arguments work either with or without underscores (e.g.&nbsp;<code>start_date</code> or <code>startdate</code>)</p>
+<section id="parameters-2" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>obj</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/functions.html#int">int</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a> / <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>the object to convert; if None, return current date</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>args</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/functions.html#int">int</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></td>
+<td>additional objects to convert</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>start_date</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></td>
+<td>the starting date, if an integer is supplied</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>readformat</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the format to read the date in; passed to <a href="../api/sc_datetime.html#sciris.sc_datetime.readdate" title="0"><code>sc.readdate()</code></a> (NB: can also use “format” instead of “readformat”)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>to</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>the output format: ‘date’ (default), ‘datetime’, ‘str’ (or ‘string’), ‘pandas’, or ‘numpy’</td>
+<td><code>'date'</code></td>
+</tr>
+<tr class="even">
+<td>as_date</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>alternate method of choosing between output format of ‘date’ (True) or ‘str’ (False); if None, use “to” instead</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>outformat</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>the format to output the date in, if returning a string</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>only used for deprecated argument aliases</td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dates</td>
+<td><a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> or <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>either a single date object, or a list of them (matching input data type where possible)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>sc.date(<span class="st">'2020-04-05'</span>) <span class="co"># Returns datetime.date(2020, 4, 5)</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>sc.date([<span class="dv">35</span>,<span class="dv">36</span>,<span class="dv">37</span>], start_date<span class="op">=</span><span class="st">'2020-01-01'</span>, to<span class="op">=</span><span class="st">'str'</span>) <span class="co"># Returns ['2020-02-05', '2020-02-06', '2020-02-07']</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>sc.date(<span class="dv">1923288822</span>, readformat<span class="op">=</span><span class="st">'posix'</span>) <span class="co"># Interpret as a POSIX timestamp</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 1.0.0.</em></li>
+<li><em>New in version 1.2.2:</em> “readformat” argument; renamed “dateformat” to “outformat”</li>
+<li><em>New in version 2.0.0:</em> support for <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#np.datetime64" title="1"><code>np.datetime64</code></a> objects</li>
+<li><em>New in version 3.0.0:</em> added “to” argument, and support for <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Timestamp.html#pd.Timestamp" title="1"><code>pd.Timestamp</code></a> and <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#np.datetime64" title="1"><code>np.datetime64</code></a> output; allow None</li>
+<li><em>New in version 3.1.0:</em> allow “datetime” output</li>
+</ul>
+</section>
+</section>
+<section id="sciris.sc_datetime.datedelta" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.datedelta">datedelta</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.datedelta(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    datestr<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    days<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    months<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    years<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    weeks<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    dt1<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    dt2<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    as_date<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Perform calculations on a date string (or date object), returning a string (or a date). Wrapper to <a href="https://matplotlib.org/stable/api/dates_api.html#matplotlib.dates.relativedelta" title="0"><code>dateutil.relativedelta.relativedelta()</code></a>.</p>
+<p>If <code>datestr</code> is <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a>, then return the delta object rather than the new date.</p>
+<section id="parameters-3" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>datestr</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None">None</a> / <a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the starting date (typically a string); if None, return the relative delta</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>days</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>the number of days (positive or negative) to increment</td>
+<td><code>0</code></td>
+</tr>
+<tr class="odd">
+<td>months</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>as above</td>
+<td><code>0</code></td>
+</tr>
+<tr class="even">
+<td>years</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a> / <a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td>as above; if a float, converted to days (NB: fractional months and weeks are not supported)</td>
+<td><code>0</code></td>
+</tr>
+<tr class="odd">
+<td>weeks</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>as above</td>
+<td><code>0</code></td>
+</tr>
+<tr class="even">
+<td>dt1, dt2</td>
+<td><code>dates</code></td>
+<td>if both provided, compute the difference between them</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>as_date</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>if True, return a date object; otherwise, return as input type</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date()</code></a></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>sc.datedelta(<span class="st">'2021-07-07'</span>, <span class="dv">3</span>) <span class="co"># Add 3 days</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>sc.datedelta(<span class="st">'2021-07-07'</span>, days<span class="op">=-</span><span class="dv">4</span>) <span class="co"># Subtract 4 days</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>sc.datedelta(<span class="st">'2021-07-07'</span>, weeks<span class="op">=</span><span class="dv">4</span>, months<span class="op">=-</span><span class="dv">1</span>, as_date<span class="op">=</span><span class="va">True</span>) <span class="co"># Add 4 weeks but subtract a month, and return a dateobj</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>sc.datedelta(days<span class="op">=</span><span class="dv">3</span>) <span class="co"># Alias to du.relativedelta.relativedelta(days=3)</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>sc.datedelta([<span class="st">'2021-07-07'</span>, <span class="st">'2022-07-07'</span>], months<span class="op">=</span><span class="dv">1</span>) <span class="co"># Increment multiple dates</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>sc.datedelta(<span class="st">'2020-06-01'</span>, years<span class="op">=</span><span class="fl">0.25</span>) <span class="co"># Use a fractional number of years (to the nearest day)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 3.0.0:</em> operate on list of dates</li>
+<li><em>New in version 3.1.0:</em> handle all date input formats</li>
+<li><em>New in version 3.2.0:</em> handle fractional years</li>
+</ul>
+</section>
+</section>
+<section id="sciris.sc_datetime.daterange" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.daterange">daterange</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.daterange(</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    start_date<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    end_date<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    interval<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    inclusive<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    as_date<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    readformat<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    outformat<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Return a list of dates from the start date to the end date. To convert a list of days (as integers) to dates, use <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date()</code></a> instead.</p>
+<p>Note: instead of an end date, can also pass one or more of days, months, weeks, or years, which will be added on to the start date via <a href="../api/sc_datetime.html#sciris.sc_datetime.datedelta" title="0"><code>sc.datedelta()</code></a>.</p>
+<section id="parameters-4" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>start_date (int/str/date)</td>
+<td></td>
+<td>the starting date, in any format</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>end_date (int/str/date)</td>
+<td></td>
+<td>the end date, in any format (see also kwargs below)</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>interval (int/str/dict)</td>
+<td></td>
+<td>if an int, the number of days; if ‘week’, ‘month’, or ‘year’, one of those; if a dict, passed to <code>dt.relativedelta()</code></td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>inclusive (bool)</td>
+<td></td>
+<td>if True (default), return to end_date inclusive; otherwise, stop the day before</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>as_date (bool)</td>
+<td></td>
+<td>if True, return a list of <a href="https://docs.python.org/3/library/datetime.html#datetime.date" title="1"><code>datetime.date</code></a> objects; else, as input type (e.g.&nbsp;strings; note: you can also use “asdate” instead of “as_date”)</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>readformat (str)</td>
+<td></td>
+<td>passed to <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date()</code></a></td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>outformat (str)</td>
+<td></td>
+<td>passed to <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date()</code></a></td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>kwargs (dict)</td>
+<td></td>
+<td>optionally, use any valid argument to <a href="../api/sc_datetime.html#sciris.sc_datetime.datedelta" title="0"><code>sc.datedelta()</code></a> to create the end_date</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>dates1 <span class="op">=</span> sc.daterange(<span class="st">'2020-03-01'</span>, <span class="st">'2020-04-04'</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>dates2 <span class="op">=</span> sc.daterange(<span class="st">'2020-03-01'</span>, <span class="st">'2022-05-01'</span>, interval<span class="op">=</span><span class="bu">dict</span>(months<span class="op">=</span><span class="dv">2</span>), asdate<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>dates3 <span class="op">=</span> sc.daterange(<span class="st">'2020-03-01'</span>, weeks<span class="op">=</span><span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 1.0.0.</em></li>
+<li><em>New in version 1.3.0:</em> “interval” argument</li>
+<li><em>New in version 2.0.0:</em> <a href="../api/sc_datetime.html#sciris.sc_datetime.datedelta" title="0"><code>sc.datedelta()</code></a> arguments</li>
+<li><em>New in version 3.0.0:</em> preserve input type</li>
+</ul>
+</section>
+</section>
+<section id="sciris.sc_datetime.datetoyear" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.datetoyear">datetoyear</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.datetoyear(dateobj, dateformat<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convert a date to decimal year.</p>
+<section id="parameters-5" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dateobj</td>
+<td>(<a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a>, <a href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas">pd</a>.<code>TimeStamp</code>)</td>
+<td>The datetime instance to convert</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>dateformat</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>If dateobj is a string, the optional date conversion format to use</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-1" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 76%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>Equivalent decimal year from date, or date from decial year</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>sc.datetoyear(<span class="st">'2010-07-01'</span>) <span class="co"># Returns approximately 2010.5</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>sc.datetoyear(<span class="fl">2010.5</span>) <span class="co"># Returns datetime.date(2010, 7, 2)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya.</p>
+<ul>
+<li><em>New in version 1.0.0.</em></li>
+<li><em>New in version 3.2.0:</em> “reverse” argument</li>
+<li><em>New in version 3.2.1:</em> “reverse” argument replaced by sc.yeartodate()</li>
+</ul>
+</section>
+</section>
+<section id="sciris.sc_datetime.day" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.day">day</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.day(obj, <span class="op">*</span>args, start_date<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convert a string, date/datetime object, or int to a day (int), the number of days since the start day. See also <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date()</code></a> and `sc.daydiff()``. If a start day is not supplied, it returns the number of days into the current year.</p>
+<section id="parameters-6" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>obj</td>
+<td>(<a href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a>, <a href="https://docs.python.org/3/library/functions.html#int">int</a>, <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a>, <a href="https://docs.python.org/3/library/array.html#module-array">array</a>)</td>
+<td>convert any of these objects to a day relative to the start day</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>args</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>additional days</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>start_date</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a></td>
+<td>the start day; if none is supplied, return days since (supplied year)-01-01.</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-2" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>days</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a> or <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the day(s) in simulation time (matching input data type where possible)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>sc.day(sc.now()) <span class="co"># Returns how many days into the year we are</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>sc.day([<span class="st">'2021-01-21'</span>, <span class="st">'2024-04-04'</span>], start_date<span class="op">=</span><span class="st">'2022-02-22'</span>) <span class="co"># Days can be positive or negative</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 1.0.0.</em></li>
+<li><em>New in version 1.2.2:</em> renamed “start_day” to “start_date”</li>
+</ul>
+</section>
+</section>
+<section id="sciris.sc_datetime.daydiff" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.daydiff">daydiff</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.daydiff(<span class="op">*</span>args)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convenience function to find the difference between two or more days. With only one argument, calculate days since Jan.&nbsp;1st.</p>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>diff  <span class="op">=</span> sc.daydiff(<span class="st">'2020-03-20'</span>, <span class="st">'2020-04-05'</span>) <span class="co"># Returns 16</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>diffs <span class="op">=</span> sc.daydiff(<span class="st">'2020-03-20'</span>, <span class="st">'2020-04-05'</span>, <span class="st">'2020-05-01'</span>) <span class="co"># Returns [16, 26]</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>doy <span class="op">=</span> sc.daydiff(<span class="st">'2022-03-20'</span>) <span class="co"># Returns 79, the number of days since 2022-01-01</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 1.0.0.</em></li>
+<li><em>New in version 3.0.0:</em> Calculated relative days with one argument</li>
+<li><em>New in version 3.2.2:</em> handle list as first argument</li>
+</ul>
+</section>
+<section id="sciris.sc_datetime.elapsedtimestr" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.elapsedtimestr">elapsedtimestr</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.elapsedtimestr(pasttime, maxdays<span class="op">=</span><span class="dv">5</span>, minseconds<span class="op">=</span><span class="dv">10</span>, shortmonths<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Accepts a datetime object or a string in ISO 8601 format and returns a human-readable string explaining when this time was.</p>
+<p>The rules are as follows:</p>
+<ul>
+<li>If a time is within the last hour, return ‘XX minutes’</li>
+<li>If a time is within the last 24 hours, return ‘XX hours’</li>
+<li>If within the last 5 days, return ‘XX days’</li>
+<li>If in the same year, print the date without the year</li>
+<li>If in a different year, print the date with the whole year</li>
+</ul>
+<p>These can be configured as options.</p>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>yesterday <span class="op">=</span> sc.datedelta(sc.now(), days<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>sc.elapsedtimestr(yesterday)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="sciris.sc_datetime.getdate" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.getdate">getdate</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.getdate(obj<span class="op">=</span><span class="va">None</span>, astype<span class="op">=</span><span class="st">'str'</span>, dateformat<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias for converting a date object to a formatted string.</p>
+<p>See also <a href="../api/sc_datetime.html#sciris.sc_datetime.now" title="0"><code>sc.now()</code></a>.</p>
+<section id="parameters-7" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>obj</td>
+<td><a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></td>
+<td>the datetime object to convert</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>astype</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>what to return; choices are “str” (default), “dateobj”, “float” (full timestamp), “int” (timestamp to second precision)</td>
+<td><code>'str'</code></td>
+</tr>
+<tr class="odd">
+<td>dateformat</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>if <code>astype</code> is <code>'str'</code>, use this output format</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>sc.getdate() <span class="co"># Returns a string for the current date</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>sc.getdate(astype<span class="op">=</span><span class="st">'float'</span>) <span class="co"># Convert today's time to a timestamp</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_datetime.now" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.now">now</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.now(</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    astype<span class="op">=</span><span class="st">'dateobj'</span>,</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    timezone<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    utc<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    tostring<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    dateformat<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Get the current time as a datetime object, optionally in UTC time.</p>
+<p><a href="../api/sc_datetime.html#sciris.sc_datetime.now" title="0"><code>sc.now()</code></a> is similar to <a href="../api/sc_datetime.html#sciris.sc_datetime.getdate" title="0"><code>sc.getdate()</code></a>, but <a href="../api/sc_datetime.html#sciris.sc_datetime.now" title="0"><code>sc.now()</code></a> returns a datetime object by default, while <a href="../api/sc_datetime.html#sciris.sc_datetime.getdate" title="0"><code>sc.getdate()</code></a> returns a string by default.</p>
+<section id="parameters-8" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>astype (str)</td>
+<td></td>
+<td>what to return; choices are “dateobj”, “str”, “float”; see <a href="../api/sc_datetime.html#sciris.sc_datetime.getdate" title="0"><code>sc.getdate()</code></a> for more</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>timezone (str)</td>
+<td></td>
+<td>the timezone to set the itme to</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>utc (bool)</td>
+<td></td>
+<td>whether the time is specified in UTC time</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>dateformat (str)</td>
+<td></td>
+<td>if <code>astype</code> is <code>'str'</code>, use this output format</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>sc.now() <span class="co"># Return current local time, e.g. 2019-03-14 15:09:26</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>sc.now(timezone<span class="op">=</span><span class="st">'US/Pacific'</span>) <span class="co"># Return the time now in a specific timezone</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>sc.now(utc<span class="op">=</span><span class="va">True</span>) <span class="co"># Return the time in UTC</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>sc.now(astype<span class="op">=</span><span class="st">'str'</span>) <span class="co"># Return the current time as a string instead of a date object; use 'int' for seconds</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>sc.now(tostring<span class="op">=</span><span class="va">True</span>) <span class="co"># Backwards-compatible alias for astype='str'</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>sc.now(dateformat<span class="op">=</span><span class="st">'%Y-%b-</span><span class="sc">%d</span><span class="st">'</span>) <span class="co"># Return a different date format</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 1.3.0:</em> made “astype” the first argument; removed “tostring” argument</p>
+</section>
+</section>
+<section id="sciris.sc_datetime.randsleep" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.randsleep">randsleep</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.randsleep(delay<span class="op">=</span><span class="fl">1.0</span>, var<span class="op">=</span><span class="fl">1.0</span>, low<span class="op">=</span><span class="va">None</span>, high<span class="op">=</span><span class="va">None</span>, seed<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Sleep for a nondeterminate period of time (useful for desynchronizing tasks)</p>
+<section id="parameters-9" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>delay</td>
+<td><a href="https://docs.python.org/3/library/functions.html#float">float</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>average duration in seconds to sleep for; if a pair of values, treat as low and high</td>
+<td><code>1.0</code></td>
+</tr>
+<tr class="even">
+<td>var</td>
+<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td>how much variability to have (default, 1.0, i.e.&nbsp;from 0 to 2*interval)</td>
+<td><code>1.0</code></td>
+</tr>
+<tr class="odd">
+<td>low</td>
+<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td>optionally define lower bound of sleep</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>high</td>
+<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td>optionally define upper bound of sleep</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>seed</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>if provided, reset the random seed</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>sc.randsleep(<span class="dv">1</span>) <span class="co"># Sleep for 0-2 s (average 1.0)</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>sc.randsleep(<span class="dv">2</span>, <span class="fl">0.1</span>) <span class="co"># Sleep for 1.8-2.2 s (average 2.0)</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>sc.randsleep([<span class="fl">0.5</span>, <span class="fl">1.5</span>]) <span class="co"># Sleep for 0.5-1.5 s</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>sc.randsleeep(low<span class="op">=</span><span class="fl">0.5</span>, high<span class="op">=</span><span class="fl">1.5</span>) <span class="co"># Ditto</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 2.0.0.</em> <em>New in version 3.0.0:</em> “seed” argument</p>
+</section>
+</section>
+<section id="sciris.sc_datetime.readdate" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.readdate">readdate</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.readdate(</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    datestr<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args,</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    dateformat<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    return_defaults<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convenience function for loading a date from a string. If dateformat is None, this function tries a list of standard date types. Note: in most cases <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date()</code></a> should be used instead.</p>
+<p>By default, a numeric date is treated as a POSIX (Unix) timestamp. This can be changed with the <code>dateformat</code> argument, specifically:</p>
+<ul>
+<li>‘posix’/None: treat as a POSIX timestamp, in seconds from 1970</li>
+<li>‘ordinal’/‘matplotlib’: treat as an ordinal number of days from 1970 (Matplotlib default)</li>
+</ul>
+<section id="parameters-10" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>datestr</td>
+<td>(<a href="https://docs.python.org/3/library/functions.html#int">int</a>, <a href="https://docs.python.org/3/library/functions.html#float">float</a>, <a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a>)</td>
+<td>the string containing the date, or the timestamp (in seconds), or a list of either</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>args</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>additional dates to convert</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>dateformat</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the format for the date, if known; if ‘dmy’ or ‘mdy’, try as day-month-year or month-day-year formats; can also be a list of options</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>return_defaults</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>don’t convert the date, just return the defaults</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
+<td>verbose</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>return detailed error messages</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-3" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dateobj</td>
+<td><a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></td>
+<td>a datetime object</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>dateobj  <span class="op">=</span> sc.readdate(<span class="st">'2020-03-03'</span>) <span class="co"># Standard format, so works</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>dateobj  <span class="op">=</span> sc.readdate(<span class="st">'04-03-2020'</span>, dateformat<span class="op">=</span><span class="st">'dmy'</span>) <span class="co"># Date is ambiguous, so need to specify day-month-year order</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>dateobj  <span class="op">=</span> sc.readdate(<span class="dv">1611661666</span>) <span class="co"># Can read timestamps as well</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>dateobj  <span class="op">=</span> sc.readdate(<span class="dv">16166</span>, dateformat<span class="op">=</span><span class="st">'ordinal'</span>) <span class="co"># Or ordinal numbers of days, as used by Matplotlib</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>dateobjs <span class="op">=</span> sc.readdate([<span class="st">'2020-06'</span>, <span class="st">'2020-07'</span>], dateformat<span class="op">=</span><span class="st">'%Y-%m'</span>) <span class="co"># Can read custom date formats</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>dateobjs <span class="op">=</span> sc.readdate(<span class="st">'20200321'</span>, <span class="dv">1611661666</span>) <span class="co"># Can mix and match formats</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_datetime.tic" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.tic">tic</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.tic()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>With <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a>, a little pair of functions to calculate a time difference:</p>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>sc.tic()</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>slow_func()</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>sc.toc()</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> sc.tic()</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>slow_func2()</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>sc.toc(T, label<span class="op">=</span><span class="st">'slow_func2'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>See also <a href="../api/sc_datetime.html#sciris.sc_datetime.timer" title="0"><code>sc.timer()</code></a>.</p>
+</section>
+<section id="sciris.sc_datetime.time" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.time">time</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.time()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Get current time in seconds – alias to time.time()</p>
+<p>See also <a href="../api/sc_datetime.html#sciris.sc_datetime.now" title="0"><code>sc.now()</code></a> to return a datetime object, and <a href="../api/sc_datetime.html#sciris.sc_datetime.getdate" title="0"><code>sc.getdate()</code></a> to return a string.</p>
+<p><em>New in version 3.0.0.</em></p>
+</section>
+<section id="sciris.sc_datetime.timedsleep" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.timedsleep">timedsleep</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.timedsleep(delay<span class="op">=</span><span class="va">None</span>, start<span class="op">=</span><span class="va">None</span>, verbose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pause for the specified amount of time, taking into account how long other operations take.</p>
+<p>This function is usually used in a loop; it works like <a href="https://docs.python.org/3/library/time.html#time.sleep" title="1"><code>time.sleep()</code></a>, but subtracts time taken by the other operations in the loop so that each loop iteration takes exactly <code>delay</code> amount of time. Note: since <a href="https://docs.python.org/3/library/time.html#time.sleep" title="1"><code>time.sleep()</code></a> has a minimum overhead (about 2e-4 seconds), below this duration, no pause will occur.</p>
+<section id="parameters-11" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>delay</td>
+<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td>time, in seconds, to wait for</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>start</td>
+<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td>if provided, the start time</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>verbose</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to print details</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Example for a long(ish) computation</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    sc.timedsleep(<span class="st">'start'</span>) <span class="co"># Initialize</span></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">int</span>(<span class="dv">2</span><span class="op">*</span>np.random.rand()<span class="op">*</span><span class="fl">1e6</span>) <span class="co"># Variable computation time</span></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>        tmp <span class="op">=</span> np.random.rand()</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>    sc.timedsleep(<span class="dv">1</span>, verbose<span class="op">=</span><span class="va">True</span>) <span class="co"># Wait for one second per iteration including computation time</span></span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Example illustrating more accurate timing</span></span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">1000</span></span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> sc.timer():</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>        sc.timedsleep(<span class="dv">1</span><span class="op">/</span>n)</span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Elapsed time: 1.01 s</span></span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> sc.timer():</span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>        time.sleep(<span class="dv">1</span><span class="op">/</span>n)</span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Elapsed time: 1.21 s</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 3.0.0:</em> “verbose” False by default; more accurate overhead calculation</p>
+</section>
+</section>
+<section id="sciris.sc_datetime.toc" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.toc">toc</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.toc(</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    start<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>    baselabel<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>    sigfigs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>    reset<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>    unit<span class="op">=</span><span class="st">'s'</span>,</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>    elapsed<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>With <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a>, a little pair of functions to calculate a time difference. See also <a href="../api/sc_datetime.html#sciris.sc_datetime.timer" title="0"><code>sc.timer()</code></a>.</p>
+<p>By default, output is displayed in seconds. You can change this with the <code>unit</code> argument, which can be a string or a float:</p>
+<pre><code>- 'hr' or 3600
+- 'min' or 60
+- 's' or 1 (default)
+- 'ms' or 1e-3
+- 'us' or 1e-6
+- 'ns' or 1e-9
+- 'auto' to choose an appropriate unit</code></pre>
+<section id="parameters-12" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>start</td>
+<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td>the starting time, as returned by e.g.&nbsp;<a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a></td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>label</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>optional label to add</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>baselabel</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>optional base label; default is “Elapsed time:”</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>sigfigs</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>number of significant figures for time estimate</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>reset</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>reset the time; like calling <a href="../api/sc_datetime.html#sciris.sc_datetime.toctic" title="0"><code>sc.toctic()</code></a> or <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a> again</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
+<td>unit</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td>the unit of time to display; see options above</td>
+<td><code>'s'</code></td>
+</tr>
+<tr class="odd">
+<td>output</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to return the output (otherwise print); if output=‘message’, then return the message string; if output=‘both’, then return both</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
+<td>verbose</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to print (true by default)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>elapsed</td>
+<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td>use a pre-calculated elapsed time instead of recalculating (not recommneded)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>not used; only for handling deprecations</td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>sc.tic()</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>slow_func()</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>sc.toc()</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> sc.tic()</span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>slow_func2()</span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>sc.toc(T, label<span class="op">=</span><span class="st">'slow_func2'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 1.3.0:</em> new arguments</li>
+<li><em>New in version 3.0.0:</em> “unit” argument</li>
+<li><em>New in version 3.2.1:</em> renamed “doprint” to “verbose”</li>
+</ul>
+</section>
+</section>
+<section id="sciris.sc_datetime.toctic" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.toctic">toctic</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.toctic(returntic<span class="op">=</span><span class="va">False</span>, returntoc<span class="op">=</span><span class="va">False</span>, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A convenience fuction for multiple timings. Can return the default output of either <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a> or <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a> (default neither). Arguments are passed to <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a>. Equivalent to <code>sc.toc(reset=True)</code>.</p>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>sc.tic()</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>slow_operation_1()</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>sc.toctic()</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>slow_operation_2()</span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>sc.toc()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 1.0.0.</em></p>
+</section>
+<section id="sciris.sc_datetime.yeartodate" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_datetime.yeartodate">yeartodate</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.yeartodate(year, as_date<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convert a decimal year to a date</p>
+<section id="parameters-13" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-13">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>year</td>
+<td>(<a href="https://docs.python.org/3/library/functions.html#int">int</a>, <a href="https://docs.python.org/3/library/functions.html#float">float</a>)</td>
+<td>The numerical year to convert to a DateTime</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>as_date</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>If True (default), return an <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date</code></a> object, otherwise return a string</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-4" class="level4 doc-section doc-section-returns">
+<h4 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>An <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date</code></a> object (default) or string, depending on the <code>as_date</code> argument</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>sc.yeartodate(<span class="st">'2010-07-01'</span>) <span class="co"># Returns approximately 2010.5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 3.2.1.</em></li>
+</ul>
+
+
+</section>
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../api/sc_utils.html" class="pagination-link" aria-label="sc_utils">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">sc_utils</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../api/sc_nested.html" class="pagination-link" aria-label="sc_nested">
+        <span class="nav-page-text">sc_nested</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>Docs built for Sciris v3.3.0 (2026-08-08).<br>© 2014–2026 by the Sciris Development Team.</p>
+<div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/sciris/sciris">
+      <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+    </a>
+  </li>  
+    <li class="nav-item compact">
+    <a class="nav-link" href="mailto:info@sciris.org">
+      <i class="bi bi-envelope-at-fill" role="img">
+</i> 
+    </a>
+  </li>  
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://sciris.org/">
+      <i class="bi bi-globe" role="img">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

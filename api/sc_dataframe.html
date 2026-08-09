@@ -1,0 +1,2688 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>sc_dataframe – Sciris</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../api/sc_fileio.html" rel="next">
+<link href="../api/sc_odict.html" rel="prev">
+<link href="..//assets/favicon.ico" rel="icon">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-dc16a9b152f85a9de5b03f2d2ad60ba1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../assets/sciris-logo.png" alt="" class="navbar-logo light-content">
+    <img src="../assets/sciris-logo.png" alt="" class="navbar-logo dark-content">
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../overview.html"> 
+<span class="menu-text">Overview</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../tutorials.html"> 
+<span class="menu-text">Tutorials</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../whatsnew.html"> 
+<span class="menu-text">What’s new</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../contributing.html"> 
+<span class="menu-text">Contributing</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../api/index.html"> 
+<span class="menu-text">API reference</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools tools-wide">
+    <a href="https://github.com/sciris/sciris" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+    <a href="mailto:info@sciris.org" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-envelope-at-fill"></i></a>
+    <a href="https://sciris.org" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-globe"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../api/sc_odict.html"><strong>Containers</strong></a></li><li class="breadcrumb-item"><a href="../api/sc_dataframe.html">sc_dataframe</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>Home</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>API reference</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Math and arrays</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_math.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_math</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_asd.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_asd</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Containers</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_odict.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_odict</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_dataframe.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">sc_dataframe</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Files and versioning</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_fileio.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_fileio</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_versioning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_versioning</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Printing and plotting</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_printing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_printing</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_plotting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_plotting</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_colors.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_colors</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Parallelization and profiling</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_parallel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_parallel</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_profiling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_profiling</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Utilities</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_utils.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_utils</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_datetime.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_datetime</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_nested.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_nested</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/sc_settings.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">sc_settings</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#sciris.sc_dataframe" id="toc-sciris.sc_dataframe" class="nav-link active" data-scroll-target="#sciris.sc_dataframe">sc_dataframe</a>
+  <ul>
+  <li><a href="#classes" id="toc-classes" class="nav-link" data-scroll-target="#classes">Classes</a>
+  <ul>
+  <li><a href="#sciris.sc_dataframe.dataframe" id="toc-sciris.sc_dataframe.dataframe" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe">dataframe</a>
+  <ul class="collapse">
+  <li><a href="#parameters" id="toc-parameters" class="nav-link" data-scroll-target="#parameters">Parameters</a></li>
+  <li><a href="#attributes" id="toc-attributes" class="nav-link" data-scroll-target="#attributes">Attributes</a></li>
+  <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a>
+  <ul class="collapse">
+  <li><a href="#sciris.sc_dataframe.dataframe.addcol" id="toc-sciris.sc_dataframe.dataframe.addcol" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.addcol">addcol</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.append" id="toc-sciris.sc_dataframe.dataframe.append" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.append">append</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.appendrow" id="toc-sciris.sc_dataframe.dataframe.appendrow" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.appendrow">appendrow</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.cat" id="toc-sciris.sc_dataframe.dataframe.cat" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.cat">cat</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.col_index" id="toc-sciris.sc_dataframe.dataframe.col_index" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.col_index">col_index</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.col_name" id="toc-sciris.sc_dataframe.dataframe.col_name" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.col_name">col_name</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.concat" id="toc-sciris.sc_dataframe.dataframe.concat" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.concat">concat</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.disp" id="toc-sciris.sc_dataframe.dataframe.disp" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.disp">disp</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.enumrows" id="toc-sciris.sc_dataframe.dataframe.enumrows" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.enumrows">enumrows</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.equal" id="toc-sciris.sc_dataframe.dataframe.equal" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.equal">equal</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.equals" id="toc-sciris.sc_dataframe.dataframe.equals" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.equals">equals</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.filtercols" id="toc-sciris.sc_dataframe.dataframe.filtercols" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.filtercols">filtercols</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.filterin" id="toc-sciris.sc_dataframe.dataframe.filterin" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.filterin">filterin</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.filterout" id="toc-sciris.sc_dataframe.dataframe.filterout" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.filterout">filterout</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.findind" id="toc-sciris.sc_dataframe.dataframe.findind" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.findind">findind</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.findinds" id="toc-sciris.sc_dataframe.dataframe.findinds" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.findinds">findinds</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.findrow" id="toc-sciris.sc_dataframe.dataframe.findrow" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.findrow">findrow</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.flexget" id="toc-sciris.sc_dataframe.dataframe.flexget" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.flexget">flexget</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.get" id="toc-sciris.sc_dataframe.dataframe.get" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.get">get</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.insertrow" id="toc-sciris.sc_dataframe.dataframe.insertrow" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.insertrow">insertrow</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.merge" id="toc-sciris.sc_dataframe.dataframe.merge" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.merge">merge</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.popcols" id="toc-sciris.sc_dataframe.dataframe.popcols" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.popcols">popcols</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.poprow" id="toc-sciris.sc_dataframe.dataframe.poprow" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.poprow">poprow</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.poprows" id="toc-sciris.sc_dataframe.dataframe.poprows" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.poprows">poprows</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.read_csv" id="toc-sciris.sc_dataframe.dataframe.read_csv" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.read_csv">read_csv</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.read_csv_string" id="toc-sciris.sc_dataframe.dataframe.read_csv_string" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.read_csv_string">read_csv_string</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.read_excel" id="toc-sciris.sc_dataframe.dataframe.read_excel" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.read_excel">read_excel</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.replacecol" id="toc-sciris.sc_dataframe.dataframe.replacecol" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.replacecol">replacecol</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.replacedata" id="toc-sciris.sc_dataframe.dataframe.replacedata" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.replacedata">replacedata</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.set" id="toc-sciris.sc_dataframe.dataframe.set" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.set">set</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.set_dtypes" id="toc-sciris.sc_dataframe.dataframe.set_dtypes" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.set_dtypes">set_dtypes</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.sort" id="toc-sciris.sc_dataframe.dataframe.sort" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.sort">sort</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.sortcols" id="toc-sciris.sc_dataframe.dataframe.sortcols" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.sortcols">sortcols</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.sortrows" id="toc-sciris.sc_dataframe.dataframe.sortrows" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.sortrows">sortrows</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.to_odict" id="toc-sciris.sc_dataframe.dataframe.to_odict" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.to_odict">to_odict</a></li>
+  <li><a href="#sciris.sc_dataframe.dataframe.to_pandas" id="toc-sciris.sc_dataframe.dataframe.to_pandas" class="nav-link" data-scroll-target="#sciris.sc_dataframe.dataframe.to_pandas">to_pandas</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../api/sc_odict.html"><strong>Containers</strong></a></li><li class="breadcrumb-item"><a href="../api/sc_dataframe.html">sc_dataframe</a></li></ol></nav></header>
+
+
+
+
+
+<section id="sciris.sc_dataframe" class="level1">
+<h1>sc_dataframe</h1>
+<p><a href="../api/sc_dataframe.html#sciris.sc_dataframe" title="0"><code>sc_dataframe</code></a></p>
+<p>Extension of the pandas dataframe to be more flexible, especially with filtering rows/columns and concatenating data.</p>
+<section id="classes" class="level2">
+<h2 class="anchored" data-anchor-id="classes">Classes</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe">dataframe</a></td>
+<td>An extension of the pandas <code>DataFrame</code> with additional convenience methods for</td>
+</tr>
+</tbody>
+</table>
+<section id="sciris.sc_dataframe.dataframe" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe">dataframe</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    dtype<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    copy<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    dtypes<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    nrows<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>An extension of the pandas <code>DataFrame</code> with additional convenience methods for accessing rows and columns and performing other operations, such as adding rows.</p>
+<section id="parameters" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>data</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a> / <a href="https://docs.python.org/3/library/array.html#module-array">array</a> / <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe">dataframe</a></td>
+<td>the data to use; passed to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pd.DataFrame" title="1"><code>pd.DataFrame()</code></a></td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>index</td>
+<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>the index to use; passed to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pd.DataFrame" title="1"><code>pd.DataFrame()</code></a></td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>columns</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>column labels (if a dict is supplied, the value sets the dtype)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>dtype</td>
+<td><a href="https://docs.python.org/3/library/functions.html#type">type</a></td>
+<td>a dtype for the whole dataframe; passed to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pd.DataFrame" title="1"><code>pd.DataFrame()</code></a></td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>copy</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to copy the data (ignored in pandas ≥ 3.0.0 due to Copy-on-Write behavior)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>dtypes</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a> / <a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>alternatively, list of data types to set each column to</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>nrows</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>the number of arrows to preallocate (default 0)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>if provided, treat these as data columns</td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><em>Hint</em>: Run the example below line by line to get a sense of how the dataframe changes.</p>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(cols<span class="op">=</span>[<span class="st">'x'</span>,<span class="st">'y'</span>], data<span class="op">=</span>[[<span class="dv">1238</span>,<span class="dv">2</span>],[<span class="dv">384</span>,<span class="dv">5</span>],[<span class="dv">666</span>,<span class="dv">7</span>]]) <span class="co"># Create data frame</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'x'</span>] <span class="co"># Print out a column</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>df[<span class="dv">0</span>] <span class="co"># Print out a row</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'x'</span>,<span class="dv">0</span>] <span class="co"># Print out an element</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>df[<span class="dv">0</span>,:] <span class="op">=</span> [<span class="dv">123</span>,<span class="dv">6</span>]<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Set values for a whole row</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'y'</span>] <span class="op">=</span> [<span class="dv">8</span>,<span class="dv">5</span>,<span class="dv">0</span>]<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Set values for a whole column</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'z'</span>] <span class="op">=</span> [<span class="dv">14</span>,<span class="dv">14</span>,<span class="dv">14</span>]<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Add new column</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>df.rmcol(<span class="st">'z'</span>)<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Remove a column</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>df.addcol(<span class="st">'z'</span>, [<span class="dv">14</span>,<span class="dv">14</span>,<span class="dv">14</span>])<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Alternate way to add new column</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>df.poprow(<span class="dv">1</span>)<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Remove a row</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>df.append([<span class="dv">555</span>,<span class="dv">2</span>,<span class="dv">14</span>])<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Append a new row</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>df.insertrow(<span class="dv">1</span>,[<span class="dv">556</span>,<span class="dv">2</span>,<span class="dv">14</span>])<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Insert a new row</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>df.sort()<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Sort by the first column</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>df.sort(<span class="st">'y'</span>)<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Sort by the second column</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>df.findrow(<span class="dv">123</span>) <span class="co"># Return the row starting with value 123</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>df.rmrow()<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Remove last row</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>df.rmrow(<span class="dv">555</span>)<span class="op">;</span> <span class="bu">print</span>(df) <span class="co"># Remove the row starting with element '555'</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Direct setting of data</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], b<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The dataframe can be used for both numeric and non-numeric data.</p>
+<ul>
+<li><em>New in version 2.0.0:</em> subclass pandas DataFrame</li>
+<li><em>New in version 3.0.0:</em> “dtypes” argument; handling of item setting</li>
+<li><em>New in version 3.1.0:</em> use panda’s equality operator by default (unless an exception is raised); new “equal” method; “cat” can be an instance method now</li>
+<li><em>New in version 3.2.5:</em> pandas 3.0.0 compatibility</li>
+</ul>
+</section>
+<section id="attributes" class="level4">
+<h4 class="anchored" data-anchor-id="attributes">Attributes</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.cols">cols</a></td>
+<td>Get columns as a list</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.ncols">ncols</a></td>
+<td>Get the number of columns in the dataframe</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.nrows">nrows</a></td>
+<td>Get the number of rows in the dataframe</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="methods" class="level4">
+<h4 class="anchored" data-anchor-id="methods">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.addcol">addcol</a></td>
+<td>Add new column(s) to the data frame</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.append">append</a></td>
+<td>Alias to <code>appendrow()</code>.</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.appendrow">appendrow</a></td>
+<td>Add row(s) to the end of the dataframe.</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.cat">cat</a></td>
+<td>Convenience class method for concatenating multiple dataframes. See <code>df.concat()</code></td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.col_index">col_index</a></td>
+<td>Get the index of the column named <code>col</code>.</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.col_name">col_name</a></td>
+<td>Get the name of the column(s) with index <code>col</code>.</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.concat">concat</a></td>
+<td>Concatenate additional data onto the current dataframe.</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.disp">disp</a></td>
+<td>Flexible display of a dataframe, showing all rows/columns by default.</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.enumrows">enumrows</a></td>
+<td>Efficiently enumerate the rows of the dataframe</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.equal">equal</a></td>
+<td>Class method returning boolean true/false equals that allows for more robust equality checks:</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.equals">equals</a></td>
+<td>Try the default <code>equals()</code>, but fall back</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.filtercols">filtercols</a></td>
+<td>Filter columns keeping only those specified – note, by default, do not perform in place</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.filterin">filterin</a></td>
+<td>Keep only rows matching a criterion; see also <code>df.filterout()</code></td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.filterout">filterout</a></td>
+<td>Remove rows matching a criterion (in place); see also <code>df.filterin()</code></td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.findind">findind</a></td>
+<td>Find the row index for a given value and column.</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.findinds">findinds</a></td>
+<td>Return the indices of all rows matching the given key in a given column.</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.findrow">findrow</a></td>
+<td>Return a row by searching for a matching value.</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.flexget">flexget</a></td>
+<td>More complicated way of getting data from a dataframe. While getting directly</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.get">get</a></td>
+<td>Alias to pandas <strong>getitem</strong> method; rarely used</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.insertrow">insertrow</a></td>
+<td>Insert row(s) at the specified location. See also <code>df.concat()</code></td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.merge">merge</a></td>
+<td>Alias to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.merge.html#pd.merge" title="1"><code>pd.merge</code></a>, except merge in place.</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.popcols">popcols</a></td>
+<td>Remove a column or columns from the data frame.</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.poprow">poprow</a></td>
+<td>Remove a row from the data frame.</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.poprows">poprows</a></td>
+<td>Remove multiple rows by index or value</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.read_csv">read_csv</a></td>
+<td>Alias to <code>pd.read_csv &lt;pandas.read_csv</code>, returning a Sciris dataframe</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.read_csv_string">read_csv_string</a></td>
+<td>Read a CSV from a string rather than a file</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.read_excel">read_excel</a></td>
+<td>Alias to <code>pd.read_excel &lt;pandas.read_excel</code>, returning a Sciris dataframe</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.replacecol">replacecol</a></td>
+<td>Replace all of one value in a column with a new value</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.replacedata">replacedata</a></td>
+<td>Replace data in the dataframe with other data; usually not used directly</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.set">set</a></td>
+<td>Alias to pandas <strong>setitem</strong> method; rarely used</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.set_dtypes">set_dtypes</a></td>
+<td>Set dtypes in-place (see <code>df.astype()</code> for the user-facing version)</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.sort">sort</a></td>
+<td>Alias to <code>sortrows()</code>.</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.sortcols">sortcols</a></td>
+<td>Like sortrows(), but change column order (usually in place) instead.</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.sortrows">sortrows</a></td>
+<td>Sort the dataframe rows in place by the specified column(s).</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_dataframe.dataframe.to_odict">to_odict</a></td>
+<td>Convert dataframe to a dict of columns, optionally specifying certain rows.</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_dataframe.dataframe.to_pandas">to_pandas</a></td>
+<td>Convert to a plain pandas dataframe</td>
+</tr>
+</tbody>
+</table>
+<section id="sciris.sc_dataframe.dataframe.addcol" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.addcol">addcol</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.addcol(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    key<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    value<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    inplace<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Add new column(s) to the data frame</p>
+<p>See also <code>assign()</code>, which is similar, but returns a new dataframe by default.</p>
+<section id="parameters-1" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>key</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>the name of the column</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>value</td>
+<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>the values for the column</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>data</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>alternatively, specify a dictionary of columns to add</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>inplace</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to return a new dataframe</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>additional columns to add</td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p>NB: a single argument is interpreted as “data”</p>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(<span class="bu">dict</span>(x<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], y<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>new_cols <span class="op">=</span> <span class="bu">dict</span>(z<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], a<span class="op">=</span>[<span class="dv">9</span>,<span class="dv">8</span>,<span class="dv">7</span>])</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>df.addcol(new_cols)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.append" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.append">append</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.append(row, reset_index<span class="op">=</span><span class="va">True</span>, inplace<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias to <code>appendrow()</code>.</p>
+<p><strong>Note</strong>: <code>pd.DataFrame.append</code> was deprecated in pandas version 2.0; see https://github.com/pandas-dev/pandas/issues/35407 for details. Since this method is implemented using <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.concat.html#pd.concat" title="1"><code>pd.concat()</code></a>, it does not suffer from the performance problems that <code>append</code> did.</p>
+<p><em>New in version 3.0.0.</em></p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.appendrow" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.appendrow">appendrow</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.appendrow(row, reset_index<span class="op">=</span><span class="va">True</span>, inplace<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Add row(s) to the end of the dataframe.</p>
+<p>See also <code>df.concat()</code> and <code>df.insertrow()</code>. Similar to the pandas operation <code>df.iloc[-1] = ...</code>, but faster and provides additional type checking.</p>
+<section id="parameters-2" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>value</td>
+<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>the row(s) to append</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>reset_index</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>update the index</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
+<td>inplace</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to modify in-place</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+<p>Note: “appendrow” and “concat” are equivalent, except appendrow() defaults to modifying in-place and “concat” defaults to returning a new dataframe.</p>
+<p>Warning: modifying dataframes in-place is quite inefficient. For highest performance, construct the data in large chunks and then add to the dataframe all at once, rather than adding row by row.</p>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(<span class="bu">dict</span>(</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> [<span class="st">'foo'</span>,<span class="st">'bar'</span>],</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> [<span class="dv">1</span>,<span class="dv">2</span>],</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    c <span class="op">=</span> np.random.rand(<span class="dv">2</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>df.appendrow([<span class="st">'cat'</span>, <span class="dv">3</span>, <span class="fl">0.3</span>])           <span class="co"># Append a list</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>df.appendrow(<span class="bu">dict</span>(a<span class="op">=</span><span class="st">'dog'</span>, b<span class="op">=</span><span class="dv">4</span>, c<span class="op">=</span><span class="fl">0.7</span>)) <span class="co"># Append a dict</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 3.0.0:</em> renamed “value” to “row”; improved performance</p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.cat" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.cat">cat</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.cat(data, <span class="op">*</span>args, dfargs<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convenience class method for concatenating multiple dataframes. See <code>df.concat()</code> for the equivalent instance method.</p>
+<section id="parameters-3" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>data</td>
+<td><a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe">dataframe</a> / <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>the dataframe/data to use as the basis of the new dataframe</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>args</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>additional dataframes (or object that can be converted to dataframes) to concatenate</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>dfargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>arguments passed to construct each dataframe</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <code>df.concat()</code></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>arr1 <span class="op">=</span> np.random.rand(<span class="dv">6</span>,<span class="dv">3</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>df2 <span class="op">=</span> pd.DataFrame(np.random.rand(<span class="dv">4</span>,<span class="dv">3</span>))</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>df3 <span class="op">=</span> sc.dataframe.cat(arr1, df2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 2.0.2.</em></p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.col_index" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.col_index">col_index</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.col_index(col<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>args, die<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Get the index of the column named <code>col</code>.</p>
+<p>Similar to <code>df.columns.get_loc(col)</code>, and opposite of <code>df.col_name</code>.</p>
+<section id="parameters-4" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>col</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the column(s) to get the index of (return 0 if None)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>args</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>additional column(s) to get the index of</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>die</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to raise an exception if the column could not be found (else, return None)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(<span class="bu">dict</span>(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], b<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>], c<span class="op">=</span>[<span class="dv">7</span>,<span class="dv">8</span>,<span class="dv">9</span>]))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>df.col_index(<span class="st">'b'</span>) <span class="co"># Returns 1</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>df.col_index(<span class="dv">1</span>) <span class="co"># Returns 1</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>df.col_index(<span class="st">'a'</span>, <span class="st">'c'</span>) <span class="co"># Returns [0, 2]</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 3.0.0:</em> renamed from “_sanitizecols”; multiple arguments</p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.col_name" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.col_name">col_name</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.col_name(col<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>args, die<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Get the name of the column(s) with index <code>col</code>.</p>
+<p>Similar to <code>df.columns[col]</code>, and opposite of <code>df.col_index</code>.</p>
+<p><strong>Note</strong>: This method always looks for named columns first. If <code>col</code> is name of a column, it will return <code>col</code> rather than <code>columns[col]</code>. See example below for more information.</p>
+<section id="parameters-5" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>col</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the column(s) to get the index of (return 0 if None)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>args</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>additional column(s) to get the index of</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>die</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to raise an exception if the column could not be found (else, return None)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(<span class="bu">dict</span>(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], b<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>], c<span class="op">=</span>[<span class="dv">7</span>,<span class="dv">8</span>,<span class="dv">9</span>]))</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>df.col_name(<span class="dv">1</span>) <span class="co"># Returns 'b'</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>df.col_name(<span class="st">'b'</span>) <span class="co"># Returns 'b'</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>df.col_name(<span class="dv">0</span>, <span class="dv">2</span>) <span class="co"># Returns ['a', 'c']</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 3.0.0.</em></p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.concat" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.concat">concat</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.concat(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    data,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    reset_index<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    inplace<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    dfargs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Concatenate additional data onto the current dataframe.</p>
+<p>Similar to <code>df.appendrow()</code> and <code>df.insertrow()</code>; see also <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe.cat" title="0"><code>sc.dataframe.cat()</code></a> for the equivalent class method.</p>
+<section id="parameters-6" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>data</td>
+<td><a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe">dataframe</a> / <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>the data to concatenate</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>*args</td>
+<td><a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe">dataframe</a> / <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>additional data to concatenate</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>columns</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>if supplied, columns to go with the data</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>reset_index</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>update the index</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
+<td>inplace</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to append in place</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
+<td>dfargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>arguments passed to construct each dataframe</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>**kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.concat.html#pd.concat" title="1"><code>pd.concat()</code></a></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>arr1 <span class="op">=</span> np.random.rand(<span class="dv">6</span>,<span class="dv">3</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>df2 <span class="op">=</span> sc.dataframe(np.random.rand(<span class="dv">4</span>,<span class="dv">3</span>))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>df3 <span class="op">=</span> df2.concat(arr1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 2.0.2:</em> “inplace” defaults to False</li>
+<li><em>New in version 3.0.0:</em> improved type handling</li>
+</ul>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.disp" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.disp">disp</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.disp(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    nrows<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    ncols<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    width<span class="op">=</span><span class="dv">999</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    precision<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    options<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Flexible display of a dataframe, showing all rows/columns by default.</p>
+<section id="parameters-7" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-7">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>nrows</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>maximum number of rows to show (default: all)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>ncols</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>maximum number of columns to show (default: all)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>width</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>maximum screen width (default: 999)</td>
+<td><code>999</code></td>
+</tr>
+<tr class="even">
+<td>precision</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>number of decimal places to show (default: 4)</td>
+<td><code>4</code></td>
+</tr>
+<tr class="odd">
+<td>options</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>an optional dictionary of additional options, passed to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.option_context.html#pd.option_context" title="1"><code>pd.option_context()</code></a></td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>also passed to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.option_context.html#pd.option_context" title="1"><code>pd.option_context()</code></a>, with ‘display.’ preprended if needed</td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(data<span class="op">=</span>np.random.rand(<span class="dv">100</span>,<span class="dv">10</span>))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>df.disp()</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>df.disp(precision<span class="op">=</span><span class="dv">1</span>, ncols<span class="op">=</span><span class="dv">5</span>, colheader_justify<span class="op">=</span><span class="st">'left'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 2.0.1.</em></p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.enumrows" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.enumrows">enumrows</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.enumrows(cols<span class="op">=</span><span class="va">None</span>, <span class="bu">type</span><span class="op">=</span><span class="st">'objdict'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Efficiently enumerate the rows of the dataframe</p>
+<p>Similar to <code>df.iterrows()</code>, but up to 30x faster since uses tuples instead of <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pd.Series" title="1"><code>pd.Series</code></a>.</p>
+<section id="parameters-8" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>cols</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the list of columns to include in the enumeration (by default, all)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>type</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/functions.html#type">type</a></td>
+<td>the output type for each row: options are ‘objdict’ (default), tuple (fastest), list (very fast), dict (pretty fast)</td>
+<td><code>'objdict'</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(<span class="bu">dict</span>(x<span class="op">=</span>[<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>], y<span class="op">=</span>[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">7</span>,<span class="dv">8</span>], z<span class="op">=</span>[<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">4</span>,<span class="dv">3</span>,<span class="dv">2</span>]))</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,row <span class="kw">in</span> df.enumrows(): <span class="bu">print</span>(i, row.x<span class="op">+</span>row.y) <span class="co"># Typical use case</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,row <span class="kw">in</span> df.enumrows(<span class="bu">type</span><span class="op">=</span><span class="bu">tuple</span>): <span class="bu">print</span>(i, row[<span class="dv">0</span>]<span class="op">+</span>row[<span class="dv">1</span>]) <span class="co"># Fastest</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,row <span class="kw">in</span> df.enumrows(<span class="bu">type</span><span class="op">=</span><span class="bu">dict</span>): <span class="bu">print</span>(i, row[<span class="st">'x'</span>]<span class="op">+</span>row[<span class="st">'y'</span>]) <span class="co"># Still fast</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,(x,y) <span class="kw">in</span> df.enumrows(cols<span class="op">=</span>[<span class="st">'x'</span>, <span class="st">'y'</span>], <span class="bu">type</span><span class="op">=</span><span class="bu">tuple</span>): <span class="bu">print</span>(i, x<span class="op">+</span>y) <span class="co"># Even faster</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.equal" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.equal">equal</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.equal(<span class="op">*</span>args, equal_nan<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Class method returning boolean true/false equals that allows for more robust equality checks: same type, size, columns, and values. See <code>df.equals()</code> for equivalent instance method.</p>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df1 <span class="op">=</span> sc.dataframe(a<span class="op">=</span>[<span class="dv">1</span>, <span class="dv">2</span>, np.nan])</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>df2 <span class="op">=</span> sc.dataframe(a<span class="op">=</span>[<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>])</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>sc.dataframe.equal(df1, df1) <span class="co"># Returns True</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>sc.dataframe.equal(df1, df1, equal_nan<span class="op">=</span><span class="va">False</span>) <span class="co"># Returns False</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>sc.dataframe.equal(df1, df2) <span class="co"># Returns False</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>sc.dataframe.equal(df1, df1, df2) <span class="co"># Also returns False</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 3.1.0.</em></p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.equals" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.equals">equals</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.equals(other, <span class="op">*</span>args, equal_nan<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Try the default <code>equals()</code>, but fall back on the more robust <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe.equal" title="0"><code>sc.dataframe.equal()</code></a> if that fails.</p>
+<p><em>New in version 3.1.0.</em></p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.filtercols" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.filtercols">filtercols</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.filtercols(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    cols<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args,</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    keep<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    reset_index<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    inplace<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Filter columns keeping only those specified – note, by default, do not perform in place</p>
+<section id="parameters-9" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-9">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>cols</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the columns to keep (or remove if keep=False)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>args</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>additional columns</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>keep</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to keep the named columns (else, remove them)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>die</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to raise an exception if a column is not found</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
+<td>reset_index</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>update the index</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>inplace</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to modify in-place</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(cols<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>,<span class="st">'d'</span>], data<span class="op">=</span>np.random.rand(<span class="dv">3</span>,<span class="dv">4</span>))</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>df2 <span class="op">=</span> df.filtercols(<span class="st">'a'</span>,<span class="st">'b'</span>) <span class="co"># Keeps columns 'a' and 'b'</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>df3 <span class="op">=</span> df.filtercols(<span class="st">'a'</span>,<span class="st">'c'</span>, keep<span class="op">=</span><span class="va">False</span>) <span class="co"># Keeps columns 'b' and 'd'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.filterin" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.filterin">filterin</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.filterin(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    inds<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    value<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    col<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    reset_index<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    inplace<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Keep only rows matching a criterion; see also <code>df.filterout()</code></p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.filterout" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.filterout">filterout</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.filterout(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    inds<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    value<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    col<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    reset_index<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    inplace<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Remove rows matching a criterion (in place); see also <code>df.filterin()</code></p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.findind" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.findind">findind</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.findind(value<span class="op">=</span><span class="va">None</span>, col<span class="op">=</span><span class="va">None</span>, closest<span class="op">=</span><span class="va">False</span>, die<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Find the row index for a given value and column.</p>
+<p>See <code>df.findrow()</code> for the equivalent to return the row itself rather than the index of the row. See <code>df.col_index()</code> for the column equivalent.</p>
+<section id="parameters-10" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-10">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>value</td>
+<td><a href="https://docs.python.org/3/library/functions.html#any">any</a></td>
+<td>the value to look for (default: return last row index)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>col</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>the column to look in (default: first)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>closest</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>if true, return the closest match if an exact match is not found</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
+<td>die</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to raise an exception if the value is not found (otherwise, return None)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(data<span class="op">=</span>[[<span class="dv">2016</span>,<span class="fl">0.3</span>],[<span class="dv">2017</span>,<span class="fl">0.5</span>]], columns<span class="op">=</span>[<span class="st">'year'</span>,<span class="st">'val'</span>])</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>df.findind(<span class="dv">2016</span>) <span class="co"># returns 0</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>df.findind(<span class="fl">0.5</span>, <span class="st">'val'</span>) <span class="co"># returns 1</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>df.findind(<span class="dv">2013</span>) <span class="co"># returns None, or exception if die is True</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>df.findind(<span class="dv">2013</span>, closest<span class="op">=</span><span class="va">True</span>) <span class="co"># returns 0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 3.0.0:</em> renamed from “_rowindex”</p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.findinds" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.findinds">findinds</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.findinds(value<span class="op">=</span><span class="va">None</span>, col<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Return the indices of all rows matching the given key in a given column.</p>
+<section id="parameters-11" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-11">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>value</td>
+<td><a href="https://docs.python.org/3/library/functions.html#any">any</a></td>
+<td>the value to look for</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>col</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>the column to look in</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <a href="../api/sc_math.html#sciris.sc_math.findinds" title="0"><code>sc.findinds()</code></a></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(cols<span class="op">=</span>[<span class="st">'year'</span>,<span class="st">'val'</span>],data<span class="op">=</span>[[<span class="dv">2016</span>,<span class="fl">0.3</span>],[<span class="dv">2017</span>,<span class="fl">0.5</span>], [<span class="dv">2018</span>, <span class="fl">0.3</span>]])</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>df.findinds(<span class="fl">0.3</span>, <span class="st">'val'</span>) <span class="co"># Returns array([0,2])</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.findrow" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.findrow">findrow</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.findrow(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    value<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    col<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    default<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    closest<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    asdict<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Return a row by searching for a matching value.</p>
+<p>See <code>df.findind()</code> for the equivalent to return the index of the row rather than the row itself, and <code>df.findinds()</code> to find multiple row indices.</p>
+<section id="parameters-12" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>value</td>
+<td><a href="https://docs.python.org/3/library/functions.html#any">any</a></td>
+<td>the value to look for</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>col</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>the column to look for this value in</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>default</td>
+<td><a href="https://docs.python.org/3/library/functions.html#any">any</a></td>
+<td>the value to return if key is not found (overrides die)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>closest</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether or not to return the closest row (overrides default and die)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
+<td>asdict</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to return results as dict rather than list</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
+<td>die</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to raise an exception if the value is not found</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(cols<span class="op">=</span>[<span class="st">'year'</span>,<span class="st">'val'</span>],data<span class="op">=</span>[[<span class="dv">2016</span>,<span class="fl">0.3</span>],[<span class="dv">2017</span>,<span class="fl">0.5</span>], [<span class="dv">2018</span>, <span class="fl">0.3</span>]])</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>df.findrow(<span class="dv">2016</span>) <span class="co"># returns array([2016, 0.3], dtype=object)</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>df.findrow(<span class="dv">2013</span>) <span class="co"># returns None, or exception if die is True</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>df.findrow(<span class="dv">2013</span>, closest<span class="op">=</span><span class="va">True</span>) <span class="co"># returns array([2016, 0.3], dtype=object)</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>df.findrow(<span class="dv">2016</span>, asdict<span class="op">=</span><span class="va">True</span>) <span class="co"># returns {'year':2016, 'val':0.3}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.flexget" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.flexget">flexget</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.flexget(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    cols<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    rows<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    asarray<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    cast<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    default<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>More complicated way of getting data from a dataframe. While getting directly by key usually returns the array data directly, this usually returns another dataframe.</p>
+<section id="parameters-13" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-13">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>cols</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the column(s) to get</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>rows</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the row(s) to get</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>asarray</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to return an array (otherwise, return a dataframe)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
+<td>cast</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>attempt to cast to an all-numeric array</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
+<td>default</td>
+<td><a href="https://docs.python.org/3/library/functions.html#any">any</a></td>
+<td>the value to return if the column(s)/row(s) can’t be found</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(cols<span class="op">=</span>[<span class="st">'x'</span>,<span class="st">'y'</span>,<span class="st">'z'</span>],data<span class="op">=</span>[[<span class="dv">1238</span>,<span class="dv">2</span>,<span class="op">-</span><span class="dv">1</span>],[<span class="dv">384</span>,<span class="dv">5</span>,<span class="op">-</span><span class="dv">2</span>],[<span class="dv">666</span>,<span class="dv">7</span>,<span class="op">-</span><span class="dv">3</span>]]) <span class="co"># Create data frame</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>df.flexget(cols<span class="op">=</span>[<span class="st">'x'</span>,<span class="st">'z'</span>], rows<span class="op">=</span>[<span class="dv">0</span>,<span class="dv">2</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.get" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.get">get</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.get(key)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias to pandas <strong>getitem</strong> method; rarely used</p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.insertrow" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.insertrow">insertrow</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.insertrow(</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    value<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    reset_index<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    inplace<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Insert row(s) at the specified location. See also <code>df.concat()</code> and <code>df.appendrow()</code>.</p>
+<section id="parameters-14" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-14">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>index</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>index at which to insert new row(s)</td>
+<td><code>0</code></td>
+</tr>
+<tr class="even">
+<td>value</td>
+<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>the row(s) to insert; can be an array, list, or dict</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>reset_index</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>update the index</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>inplace</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to modify in-place</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
+<td>die</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>raise an exception if the length/columns of the inserted row do not match the existing dataframe</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to `<code>df.concat()</code></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p>Warning: modifying dataframes in-place is quite inefficient. For highest performance, construct the data in large chunks and then add to the dataframe all at once, rather than adding row by row.</p>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(<span class="bu">dict</span>(</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> [<span class="st">'foo'</span>,<span class="st">'cat'</span>],</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> [<span class="dv">1</span>,<span class="dv">3</span>],</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    c <span class="op">=</span> np.random.rand(<span class="dv">2</span>)</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>df.insertrow(<span class="dv">1</span>, [<span class="st">'bar'</span>, <span class="dv">2</span>, <span class="fl">0.2</span>])           <span class="co"># Insert a list</span></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>df.insertrow(<span class="dv">0</span>, <span class="bu">dict</span>(a<span class="op">=</span><span class="st">'rat'</span>, b<span class="op">=</span><span class="dv">0</span>, c<span class="op">=</span><span class="fl">0.7</span>)) <span class="co"># Insert a dict</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 3.0.0:</em> renamed “row” to “index”</li>
+<li><em>New in version 3.2.3:</em> “die” argument</li>
+</ul>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.merge" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.merge">merge</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.merge(<span class="op">*</span>args, reset_index<span class="op">=</span><span class="va">True</span>, inplace<span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.merge.html#pd.merge" title="1"><code>pd.merge</code></a>, except merge in place.</p>
+<section id="parameters-15" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-15">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>reset_index</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>update the index</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>inplace</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to append in place</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
+<td>**kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.concat.html#pd.concat" title="1"><code>pd.concat()</code></a></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><em>New in version 3.0.0.</em></p>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(<span class="bu">dict</span>(x<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], y<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]))</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>df2 <span class="op">=</span> sc.dataframe(<span class="bu">dict</span>(x<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], z<span class="op">=</span>[<span class="dv">9</span>,<span class="dv">8</span>,<span class="dv">7</span>]))</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>df.merge(df2, on<span class="op">=</span><span class="st">'x'</span>, inplace<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.popcols" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.popcols">popcols</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.popcols(col<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>args, die<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Remove a column or columns from the data frame.</p>
+<p>Alias to <code>pop()</code>, except allowing multiple columns to be popped.</p>
+<section id="parameters-16" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-16">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>col</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the column(s) to be popped</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>args</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>additional columns to pop</td>
+<td><code>()</code></td>
+</tr>
+<tr class="odd">
+<td>die</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to raise an exception if a column is not found</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(cols<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>,<span class="st">'d'</span>], data<span class="op">=</span>np.random.rand(<span class="dv">3</span>,<span class="dv">4</span>))</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>df.popcols(<span class="st">'a'</span>,<span class="st">'c'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.poprow" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.poprow">poprow</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.poprow(row<span class="op">=-</span><span class="dv">1</span>, returnval<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Remove a row from the data frame.</p>
+<p>Alias to <code>drop</code>, except drop by position rather than label, and modify in-place. To pop multiple rows, see meth:<code>df.poprows() &lt;dataframe.poprows&gt;</code>.</p>
+<section id="parameters-17" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-17">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>row</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>index of the row to pop</td>
+<td><code>-1</code></td>
+</tr>
+<tr class="even">
+<td>returnval</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to return the row that was popped</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+<p>To pop a column, see <code>df.pop()</code>.</p>
+<p><em>New in version 3.0.0:</em> “key” argument renamed “row”</p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.poprows" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.poprows">poprows</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.poprows(</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    inds<span class="op">=-</span><span class="dv">1</span>,</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    value<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    col<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    reset_index<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>    inplace<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Remove multiple rows by index or value</p>
+<p>To pop a single row, see meth:<code>df.poprow() &lt;dataframe.poprow&gt;</code>.</p>
+<section id="parameters-18" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-18">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>inds</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the rows to remove</td>
+<td><code>-1</code></td>
+</tr>
+<tr class="even">
+<td>values</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>alternatively, search for these values to remove; see <code>df.findinds</code> for details</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>col</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>if removing by value, use this column to find the values</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>reset_index</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>update the index</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
+<td>inplace</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to modify in-place</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <code>df.findinds</code></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(np.random.rand(<span class="dv">10</span>,<span class="dv">3</span>))</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>df.poprows([<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>])</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(<span class="bu">dict</span>(x<span class="op">=</span>[<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>], y<span class="op">=</span>[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">7</span>,<span class="dv">8</span>]))</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>df.poprows(value<span class="op">=</span><span class="dv">2</span>, col<span class="op">=</span><span class="st">'y'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.read_csv" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.read_csv">read_csv</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.read_csv(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias to <code>pd.read_csv &lt;pandas.read_csv</code>, returning a Sciris dataframe</p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.read_csv_string" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.read_csv_string">read_csv_string</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.read_csv_string(string, strip<span class="op">=</span><span class="va">True</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Read a CSV from a string rather than a file</p>
+<p>Shortcut to <code>sc.dataframe.read_csv(io.StringIO(string))</code>.</p>
+<section id="parameters-19" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-19">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>string</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td>the string to parse as CSV data</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>strip</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to strip leading/trailing whitespace from the string first</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html#pd.read_csv" title="1"><code>pd.read_csv</code></a></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe.read_csv_string(<span class="st">'''</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="st">a,b</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="st">1,2</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="st">3,4</span></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="st">'''</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>New in version 3.3.0.</em></p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.read_excel" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.read_excel">read_excel</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.read_excel(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias to <code>pd.read_excel &lt;pandas.read_excel</code>, returning a Sciris dataframe</p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.replacecol" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.replacecol">replacecol</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.replacecol(col<span class="op">=</span><span class="va">None</span>, old<span class="op">=</span><span class="va">None</span>, new<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Replace all of one value in a column with a new value</p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.replacedata" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.replacedata">replacedata</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.replacedata(</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    newdata<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    newdf<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>    reset_index<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>    inplace<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Replace data in the dataframe with other data; usually not used directly by the user, but used as part of e.g.&nbsp;<code>df.concat()</code>.</p>
+<section id="parameters-20" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-20">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>newdata</td>
+<td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>replace the dataframe’s data with these data</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>newdf</td>
+<td><a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe">dataframe</a></td>
+<td>substitute the current dataframe with this one</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>reset_index</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>update the index</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>inplace</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to modify in-place</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><em>New in version 3.0.0:</em> improved dtype handling <em>New in version 3.2.5:</em> support deprecation of the verify_is_copy argument in Pandas 3.0</p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.set" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.set">set</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.<span class="bu">set</span>(key, value<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias to pandas <strong>setitem</strong> method; rarely used</p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.set_dtypes" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.set_dtypes">set_dtypes</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.set_dtypes(dtypes)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Set dtypes in-place (see <code>df.astype()</code> for the user-facing version)</p>
+<p><em>New in version 3.0.0.</em></p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.sort" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.sort">sort</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.sort(</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>    by<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>    reverse<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>    returninds<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>    inplace<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Alias to <code>sortrows()</code>.</p>
+<p><em>New in version 3.0.0.</em></p>
+</section>
+<section id="sciris.sc_dataframe.dataframe.sortcols" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.sortcols">sortcols</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.sortcols(sortorder<span class="op">=</span><span class="va">None</span>, reverse<span class="op">=</span><span class="va">False</span>, inplace<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Like sortrows(), but change column order (usually in place) instead.</p>
+<section id="parameters-21" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-21">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sortorder</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the list of indices to resort the columns by (if none, then alphabetical)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>reverse</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to reverse the order</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
+<td>inplace</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to modify the dataframe in-place</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+</tbody>
+</table>
+<p><em>New in version 3.0.0:</em> Ensure dtypes are preserved; “inplace” argument; “returninds” argument removed</p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.sortrows" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.sortrows">sortrows</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.sortrows(</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    by<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>    reverse<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>    returninds<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>    reset_index<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>    inplace<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Sort the dataframe rows in place by the specified column(s).</p>
+<p>Similar to <code>df.sort_values()</code>, except defaults to sorting in place, and optionally returns the indices used for sorting (like <a href="https://numpy.org/doc/stable/reference/generated/numpy.argsort.html#np.argsort" title="1"><code>np.argsort()</code></a>).</p>
+<section id="parameters-22" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-22">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>col</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or <a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td>column to sort by (default, first column)</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>reverse</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to reverse the sort order (i.e., ascending=False)</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
+<td>returninds</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to return the indices used to sort instead of the dataframe</td>
+<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
+<td>reset_index</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>update the index</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
+<td>inplace</td>
+<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td>whether to modify the dataframe in-place</td>
+<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
+<td>kwargs</td>
+<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td>passed to <code>df.sort_values()</code></td>
+<td><code>{}</code></td>
+</tr>
+</tbody>
+</table>
+<p><em>New in version 3.0.0:</em> “inplace” argument; “col” argument renamed “by”</p>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.to_odict" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.to_odict">to_odict</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.to_odict(row<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convert dataframe to a dict of columns, optionally specifying certain rows.</p>
+<section id="parameters-23" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-23">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>row</td>
+<td><a href="https://docs.python.org/3/library/functions.html#int">int</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td>the rows to include</td>
+<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="sciris.sc_dataframe.dataframe.to_pandas" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_dataframe.dataframe.to_pandas">to_pandas</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>sc_dataframe.dataframe.to_pandas(<span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convert to a plain pandas dataframe</p>
+
+
+</section>
+</section>
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../api/sc_odict.html" class="pagination-link" aria-label="sc_odict">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">sc_odict</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../api/sc_fileio.html" class="pagination-link" aria-label="sc_fileio">
+        <span class="nav-page-text">sc_fileio</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>Docs built for Sciris v3.3.0 (2026-08-08).<br>© 2014–2026 by the Sciris Development Team.</p>
+<div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/sciris/sciris">
+      <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+    </a>
+  </li>  
+    <li class="nav-item compact">
+    <a class="nav-link" href="mailto:info@sciris.org">
+      <i class="bi bi-envelope-at-fill" role="img">
+</i> 
+    </a>
+  </li>  
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://sciris.org/">
+      <i class="bi bi-globe" role="img">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

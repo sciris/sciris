@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Dictionaries and dataframes – Sciris</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../tutorials/tut_files.html" rel="next">
+<link href="../tutorials/tut_arrays.html" rel="prev">
+<link href="..//assets/favicon.ico" rel="icon">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-dc16a9b152f85a9de5b03f2d2ad60ba1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../assets/styles.css">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../assets/sciris-logo.png" alt="" class="navbar-logo light-content">
+    <img src="../assets/sciris-logo.png" alt="" class="navbar-logo dark-content">
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../overview.html"> 
+<span class="menu-text">Overview</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../tutorials.html"> 
+<span class="menu-text">Tutorials</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../whatsnew.html"> 
+<span class="menu-text">What’s new</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../contributing.html"> 
+<span class="menu-text">Contributing</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../api/index.html"> 
+<span class="menu-text">API reference</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools tools-wide">
+    <a href="https://github.com/sciris/sciris" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+    <a href="mailto:info@sciris.org" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-envelope-at-fill"></i></a>
+    <a href="https://sciris.org" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-globe"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials.html"><strong>Tutorials</strong></a></li><li class="breadcrumb-item"><a href="../tutorials/tut_dicts.html">Dictionaries and dataframes</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>Home</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../overview.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>Overview</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Tutorials</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">All tutorials</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/tut_intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Whirlwind tour</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/tut_arrays.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Math and array tools</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/tut_dicts.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Dictionaries and dataframes</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/tut_files.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Files and versioning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/tut_printing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Printing</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/tut_plotting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Plotting and colors</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/tut_parallel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Parallelization and profiling</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/tut_dates.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dates and times</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/tut_utils.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Other tools</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../tutorials/tut_advanced.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Advanced features</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../whatsnew.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>What’s new</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../api/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><strong>API reference</strong></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text"><strong>Contributing</strong></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../contributing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">How to contribute</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../conduct.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Code of conduct</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../style_guide.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Style guide</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-odict" id="toc-the-odict" class="nav-link active" data-scroll-target="#the-odict">The <code>odict</code></a></li>
+  <li><a href="#the-objdict" id="toc-the-objdict" class="nav-link" data-scroll-target="#the-objdict">The <code>objdict</code></a></li>
+  <li><a href="#dataframes" id="toc-dataframes" class="nav-link" data-scroll-target="#dataframes">Dataframes</a>
+  <ul>
+  <li><a href="#dataframe-creation" id="toc-dataframe-creation" class="nav-link" data-scroll-target="#dataframe-creation">Dataframe creation</a></li>
+  <li><a href="#dataframe-indexing" id="toc-dataframe-indexing" class="nav-link" data-scroll-target="#dataframe-indexing">Dataframe indexing</a></li>
+  <li><a href="#dataframe-manipulation" id="toc-dataframe-manipulation" class="nav-link" data-scroll-target="#dataframe-manipulation">Dataframe manipulation</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials.html"><strong>Tutorials</strong></a></li><li class="breadcrumb-item"><a href="../tutorials/tut_dicts.html">Dictionaries and dataframes</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Dictionaries and dataframes</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Needing a better way of ordering dictionaries was one of the original inspirations for Sciris back in 2014. In those dark days of Python &lt;=3.6, dictionaries were unordered, which meant that <a href="https://docs.python.org/3/library/stdtypes.html#dict.keys" title="1"><code>dict.keys()</code></a> could give you anything. (And you still can’t do <code>dict.keys()[0]</code>, much less <code>dict[0]</code>). This tutorial describes Sciris’ ordered dict, the <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>, its close cousin the <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>objdict</code></a>, and its pandas-powered pseudorelative, the <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe" title="0"><code>dataframe</code></a>.</p>
+<section id="the-odict" class="level2">
+<h2 class="anchored" data-anchor-id="the-odict">The <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a></h2>
+<p>In basically every situation except one, an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> can be used like a <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="1"><code>dict</code></a>. (Since this is a tutorial, see if you can intuit what that one situation is!) For example, creating an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>works just like creating a regular dict:</p>
+<div id="9564b08b" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>od <span class="op">=</span> sc.odict(a<span class="op">=</span>[<span class="st">'some'</span>, <span class="st">'strings'</span>], b<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>])</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(od)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>#0: 'a': ['some', 'strings']
+#1: 'b': [1, 2, 3]</code></pre>
+</div>
+</div>
+<p>Okay, it doesn’t exactly <em>look</em> like a dict, but it is one:</p>
+<div id="f0ac9809" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Keys:   </span><span class="sc">{</span>od<span class="sc">.</span>keys()<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Values: </span><span class="sc">{</span>od<span class="sc">.</span>values()<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Items:  </span><span class="sc">{</span>od<span class="sc">.</span>items()<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Keys:   ['a', 'b']
+Values: [['some', 'strings'], [1, 2, 3]]
+Items:  [('a', ['some', 'strings']), ('b', [1, 2, 3])]</code></pre>
+</div>
+</div>
+<p>Looks pretty much the same as a regular dict, except that <code>od.keys()</code> returns a regular list (so, yes, you can do <code>od.keys()[0]</code>). But, you can do things you can’t do with a regular dict, such as:</p>
+<div id="a456a682" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,k,v <span class="kw">in</span> od.enumitems():</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Item </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss"> is called </span><span class="sc">{</span>k<span class="sc">}</span><span class="ss"> and has value </span><span class="sc">{</span>v<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Item 0 is called a and has value ['some', 'strings']
+Item 1 is called b and has value [1, 2, 3]</code></pre>
+</div>
+</div>
+<p>We can, as you probably guessed, also retrieve items by <em>index</em> as well:</p>
+<div id="2dabf427" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(od[<span class="st">'a'</span>])</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(od[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>['some', 'strings']
+['some', 'strings']</code></pre>
+</div>
+</div>
+<p>Remember the question about the situation where you wouldn’t use an odict? The answer is if your dict has integer keys, then although you still <em>could</em> use an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>, it’s probably best to use a regular <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="1"><code>dict</code></a>. But even float keys are fine to use (if somewhat strange).</p>
+<p>You might’ve noticed that the <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> has more verbose output than a regular dict. This is because its primary purpose is as a high-level container for storing large(ish) objects.</p>
+<p>For example, let’s say we want to store a number of named simulation results. Look at how we’re able to leverage the <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> in the loop that creates the plots</p>
+<div id="26d9ef2a" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Sim:</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n<span class="op">=</span><span class="dv">20</span>, n_factors<span class="op">=</span><span class="dv">6</span>):</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.results <span class="op">=</span> sc.odict()</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.n <span class="op">=</span> n</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.n_factors <span class="op">=</span> n_factors</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> run(<span class="va">self</span>):</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="va">self</span>.n_factors):</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>            label <span class="op">=</span> <span class="ss">f'y = N^</span><span class="sc">{</span>i<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">'</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>            result <span class="op">=</span> np.random.randn(<span class="va">self</span>.n)<span class="op">**</span>(i<span class="op">+</span><span class="dv">1</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.results[label] <span class="op">=</span> result</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> plot(<span class="va">self</span>):</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> sc.options.context(jupyter<span class="op">=</span><span class="va">True</span>): <span class="co"># Jupyter-optimized plotting</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>            plt.figure()</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>            rows,cols <span class="op">=</span> sc.getrowscols(<span class="bu">len</span>(<span class="va">self</span>.results))</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> i,label,result <span class="kw">in</span> <span class="va">self</span>.results.enumitems(): <span class="co"># odict magic!</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>                plt.subplot(rows, cols, i<span class="op">+</span><span class="dv">1</span>)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>                plt.scatter(np.arange(<span class="va">self</span>.n), result, c<span class="op">=</span>result, cmap<span class="op">=</span><span class="st">'parula'</span>)</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>                plt.title(label)</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>            sc.figlayout() <span class="co"># Trim whitespace from the figure</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> Sim()</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>sim.run()</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>sim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="tut_dicts_files/figure-html/cell-6-output-1.png" width="662" height="470" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We can quickly access these results for exploratory data analysis without having to remember and type the labels explicitly:</p>
+<div id="e9567e63" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Sim results are'</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sim.results)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'The first set of results is'</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sim.results[<span class="dv">0</span>])</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'The first set of results has median'</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>sc.printmedian(sim.results[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sim results are
+#0: 'y = N^1':
+array([-1.44611421,  0.53136037, -0.74684019, -1.08343476, -1.20010067,
+       -1.29220144,  1.01893806,  1.1293201 , -0.45519507,  1.5901227 ,
+       -0.35795953, -1.03262014,  0.64239683, -0.35711657, -2.38980179,
+        0.90721642, -1.14698859, -0.76448829,  0.32742606,  0.8259777 ])
+#1: 'y = N^2':
+array([1.13463400e+01, 4.29426549e+00, 1.44127100e-01, 1.94873645e-01,
+       1.09651783e-01, 1.32212884e+00, 2.43148710e-01, 1.42908894e-01,
+       1.73070310e-01, 2.64620064e+00, 3.82604345e-02, 7.86119874e-03,
+       7.85954163e-01, 3.01933641e-01, 3.25465168e-01, 9.79228642e-01,
+       3.56816027e-03, 1.63838336e-01, 3.80158493e-02, 2.67413453e-01])
+#2: 'y = N^3':
+array([-9.78844665e+00, -8.68734180e-03, -1.11551929e-01,  4.74039042e+00,
+        7.29562129e-02,  8.09536718e-01,  1.42890344e-01,  3.21369011e+00,
+       -2.38626781e-01, -3.65748352e+00, -8.22931582e-01, -7.24751498e-01,
+        3.06000313e-02,  6.86880007e-01,  2.94799178e-02, -3.76418331e-01,
+       -1.60711011e+00, -1.62677704e+00,  2.77847569e-01,  7.58823593e+00])
+#3: 'y = N^4':
+array([1.14191660e-01, 3.86499158e-02, 1.30773697e-01, 3.25828436e+01,
+       1.79210858e-02, 4.00758943e-02, 1.53970559e-02, 2.68747823e+01,
+       4.28358915e+00, 5.15813867e+00, 1.01972364e+01, 2.23539137e+01,
+       1.07224634e+01, 1.08676630e-03, 3.37968647e+01, 7.53374454e-01,
+       6.11676159e-01, 3.66359698e-02, 1.60101312e-02, 4.52808111e+00])
+#4: 'y = N^5':
+array([ 3.63811952e+00,  7.56056336e-07,  6.19518800e-11, -9.48770900e-02,
+       -1.58185702e+02, -8.63027330e-01, -1.55257095e-03, -2.22583454e+01,
+       -3.43839607e-02,  9.35751791e-03, -9.66962319e-01, -2.28599720e+00,
+       -1.81059424e-03, -1.86447859e-02,  1.76216939e+00,  2.35998039e-10,
+       -8.12295545e-01,  7.67303415e+01, -2.85478588e-02, -7.08573722e+00])
+#5: 'y = N^6':
+array([8.90783922e+02, 4.30095057e-01, 3.84708233e-01, 8.10300275e+00,
+       3.70464500e-02, 2.39440389e+00, 1.68729442e+02, 3.13225183e-10,
+       5.58600718e+00, 1.85813882e-02, 1.47280068e+01, 1.80934689e+00,
+       1.65403774e+01, 2.03864572e-02, 3.88854788e-01, 6.74754392e+00,
+       1.66280810e-04, 3.57067665e-02, 1.94073316e-03, 2.41746265e+01])
+The first set of results is
+[-1.44611421  0.53136037 -0.74684019 -1.08343476 -1.20010067 -1.29220144
+  1.01893806  1.1293201  -0.45519507  1.5901227  -0.35795953 -1.03262014
+  0.64239683 -0.35711657 -2.38980179  0.90721642 -1.14698859 -0.76448829
+  0.32742606  0.8259777 ]
+The first set of results has median
+-0.407 (95% CI: -1.942, 1.371)</code></pre>
+</div>
+</div>
+<p>This is a have-your-cake-and-eat-it-too situation: the first set of results is correctly labeled (<code>sim.results['y = N^1']</code>), but you can easily access it without having to type all that (<code>sim.results[0]</code>).</p>
+</section>
+<section id="the-objdict" class="level2">
+<h2 class="anchored" data-anchor-id="the-objdict">The <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>objdict</code></a></h2>
+<p>When you’re just writing throwaway analysis code, it can be a pain to type <code>mydict['key1']['key2']</code> over and over. (Right-pinky overuse is a <a href="https://www.math.ucdavis.edu/~greg/pinky-rsi.html">real medical issue</a>.) Wouldn’t it be nice if you could just type <code>mydict.key1.key2</code>, but otherwise have everything work exactly like a dict? This is where the <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>objdict</code></a> comes in: it’s identical to an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> (and hence like a regular <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="1"><code>dict</code></a>), except you can use “object syntax” (<code>a.b</code>) instead of “dict syntax” (<code>a['b']</code>). This is especially handy for using f-strings, since you don’t have to worry about nested quotes:</p>
+<div id="5e62b0bc" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ob <span class="op">=</span> sc.objdict(key1<span class="op">=</span>[<span class="st">'some'</span>, <span class="st">'strings'</span>], key2<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>])</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Checking </span><span class="sc">{</span>ob[<span class="dv">0</span>] <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Checking </span><span class="sc">{</span>ob<span class="sc">.</span>key1 <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Checking </span><span class="sc">{</span>ob[<span class="st">"key1"</span>] <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>) <span class="co"># We need to use double-quotes inside since single quotes are taken!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Checking ob[0] = ['some', 'strings']
+Checking ob.key1 = ['some', 'strings']
+Checking ob["key1"] = ['some', 'strings']</code></pre>
+</div>
+</div>
+<p>In most cases, you probably want to use <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>objdict</code></a>s rather than <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>s just to have the extra flexibility. Why would you ever use an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> over an <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>objdict</code></a>? Mostly just because there’s small but nonzero overhead in doing the extra attribute checking: <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> is faster (faster than even <a href="https://docs.python.org/3/library/collections.html#collections.OrderedDict" title="1"><code>collections.OrderedDict</code></a>, though slower than a plain <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="1"><code>dict</code></a>). The differences are tiny (literally nanoseconds) so won’t matter unless you’re doing millions of operations. But if you’re reading this, chances are high that you <em>do</em> sometimes need to do millions of dict operations.</p>
+</section>
+<section id="dataframes" class="level2">
+<h2 class="anchored" data-anchor-id="dataframes">Dataframes</h2>
+<p>The Sciris <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe" title="0"><code>sc.dataframe()</code></a> works exactly like pandas <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pd.DataFrame" title="1"><code>pd.DataFrame()</code></a>, with a couple extra features, mostly to do with creation, indexing, and manipulation.</p>
+<section id="dataframe-creation" class="level3">
+<h3 class="anchored" data-anchor-id="dataframe-creation">Dataframe creation</h3>
+<p>Any valid <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> dataframe initialization works exactly the same in Sciris. However, Sciris is a bit more flexible about how you can create the dataframe, again optimized for letting you make them quickly with minimal code. For example:</p>
+<div id="476f67d5" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> [<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>]</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>]</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(<span class="bu">dict</span>(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z)) <span class="co"># Pandas</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z) <span class="co"># Sciris</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>It’s not a huge difference, but the Sciris one is shorter. Sciris also makes it easier to define types on dataframe creation:</p>
+<div id="640b87e6" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z, dtypes<span class="op">=</span>[<span class="bu">str</span>, <span class="bu">float</span>, <span class="bu">bool</span>])</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   x    y      z
+0  a  1.0   True
+1  b  2.0  False
+2  c  3.0   True</code></pre>
+</div>
+</div>
+<p>You can also define data types along with the columns:</p>
+<div id="8eb1b671" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>columns <span class="op">=</span> <span class="bu">dict</span>(x<span class="op">=</span><span class="bu">str</span>, y<span class="op">=</span><span class="bu">float</span>, z<span class="op">=</span><span class="bu">bool</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> [</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    [<span class="st">'a'</span>, <span class="dv">1</span>, <span class="dv">1</span>],</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    [<span class="st">'b'</span>, <span class="dv">2</span>, <span class="dv">0</span>],</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    [<span class="st">'c'</span>, <span class="dv">3</span>, <span class="dv">1</span>],</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(columns<span class="op">=</span>columns, data<span class="op">=</span>data)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>df.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   x    y      z
+0  a  1.0   True
+1  b  2.0  False
+2  c  3.0   True</code></pre>
+</div>
+</div>
+<p>The <code>df.disp()</code> command will do its best to show the full dataframe. By default, Sciris dataframes (just like pandas) are shown in abbreviated form:</p>
+<div id="f504d33e" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(data<span class="op">=</span>np.random.rand(<span class="dv">70</span>,<span class="dv">10</span>))</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           0         1         2         3         4         5         6  \
+0   0.022437  0.347024  0.928749  0.598027  0.064296  0.174799  0.682645   
+1   0.384862  0.330465  0.417581  0.509425  0.204998  0.046149  0.267296   
+2   0.295849  0.885216  0.367180  0.168756  0.347129  0.457618  0.123138   
+3   0.657364  0.307905  0.663238  0.131116  0.516454  0.848086  0.798420   
+4   0.261597  0.599403  0.120822  0.636596  0.832165  0.096545  0.156900   
+..       ...       ...       ...       ...       ...       ...       ...   
+65  0.048039  0.676630  0.608643  0.862830  0.902662  0.826011  0.770834   
+66  0.858294  0.591060  0.148441  0.499825  0.056389  0.787187  0.905235   
+67  0.219136  0.057179  0.549187  0.225285  0.948819  0.582966  0.001776   
+68  0.512266  0.052312  0.651249  0.583651  0.318309  0.273116  0.148942   
+69  0.795738  0.732136  0.019719  0.449519  0.391415  0.536133  0.871336   
+
+           7         8         9  
+0   0.673245  0.837585  0.613296  
+1   0.318285  0.523530  0.591025  
+2   0.584132  0.687632  0.057845  
+3   0.746963  0.177001  0.856188  
+4   0.037560  0.949925  0.523207  
+..       ...       ...       ...  
+65  0.603428  0.361056  0.163399  
+66  0.634370  0.906866  0.396382  
+67  0.573180  0.236756  0.059411  
+68  0.304995  0.376219  0.664390  
+69  0.037380  0.928247  0.867855  
+
+[70 rows x 10 columns]</code></pre>
+</div>
+</div>
+<p>But sometimes you just want to see the whole thing. The official way to do it in pandas is with <code>pd.options_context</code>, but this is a lot of effort if you’re just poking around in a script or terminal (which, if you’re printing a dataframe, you probably are). By default, <code>df.disp()</code> shows the whole damn thing:</p>
+<div id="231a549f" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         0       1       2       3       4       5       6       7       8       9
+0   0.0224  0.3470  0.9287  0.5980  0.0643  0.1748  0.6826  0.6732  0.8376  0.6133
+1   0.3849  0.3305  0.4176  0.5094  0.2050  0.0461  0.2673  0.3183  0.5235  0.5910
+2   0.2958  0.8852  0.3672  0.1688  0.3471  0.4576  0.1231  0.5841  0.6876  0.0578
+3   0.6574  0.3079  0.6632  0.1311  0.5165  0.8481  0.7984  0.7470  0.1770  0.8562
+4   0.2616  0.5994  0.1208  0.6366  0.8322  0.0965  0.1569  0.0376  0.9499  0.5232
+5   0.0626  0.7231  0.6591  0.1347  0.7433  0.5262  0.4625  0.6395  0.1342  0.8396
+6   0.0019  0.6027  0.4325  0.4348  0.4589  0.8302  0.9457  0.0970  0.9513  0.5089
+7   0.4248  0.7457  0.7557  0.5013  0.5547  0.3746  0.8149  0.3709  0.7307  0.5153
+8   0.2447  0.0080  0.6712  0.7576  0.9130  0.9183  0.4006  0.4377  0.0337  0.9566
+9   0.0883  0.8435  0.7440  0.4758  0.3961  0.6000  0.6813  0.1423  0.6857  0.1667
+10  0.7121  0.8589  0.1974  0.8394  0.4599  0.8428  0.1556  0.5722  0.6517  0.8314
+11  0.7738  0.8208  0.6315  0.7423  0.3524  0.0002  0.0656  0.9367  0.0011  0.2489
+12  0.8519  0.5461  0.7227  0.7364  0.7984  0.7930  0.2313  0.2342  0.4996  0.8533
+13  0.1988  0.5327  0.8401  0.0600  0.0863  0.7935  0.3960  0.1180  0.1990  0.8738
+14  0.9184  0.8325  0.6440  0.5584  0.8091  0.1125  0.9534  0.1620  0.8646  0.0326
+15  0.6329  0.6916  0.1944  0.3621  0.1818  0.1594  0.2075  0.1858  0.4127  0.0164
+16  0.3670  0.1813  0.9456  0.1536  0.5764  0.6512  0.1848  0.6779  0.2532  0.8805
+17  0.2097  0.9719  0.5292  0.3006  0.0617  0.3054  0.5108  0.2987  0.4093  0.8631
+18  0.7158  0.0167  0.4439  0.3271  0.1818  0.4938  0.5030  0.1316  0.1747  0.6266
+19  0.8906  0.0257  0.5152  0.0696  0.4876  0.0063  0.0356  0.0670  0.6351  0.6571
+20  0.2996  0.1835  0.8444  0.5678  0.2525  0.6847  0.6203  0.2516  0.0112  0.4779
+21  0.3548  0.5213  0.3604  0.4372  0.4749  0.6409  0.0222  0.0755  0.6385  0.3580
+22  0.8151  0.0495  0.5860  0.0075  0.6312  0.7048  0.2640  0.2232  0.9783  0.5493
+23  0.9112  0.8215  0.0225  0.1344  0.4197  0.2218  0.7773  0.5585  0.6587  0.3779
+24  0.8861  0.6014  0.0737  0.5865  0.5133  0.5748  0.8928  0.3509  0.6925  0.3715
+25  0.4776  0.2328  0.6376  0.8957  0.4208  0.0077  0.2180  0.2418  0.7256  0.0722
+26  0.4365  0.5618  0.4941  0.9997  0.3114  0.5477  0.9889  0.3200  0.8523  0.3404
+27  0.0922  0.2487  0.4895  0.2267  0.6168  0.7877  0.4945  0.1988  0.7752  0.9851
+28  0.5205  0.9543  0.5537  0.5765  0.7748  0.6588  0.6051  0.4468  0.5081  0.7740
+29  0.9891  0.2717  0.3270  0.6036  0.0337  0.6720  0.4524  0.0066  0.9222  0.0593
+30  0.0742  0.9439  0.1009  0.6245  0.5884  0.7090  0.3061  0.4968  0.8398  0.7021
+31  0.0703  0.4508  0.9390  0.0560  0.8264  0.4726  0.9947  0.9530  0.2422  0.2730
+32  0.3000  0.9481  0.5544  0.5185  0.4555  0.9516  0.6829  0.6321  0.1163  0.3200
+33  0.5259  0.6660  0.5996  0.3537  0.9851  0.4877  0.4395  0.9211  0.8852  0.9711
+34  0.5655  0.0959  0.5496  0.7265  0.3303  0.5718  0.9603  0.1832  0.6877  0.2527
+35  0.5708  0.7113  0.6459  0.1000  0.7338  0.4470  0.4268  0.5710  0.3621  0.9490
+36  0.9839  0.0106  0.6973  0.3590  0.1533  0.2874  0.8641  0.7455  0.8743  0.1008
+37  0.9146  0.8438  0.7938  0.8821  0.1358  0.7337  0.7276  0.0515  0.3105  0.8341
+38  0.0536  0.1664  0.8304  0.9409  0.3118  0.5327  0.6413  0.9173  0.6659  0.5888
+39  0.9512  0.1597  0.1757  0.7545  0.7024  0.9924  0.2747  0.0027  0.9191  0.6211
+40  0.3365  0.4385  0.1018  0.1705  0.1584  0.5291  0.3018  0.5938  0.4263  0.2096
+41  0.0498  0.3689  0.3649  0.5181  0.8753  0.3307  0.1588  0.4175  0.5826  0.9864
+42  0.2018  0.5915  0.5416  0.7190  0.9676  0.2475  0.4460  0.8014  0.4833  0.1184
+43  0.9120  0.6133  0.3445  0.2035  0.4723  0.4120  0.0517  0.6836  0.0322  0.3471
+44  0.2038  0.9914  0.4954  0.8523  0.3096  0.7327  0.9118  0.1613  0.9376  0.6413
+45  0.0767  0.7255  0.9092  0.8516  0.3050  0.7843  0.9669  0.6508  0.6627  0.6867
+46  0.8308  0.6714  0.7224  0.7116  0.7139  0.1260  0.3806  0.3655  0.7111  0.9762
+47  0.1975  0.9473  0.8648  0.4170  0.5331  0.0459  0.5458  0.5375  0.7752  0.3466
+48  0.5824  0.9832  0.2844  0.5864  0.3356  0.3348  0.7251  0.4307  0.8393  0.4881
+49  0.5114  0.5561  0.1643  0.2047  0.4995  0.9325  0.9768  0.4084  0.8438  0.1397
+50  0.2100  0.1284  0.7385  0.8479  0.5968  0.2859  0.0634  0.6852  0.4877  0.7900
+51  0.1011  0.0156  0.5369  0.3165  0.6836  0.8661  0.1779  0.5468  0.2078  0.9675
+52  0.0058  0.6895  0.2549  0.4780  0.2299  0.6812  0.8420  0.6534  0.3533  0.3181
+53  0.2359  0.2543  0.9065  0.5183  0.7041  0.5723  0.9643  0.6501  0.2783  0.1268
+54  0.6137  0.9919  0.9419  0.5107  0.2626  0.3669  0.2063  0.2381  0.5447  0.1049
+55  0.7710  0.8549  0.6567  0.4142  0.2007  0.0251  0.9886  0.9248  0.6944  0.1526
+56  0.8056  0.7743  0.8072  0.9644  0.4420  0.5964  0.9499  0.5866  0.2307  0.7056
+57  0.9172  0.0058  0.7493  0.0514  0.1396  0.5035  0.5645  0.1736  0.8109  0.2059
+58  0.2427  0.7407  0.8808  0.0562  0.9902  0.0852  0.8183  0.8162  0.4821  0.7325
+59  0.0902  0.6056  0.7075  0.0005  0.0948  0.8629  0.1361  0.9983  0.3789  0.5205
+60  0.3981  0.4608  0.7996  0.6288  0.7773  0.8289  0.0797  0.8914  0.9694  0.4705
+61  0.1838  0.7064  0.4137  0.8442  0.4735  0.6194  0.3908  0.4926  0.2516  0.2696
+62  0.5492  0.2579  0.9615  0.0640  0.8339  0.8486  0.3547  0.1004  0.5262  0.1619
+63  0.3977  0.3837  0.2685  0.5196  0.0611  0.0871  0.5920  0.7692  0.6821  0.5091
+64  0.3180  0.8236  0.8074  0.2434  0.0094  0.6605  0.3465  0.4262  0.0200  0.0638
+65  0.0480  0.6766  0.6086  0.8628  0.9027  0.8260  0.7708  0.6034  0.3611  0.1634
+66  0.8583  0.5911  0.1484  0.4998  0.0564  0.7872  0.9052  0.6344  0.9069  0.3964
+67  0.2191  0.0572  0.5492  0.2253  0.9488  0.5830  0.0018  0.5732  0.2368  0.0594
+68  0.5123  0.0523  0.6512  0.5837  0.3183  0.2731  0.1489  0.3050  0.3762  0.6644
+69  0.7957  0.7321  0.0197  0.4495  0.3914  0.5361  0.8713  0.0374  0.9282  0.8679</code></pre>
+</div>
+</div>
+<p>You can also pass other options if you want to customize it further:</p>
+<div id="ac9b8df1" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>df.disp(precision<span class="op">=</span><span class="dv">1</span>, ncols<span class="op">=</span><span class="dv">5</span>, nrows<span class="op">=</span><span class="dv">10</span>, colheader_justify<span class="op">=</span><span class="st">'left'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    0        1        ...  8    9      
+0   2.2e-02  3.5e-01  ...  0.8  6.1e-01
+1   3.8e-01  3.3e-01  ...  0.5  5.9e-01
+2   3.0e-01  8.9e-01  ...  0.7  5.8e-02
+3   6.6e-01  3.1e-01  ...  0.2  8.6e-01
+4   2.6e-01  6.0e-01  ...  0.9  5.2e-01
+..      ...      ...  ...  ...      ...
+65  4.8e-02  6.8e-01  ...  0.4  1.6e-01
+66  8.6e-01  5.9e-01  ...  0.9  4.0e-01
+67  2.2e-01  5.7e-02  ...  0.2  5.9e-02
+68  5.1e-01  5.2e-02  ...  0.4  6.6e-01
+69  8.0e-01  7.3e-01  ...  0.9  8.7e-01
+
+[70 rows x 10 columns]</code></pre>
+</div>
+</div>
+</section>
+<section id="dataframe-indexing" class="level3">
+<h3 class="anchored" data-anchor-id="dataframe-indexing">Dataframe indexing</h3>
+<p>All the regular <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> methods (<code>df['mycol']</code>, <code>df.mycol</code>, <code>df.loc</code>, <code>df.iloc</code>, etc.) work exactly the same. But Sciris gives additional options for indexing. Specifically, <code>getitem</code> commands (what happens under the hood when you call <code>df[thing]</code>) will first try the standard pandas <code>getitem</code>, but then fall back to <code>iloc</code> if that fails. For example:</p>
+<div id="1594c9d8" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    x      <span class="op">=</span> [<span class="dv">1</span>,   <span class="dv">2</span>,  <span class="dv">3</span>], </span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> [<span class="dv">45</span>, <span class="dv">23</span>, <span class="dv">37</span>], </span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    valid  <span class="op">=</span> [<span class="dv">1</span>,   <span class="dv">0</span>,  <span class="dv">1</span>]</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>sc.heading(<span class="st">'Regular pandas indexing'</span>)</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df[<span class="st">'values'</span>,<span class="dv">1</span>])</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>sc.heading(<span class="st">'Pandas-like iloc indexing'</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df.iloc[<span class="dv">1</span>])</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>sc.heading(<span class="st">'Automatic iloc indexing'</span>)</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df[<span class="dv">1</span>]) <span class="co"># Would be a KeyError in regular pandas</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<div class="ansi-escaped-output">
+<pre><span class="ansi-cyan-fg">
+
+
+
+———————————————————————
+
+Regular pandas indexing
+
+———————————————————————
+
+</span>
+
+23
+
+<span class="ansi-cyan-fg">
+
+
+
+—————————————————————————
+
+Pandas-like iloc indexing
+
+—————————————————————————
+
+</span>
+
+x          2
+
+values    23
+
+valid      0
+
+Name: 1, dtype: int64
+
+<span class="ansi-cyan-fg">
+
+
+
+———————————————————————
+
+Automatic iloc indexing
+
+———————————————————————
+
+</span>
+
+x          2
+
+values    23
+
+valid      0
+
+Name: 1, dtype: int64
+</pre>
+</div>
+</div>
+</div>
+</section>
+<section id="dataframe-manipulation" class="level3">
+<h3 class="anchored" data-anchor-id="dataframe-manipulation">Dataframe manipulation</h3>
+<p>One quirk of <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> dataframes is that almost every operation creates a copy rather than modifies the original dataframe in-place (leading to the infamous <a href="https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas">SettingWithCopyWarning</a>.) This is extremely helpful, and yet, sometimes you <em>do</em> want to modify a dataframe in place. For example, to append a row:</p>
+<div id="0be91425" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the dataframe</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> [<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>],</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>],</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>],</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the new row</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>newrow <span class="op">=</span> [<span class="st">'d'</span>, <span class="dv">4</span>, <span class="dv">0</span>]</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Append it in-place</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>df.appendrow(newrow)</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Show the result</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   x  y  z
+0  a  1  1
+1  b  2  0
+2  c  3  1
+3  d  4  0</code></pre>
+</div>
+</div>
+<p>That was easy! For reference, here’s the <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> equivalent (since <code>append</code> was <a href="https://github.com/pandas-dev/pandas/issues/35407">deprecated</a>):</p>
+<div id="8dc8c0d7" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to a vanilla dataframe</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> df.to_pandas() </span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the new row</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>newrow <span class="op">=</span> [<span class="st">'e'</span>, <span class="dv">5</span>, <span class="dv">1</span>]</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Append it</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> pd.concat([pdf, pd.DataFrame([newrow], columns<span class="op">=</span>pdf.columns)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>That’s rather a pain to type, and if you mess up (e.g.&nbsp;type <code>newrow</code> instead of <code>[newrow]</code>), in some cases it won’t even fail, just give you the wrong result! Crikey.</p>
+<p>Just like how <a href="../api/sc_math.html#sciris.sc_math.cat" title="0"><code>sc.cat()</code></a> will take anything vaguely arrayish and turn it into an actual array, <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe.cat" title="0"><code>sc.dataframe.cat()</code></a> will do the same thing:</p>
+<div id="73d8bc0d" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe.cat(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    sc.dataframe(x<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>], y<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>]), <span class="co"># Actual dataframe</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">dict</span>(x<span class="op">=</span>[<span class="st">'c'</span>,<span class="st">'d'</span>], y<span class="op">=</span>[<span class="dv">3</span>,<span class="dv">4</span>]),         <span class="co"># Dict of data</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    [[<span class="st">'e'</span>,<span class="dv">5</span>], [<span class="st">'f'</span>, <span class="dv">6</span>]],                <span class="co"># Or just the data!</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   x  y
+0  a  1
+1  b  2
+2  c  d
+3  3  4
+4  e  5
+5  f  6</code></pre>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../tutorials/tut_arrays.html" class="pagination-link" aria-label="Math and array tools">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Math and array tools</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../tutorials/tut_files.html" class="pagination-link" aria-label="Files and versioning">
+        <span class="nav-page-text">Files and versioning</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>Docs built for Sciris v3.3.0 (2026-08-08).<br>© 2014–2026 by the Sciris Development Team.</p>
+<div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/sciris/sciris">
+      <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+    </a>
+  </li>  
+    <li class="nav-item compact">
+    <a class="nav-link" href="mailto:info@sciris.org">
+      <i class="bi bi-envelope-at-fill" role="img">
+</i> 
+    </a>
+  </li>  
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://sciris.org/">
+      <i class="bi bi-globe" role="img">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

@@ -1,6 +1,0 @@
-axes.axisbelow:    True
-axes.spines.right: False
-axes.spines.top:   False
-figure.facecolor:  white
-font.family:       sans-serif
-legend.frameon:    False
