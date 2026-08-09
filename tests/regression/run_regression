@@ -1,0 +1,19 @@
+#!/bin/bash
+# Run the test suite on old Python package versions.
+
+# Enable all conda commands
+start=`date +%s`
+eval "$(conda shell.bash hook)"
+
+for year in 2021 2022 2023; do
+    echo "Working on $year..."
+    name=sciris$year
+    conda activate $name
+    echo `which python`
+    pytest ../test_*.py -n auto --ignore=manual
+done
+
+end=`date +%s`
+echo "Done after $((end-start)) seconds."
+
+
