@@ -24,14 +24,12 @@ To check that they are up to date (used by the test suite, hence CI)::
 
 import re
 import sys
-import json
 import inspect
-from pathlib import Path
 import sciris as sc
 
 __all__ = ['make_index', 'load', 'write', 'check']
 
-thisdir = Path(__file__).parent
+thisdir = sc.thispath(__file__)
 jsonfile = thisdir / 'api.json'
 llmsfile = thisdir / 'llms.txt'
 llmsfullfile = thisdir / 'llms-full.txt'
@@ -284,13 +282,7 @@ def load():
     print(index['n_entries'])
     ```
     """
-    with open(jsonfile) as f:
-        return json.load(f)
-
-
-def _tojson(index):
-    """ Serialize the index deterministically, so unchanged APIs produce unchanged files """
-    return json.dumps(index, indent=2, sort_keys=False, ensure_ascii=False) + '\n'
+    return sc.loadjson(jsonfile)
 
 
 def write(verbose=True):
@@ -304,21 +296,16 @@ def write(verbose=True):
         The list of files written.
     """
     index = make_index()
-    written = []
+    sc.savejson(jsonfile, index)
+    written = [jsonfile]
 
-    contents = {
-        jsonfile     : _tojson(index),
-        llmsfile     : make_llms_txt(index, examples=False),
-        llmsfullfile : make_llms_txt(index, examples=True),
-    }
-
-    for path,text in contents.items():
-        path.write_text(text, encoding='utf-8')
+    for path,examples in [(llmsfile, False), (llmsfullfile, True)]:
+        sc.savetext(path, make_llms_txt(index, examples=examples))
         written.append(path)
-        if verbose:
-            print(f'  Wrote {path.name} ({len(text)/1e3:0.1f} kB)')
 
     if verbose:
+        for path in written:
+            print(f'  Wrote {path.name} ({path.stat().st_size/1e3:0.1f} kB)')
         print(f'Indexed {index["n_entries"]} Sciris functions and classes for v{index["version"]}')
     return written
 
@@ -334,19 +321,22 @@ def check(verbose=True):
         The list of files that are out of date (empty if everything matches).
     """
     index = make_index()
-    expected = {
-        jsonfile     : _tojson(index),
-        llmsfile     : make_llms_txt(index, examples=False),
-        llmsfullfile : make_llms_txt(index, examples=True),
-    }
-
     stale = []
-    for path,text in expected.items():
-        actual = path.read_text(encoding='utf-8') if path.is_file() else None
-        if actual != text:
+
+    def compare(path, expected):
+        """ Compare a file to what it should contain, treating a missing file as stale """
+        if not path.exists():
+            return 'missing'
+        actual = sc.loadjson(path) if path.suffix == '.json' else sc.loadtext(path)
+        return None if actual == expected else 'out of date'
+
+    for path,expected in [(jsonfile, index),
+                          (llmsfile, make_llms_txt(index, examples=False)),
+                          (llmsfullfile, make_llms_txt(index, examples=True))]:
+        reason = compare(path, expected)
+        if reason:
             stale.append(path)
             if verbose:
-                reason = 'missing' if actual is None else 'out of date'
                 print(f'  {path.name} is {reason}')
     if verbose and not stale:
         print(f'All API artifacts are up to date ({index["n_entries"]} entries, v{index["version"]})')

@@ -120,7 +120,7 @@ def _load_filestr(filename, folder=None, verbose=False):
                 except Exception as E3:
                     try: # And finally as a regular object
                         if verbose: print('  Reading as nonbinary file...')
-                        with open(filename, 'r') as fileobj:
+                        with open(filename, 'r', encoding='utf-8') as fileobj:
                             filestr = fileobj.read() # Convert it to a string
                     except Exception as E4:
                         gziperror = _gziperror(filename) + f'\nAdditional errors encountered:\n{str(E2)}\n{str(E3)}\n{str(E4)}'
@@ -427,25 +427,32 @@ __all__ += ['loadtext', 'savetext', 'loadzip', 'unzip', 'savezip', 'path', 'ispa
             'loadany']
 
 
-def loadtext(filename=None, folder=None, splitlines=False):
+def loadtext(filename=None, folder=None, splitlines=False, encoding='utf-8'):
     """
     Convenience function for reading a text file
+
+    Args:
+        filename (str/path): the file to load
+        folder (str): folder if not part of the filename
+        splitlines (bool): whether to return a list of lines rather than a single string
+        encoding (str): the file encoding (default UTF-8, rather than the platform-dependent default)
 
     **Example**:
 
     ```python
     mytext = sc.loadtext('my-document.txt')
     ```
+    *New in version 3.3.0:* default to UTF-8 encoding
     """
     filename = makefilepath(filename=filename, folder=folder)
-    with open(filename) as f:
+    with open(filename, encoding=encoding) as f:
         output = f.read()
     if splitlines:
         output = output.splitlines()
     return output
 
 
-def savetext(filename=None, string=None, **kwargs):
+def savetext(filename=None, string=None, encoding='utf-8', **kwargs):
     """
     Convenience function for saving a text file -- accepts a string or list of strings;
     can also save an arbitrary object, in which case it will first convert to a string.
@@ -453,6 +460,7 @@ def savetext(filename=None, string=None, **kwargs):
     Args:
         filename (str): the filename to save to
         string (str): the string (or object) to save
+        encoding (str): the file encoding (default UTF-8, rather than the platform-dependent default)
         kwargs (dict): passed to `np.savetxt()` if saving an array
 
     **Example**:
@@ -462,6 +470,8 @@ def savetext(filename=None, string=None, **kwargs):
     sc.savetext('my-poem.txt', text)
     ```
     *New in version 3.1.0:* fixed bug with saving a list of strings
+
+    *New in version 3.3.0:* default to UTF-8 encoding
     """
     is_array = sc.isarray(string)
     if isinstance(string, list):
@@ -471,9 +481,9 @@ def savetext(filename=None, string=None, **kwargs):
     filename = makefilepath(filename=filename, makedirs=True)
     if is_array: # Shortcut to Numpy for saving arrays -- basic CSV
         kw = sc.mergedicts(dict(fmt='%s', delimiter=', '), kwargs)
-        np.savetxt(filename, string, **kw)
+        np.savetxt(filename, string, encoding=encoding, **kw)
     else: # Main use case: save text
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding=encoding) as f:
             f.write(string)
     return
 
@@ -1399,7 +1409,7 @@ def readjson(string, **kwargs):
     return json.loads(string, **kwargs)
 
 
-def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
+def loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', **kwargs):
     """
     Convenience function for reading a JSON file (or string).
 
@@ -1408,6 +1418,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
         folder (str): folder if not part of the filename
         string (str): if not loading from a file, a string representation of the JSON
         fromfile (bool): whether or not to load from file
+        encoding (str): the file encoding (default UTF-8, as required by the JSON standard)
         kwargs (dict): passed to `json.load()`
 
     Returns:
@@ -1421,6 +1432,8 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
     ```
     See also `sc.readjson()` for loading a JSON from
     a string.
+
+    *New in version 3.3.0:* default to UTF-8 encoding
     """
     if string is not None or not fromfile:
         if string is None and filename is not None: # pragma: no cover
@@ -1429,7 +1442,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
     else:
         filepath = makefilepath(filename=filename, folder=folder)
         try:
-            with open(filepath) as f:
+            with open(filepath, encoding=encoding) as f:
                 output = json.load(f, **kwargs)
         except FileNotFoundError as E: # pragma: no cover
             errormsg = f'No such file "{filename}". Use "string" argument or "fromfile=False" if loading a JSON string rather than a file.'
@@ -1437,7 +1450,7 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs):
     return output
 
 
-def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, **kwargs):
+def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, encoding='utf-8', **kwargs):
     """
     Convenience function for saving to a JSON file.
 
@@ -1449,6 +1462,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         indent (int): indentation to use for saved JSON
         keepnone (bool): allow `sc.savejson(None)` to return 'null' rather than raising an exception
         sanitizepath (bool): whether to sanitize the path prior to saving
+        encoding (str): the file encoding (default UTF-8, as required by the JSON standard)
         kwargs (dict): passed to `json.dump()`
 
     Returns:
@@ -1461,6 +1475,8 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
     sc.savejson('my-file.json', json)
     ```
     See also `sc.jsonify()`.
+
+    *New in version 3.3.0:* default to UTF-8 encoding
     """
     filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
 
@@ -1469,7 +1485,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
 
-    with open(filename, 'w') as f:
+    with open(filename, 'w', encoding=encoding) as f:
         json.dump(jsonify(obj), f, indent=indent, **kwargs)
 
     return filename
@@ -1499,7 +1515,7 @@ def readyaml(string, **kwargs):
     return loadyaml(string=string, **kwargs)
 
 
-def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None):
+def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None, encoding='utf-8'):
     """
     Convenience function for reading a YAML file (or string).
 
@@ -1510,6 +1526,7 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
         fromfile (bool): whether or not to load from file
         safe (bool): whether to use the safe loader
         loader (Loader): custom YAML loader (takes precedence over `safe`)
+        encoding (str): the file encoding (default UTF-8, as required by the YAML standard)
 
     Returns:
         output (dict): the YAML object
@@ -1520,6 +1537,7 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
     yaml = sc.loadyaml('my-file.yaml')
     yaml = sc.loadyaml(string='{"a":null, "b":[1,2,3]}')
     ```
+    *New in version 3.3.0:* default to UTF-8 encoding
     """
     import yaml # Optional import
 
@@ -1535,7 +1553,7 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
     else:
         filepath = makefilepath(filename=filename, folder=folder)
         try:
-            with open(filepath) as f:
+            with open(filepath, encoding=encoding) as f:
                 output = yaml.load_all(f, loader)
                 output = list(output)
         except FileNotFoundError as E: # pragma: no cover
@@ -1550,7 +1568,7 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
 
 
 def saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True,
-             die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs):
+             die=True, keepnone=False, dumpall=False, sanitizepath=True, encoding='utf-8', **kwargs):
     """
     Convenience function for saving to a YAML file.
 
@@ -1565,6 +1583,7 @@ def saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True,
         keepnone (bool): allow `sc.saveyaml(None)` to return 'null' rather than raising an exception
         dumpall (bool): if True, treat a list input as separate YAML pages
         sanitizepath (bool): whether to sanitize the path prior to saving
+        encoding (str): the file encoding (default UTF-8, as required by the YAML standard)
         kwargs (dict): passed to `yaml.dump()`
 
     Returns:
@@ -1578,6 +1597,7 @@ def saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True,
 
     string = sc.saveyaml(obj=yaml) # Export to string
     ```
+    *New in version 3.3.0:* default to UTF-8 encoding
     """
     import yaml # Optional import
 
@@ -1598,7 +1618,7 @@ def saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True,
     if filename is not None:
         filename = makefilepath(filename=filename, folder=folder, sanitize=sanitizepath, makedirs=True)
         output = filename
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding=encoding) as f:
             dump_func(obj, f, **kw)
 
     # Alternate usage: return a string

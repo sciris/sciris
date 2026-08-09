@@ -571,7 +571,7 @@ class profile(sc.prettyobj):
         import ast # Not used elsewhere
 
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 source = f.read()
 
             tree = ast.parse(source, filename=filepath)

@@ -461,7 +461,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
       data[datafile] = sc.loadany(datafile)
   ```
 
-- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs)`: Convenience function for reading a JSON file (or string).
+- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', **kwargs)`: Convenience function for reading a JSON file (or string).
 
   ```python
   json = sc.loadjson('my-file.json')
@@ -485,13 +485,13 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   assert obj == obj2
   ```
 
-- `sc.loadtext(filename=None, folder=None, splitlines=False)`: Convenience function for reading a text file
+- `sc.loadtext(filename=None, folder=None, splitlines=False, encoding='utf-8')`: Convenience function for reading a text file
 
   ```python
   mytext = sc.loadtext('my-document.txt')
   ```
 
-- `sc.loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None)`: Convenience function for reading a YAML file (or string).
+- `sc.loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None, encoding='utf-8')`: Convenience function for reading a YAML file (or string).
 
   ```python
   yaml = sc.loadyaml('my-file.yaml')
@@ -586,7 +586,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   # [...]
   ```
 
-- `sc.savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, **kwargs)`: Convenience function for saving to a JSON file.
+- `sc.savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, encoding='utf-8', **kwargs)`: Convenience function for saving to a JSON file.
 
   ```python
   json = {'foo':'bar', 'data':[1,2,3]}
@@ -611,14 +611,14 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   # [...]
   ```
 
-- `sc.savetext(filename=None, string=None, **kwargs)`: Convenience function for saving a text file -- accepts a string or list of strings; can also save an arbitrary object, in which case it will first convert to a string.
+- `sc.savetext(filename=None, string=None, encoding='utf-8', **kwargs)`: Convenience function for saving a text file -- accepts a string or list of strings; can also save an arbitrary object, in which case it will first convert to a string.
 
   ```python
   text = ['Here', 'is', 'a', 'poem']
   sc.savetext('my-poem.txt', text)
   ```
 
-- `sc.saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs)`: Convenience function for saving to a YAML file.
+- `sc.saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True, die=True, keepnone=False, dumpall=False, sanitizepath=True, encoding='utf-8', **kwargs)`: Convenience function for saving to a YAML file.
 
   ```python
   yaml = {'foo':'bar', 'data':[1,2,3]}

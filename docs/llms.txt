@@ -80,11 +80,11 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.jsonunpickle(json=None, filename=None)`: Open a saved JSON pickle
 - `sc.load(filename=None, folder=None, verbose=None, die=False, remapping=None, method=None, auto_remap=True, **kwargs)`: Load a file that has been saved as a gzipped pickle file, e.g. by `sc.save()`. Accepts either a filename (standard usage) or a file object as the first argument. Note that `sc.load()`/`sc.loadobj()` are aliases of each other. [aliases: sc.loadobj()]
 - `sc.loadany(filename, folder=None, verbose=False, **kwargs)`: Load data from a file using all known load functions until one works.
-- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs)`: Convenience function for reading a JSON file (or string).
+- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', **kwargs)`: Convenience function for reading a JSON file (or string).
 - `sc.loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs)`: Load a spreadsheet as a dataframe or a list of lists.
 - `sc.loadstr(string, **kwargs)`: Like `sc.load()`, but for a bytes-like string (rarely used).
-- `sc.loadtext(filename=None, folder=None, splitlines=False)`: Convenience function for reading a text file
-- `sc.loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None)`: Convenience function for reading a YAML file (or string).
+- `sc.loadtext(filename=None, folder=None, splitlines=False, encoding='utf-8')`: Convenience function for reading a text file
+- `sc.loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None, encoding='utf-8')`: Convenience function for reading a YAML file (or string).
 - `sc.loadzip(filename=None, folder=None, load=True, convert=True, **kwargs)`: Load the contents of a zip file into a variable.
 - `sc.makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=False, checkexists=None, sanitize=False, die=True, verbose=False)`: Utility for taking a filename and folder -- or not -- and generating a valid path from them. By default, this function will combine a filename and folder using os.path.join, create the folder(s) if needed with os.makedirs, and return the absolute path.
 - `sc.makepath(*args, aspath=True, **kwargs)`: Alias for `sc.makefilepath()` that returns a path by default instead of a string (with apologies for the confusing terminology, kept for backwards compatibility).
@@ -96,10 +96,10 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=False, disallowed=None, aspath=False)`: Takes a potentially Linux- and Windows-unfriendly candidate file name, and returns a "sanitized" version that is more usable.
 - `sc.sanitizepath(*args, aspath=True, **kwargs)`: Alias for `sc.sanitizefilename()` that returns a path by default instead of a string.
 - `sc.save(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip', compresslevel=5, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs)`: Save any object to disk [aliases: sc.saveobj()]
-- `sc.savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, **kwargs)`: Convenience function for saving to a JSON file.
+- `sc.savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, encoding='utf-8', **kwargs)`: Convenience function for saving to a JSON file.
 - `sc.savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, workbook_args=None, formats=None, formatdata=None, verbose=False)`: Semi-simple function to save data nicely to Excel.
-- `sc.savetext(filename=None, string=None, **kwargs)`: Convenience function for saving a text file -- accepts a string or list of strings; can also save an arbitrary object, in which case it will first convert to a string.
-- `sc.saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs)`: Convenience function for saving to a YAML file.
+- `sc.savetext(filename=None, string=None, encoding='utf-8', **kwargs)`: Convenience function for saving a text file -- accepts a string or list of strings; can also save an arbitrary object, in which case it will first convert to a string.
+- `sc.saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True, die=True, keepnone=False, dumpall=False, sanitizepath=True, encoding='utf-8', **kwargs)`: Convenience function for saving to a YAML file.
 - `sc.savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True, basename=False, tobytes=True, verbose=True, **kwargs)`: Create a zip file from the supplied list of files (or less commonly, supplied data)
 - `sc.Spreadsheet(*args, **kwargs)`: A class for reading and writing Excel files in binary format. No disk IO needs to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
 - `sc.thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs)`: Tiny helper function to get the folder for a file, usually the current file. If not supplied, then use the current file.

@@ -220,12 +220,12 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
             raise RuntimeError("Could not find .git directory")
 
         # Then, get the branch and commit
-        with open(os.path.join(gitdir, "HEAD"), "r") as f1:
+        with open(os.path.join(gitdir, "HEAD"), "r", encoding='utf-8') as f1:
             ref = f1.read()
             if ref.startswith("ref:"):
                 refdir = ref.split(" ")[1].strip()  # The path to the file with the commit
                 gitbranch = refdir.replace("refs/heads/", "")  # / is always used (not os.sep)
-                with open(os.path.join(gitdir, refdir), "r") as f2:
+                with open(os.path.join(gitdir, refdir), "r", encoding='utf-8') as f2:
                     githash = f2.read().strip()  # The hash of the commit
             else: # pragma: no cover
                 gitbranch = "Detached head (no branch)"
@@ -384,7 +384,7 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
             output = {'filename':fname, 'lineno':lineno}
             if includeline: # pragma: no cover
                 try:
-                    with open(fname) as f:
+                    with open(fname, encoding='utf-8') as f:
                         lines = f.read().splitlines()
                         line = lines[lineno-1] # -1 since line numbers start at 1
                     output['line'] = line
