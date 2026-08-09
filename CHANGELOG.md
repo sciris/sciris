@@ -15,7 +15,8 @@ By import convention, components of the Sciris library are listed beginning with
 7.  `sc.progressbar()` now has an `output` argument for returning the progress bar as a string.
 8.  Added `sc.cpucount()`, `sc.cpu_load()`, and `sc.mem_load()` as aliases of `sc.cpu_count()`, `sc.cpuload()`, and `sc.memload()`.
 9.  The documentation has been converted from Sphinx to [Quarto](https://quarto.org), and is now published at <https://docs.sciris.org> via GitHub Pages. Docstrings (and the files in the repository root, e.g. this changelog) are now formatted with Markdown rather than RST, and the tutorials are now Quarto documents (`.qmd`) rather than Jupyter notebooks (`.ipynb`).
-10. `sc.require()` now allows prerelease versions, so e.g. `sc.require('starsim>3.0.0')` is met by an editable install of version `3.2.3.dev0`.
+10. The documentation now includes a machine-readable index of the entire public API, for use by IDEs, documentation search, and LLM-based tools: [llms.txt](https://docs.sciris.org/llms.txt), [llms-full.txt](https://docs.sciris.org/llms-full.txt) (which also includes an example for each function), and [api.json](https://docs.sciris.org/api.json). All three are generated from the source via `cd docs && python make_api.py`.
+11. `sc.require()` now allows prerelease versions, so e.g. `sc.require('starsim>3.0.0')` is met by an editable install of version `3.2.3.dev0`.
 
 ## Version 3.2.9 (2026-03-06)
 

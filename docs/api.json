@@ -1,0 +1,2814 @@
+{
+  "version": "3.3.0",
+  "description": "Fast, flexible tools to simplify scientific Python",
+  "notes": [
+    "Sciris is a library of utilities for scientific computing: containers, file I/O, dates, arrays, plotting, parallelization, and profiling.",
+    "Everything listed here is available from the top level: `import sciris as sc`, then e.g. `sc.findnearest()`. Do not import submodules directly.",
+    "Signatures are as introspected from the current version; summaries are the first paragraph of each docstring.",
+    "Aliases are alternative names for the same object; the canonical name is the one listed, and is the one to prefer when writing new code."
+  ],
+  "links": [
+    {
+      "title": "Documentation",
+      "url": "https://docs.sciris.org",
+      "description": "tutorials, API reference, and the style guide"
+    },
+    {
+      "title": "Source",
+      "url": "https://github.com/sciris/sciris",
+      "description": "the Sciris repository"
+    },
+    {
+      "title": "Paper",
+      "url": "https://doi.org/10.21105/joss.05076",
+      "description": "Sciris: Simplifying scientific software in Python (JOSS 2023)"
+    }
+  ],
+  "n_entries": 274,
+  "aliases": {
+    "Timer": "timer",
+    "cpu_load": "cpuload",
+    "cpucount": "cpu_count",
+    "get_rows_cols": "getrowscols",
+    "glob": "getfilelist",
+    "loadobj": "load",
+    "mem_load": "memload",
+    "promotetoarray": "toarray",
+    "promotetolist": "tolist",
+    "rmnans": "sanitize",
+    "sanitizejson": "jsonify",
+    "saveobj": "save",
+    "sigfigs": "sigfig",
+    "wget": "urlopen"
+  },
+  "entries": [
+    {
+      "name": "alpinecolormap",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(apply=False)",
+      "summary": "This function generates a map based on ascending height. Based on data from Kazakhstan.",
+      "example": "sc.colormapdemo('alpine')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "animation",
+      "kind": "class",
+      "module": "sc_plotting",
+      "signature": "(fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename='animation', nametemplate=None, imagefolder=None, anim_args=None, save_args=None, frames=None, tidy=True, verbose=True, **kwargs)",
+      "summary": "A class for storing and saving a Matplotlib animation.",
+      "example": "anim = sc.animation()\n\nplt.figure()\nrepeats = 21\ncolors = sc.vectocolor(repeats, cmap='turbo')\nfor i in range(repeats):\n    scale = 1/np.sqrt(i+1)\n    x = scale*np.random.randn(10)\n    y = scale*np.random.randn(10)\n    label = str(i) if not(i%5) else None\n    plt.scatter(x, y, c=[colors[i]], label=label)\n    plt.title(f'Scale = 1/√{i}')\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "approx",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(val1=None, val2=None, eps=None, **kwargs)",
+      "summary": "Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()` and may be removed in future versions.",
+      "example": "sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True\nsc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "argparse",
+      "kind": "class",
+      "module": "sc_odict",
+      "signature": "(parse=True, **kwargs)",
+      "summary": "Ultra-simple argument parser",
+      "example": "# Option 1: Supply arguments directly\nargs = sc.argparse(iterations=10, output_file='results.csv')\n\n# Option 2: Add arguments one by one\nargs = sc.argparse()\nargs.add(iterations=10)\nargs.add(output_file='results.csv')\nargs.parse()\n\n# Command-line usage\npython argparse_example.py 100 'data.csv'\npython argparse_example.py 100 output_file='data.csv'\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "arraycolors",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(arr, **kwargs)",
+      "summary": "Map an N-dimensional array of values onto the current colormap. An extension of vectocolor() for multidimensional arrays; see that function for additional arguments.",
+      "example": "n = 1000\nncols = 5\narr = np.random.rand(n,ncols)\nfor c in range(ncols):\n    arr[:,c] += c\nx = np.random.rand(n)\ny = np.random.rand(n)\ncolors = sc.arraycolors(arr)\nplt.figure(figsize=(20,16))\nfor c in range(ncols):\n    plt.scatter(x+c, y, s=50, c=colors[:,c])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "arraymean",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True, doprint=False, **kwargs)",
+      "summary": "Quickly calculate the mean and standard deviation of an array.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "arraymedian",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(data, ci=95, sf=3, doprint=False, **kwargs)",
+      "summary": "Quickly calculate the median and confidence interval of an array.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "asciify",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs)",
+      "summary": "Convert an arbitrary Unicode string to ASCII.",
+      "example": "sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "asd",
+      "kind": "function",
+      "module": "sc_asd",
+      "signature": "(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2, pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None, abstol=1e-06, reltol=0.001, stalliters=None, stoppingfunc=None, randseed=None, label=None, verbose=1, minval=0, die=True, **kwargs)",
+      "summary": "Optimization using adaptive stochastic descent (ASD). Can be used as a faster and more powerful alternative to e.g. `scipy.optimize.minimize()`.",
+      "example": "# Basic usage\nimport numpy as np\nimport sciris as sc\nresult = sc.asd(np.linalg.norm, [1, 2, 3])\nprint(result.x)\n\n# With arguments: positional via args, or dict of keywords, or keyword arguments\ndef my_func(x, scale=1.0, weight=1.0):  # Example function with keywords\n    return abs((x[0] - 1)) + abs(x[1] + 2)*scale + abs(x[2] + 3)*weight\n\nresult = sc.asd(my_func, x=[0, 0, 1], args=[0.5, 0.1]) # Option 1 for passing arguments\nresult = sc.asd(my_func, x=[0, 0, 1], args=dict(scale=0.5, weight=0.1)) # Option 2 for passing arguments\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "asobj",
+      "kind": "function",
+      "module": "sc_odict",
+      "signature": "(obj, strict=True)",
+      "summary": "Convert any object for which you would normally do `a['b']` to one where you can do `a.b`.",
+      "example": "d = dict(foo=1, bar=2)\nd_obj = sc.asobj(d)\nd_obj.foo = 10",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "autolist",
+      "kind": "class",
+      "module": "sc_utils",
+      "signature": "(*args)",
+      "summary": "A simple extension to a list that defines add methods to simplify appending and extension.",
+      "example": "ls = sc.autolist(3) # Quickly convert a scalar to a list\n\nls = sc.autolist()\nfor i in range(5):\n    ls += i # No need for ls += [i]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "ax3d",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False, elev=None, azim=None, figkwargs=None, **kwargs)",
+      "summary": "Create a 3D axis to plot in.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "bandedcolormap",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(minvalue=None, minsaturation=None, hueshift=None, saturationscale=None, npts=None, apply=False)",
+      "summary": "Map colors onto bands of hue and saturation, with lightness mapped linearly. Unlike most colormaps, this colormap does not aim to be percentually uniform, but rather aims to make it easy to relate colors to as-exact-as-possible numbers (while still maintaining a semblance of overall trend from low […]",
+      "example": "cmap = sc.bandedcolormap(minvalue=0, minsaturation=0)\nsc.colormapdemo(cmap=cmap)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "bar3d",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=None, returnfig=False, figkwargs=None, axkwargs=None, **kwargs)",
+      "summary": "Plot 2D data as 3D bars",
+      "example": "# Simple example\ndata = np.random.rand(5,4)\nsc.bar3d(data)\n\n# Use non-default axes and colors (note: this one is pretty!)\nnx = 5\nny = 6\nx = 10*np.arange(nx)\ny = np.arange(ny) + 10\nz = -np.random.rand(ny,nx)\ndz = -2*z\nc = z**2\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "benchmark",
+      "kind": "function",
+      "module": "sc_profiling",
+      "signature": "(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False)",
+      "summary": "Benchmark Python performance",
+      "example": "sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}\n\nnumpy_mops = sc.benchmark(which='numpy')\nif numpy_mops < 100:\n    print('Your computer is slow')\nelif numpy_mops > 400:\n    print('Your computer is fast')\nelse:\n    print('Your computer is normal')\n\nsc.benchmark(parallel=True) # Use all CPUs",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "bicolormap",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, apply=False)",
+      "summary": "This function generators a two-color map, blue for negative, red for positive changes, with grey in the middle. The input argument is how much of a color gap there is between the red scale and the blue one.",
+      "example": "sc.bicolormap(gap=0, mingreen=0, redbluemix=1, epsilon=0) # From pure red to pure blue with white in the middle\nsc.bicolormap(gap=0, mingreen=0, redbluemix=0, epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue\nsc.bicolormap(gap=0.3, mingreen=0.2, redbluemix=0, epsilon=0.01) # Red and blue with a sharp distinction between",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "blank",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(n=3)",
+      "summary": "Tiny function to print n blank lines, 3 by default",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "Blobject",
+      "kind": "class",
+      "module": "sc_fileio",
+      "signature": "(source=None, name=None, filename=None, blob=None)",
+      "summary": "A wrapper for a binary file -- rarely used directly.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "boxoff",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(ax=None, which=None, removeticks=True)",
+      "summary": "Removes the top and right borders (\"spines\") of a plot.",
+      "example": "plt.figure()\nplt.plot([2,5,3])\nsc.boxoff()\n\nfig, ax = plt.subplots()\nplt.plot([1,4,1,4])\nsc.boxoff(ax=ax, which='all')\n\nfig = plt.figure()\nplt.scatter(np.arange(100), np.random.rand(100))\nsc.boxoff('top, bottom')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "capture",
+      "kind": "class",
+      "module": "sc_printing",
+      "signature": "(seq='', *args, **kwargs)",
+      "summary": "Captures stdout (e.g., from `print()`) as a variable.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "cat",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(*args, copy=False, **kwargs)",
+      "summary": "Like `numpy.concatenate`, but takes anything and returns an array. Useful for e.g. appending a single number onto the beginning or end of an array.",
+      "example": "arr = sc.cat(4, np.ones(3))\narr = sc.cat(np.array([1,2,3]), [4,5], 6)\narr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "checkmem",
+      "kind": "function",
+      "module": "sc_profiling",
+      "signature": "(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)",
+      "summary": "Checks how much memory the variable or variables in question use by dumping them to file.",
+      "example": "import numpy as np\nimport sciris as sc\n\nlist_obj = ['label', np.random.rand(2483,589)])\nsc.checkmem(list_obj)\n\nnested_dict = dict(\n    foo = dict(\n        a = np.random.rand(5,10),\n        b = np.random.rand(5,20),\n        c = np.random.rand(5,50),\n    ),\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "checkram",
+      "kind": "function",
+      "module": "sc_profiling",
+      "signature": "(unit='mb', fmt='0.2f', start=0, to_string=True)",
+      "summary": "Measure actual memory usage, typically at different points throughout execution.",
+      "example": "import sciris as sc\nimport numpy as np\nstart = sc.checkram(to_string=False)\na = np.random.random((1_000, 10_000))\nprint(sc.checkram(start=start))",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "checktype",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj=None, objtype=None, subtype=None, die=False)",
+      "summary": "A convenience function for checking instances. If objtype is a type, then this function works exactly like isinstance(). But, it can also be one of the following strings:",
+      "example": "sc.checktype(rand(10), 'array', 'number') # Returns True\nsc.checktype(['a','b','c'], 'listlike') # Returns True\nsc.checktype(['a','b','c'], 'arraylike') # Returns False\nsc.checktype([{'a':3}], list, dict) # Returns True",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "classatt",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(obj, strlen=22, ncol=3, private=False, sort=True, _objkeys=None, _dirkeys=None, return_keys=False)",
+      "summary": "Return a sorted string of class attributes for the Python __repr__ method; see `sc.prepr()` for options",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "colorize",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(color=None, string=None, doprint=None, output=False, enable=True, showhelp=False, fg=None, bg=None, style=None)",
+      "summary": "Colorize output text.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "colormapdemo",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(cmap=None, n=None, smoothing=None, randseed=None, doshow=True)",
+      "summary": "Demonstrate a color map using simulated elevation data, shown in both 2D and 3D. The argument can be either a colormap itself or a string describing a colormap.",
+      "example": "sc.colormapdemo('inferno') # Use a registered Matplotlib colormap\nsc.colormapdemo('parula') # Use a registered Sciris colormap\nsc.colormapdemo(sc.alpinecolormap(), n=200, smoothing=20, randseed=2942) # Use a colormap object",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "commaticks",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(ax=None, axis='y', precision=2, cursor_precision=0)",
+      "summary": "Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000).",
+      "example": "data = np.random.rand(10)*1e4\nplt.plot(data)\nsc.commaticks()",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "compareversions",
+      "kind": "function",
+      "module": "sc_versioning",
+      "signature": "(version1, version2)",
+      "summary": "Function to compare versions, expecting both arguments to be a string of the format 1.2.3, but numeric works too. Returns 0 for equality, -1 for v1<v2, and 1 for v1>v2.",
+      "example": "sc.compareversions('1.2.3', '2.3.4') # returns -1\nsc.compareversions(2, '2') # returns 0\nsc.compareversions('3.1', '2.99') # returns 1\nsc.compareversions('3.1', '>=2.99') # returns True\nsc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern\nsc.compareversions(mymodule, '>=1.0') # alias to the above",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "convolve",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(a, v)",
+      "summary": "Like `numpy.convolve`, but always returns an array the size of the first array (equivalent to mode='same'), and solves the boundary problem present in `numpy.convolve` by adjusting the edges by the weight of the convolution kernel.",
+      "example": "a = np.ones(5)\nv = np.array([0.3, 0.5, 0.2])\nc1 = np.convolve(a, v, mode='same') # Returns array([0.8, 1.  , 1.  , 1.  , 0.7])\nc2 = sc.convolve(a, v)              # Returns array([1., 1., 1., 1., 1.])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "count",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(arr=None, val=None, eps=1e-06, **kwargs)",
+      "summary": "Count the number of matching elements.",
+      "example": "sc.count(rand(10)<0.5) # returns e.g. 4\nsc.count([2,3,6,3], 3) # returns 2",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "counter",
+      "kind": "class",
+      "module": "sc_odict",
+      "signature": "(iterable=None, /, **kwds)",
+      "summary": "Like `collections.Counter`, but with additional supported mathematical operations.",
+      "example": "vals = [1,1,12,3,4,2,4,2,53,5,5,6,2,3,5]\ncounts = sc.counter(vals)\ncounts.max() # returns 3",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "cp",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj, die=True)",
+      "summary": "Shortcut to perform a shallow copy operation",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "cprofile",
+      "kind": "class",
+      "module": "sc_profiling",
+      "signature": "(sort='cumtime', columns='default', mintime=0.001, maxitems=100, maxfunclen=40, maxpathlen=40, use_ms=None, stripdirs=True, show=True)",
+      "summary": "Function profiler, built off Python's built-in cProfile",
+      "example": "import sciris as sc\nimport numpy as np\n\nclass Slow:\n\n    def math(self):\n        n = 1_000_000\n        self.a = np.arange(n)\n        self.b = sum(self.a)\n\n    def plain(self):\n        n = 100_000\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "cpu_count",
+      "kind": "function",
+      "module": "sc_parallel",
+      "signature": "()",
+      "summary": "Alias to `multiprocessing.cpu_count()`",
+      "example": "",
+      "aliases": [
+        "cpucount"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "cpuload",
+      "kind": "function",
+      "module": "sc_parallel",
+      "signature": "(interval=0.1)",
+      "summary": "Takes a snapshot of current CPU usage via `psutil`",
+      "example": "",
+      "aliases": [
+        "cpu_load"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "createcollist",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(items, title=None, strlen=22, ncol=3)",
+      "summary": "Creates a string for a nice columnated list (e.g. to use in __repr__ method)",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "dataframe",
+      "kind": "class",
+      "module": "sc_dataframe",
+      "signature": "(data=None, index=None, columns=None, dtype=None, copy=None, dtypes=None, nrows=None, **kwargs)",
+      "summary": "An extension of the pandas `DataFrame` with additional convenience methods for accessing rows and columns and performing other operations, such as adding rows.",
+      "example": "df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame\ndf['x'] # Print out a column\ndf[0] # Print out a row\ndf['x',0] # Print out an element\ndf[0,:] = [123,6]; print(df) # Set values for a whole row\ndf['y'] = [8,5,0]; print(df) # Set values for a whole column\ndf['z'] = [14,14,14]; print(df) # Add new column\ndf.rmcol('z'); print(df) # Remove a column\ndf.addcol('z', [14,14,14]); print(df) # Alternate way to add new column\ndf.poprow(1); print(df) # Remove a row\ndf.append([555,2,14]); print(df) # Append a new row\ndf.insertrow(1,[556,2,14]); print(df) # Insert a new row\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "dataindex",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(dataarray, index)",
+      "summary": "Take an array of data and return either the first or last (or some other) non-NaN entry.",
+      "example": "",
+      "aliases": [],
+      "deprecated": true
+    },
+    {
+      "name": "date",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(obj=None, *args, start_date=None, readformat=None, to='date', as_date=None, outformat=None, **kwargs)",
+      "summary": "Convert any reasonable object -- a string, integer, or datetime object, or list/array of any of those -- to a date object (or string, pandas, or numpy date).",
+      "example": "sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)\nsc.date([35,36,37], start_date='2020-01-01', to='str') # Returns ['2020-02-05', '2020-02-06', '2020-02-07']\nsc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "datedelta",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=None, as_date=None, **kwargs)",
+      "summary": "Perform calculations on a date string (or date object), returning a string (or a date). Wrapper to `dateutil.relativedelta.relativedelta()`.",
+      "example": "sc.datedelta('2021-07-07', 3) # Add 3 days\nsc.datedelta('2021-07-07', days=-4) # Subtract 4 days\nsc.datedelta('2021-07-07', weeks=4, months=-1, as_date=True) # Add 4 weeks but subtract a month, and return a dateobj\nsc.datedelta(days=3) # Alias to du.relativedelta.relativedelta(days=3)\nsc.datedelta(['2021-07-07', '2022-07-07'], months=1) # Increment multiple dates\nsc.datedelta('2020-06-01', years=0.25) # Use a fractional number of years (to the nearest day)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "dateformatter",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(ax=None, style='sciris', dateformat=None, start=None, end=None, rotation=None, locator=None, axis='x', **kwargs)",
+      "summary": "Format the x-axis to use a given date formatter.",
+      "example": "# Reformat date data\nplt.figure()\nx = sc.daterange('2021-04-04', '2022-05-05', asdate=True)\ny = sc.smooth(np.random.rand(len(x)))\nplt.plot(x, y)\nsc.dateformatter()\n\n# Configure with Matplotlib's Concise formatter\nfig,ax = plt.subplots()\nplt.plot(sc.date(np.arange(365), start_date='2022-01-01'), np.random.randn(365))\nsc.dateformatter(ax=ax, style='concise')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "datenumformatter",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(ax=None, start_date=None, dateformat=None, interval=None, start=None, end=None, rotation=None)",
+      "summary": "Format a numeric x-axis to use dates.",
+      "example": "# Automatically configure a non-date axis with default options\nplt.plot(np.arange(365), np.random.rand(365))\nsc.datenumformatter(start_date='2021-01-01')\n\n# Manually configure\nfig,ax = plt.subplots()\nax.plot(np.arange(60), np.random.random(60))\nformatter = sc.datenumformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "daterange",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(start_date=None, end_date=None, interval=None, inclusive=True, as_date=None, readformat=None, outformat=None, **kwargs)",
+      "summary": "Return a list of dates from the start date to the end date. To convert a list of days (as integers) to dates, use `sc.date()` instead.",
+      "example": "dates1 = sc.daterange('2020-03-01', '2020-04-04')\ndates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2), asdate=True)\ndates3 = sc.daterange('2020-03-01', weeks=5)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "datetoyear",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(dateobj, dateformat=None, **kwargs)",
+      "summary": "Convert a date to decimal year.",
+      "example": "sc.datetoyear('2010-07-01') # Returns approximately 2010.5\nsc.datetoyear(2010.5) # Returns datetime.date(2010, 7, 2)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "day",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(obj, *args, start_date=None, **kwargs)",
+      "summary": "Convert a string, date/datetime object, or int to a day (int), the number of days since the start day. See also `sc.date()` and `sc.daydiff()``. If a start day is not supplied, it returns the number of days into the current year.",
+      "example": "sc.day(sc.now()) # Returns how many days into the year we are\nsc.day(['2021-01-21', '2024-04-04'], start_date='2022-02-22') # Days can be positive or negative",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "daydiff",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(*args)",
+      "summary": "Convenience function to find the difference between two or more days. With only one argument, calculate days since Jan. 1st.",
+      "example": "diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16\ndiffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]\n\ndoy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "dcp",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj, memo=None, die=True, verbose=True)",
+      "summary": "Shortcut to perform a deep copy operation",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "ddict",
+      "kind": "class",
+      "module": "other",
+      "signature": "(...)",
+      "summary": "defaultdict(default_factory=None, /, [...]) --> dict with default factory",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "dictobj",
+      "kind": "class",
+      "module": "sc_odict",
+      "signature": "(*args, **kwargs)",
+      "summary": "Lightweight class to create an object that can also act like a dictionary.",
+      "example": "obj = sc.dictobj()\nobj.a = 5\nobj['b'] = 10\nprint(obj.items())",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "download",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(url, *args, filename=None, save=True, parallel=True, die=True, verbose=True, **kwargs)",
+      "summary": "Download one or more URLs in parallel and return output or save them to disk.",
+      "example": "html = sc.download('http://sciris.org') # Download a single URL\ndata = sc.download('http://sciris.org', 'http://covasim.org', save=False) # Download two in parallel\nsc.download({'sciris.html':'http://sciris.org', 'covasim.html':'http://covasim.org'}) # Download two and save to disk\nsc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto\ndata = sc.download(dict(sciris='http://sciris.org', covasim='http://covasim.org'), save=False) # Download and store in memory",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "dumpstr",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(obj=None, **kwargs)",
+      "summary": "Dump an object to a bytes-like string (rarely used by the user); see `sc.save()` instead.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "elapsedtimestr",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(pasttime, maxdays=5, minseconds=10, shortmonths=True)",
+      "summary": "Accepts a datetime object or a string in ISO 8601 format and returns a human-readable string explaining when this time was.",
+      "example": "yesterday = sc.datedelta(sc.now(), days=-1)\nsc.elapsedtimestr(yesterday)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "emptyfig",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(*args, **kwargs)",
+      "summary": "The emptiest figure possible",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "Equal",
+      "kind": "class",
+      "module": "sc_nested",
+      "signature": "(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, union=True, verbose=None, compare=True, die=False, **kwargs)",
+      "summary": "Compare equality between two arbitrary objects -- see `sc.equal()` for full documentation.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "equal",
+      "kind": "function",
+      "module": "sc_nested",
+      "signature": "(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, union=True, verbose=None, die=False, **kwargs)",
+      "summary": "Compare equality between two arbitrary objects",
+      "example": "o1 = dict(\n    a = [1,2,3],\n    b = np.array([4,5,6]),\n    c = dict(\n        df = sc.dataframe(q=[sc.date('2022-02-02'), sc.date('2023-02-02')])\n    )\n)\n\n# Identical object\no2 = sc.dcp(o1)\n\n# Non-identical object\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "Failed",
+      "kind": "class",
+      "module": "sc_fileio",
+      "signature": "(*args, **kwargs)",
+      "summary": "An empty class to represent a failed object loading. Not for use by the user.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "fast_uuid",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True)",
+      "summary": "Create a fast UID or set of UIDs. Note: for certain applications, `sc.uuid()` is faster than `sc.fast_uuid()`!",
+      "example": "uuids = sc.fast_uuid(n=100) # Generate 100 UUIDs",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "fig3d",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(num=None, nrows=1, ncols=1, index=1, returnax=False, figkwargs=None, axkwargs=None, **kwargs)",
+      "summary": "Shortcut for creating a figure with 3D axes.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "figlayout",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(fig=None, tight=True, keep=None, **kwargs)",
+      "summary": "Alias to both `fig.set_layout_engine()` and `fig.subplots_adjust()`.",
+      "example": "fig,axs = sc.get_rows_cols(37, make=True, tight=False) # Create 7x6 subplots, squished together\nsc.figlayout(bottom=0.3)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "fillnans",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(data=None, replacenans=True, **kwargs)",
+      "summary": "Alias for `sc.sanitize(..., replacenans=True)` with nearest interpolation (or a specified value).",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "findfirst",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(*args, **kwargs)",
+      "summary": "Alias for `sc.findinds(..., first=True)`. *New in version 1.0.0.*",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "findinds",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(arr=None, val=None, *args, eps=1e-06, first=False, last=False, ind=None, die=True, **kwargs)",
+      "summary": "Find matches even if two things aren't eactly equal (e.g. floats vs. ints).",
+      "example": "data = np.random.rand(10)\nsc.findinds(data<0.5) # Standard usage; returns e.g. array([2, 4, 5, 9])\nsc.findinds(data>0.1, data<0.5) # Multiple arguments\n\nsc.findinds([2,3,6,3], 3) # Returs array([1,3])\nsc.findinds([2,3,6,3], 3, first=True) # Returns 1",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "findlast",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(*args, **kwargs)",
+      "summary": "Alias for `sc.findinds(..., last=True)`. *New in version 1.0.0.*",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "findnans",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(data=None, **kwargs)",
+      "summary": "Alias for `sc.findinds(np.isnan(data))`.",
+      "example": "data = [0, 1, 2, np.nan, 4, np.nan, 6, np.nan, np.nan, np.nan, 10]\nsc.findnans(data) # Returns array([3, 5, 7, 8, 9])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "findnearest",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(series=None, value=None)",
+      "summary": "Return the index of the nearest match in series to value -- like `sc.findinds()`, but always returns an object with the same type as value (i.e. findnearest with a number returns a number, findnearest with an array returns an array).",
+      "example": "sc.findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5\nsc.findnearest([2,3,6,3], 6) # returns 2\nsc.findnearest([2,3,6,3], 6) # returns 2\nsc.findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "flattendict",
+      "kind": "function",
+      "module": "sc_nested",
+      "signature": "(nesteddict, sep=None, _prefix=None)",
+      "summary": "Flatten nested dictionary",
+      "example": ">>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}})\n{('a', 'b'): 1, ('a', 'c', 'd'): 2, ('a', 'c', 'e'): 3}\n>>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}}, sep='_')\n{'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "flexstr",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(arg, *args, force=True, join='')",
+      "summary": "Try converting any object to a \"regular\" string (i.e. `str`), but proceed if it fails. Note: this function calls `repr()` rather than `str()` to ensure a more robust representation of objects.",
+      "example": "sc.flexstr(b'foo', 'bar', [1,2]) # Returns 'foobar[1, 2]'",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "fonts",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(add=None, use=False, output='name', dryrun=False, rebuild=False, verbose=False, die=False, **kwargs)",
+      "summary": "List available fonts, or add new ones. Alias to Matplotlib's font manager.",
+      "example": "sc.fonts() # List available font names\nsc.fonts(fullfont=True) # List available font objects\nsc.fonts('myfont.ttf', use=True) # Add this font and immediately set to default\nsc.fonts(['/folder1', '/folder2']) # Add all fonts in both folders\nsc.fonts(rebuild=True) # Run this if added fonts aren't appearing",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "freeze",
+      "kind": "function",
+      "module": "sc_versioning",
+      "signature": "(lower=False)",
+      "summary": "Alias for pip freeze.",
+      "example": "assert 'numpy' in sc.freeze() # One way to check for versions",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "gauss1d",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(x=None, y=None, xi=None, scale=None, use32=True)",
+      "summary": "Gaussian 1D smoothing kernel.",
+      "example": "# Setup\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport sciris as sc\n\nx = np.random.rand(40)\ny = (x-0.3)**2 + 0.2*np.random.rand(40)\n\n# Smooth\nyi = sc.gauss1d(x, y)\nyi2 = sc.gauss1d(x, y, scale=0.3)\nxi3 = np.linspace(0,1)\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "gauss2d",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, yscale=1.0, grid=False, use32=True)",
+      "summary": "Gaussian 2D smoothing kernel.",
+      "example": "# Setup\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nx = np.random.rand(40)\ny = np.random.rand(40)\nz = 1-(x-0.5)**2 + (y-0.5)**2 # Make a saddle\n\n# Simple usage -- only works if z is 2D\nzi0 = sc.gauss2d(np.random.rand(10,10))\nsc.surf3d(zi0)\n\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "getcaller",
+      "kind": "function",
+      "module": "sc_versioning",
+      "signature": "(frame=2, tostring=True, includelineno=False, includeline=False, relframe=0, die=False)",
+      "summary": "Try to get information on the calling function, but fail gracefully. See also `sc.thisfile()`.",
+      "example": "sc.getcaller()\nsc.getcaller(tostring=False)['filename'] # Equivalent to sc.getcaller()\nsc.getcaller(frame=3) # Descend one level deeper than usual\nsc.getcaller(frame=1, tostring=False, includeline=True) # See the line that called sc.getcaller()",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "getdate",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(obj=None, astype='str', dateformat=None)",
+      "summary": "Alias for converting a date object to a formatted string.",
+      "example": "sc.getdate() # Returns a string for the current date\nsc.getdate(astype='float') # Convert today's time to a timestamp",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "getfilelist",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=True, aspath=None)",
+      "summary": "A shortcut for using `glob.glob()`.",
+      "example": "sc.getfilelist() # return all files and folders in current folder\nsc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder\nsc.getfilelist('~/temp/*.py') # Like above\nsc.getfilelist(fnmatch='*.py') # Recursively find all files ending in .py",
+      "aliases": [
+        "glob"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "getfilepaths",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(*args, aspath=True, **kwargs)",
+      "summary": "Alias for `sc.getfilelist()` that returns paths by default instead of strings.",
+      "example": "sc.getfilelist() # return all files and folders in current folder\nsc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder\nsc.getfilelist('~/temp/*.py') # Like above\nsc.getfilelist(fnmatch='*.py') # Recursively find all files ending in .py",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "getnested",
+      "kind": "function",
+      "module": "sc_nested",
+      "signature": "(nested, keylist, safe=False, default=None)",
+      "summary": "Get the value for the given list of keys",
+      "example": "sc.getnested(foo, ['a','b']) # Gets foo['a']['b']",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "getplatform",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(expected=None, platform=None, die=False)",
+      "summary": "Return the name of the current \"main\" platform (e.g. 'mac')",
+      "example": "sc.getplatform() # Get current name of platform\nsc.getplatform('windows', die=True) # Raise an exception if not on Windows\nsc.getplatform(platform='darwin') # Normalize to 'mac'",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "getrowscols",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remove_extra=True, **kwargs)",
+      "summary": "Get the number of rows and columns needed to plot N figures.",
+      "example": "nrows,ncols = sc.get_rows_cols(36) # Returns 6,6\nnrows,ncols = sc.get_rows_cols(37) # Returns 7,6\nnrows,ncols = sc.get_rows_cols(100, ratio=2) # Returns 15,7\nnrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized\nfig,axs     = sc.getrowscols(37, make=True) # Create 7x6 subplots, using the alias",
+      "aliases": [
+        "get_rows_cols"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "getuser",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "()",
+      "summary": "Get the current username",
+      "example": "sc.getuser()",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "getvaliddata",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(data=None, filterdata=None, defaultind=0)",
+      "summary": "Return the data value indices that are valid based on the validity of the input data.",
+      "example": "sc.getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])",
+      "aliases": [],
+      "deprecated": true
+    },
+    {
+      "name": "getvalidinds",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(data=None, filterdata=None)",
+      "summary": "Return the indices that are valid based on the validity of the input data from an arbitrary number of 1-D vector inputs. Note, closely related to `sc.getvaliddata()`.",
+      "example": "sc.getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])",
+      "aliases": [],
+      "deprecated": true
+    },
+    {
+      "name": "gitinfo",
+      "kind": "function",
+      "module": "sc_versioning",
+      "signature": "(path=None, hashlen=7, die=False, verbose=True)",
+      "summary": "Retrieve git info",
+      "example": "info = sc.gitinfo() # Get git info for current script repository\ninfo = sc.gitinfo(my_package.__file__) # Get git info for a particular Python package",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "gridcolors",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0, basis='default', demo=False)",
+      "summary": "Create a qualitative \"color map\" by assigning points according to the maximum pairwise distance in the color cube. Basically, the algorithm generates n points that are maximally uniformly spaced in the [R, G, B] color cube.",
+      "example": "import numpy as np\nimport matplotlib.pyplot as plt\nimport sciris as sc\n\nncolors = 10\npiedata = np.random.rand(ncolors)\ncolors = sc.gridcolors(ncolors)\nplt.pie(piedata, colors=colors)\nsc.gridcolors(ncolors, demo=True)\nplt.show()",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "heading",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(string='', *args, color='cyan', divider='—', spaces=2, spacesafter=1, minlength=10, maxlength=200, sep=' ', tight=False, doprint=None, output=False, **kwargs)",
+      "summary": "Create a colorful heading. If just supplied with a string (or list of inputs like print()), create blue text with horizontal lines above and below and 3 spaces above. You can customize the color, the divider character, how many spaces appear before the heading, and the minimum length of the divider […]",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "help",
+      "kind": "function",
+      "module": "sc_settings",
+      "signature": "(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False, debug=False)",
+      "summary": "Get help on Sciris in general, or search for a word/expression.",
+      "example": "sc.help()\nsc.help('smooth')\nsc.help('JSON', ignorecase=False, context=True)\nsc.help('pickle', source=True, context=True)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "hex2rgb",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(string)",
+      "summary": "A little helper function to convert e.g. '87bc26' to a pleasing shade of green.",
+      "example": "rgb = sc.hex2rgb('#87bc26') # Returns array([0.52941176, 0.7372549 , 0.14901961])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "hsv2rgb",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(colors=None)",
+      "summary": "Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets.",
+      "example": "rgb = sc.hsv2rgb([0.23, 0.80, 0.74]) # Returns array([0.51504, 0.74   , 0.148  ])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "htmlify",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(string, reverse=False, tostring=False)",
+      "summary": "Convert a string to its HTML representation by converting unicode characters, characters that need to be escaped, and newlines. If reverse=True, will convert HTML to string. If tostring=True, will convert the bytestring back to Unicode.",
+      "example": "output = sc.htmlify('foo&\\nbar') # Returns b'foo&amp;<br>bar'\noutput = sc.htmlify('föö&\\nbar', tostring=True) # Returns 'f&#246;&#246;&amp;&nbsp;&nbsp;&nbsp;&nbsp;bar'\noutput = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "humanize_bytes",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(bytesize, decimals=3)",
+      "summary": "Convert a number of bytes into a human-readable total.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "ifelse",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(*args, default=None, check=None)",
+      "summary": "For a list of inputs, return the first one that meets the condition",
+      "example": "# 1. Standard usage\na = None\nb = 3\nout = sc.ifelse(a, b)\n\n## Equivalent to:\nout = a if a is not None else b\n\n# 2. Boolean usage\nargs = ['', False, {}, 'ok']\nout = sc.ifelse(*args, check=bool)\n\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "importbyname",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(module=None, variable=None, path=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs)",
+      "summary": "Import modules by name.",
+      "example": "np = sc.importbyname('numpy') # Standard usage\nsc.importbyname(pd='pandas', np='numpy') # Use dictionary syntax to assign to namespace\nplt = sc.importbyname(plt='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. plt.figure() is called\nmymod = sc.importbyname(path='/path/to/mymod') # Import by path rather than name",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "importbypath",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(path, name=None, overwrite=False)",
+      "summary": "Import a module by path.",
+      "example": "# Load a module that isn't importable otherwise\nmymod = sc.importbypath('my file with spaces.py')\n\n# Load two versions of the same module\nold = sc.importbypath('/path/to/old/mylib')\nnew = sc.importbypath('/path/to/new/mylib')\nassert new.__version__ > old.__version__ # Example version comparison (see also sc.compareverisons())",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "inclusiverange",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(*args, stretch=False, **kwargs)",
+      "summary": "Like `numpy.arange`/`numpy.linspace`, but includes the start and stop points. Accepts 0-3 args, or the kwargs start, stop, step.",
+      "example": "x = sc.inclusiverange(10)        # Like np.arange(11)\nx = sc.inclusiverange(3,5,0.2)   # Like np.linspace(3, 5, int((5-3)/0.2+1))\nx = sc.inclusiverange(stop=5)    # Like np.arange(6)\nx = sc.inclusiverange(6, step=2) # Like np.arange(0, 7, 2)\nx = sc.inclusiverange(0, 10, 3) # Like np.arange(0, 10, 3)\nx = sc.inclusiverange(0, 10, 3, stretch=True) # Like np.linspace(0,10,int(10/3)+1)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "indent",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(prefix=None, text=None, suffix='\\n', n=0, pretty=False, width=70, **kwargs)",
+      "summary": "Small wrapper to make textwrap more user friendly.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "isarray",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj, dtype=None)",
+      "summary": "Check whether something is a Numpy array, and optionally check the dtype.",
+      "example": "sc.isarray(np.array([1,2,3]), dtype=float) # False, dtype is int",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "isfunc",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj)",
+      "summary": "Quickly check if something is a function.",
+      "example": "sc.isfunc(list) # Returns False\ncallable(list) # Returns True",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "isiterable",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj, *args, exclude=None, minlen=None)",
+      "summary": "Determine whether or not the input is iterable, with optional types to exclude.",
+      "example": "obj1 = [1,2,3]\nobj2 = 'abc'\nobj3 = set()\n\nsc.isiterable(obj1) # Returns True\nsc.isiterable(obj1, obj2, obj3, exclude=str, minlen=1) # returns [True, False, False]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "isjupyter",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(detailed=False)",
+      "summary": "Check if a command is running inside a Jupyter notebook.",
+      "example": "if sc.isjupyter():\n    sc.options(jupyter=True)\n\nif sc.isjupyter(detailed=True) == 'colab':\n    print('You are running on Google Colab')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "islinux",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(die=False)",
+      "summary": "Alias to `sc.getplatform('linux')`",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "ismac",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(die=False)",
+      "summary": "Alias to `sc.getplatform('mac')`",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "ismodule",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj)",
+      "summary": "Determine whether or not the input is a module.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "isnumber",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj, isnan=None)",
+      "summary": "Determine whether or not the input is a number.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "ispath",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(obj)",
+      "summary": "Alias to isinstance(obj, Path).",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "isprime",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(n, verbose=False)",
+      "summary": "Determine if a number is prime.",
+      "example": "for i in range(100): print(i) if sc.isprime(i) else None",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "isstring",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj)",
+      "summary": "Determine whether or not the input is string-like (i.e., str or bytes).",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "iswindows",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(die=False)",
+      "summary": "Alias to `sc.getplatform('windows')`",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "iternested",
+      "kind": "function",
+      "module": "sc_nested",
+      "signature": "(nesteddict, _previous=None)",
+      "summary": "Return a list of all the twigs in the current dictionary",
+      "example": "twigs = sc.iternested(foo)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "IterObj",
+      "kind": "class",
+      "module": "sc_nested",
+      "signature": "(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs)",
+      "summary": "Object iteration manager",
+      "example": "import sciris as sc\n\n# Create a simple class for storing data\nclass DataObj(sc.prettyobj):\n    def __init__(self, **kwargs):\n        self.keys   = tuple(kwargs.keys())\n        self.values = tuple(kwargs.values())\n\n# Create the data\nobj1 = DataObj(a=[1,2,3], b=[4,5,6])\nobj2 = DataObj(c=[7,8,9], d=[10])\nobj = DataObj(obj1=obj1, obj2=obj2)\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "iterobj",
+      "kind": "function",
+      "module": "sc_nested",
+      "signature": "(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, *args, **kwargs)",
+      "summary": "Iterate over an object and apply a function to each node (item with or without children).",
+      "example": "data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))\n\n# Search through an object\ndef check_int(obj):\n    return isinstance(obj, int)\n\nout = sc.iterobj(data, check_int)\nprint(out)\n\n# Modify in place -- collapse mutliple short lines into one\ndef collapse(obj, maxlen):\n    string = str(obj)\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "jsonify",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=True, **kwargs)",
+      "summary": "This is the main conversion function for Python data-structures into JSON-compatible data structures (note: `sc.sanitizejson()`/`sc.jsonify()` are identical).",
+      "example": "data = dict(a=np.random.rand(3), b=dict(foo='cat', bar='dog'))\njson = sc.jsonify(data)\njsonstr = sc.jsonify(data, tostring=True, indent=2)\n\n# Use a custom function for parsing the data\ncustom = {np.ndarray: lambda x: f'It was an array: {x}'}\nj2 = sc.jsonify(data, custom=custom)",
+      "aliases": [
+        "sanitizejson"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "jsonpickle",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(obj, filename=None, tostring=False, **kwargs)",
+      "summary": "Save any Python object to a JSON using jsonpickle.",
+      "example": "# Create data\ndf1  = sc.dataframe(a=[1,2,3], b=['a','b','c'])\n\n# Convert to JSON and read back\njson = sc.jsonpickle(df1)\ndf2  = sc.jsonunpickle(json)\n\n# Save to JSON and load back\nsc.jsonpickle(df1, 'my-data.json')\ndf3  = sc.jsonunpickle('my-data.json')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "jsonunpickle",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(json=None, filename=None)",
+      "summary": "Open a saved JSON pickle",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "KeyNotFoundError",
+      "kind": "class",
+      "module": "sc_utils",
+      "signature": "(...)",
+      "summary": "A tiny class to fix repr for KeyErrors. KeyError prints the repr of the error message, rather than the actual message, so e.g. newline characters print as the character rather than the actual newline.",
+      "example": "raise sc.KeyNotFoundError('The key \"foo\" is not available, but these are: \"bar\", \"cat\"')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "LazyModule",
+      "kind": "class",
+      "module": "sc_utils",
+      "signature": "(module, variable, namespace=None, overwrite=True)",
+      "summary": "Create a \"lazy\" module that is loaded if and only if an attribute is called.",
+      "example": "pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas\ndf = pd.DataFrame() # Not only does this work, but pd is now actually pandas",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "LimitExceeded",
+      "kind": "class",
+      "module": "sc_profiling",
+      "signature": "(...)",
+      "summary": "Custom exception for use with the `sc.resourcemonitor()` monitor.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "Link",
+      "kind": "class",
+      "module": "sc_utils",
+      "signature": "(obj=None)",
+      "summary": "A class to differentiate between an object and a link to an object. The idea is that this object is parsed differently from other objects -- most notably, a recursive method (such as a pickle) would skip over Link objects, and then would fix them up after the other objects had been reinstated.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "LinkException",
+      "kind": "class",
+      "module": "sc_utils",
+      "signature": "(...)",
+      "summary": "An exception to raise when links are broken, for exclusive use with the Link class.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "linregress",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(x, y, full=False, **kwargs)",
+      "summary": "Simple linear regression returning the line of best fit and R value. Similar to `scipy.stats.linregress`` but simpler.",
+      "example": "x = range(10)\ny = sorted(2*np.random.rand(10) + 1)\nm,b = sc.linregress(x, y) # Simple usage\nout = sc.linregress(x, y, full=True) # Has out.m, out.b, out.x, out.y, out.corr, etc.\nplt.scatter(x, y)\nplt.plot(x, m*x+b)\nplt.bar(x, out.residuals)\nplt.title(f'R² = {out.r2}')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "listfuncs",
+      "kind": "function",
+      "module": "sc_profiling",
+      "signature": "(*args, private='__init__', include=None, exclude=None, strict=False)",
+      "summary": "Enumerate all functions in the supplied arguments; used in `sc.profile()`.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "load",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, folder=None, verbose=None, die=False, remapping=None, method=None, auto_remap=True, **kwargs)",
+      "summary": "Load a file that has been saved as a gzipped pickle file, e.g. by `sc.save()`. Accepts either a filename (standard usage) or a file object as the first argument. Note that `sc.load()`/`sc.loadobj()` are aliases of each other.",
+      "example": "obj = sc.load('myfile.obj') # Standard usage\nold = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files\nold = sc.load('my-old-file.obj', remapping={'foo.Bar': cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat\nold = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}, method='robust') # Equivalent to the above but force remapping and don't fail\nold = sc.load('my-old-file.obj', remapping={'foo.Bar': None}) # Skip mapping foo.Bar and don't fail",
+      "aliases": [
+        "loadobj"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "loadany",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename, folder=None, verbose=False, **kwargs)",
+      "summary": "Load data from a file using all known load functions until one works.",
+      "example": "data = sc.odict()\ndatafiles = ['headers.json', 'some-data.csv', 'more-data.xlsx', 'final-data.obj']\nfor datafile in datafiles:\n    data[datafile] = sc.loadany(datafile)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "loadarchive",
+      "kind": "function",
+      "module": "sc_versioning",
+      "signature": "(filename, folder=None, loadobj=True, loadmetadata=False, remapping=None, die=True, **kwargs)",
+      "summary": "Load a zip file saved with `sc.savearchive()`.",
+      "example": "obj = MyClass() # Create an arbitrary object\nsc.savearchive('my-class.zip', obj)\n\n# Much later...\ndata = sc.loadarchive('my-class.zip', loadmetadata=True)\nmetadata, obj = data['metadata'], data['obj']",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "loadbalancer",
+      "kind": "function",
+      "module": "sc_parallel",
+      "signature": "(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1, maxtime=36000, label=None, verbose=None, **kwargs)",
+      "summary": "Delay execution while CPU load is too high -- a very simple load balancer.",
+      "example": "# Simplest usage -- delay if CPU or memory load is >80%\nsc.loadbalancer()\n\n# Use a maximum CPU load of 50%, maximum memory of 90%, and stagger the start by process number\nfor nproc in processlist:\n    sc.loadbalancer(maxload=0.5, maxmem=0.8, index=nproc)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "loadfig",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(filename=None)",
+      "summary": "Load a plot from a file and reanimate it.",
+      "example": "import matplotlib.pyplot as plt\nimport sciris as sc\nfig = plt.figure(); plt.plot(np.random.rand(10))\nsc.savefigs(fig, filetype='fig', filename='example.fig')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "loadjson",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, folder=None, string=None, fromfile=True, **kwargs)",
+      "summary": "Convenience function for reading a JSON file (or string).",
+      "example": "json = sc.loadjson('my-file.json')\njson = sc.loadjson(string='{\"a\":null, \"b\":[1,2,3]}')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "loadmetadata",
+      "kind": "function",
+      "module": "sc_versioning",
+      "signature": "(filename, load_all=False, die=True)",
+      "summary": "Read metadata from a saved image; currently only PNG and SVG are supported.",
+      "example": "plt.plot([1,2,3], [4,2,6])\nsc.savefig('example.png')\nsc.loadmetadata('example.png')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "loadspreadsheet",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs)",
+      "summary": "Load a spreadsheet as a dataframe or a list of lists.",
+      "example": "df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel(header=1)\nwb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook\ndata = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "loadstr",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(string, **kwargs)",
+      "summary": "Like `sc.load()`, but for a bytes-like string (rarely used).",
+      "example": "obj = sc.objdict(a=1, b=2)\nbytestring = sc.dumpstr(obj)\nobj2 = sc.loadstr(bytestring)\nassert obj == obj2",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "loadtext",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, folder=None, splitlines=False)",
+      "summary": "Convenience function for reading a text file",
+      "example": "mytext = sc.loadtext('my-document.txt')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "loadyaml",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None)",
+      "summary": "Convenience function for reading a YAML file (or string).",
+      "example": "yaml = sc.loadyaml('my-file.yaml')\nyaml = sc.loadyaml(string='{\"a\":null, \"b\":[1,2,3]}')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "loadzip",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, folder=None, load=True, convert=True, **kwargs)",
+      "summary": "Load the contents of a zip file into a variable.",
+      "example": "data = sc.loadzip('my-files.zip')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "makefilepath",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=False, checkexists=None, sanitize=False, die=True, verbose=False)",
+      "summary": "Utility for taking a filename and folder -- or not -- and generating a valid path from them. By default, this function will combine a filename and folder using os.path.join, create the folder(s) if needed with os.makedirs, and return the absolute path.",
+      "example": "filepath = sc.makefilepath('myfile.obj') # Equivalent to os.path.abspath(os.path.expanduser('myfile.obj'))",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "makenested",
+      "kind": "function",
+      "module": "sc_nested",
+      "signature": "(obj=None, keylist=None, value=None, overwrite=True, generator=None, copy=False)",
+      "summary": "Make or set a nested object (such as a dictionary).",
+      "example": "foo = {}\nsc.makenested(foo, ['a','b'])\nfoo['a']['b'] = 3\nprint(sc.getnested(foo, ['a','b'])) # 3\nsc.setnested(foo, ['a','b'], 7)\nprint(sc.getnested(foo, ['a','b'])) # 7\nsc.makenested(foo, ['bar','cat'], value='in the hat')\nprint(foo['bar'])  # {'cat': 'in the hat'}",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "makepath",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(*args, aspath=True, **kwargs)",
+      "summary": "Alias for `sc.makefilepath()` that returns a path by default instead of a string (with apologies for the confusing terminology, kept for backwards compatibility).",
+      "example": "filepath = sc.makefilepath('myfile.obj') # Equivalent to os.path.abspath(os.path.expanduser('myfile.obj'))",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "manualcolorbar",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=None, cmap=None, norm=None, label=None, labelkwargs=None, ticks=None, ticklabels=None, fig=None, ax=None, cax=None, axkwargs=None, **kwargs)",
+      "summary": "Add a colorbar to a plot that does not support one by default.",
+      "example": "# Create a default colorbar\nsc.manualcolorbar()\n\n# Add a colorbar to non-mappable data (e.g. a scatterplot)\nn = 1000\nx = np.random.randn(n)\ny = np.random.randn(n)\nc = x**2 + y**2\nplt.scatter(x, y, c=c)\nsc.manualcolorbar(c)\n\n# Create a custom colorbar with a custom label\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "maximize",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(fig=None, die=False)",
+      "summary": "Maximize the current (or supplied) figure. Note: not guaranteed to work for all Matplotlib backends (e.g., agg).",
+      "example": "plt.plot([2,3,5])\nsc.maximize()",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "memload",
+      "kind": "function",
+      "module": "sc_parallel",
+      "signature": "()",
+      "summary": "Takes a snapshot of current fraction of memory usage via `psutil`",
+      "example": "",
+      "aliases": [
+        "mem_load"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "mergedicts",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, _die=True, **kwargs)",
+      "summary": "Small function to merge multiple dicts together.",
+      "example": "d0 = sc.mergedicts(user_args) # Useful if user_args might be None, but d0 is always a dict\nd1 = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}\nd2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}, None) # Returns {'a':1, 'b':3, 'c':4}\nd3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})\nd4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "mergelists",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(*args, coerce='default', copy=False, **kwargs)",
+      "summary": "Merge multiple lists together.",
+      "example": "# Simple usage\nsc.mergelists(None)                                # Returns []\nsc.mergelists([1,2,3], [4,5,6])                    # Returns [1, 2, 3, 4, 5, 6]\nsc.mergelists([1,2,3], 4, 5, 6)                    # Returns [1, 2, 3, 4, 5, 6]\nsc.mergelists([(1,2), (3,4)], (5,6))               # Returns [(1, 2), (3, 4), (5, 6)]\nsc.mergelists((1,2), (3,4), (5,6))                 # Returns [(1, 2), (3, 4), (5, 6)]\nsc.mergelists((1,2), (3,4), (5,6), coerce='tuple') # Returns [1, 2, 3, 4, 5, 6]\n\n# Usage for handling flexible input arguments\ndef my_func(arg=None, *args):\n    arglist = sc.mergelists(arg, list(args))\n    return arglist\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "mergenested",
+      "kind": "function",
+      "module": "sc_nested",
+      "signature": "(dict1, dict2, die=False, verbose=False, _path=None)",
+      "summary": "Merge different nested dictionaries",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "metadata",
+      "kind": "function",
+      "module": "sc_versioning",
+      "signature": "(outfile=None, version=None, comments=None, require=None, pipfreeze=True, user=True, caller=True, git=True, asdict=False, tostring=False, relframe=0, **kwargs)",
+      "summary": "Collect common metadata: useful for exactly recreating (or remembering) the environment at a moment in time.",
+      "example": "metadata = sc.metadata()\nsc.compareversions(metadata.versions.pandas, '1.5.0')\n\nsc.metadata('my-metadata.json') # Save to disk",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "midpointnorm",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(vcenter=0, vmin=None, vmax=None)",
+      "summary": "Alias to Matplotlib's TwoSlopeNorm. Used to place the center of the colormap somewhere other than the center of the data.",
+      "example": "data = np.random.rand(10,10) - 0.2\nplt.pcolor(data, cmap='bi', norm=sc.midpointnorm())",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "movelegend",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(ax1, ax2=None, invisible=True, **kwargs)",
+      "summary": "Move the legend from one axes to another, preserving properties.",
+      "example": "import numpy as np\nimport sciris as sc\n\nfig, axs = sc.getrowscols(3, make=True)\n\nfor i,ax in enumerate(fig.axes):\n    for j in range(4):\n        ax.plot(np.random.rand(50)*(1+j), 'o', label=f'Scale = {j}')\n\nax4 = fig.add_subplot(2,2,4)\nsc.movelegend(ax, ax4) # Can be any of the axes since they have the same legend",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "mprofile",
+      "kind": "function",
+      "module": "sc_profiling",
+      "signature": "(run, follow=None, show_results=True, *args, **kwargs)",
+      "summary": "Profile the line-by-line memory required by a function. See profile() for a usage example.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "nanequal",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(arr, *args, scalar=False, equal_nan=True)",
+      "summary": "Compare two or more arrays for equality element-wise, treating NaN values as equal.",
+      "example": "arr1 = np.array([1, 2, np.nan])\narr2 = [1, 2, np.nan]\nsc.nanequal(arr1, arr2) # Returns array([ True,  True,  True])\n\narr3 = [3, np.nan, 'foo']\nsc.nanequal(arr3, arr3, arr3, scalar=True) # Returns True",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "nestedloop",
+      "kind": "function",
+      "module": "sc_nested",
+      "signature": "(inputs, loop_order)",
+      "summary": "Zip list of lists in order",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "newlinejoin",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(*args)",
+      "summary": "Alias to `strjoin(*args, sep='\\n')`.",
+      "example": "sc.newlinejoin([1,2,3], 4, 'five')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "normalize",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(arr, minval=0.0, maxval=1.0)",
+      "summary": "Rescale an array between a minimum value and a maximum value.",
+      "example": "normarr = sc.normalize([2,3,7,27]) # Returns array([0.  , 0.04, 0.2 , 1.  ])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "normsum",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(arr, total=None)",
+      "summary": "Multiply a list or array by some normalizing factor so that its sum is equal to the total. Formerly called \"`scaleratio`\".",
+      "example": "normarr = sc.normsum([2,5,3,10], 100) # Scale so sum equals 100; returns [10.0, 25.0, 15.0, 50.0]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "now",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=None)",
+      "summary": "Get the current time as a datetime object, optionally in UTC time.",
+      "example": "sc.now() # Return current local time, e.g. 2019-03-14 15:09:26\nsc.now(timezone='US/Pacific') # Return the time now in a specific timezone\nsc.now(utc=True) # Return the time in UTC\nsc.now(astype='str') # Return the current time as a string instead of a date object; use 'int' for seconds\nsc.now(tostring=True) # Backwards-compatible alias for astype='str'\nsc.now(dateformat='%Y-%b-%d') # Return a different date format",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "numdigits",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(n, *args, count_minus=False, count_decimal=False)",
+      "summary": "Count the number of digits in a number (or list of numbers).",
+      "example": "sc.numdigits(12345) # Returns 5\nsc.numdigits(12345.5) # Returns 5\nsc.numdigits(0) # Returns 1\nsc.numdigits(-12345) # Returns 5\nsc.numdigits(-12345, count_minus=True) # Returns 6\nsc.numdigits(12, 123, 12345) # Returns [2, 3, 5]\nsc.numdigits(0.01) # Returns -2\nsc.numdigits(0.01, count_decimal=True) # Returns -4",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "objatt",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(obj, strlen=22, ncol=3, private=False, sort=True, _keys=None, return_keys=False)",
+      "summary": "Return a sorted string of object attributes for the Python __repr__ method; see `sc.prepr()` for options",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "objdict",
+      "kind": "class",
+      "module": "sc_odict",
+      "signature": "(*args, **kwargs)",
+      "summary": "An `odict` that acts like an object -- allow keys to be set/retrieved by object notation.",
+      "example": "import sciris as sc\n\nobj = sc.objdict(foo=3, bar=2)\nobj.foo + obj.bar # Gives 5\nfor key in obj.keys(): # It's still a dict\n    obj[key] = 10\n\nod = sc.objdict({'height':1.65, 'mass':59})\nod.bmi = od.mass/od.height**2\nod['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works\nod.keys = 3 # This raises an exception (you can't overwrite the keys() method)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "objectid",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(obj, showclasses=False)",
+      "summary": "Return the object ID as per the default Python `__repr__` method",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "objmeth",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(obj, strlen=22, ncol=3, private=False, sort=True, _keys=None, return_keys=False)",
+      "summary": "Return a sorted string of object methods for the Python __repr__ method; see `sc.prepr()` for options",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "objprop",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(obj, strlen=22, ncol=3, private=False, sort=True, _keys=None, return_keys=False)",
+      "summary": "Return a sorted string of object properties for the Python __repr__ method; see `sc.prepr()` for options",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "objrepr",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(obj, showid=True, showmeth=True, showprop=True, showatt=True, showclassatt=True, private=False, sort=True, dividerchar='—', dividerlen=72, strlen=22, ncol=3, _objkeys=None, _dirkeys=None)",
+      "summary": "Print out a detailed representation of an object: methods, properties, attributes, etc.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "odict",
+      "kind": "class",
+      "module": "sc_odict",
+      "signature": "(*args, defaultdict=None, **kwargs)",
+      "summary": "Ordered dictionary with integer indexing",
+      "example": "# Simple example\nmydict = sc.odict(foo=[1,2,3], bar=[4,5,6]) # Assignment is the same as ordinary dictionaries\nmydict['foo'] == mydict[0] # Access by key or by index\nmydict[:].sum() == 21 # Slices are returned as numpy arrays by default\nfor i,key,value in mydict.enumitems(): # Additional methods for iteration\n    print(f'Item {i} is named {key} and has value {value}')\n\n# Detailed example\nfoo = sc.odict({'ant':3,'bear':4, 'clam':6, 'donkey': 8}) # Create odict\nbar = foo.sorted() # Sort the dict\nassert bar['bear'] == 4 # Show get item by value\nassert bar[1] == 4 # Show get item by index\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "options",
+      "kind": "function",
+      "module": "sc_settings",
+      "signature": "(*args, **kwargs)",
+      "summary": "Set options for Sciris.",
+      "example": "sc.options(dpi=150) # Larger size\nsc.options(style='simple', font='Rosario') # Change to the \"simple\" Sciris style with a custom font\nsc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes\nsc.options(interactive=False) # Turn off interactive plots\nsc.options(jupyter=True) # Defaults for Jupyter\nsc.options('defaults') # Reset to default options",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "orangebluecolormap",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(apply=False)",
+      "summary": "Create an orange-blue colormap; most like RdYlBu but more pleasing. Created by Prashanth Selvaraj.",
+      "example": "cmap = sc.orangebluecolormap()\nsc.colormapdemo(cmap=cmap)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "orderlegend",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(order=None, ax=None, handles=None, labels=None, reverse=None, **kwargs)",
+      "summary": "Create a legend with a specified order, or change the order of an existing legend. Can either specify an order, or use the reverse argument to simply reverse the order. Note: you do not need to create the legend before calling this function; if you do, you will need to pass any additional keyword […]",
+      "example": "plt.plot([1,4,3], label='A')\nplt.plot([5,7,8], label='B')\nplt.plot([2,5,2], label='C')\nsc.orderlegend(reverse=True) # Legend order C, B, A\nsc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame\nplt.legend() # Restore original legend order A, B, C",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "Parallel",
+      "kind": "class",
+      "module": "sc_parallel",
+      "signature": "(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, **func_kwargs)",
+      "summary": "Parallelization manager",
+      "example": "import sciris as sc\n\ndef slowfunc(i):\n    sc.randsleep(seed=i)\n    return i**2\n\n# Standard usage\nP = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')\nP.run_async()\nP.monitor()\nP.finalize()\nprint(P.times)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "parallelize",
+      "kind": "function",
+      "module": "sc_parallel",
+      "signature": "(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, **func_kwargs)",
+      "summary": "Execute a function in parallel.",
+      "example": "def f(x):\n    return x*x\n\nresults = sc.parallelize(f, [1,2,3])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "parse_env",
+      "kind": "function",
+      "module": "sc_settings",
+      "signature": "(var, default=None, which='str')",
+      "summary": "Simple function to parse environment variables",
+      "example": "sc.parse_env('MY_FACTOR', default=3.5, which=float)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "parulacolormap",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(apply=False)",
+      "summary": "Create a map similar to Viridis, but brighter. Set apply=True to use immediately.",
+      "example": "cmap = sc.parulacolormap()\nsc.colormapdemo(cmap=cmap)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "path",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(*args, **kwargs)",
+      "summary": "Alias to `pathlib.Path()` with some additional input sanitization:",
+      "example": "sc.path('thisfile.py') # Returns PosixPath('thisfile.py')\n\nsc.path('/a/folder', None, 'a_file.txt') # Returns PosixPath('/a/folder/a_file.txt')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "percentcomplete",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(step=None, maxsteps=None, stepsize=1, prefix=None)",
+      "summary": "Display progress as a percentage.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "perturb",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(*args, n=1, span=0.5, randseed=None, normal=False)",
+      "summary": "Define an array of numbers uniformly perturbed with a mean of 1.",
+      "example": "sc.perturb() # Returns a random number on (0.5, 1.5)\nsc.perturb(0.1) # Returns a random number on (0.9, 1.1)\nsc.perturb(5, 0.3) # Returns e.g. array([0.73852362, 0.7088094 , 0.93713658, 1.13150755, 0.87183371])\nsc.perturb([1,2,3], 0.1, normal=True) # Returns e.g. array([1.03574377, 2.00286363, 3.53437126])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "plot3d",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=None, axkwargs=None, **kwargs)",
+      "summary": "Plot 3D data as a line",
+      "example": "x,y,z = np.random.rand(3,10)\nsc.plot3d(x, y, z)\n\nfig = plt.figure()\nn = 100\nx = np.array(sorted(np.random.rand(n)))\ny = x + np.random.randn(n)\nz = np.random.randn(n)\nc = np.arange(n)\nsc.plot3d(x, y, z, c=c, fig=fig)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "pp",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwargs)",
+      "summary": "Shortcut for pretty-printing the object.",
+      "example": "d = {'my very': {'large': 'and', 'unwieldy': {'nested': 'dictionary', 'cannot': 'be', 'easily': 'printed'}}}\nsc.pp(d)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "pr",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(obj, *args, **kwargs)",
+      "summary": "Pretty-print a detailed representation of an object (\"pr\" is short for \"print repr\").",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "prepr",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=72, use_repr=True, private=False, sort=True, strlen=22, ncol=3, maxtime=3, maxrecurse=5, die=False, debug=False)",
+      "summary": "Pretty-print a detailed representation of an object.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "prettyobj",
+      "kind": "class",
+      "module": "sc_printing",
+      "signature": "(*args, **kwargs)",
+      "summary": "Use pretty repr for objects, instead of just showing the type and memory pointer (the Python default for objects). Can also be used as the base class for custom classes.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printarr",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, dtype=None)",
+      "summary": "Print a numpy array nicely.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printblue",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(s, **kwargs)",
+      "summary": "Alias to print(colors.blue(s))",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printbold",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(s, **kwargs)",
+      "summary": "Alias to print(colors.bold(s))",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printcyan",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(s, **kwargs)",
+      "summary": "Alias to print(colors.cyan(s))",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printdata",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False)",
+      "summary": "Nicely print a complicated data structure, a la Matlab.",
+      "example": "",
+      "aliases": [],
+      "deprecated": true
+    },
+    {
+      "name": "printgreen",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(s, **kwargs)",
+      "summary": "Alias to print(colors.green(s))",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printjson",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(obj, indent=2, **kwargs)",
+      "summary": "Print an object as a JSON",
+      "example": "data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))\nsc.printjson(data)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printmagenta",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(s, **kwargs)",
+      "summary": "Alias to print(colors.magenta(s))",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printmean",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(*args, doprint=True, **kwargs)",
+      "summary": "Alias to `sc.arraymean()` with doprint=True",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printmedian",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(*args, doprint=True, **kwargs)",
+      "summary": "Alias to `sc.arraymedian()` with doprint=True",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printred",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(s, **kwargs)",
+      "summary": "Alias to print(colors.red(s))",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printtologfile",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(message=None, filename=None)",
+      "summary": "Append a message string to a file specified by a filename name/path.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printv",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(string, thisverbose=1, verbose=2, indent=2, **kwargs)",
+      "summary": "Optionally print a message and automatically indent. The idea is that a global or shared \"verbose\" variable is defined, which is passed to subfunctions, determining how much detail to print out.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printvars",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(localvars=None, varlist=None, label=None, divider=True, spaces=1, color=None)",
+      "summary": "Print out a list of variables. Note that the first argument must be locals().",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "printyellow",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(s, **kwargs)",
+      "summary": "Alias to print(colors.yellow(s))",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "profile",
+      "kind": "class",
+      "module": "sc_profiling",
+      "signature": "(run, follow=None, private='__init__', include=None, exclude=None, unwrap=True, skipzero=False, do_run=True, verbose=True, *args, **kwargs)",
+      "summary": "Profile the line-by-line time required by a function.",
+      "example": "def slow_fn():\n    n = 10000\n    int_list = []\n    int_dict = {}\n    for i in range(n):\n        int_list.append(i)\n        int_dict[i] = i\n    return\n\nclass Foo:\n    def __init__(self, a=0):\n        self.a = a\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "progressbar",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•', newline=False, flush=False, output=False, **kwargs)",
+      "summary": "Show a progress bar for a for loop.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "progressbars",
+      "kind": "class",
+      "module": "sc_printing",
+      "signature": "(n=1, total=1, label=None, leave=False, **kwargs)",
+      "summary": "Create multiple progress bars",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "quickobj",
+      "kind": "class",
+      "module": "sc_printing",
+      "signature": "(*args, **kwargs)",
+      "summary": "Like `sc.prettyobj()`, but do not print attribute values.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "randround",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(x)",
+      "summary": "Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.",
+      "example": "sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "randsleep",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(delay=1.0, var=1.0, low=None, high=None, seed=None)",
+      "summary": "Sleep for a nondeterminate period of time (useful for desynchronizing tasks)",
+      "example": "sc.randsleep(1) # Sleep for 0-2 s (average 1.0)\nsc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)\nsc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s\nsc.randsleeep(low=0.5, high=1.5) # Ditto",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "readdate",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(datestr=None, *args, dateformat=None, return_defaults=False, verbose=False)",
+      "summary": "Convenience function for loading a date from a string. If dateformat is None, this function tries a list of standard date types. Note: in most cases `sc.date()` should be used instead.",
+      "example": "dateobj  = sc.readdate('2020-03-03') # Standard format, so works\ndateobj  = sc.readdate('04-03-2020', dateformat='dmy') # Date is ambiguous, so need to specify day-month-year order\ndateobj  = sc.readdate(1611661666) # Can read timestamps as well\ndateobj  = sc.readdate(16166, dateformat='ordinal') # Or ordinal numbers of days, as used by Matplotlib\ndateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m') # Can read custom date formats\ndateobjs = sc.readdate('20200321', 1611661666) # Can mix and match formats",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "readjson",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(string, **kwargs)",
+      "summary": "Read JSON from a string",
+      "example": "string = '{\"this\":1, \"is\":2, \"a\":3, \"JSON\":4}'\njson = sc.readjson(string)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "readyaml",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(string, **kwargs)",
+      "summary": "Read YAML from a string",
+      "example": "string = '{\"this\":1, \"is\":2, \"a\":3, \"YAML\":4} # YAML allows comments!'\nyaml = sc.readyaml(string)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "require",
+      "kind": "function",
+      "module": "sc_versioning",
+      "signature": "(reqs=None, *args, message=None, exact=False, detailed=False, die=True, warn=True, verbose=True, **kwargs)",
+      "summary": "Check whether environment requirements are met. Alias to pkg_resources.require().",
+      "example": "sc.require('numpy')\nsc.require(numpy='')\nsc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})\nsc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False, message='Requirements <MISSING> not met, but continuing anyway')\nsc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "resourcemonitor",
+      "kind": "class",
+      "module": "sc_profiling",
+      "signature": "(mem=0.9, cpu=None, time=None, interval=1.0, label=None, start=True, die=True, kill_children=True, kill_parent=False, callback=None, verbose=None)",
+      "summary": "Asynchronously monitor resource (e.g. memory) usage and terminate the process if the specified threshold is exceeded.",
+      "example": "# Using with-as:\nwith sc.resourcemonitor(mem=0.8) as resmon:\n    memory_heavy_job()\n\n# As a standalone (don't forget to call stop!)\nresmon = sc.resourcemonitor(mem=0.95, cpu=0.9, time=3600, label='Load checker', die=False, callback=post_to_slack)\nlong_cpu_heavy_job()\nresmon.stop()\nprint(resmon.to_df())\n,",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "rgb2hex",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(arr)",
+      "summary": "A little helper function to convert e.g. [0.53, 0.74, 0.15] to a pleasing shade of green.",
+      "example": "hx = sc.rgb2hex([0.53, 0.74, 0.15]) # Returns '#87bc26'",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "rgb2hsv",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(colors=None)",
+      "summary": "Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets.",
+      "example": "hsv = sc.rgb2hsv([0.53, 0.74, 0.15]) # Returns array([0.2259887, 0.7972973, 0.74     ])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "rmpath",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(path=None, *args, die=True, verbose=True, interactive=False, **kwargs)",
+      "summary": "Remove file(s) and folder(s). Alias to `os.remove()` (for files) and `shutil.rmtree()` (for folders).",
+      "example": "sc.rmpath('myobj.obj') # Remove a single file\nsc.rmpath('myobj1.obj', 'myobj2.obj', 'myobj3.obj') # Remove multiple files\nsc.rmpath(['myobj.obj', 'tests']) # Remove a file and a folder interactively\nsc.rmpath(sc.getfilelist('tests/*.obj')) # Example of removing multiple files",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "robust_dcp",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj, _memo=None, verbose=False)",
+      "summary": "Ultra-robust deepcopying",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "rolling",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(data, window=7, operation='mean', replacenans=None, **kwargs)",
+      "summary": "Alias to `pandas.Series.rolling()` (window) method to smooth a series.",
+      "example": "data = [5,5,5,0,0,0,0,7,7,7,7,0,0,3,3,3]\nrolled = sc.rolling(data, replacenans='nearest')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "runcommand",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(command, printinput=False, printoutput=None, wait=True, **kwargs)",
+      "summary": "Make it easier to run shell commands.",
+      "example": "myfiles = sc.runcommand('ls').split('\\n') # Get a list of files in the current folder\nsc.runcommand('sshpass -f %s scp myfile.txt me@myserver:myfile.txt' % 'pa55w0rd', printinput=True, printoutput=True) # Copy a file remotely\nsc.runcommand('sleep 600; mkdir foo', wait=False) # Waits 10 min, then creates the folder \"foo\", but the function returns immediately\nsc.runcommand('find', wait=False) # Equivalent to executing 'find' in a terminal",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "safedivide",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(numerator=None, denominator=None, default=None, eps=None, warn=False)",
+      "summary": "Handle divide-by-zero and divide-by-nan elegantly.",
+      "example": "sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1\nsc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5\nsc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "sanitize",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(data=None, returninds=False, replacenans=None, defaultval=None, die=True, verbose=False, label=None)",
+      "summary": "Sanitize input to remove NaNs. (NB: `sc.sanitize()` and `sc.rmnans()` are aliases.)",
+      "example": "data = [3, 4, np.nan, 8, 2, np.nan, np.nan, 8]\nsanitized1, inds = sc.sanitize(data, returninds=True) # Remove NaNs\nsanitized2 = sc.sanitize(data, replacenans=True) # Replace NaNs using nearest neighbor interpolation\nsanitized3 = sc.sanitize(data, replacenans='nearest') # Eequivalent to replacenans=True\nsanitized4 = sc.sanitize(data, replacenans='linear') # Replace NaNs using linear interpolation\nsanitized5 = sc.sanitize(data, replacenans=0) # Replace NaNs with 0",
+      "aliases": [
+        "rmnans"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "sanitizecolor",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(color, asarray=False, alpha=None, normalize=True)",
+      "summary": "Alias to `matplotlib.colors.to_rgb`, but also handles numeric inputs.",
+      "example": "green1 = sc.sanitizecolor('g')\ngreen2 = sc.sanitizecolor('tab:green')\ncrimson1 = sc.sanitizecolor('crimson')\ncrimson2 = sc.sanitizecolor((220, 20, 60))\nmidgrey = sc.sanitizecolor(0.5)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "sanitizefilename",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename, sub='_', allowspaces=False, asciify=True, strict=False, disallowed=None, aspath=False)",
+      "summary": "Takes a potentially Linux- and Windows-unfriendly candidate file name, and returns a \"sanitized\" version that is more usable.",
+      "example": "bad = 'Nöt*a   file&name?!.doc'\ngood = sc.sanitizefilename(bad)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "sanitizepath",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(*args, aspath=True, **kwargs)",
+      "summary": "Alias for `sc.sanitizefilename()` that returns a path by default instead of a string.",
+      "example": "bad = 'Nöt*a   file&name?!.doc'\ngood = sc.sanitizefilename(bad)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "sanitizestr",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(string=None, alphanumeric=False, nospaces=False, asciify=False, lower=False, validvariable=False, spacechar='_', symchar='?')",
+      "summary": "Remove all non-\"standard\" characters from a string",
+      "example": "string1 = 'This Is a String'\nsc.sanitizestr(string1, lower=True) # Returns 'this is a string'\n\nstring2 = 'Lukáš wanted €500‽'\nsc.sanitizestr(string2, asciify=True, nospaces=True, symchar='*') # Returns 'Lukas_wanted_*500*'\n\nstring3 = '\"Ψ scattering\", María said, \"at ≤5 μm?\"'\nsc.sanitizestr(string3, asciify=True, alphanumeric=True, nospaces=True, spacechar='') # Returns '??scattering??Mariasaid??at?5?m??'\n\nstring4 = '4 path/names/to variable!'\nsc.sanitizestr(string4, validvariable=True, spacechar='') # Returns '_4pathnamestovariable'",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "save",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip', compresslevel=5, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs)",
+      "summary": "Save any object to disk",
+      "example": "# Standard usage\nmy_obj = ['this', 'is', 'my', 'custom', {'object':44}]\nsc.save('myfile.obj', my_obj)\nloaded = sc.load('myfile.obj')\nassert loaded == my_obj\n\n# Use dill instead, to save custom classes as well\nclass MyClass:\n    def __init__(self, x):\n        self.data = np.random.rand(100) + x\n    def sum(self):\n        return self.data.sum()\n# [...]",
+      "aliases": [
+        "saveobj"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "savearchive",
+      "kind": "function",
+      "module": "sc_versioning",
+      "signature": "(filename, obj, files=None, folder=None, comments=None, require=None, user=True, caller=True, git=True, pipfreeze=True, method='dill', allow_nonzip=False, dumpargs=None, **kwargs)",
+      "summary": "Save any object as a pickled zip file, including metadata as a separate JSON file.",
+      "example": "obj = MyClass() # Create an arbitrary object\nsc.savearchive('my-class.zip', obj)\n\n# Much later...\nobj = sc.loadarchive('my-class.zip')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "savefig",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relframe=0, folder=None, makedirs=True, die=True, verbose=True, **kwargs)",
+      "summary": "Save a figure, including metadata",
+      "example": "plt.plot([1,3,7])\n\nsc.savefig('example1.png')\nprint(sc.loadmetadata('example1.png'))\n\nsc.savefig('example2.png', comments='My figure', freeze=True)\nsc.pp(sc.loadmetadata('example2.png'))",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "savefigs",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, aslist=False, verbose=False, **kwargs)",
+      "summary": "Save the requested plots to disk.",
+      "example": "import matplotlib.pyplot as plt\nimport sciris as sc\nfig1 = plt.figure(); plt.plot(np.random.rand(10))\nfig2 = plt.figure(); plt.plot(np.random.rand(10))\nsc.savefigs([fig1, fig2]) # Save everything to one PDF file\nsc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})\nsc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')\nsc.savefigs(fig1, position=[0.3,0.3,0.5,0.5])",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "savejson",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, **kwargs)",
+      "summary": "Convenience function for saving to a JSON file.",
+      "example": "json = {'foo':'bar', 'data':[1,2,3]}\nsc.savejson('my-file.json', json)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "savemovie",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs)",
+      "summary": "Save a set of Matplotlib artists as a movie.",
+      "example": "import matplotlib.pyplot as plt\nimport sciris as sc\n\n# Simple example (takes ~5 s)\nplt.figure()\nframes = [pl.plot(np.cumsum(np.random.randn(100))) for i in range(20)] # Create frames\nsc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif\n\n# Complicated example (takes ~15 s)\nplt.figure()\nnframes = 100 # Set the number of frames\nndots = 100 # Set the number of dots\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "savespreadsheet",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, data=None, folder=None, sheetnames=None, close=True, workbook_args=None, formats=None, formatdata=None, verbose=False)",
+      "summary": "Semi-simple function to save data nicely to Excel.",
+      "example": "import numpy as np\nimport sciris as sc\nimport matplotlib.pyplot as plt\n\n# Simple example\ntestdata1 = np.random.rand(8,3)\nsc.savespreadsheet(filename='test1.xlsx', data=testdata1)\n\n# Include column headers\ntest2headers = [['A','B','C']] # Need double brackets to get right shape\ntest2values = np.random.rand(8,3).tolist()\ntestdata2 = test2headers + test2values\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "savetext",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, string=None, **kwargs)",
+      "summary": "Convenience function for saving a text file -- accepts a string or list of strings; can also save an arbitrary object, in which case it will first convert to a string.",
+      "example": "text = ['Here', 'is', 'a', 'poem']\nsc.savetext('my-poem.txt', text)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "saveyaml",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs)",
+      "summary": "Convenience function for saving to a YAML file.",
+      "example": "yaml = {'foo':'bar', 'data':[1,2,3]}\nsc.saveyaml('my-file.yaml', yaml, sort_keys=False) # Save to file and do not sort the keys\n\nstring = sc.saveyaml(obj=yaml) # Export to string",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "savezip",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, files=None, data=None, folder=None, sanitizepath=True, basename=False, tobytes=True, verbose=True, **kwargs)",
+      "summary": "Create a zip file from the supplied list of files (or less commonly, supplied data)",
+      "example": "scripts = sc.getfilelist('./code/*.py')\nsc.savezip('scripts.zip', scripts)\n\nsc.savezip('mydata.zip', data=dict(var1='test', var2=np.random.rand(3)))",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "scatter3d",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False, figkwargs=None, axkwargs=None, **kwargs)",
+      "summary": "Plot 3D data as a scatter",
+      "example": "# Implicit coordinates, color by height (z-value)\ndata = np.random.randn(10, 10)\nsc.scatter3d(data)\n\n# Explicit coordinates, color by index (i.e. ordering)\nx,y,z = np.random.rand(3,50)\nsc.scatter3d(x, y, z, c='index')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "ScirisDateFormatter",
+      "kind": "class",
+      "module": "sc_plotting",
+      "signature": "(locator, formats=None, zero_formats=None, show_offset=False, show_year=True, **kwargs)",
+      "summary": "An adaptation of Matplotlib's ConciseDateFormatter with a slightly different approach to formatting dates. Specifically:",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "ScirisOptions",
+      "kind": "class",
+      "module": "sc_settings",
+      "signature": "()",
+      "summary": "Set options for Sciris.",
+      "example": "sc.options(dpi=150) # Larger size\nsc.options(style='simple', font='Rosario') # Change to the \"simple\" Sciris style with a custom font\nsc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes\nsc.options(interactive=False) # Turn off interactive plots\nsc.options(jupyter=True) # Defaults for Jupyter\nsc.options('defaults') # Reset to default options",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "search",
+      "kind": "function",
+      "module": "sc_nested",
+      "signature": "(obj, query='<sc_nested_custom_None>', key='<sc_nested_custom_None>', value='<sc_nested_custom_None>', type='<sc_nested_custom_None>', method='exact', **kwargs)",
+      "summary": "Find a key/attribute or value within a list, dictionary or object.",
+      "example": "# Create a nested dictionary\nnested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':3, 'cat':[1,2,4,8]}}\n\n# Find keys\nkeymatches = sc.search(nested, 'bar', flatten=True)\n\n# Find values\nval = 4\nvalmatches = sc.search(nested, value=val).keys()[0] # Returns  ('b', 'cat', 2)\nassert sc.getnested(nested, valmatches) == val # Get from the original nested object\n\n# Find values with a function\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "sem",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(a, axis=None, *args, **kwargs)",
+      "summary": "Calculate the standard error of the mean (SEM).",
+      "example": "data = np.random.randn(100)\nsem = sc.sem(data) # Roughly 0.1",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "separatelegend",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(ax=None, handles=None, labels=None, reverse=False, figsettings=None, legendsettings=None)",
+      "summary": "Allows the legend of a figure to be rendered in a separate window instead",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "setaxislim",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(which=None, ax=None, data=None)",
+      "summary": "A small script to determine how the y limits should be set. Looks at all data (a list of arrays) and computes the lower limit to use, e.g.:",
+      "example": "sc.setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "setnested",
+      "kind": "function",
+      "module": "sc_nested",
+      "signature": "(obj=None, keylist=None, value=None, **kwargs)",
+      "summary": "Set the value for the given list of keys; alias for `sc.makenested()`.",
+      "example": "sc.setnested(foo, ['a','b'], 3) # Sets foo['a']['b'] = 3",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "setxlim",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(data=None, ax=None)",
+      "summary": "Alias for `sc.setaxislim(which='x')`",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "setylim",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(data=None, ax=None)",
+      "summary": "Alias for `sc.setaxislim(which='y')`.",
+      "example": "plt.plot([124,146,127])\nsc.setylim() # Equivalent to plt.ylim(bottom=0)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "sha",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj, digest=False, asint=False, encoding='utf-8')",
+      "summary": "Shortcut for the standard hashing (SHA) method",
+      "example": "sha1 = sc.sha(dict(foo=1, bar=2), True)\nsha2 = sc.sha(dict(foo=1, bar=2), digest=True)\nsha3 = sc.sha(dict(foo=1, bar=3), digest=True)\nassert sha1 == sha2\nassert sha2 != sha3",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "shifthue",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(colors=None, hueshift=0.0)",
+      "summary": "Shift the hue of the colors being fed in.",
+      "example": "colors = sc.shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "sigfig",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None)",
+      "summary": "Return a string representation of variable x with sigfigs number of significant figures",
+      "example": "",
+      "aliases": [
+        "sigfigs"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "sigfiground",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(x, sigfigs=4)",
+      "summary": "Round number(s) to the specified number of significant figures.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "similarity",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(*args, method='jaccard')",
+      "summary": "Compute pair-wise similarity for two or more sets",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "SIticks",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(ax=None, axis='y', fixed=False)",
+      "summary": "Apply SI tick formatting to one axis of a figure (e.g., 34k instead of 34000)",
+      "example": "data = np.random.rand(10)*1e4\nplt.plot(data)\nsc.SIticks()",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "slacknotification",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False)",
+      "summary": "Send a Slack notification when something is finished.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "smooth",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(data, repeats=None, kernel=None, legacy=False)",
+      "summary": "Very simple function to smooth a 1D or 2D array.",
+      "example": "data = np.random.randn(5,5)\nsmoothdata = sc.smooth(data)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "smoothinterp",
+      "kind": "function",
+      "module": "sc_math",
+      "signature": "(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=True, keepends=True, method='linear')",
+      "summary": "Smoothly interpolate over values",
+      "example": "import sciris as sc\nimport numpy as np\nfrom scipy import interpolate\n\norigy = np.array([0,0.2,0.1,0.9,0.7,0.8,0.95,1])\norigx = np.linspace(0,1,len(origy))\nnewx = np.linspace(0,1,5*len(origy))\nsc_y = sc.smoothinterp(newx, origx, origy, smoothness=5)\nnp_y = np.interp(newx, origx, origy)\nsi_y = interpolate.interp1d(origx, origy, 'cubic')(newx)\nkw = dict(lw=3, alpha=0.7)\nplt.plot(newx, np_y, '--', label='NumPy', **kw)\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "Spreadsheet",
+      "kind": "class",
+      "module": "sc_fileio",
+      "signature": "(*args, **kwargs)",
+      "summary": "A class for reading and writing Excel files in binary format. No disk IO needs to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "stackedbar",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(x=None, values=None, colors=None, labels=None, transpose=False, flipud=False, is_cum=False, barh=False, **kwargs)",
+      "summary": "Create a stacked bar chart.",
+      "example": "values = np.random.rand(3,5)\nsc.stackedbar(values, labels=['bottom','middle','top'])\nplt.legend()",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "strip_ansi",
+      "kind": "function",
+      "module": "sc_printing",
+      "signature": "(string)",
+      "summary": "Remove ANSI codes (e.g. colors) from a string",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "strjoin",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(*args, sep=', ')",
+      "summary": "Like string `join()`, but handles more flexible inputs, converts items to strings. By default, join with commas.",
+      "example": "sc.strjoin([1,2,3], 4, 'five')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "strsplit",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(string, sep=None, skipempty=True, lstrip=True, rstrip=True)",
+      "summary": "Convenience function to split common types of strings.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "suggest",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die=False, which='damerau')",
+      "summary": "Return suggested item",
+      "example": ">>> sc.suggest('foo', ['Foo','Bar'])\n'Foo'\n>>> sc.suggest('foo', ['FOO','Foo'])\n'Foo'\n>>> sc.suggest('foo', ['Foo ','boo'])\n'Foo '",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "surf3d",
+      "kind": "function",
+      "module": "sc_plotting",
+      "signature": "(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, colorbar=None, figkwargs=None, axkwargs=None, **kwargs)",
+      "summary": "Plot 2D or 3D data as a 3D surface",
+      "example": "# Simple example\ndata = sc.smooth(np.random.rand(30,50))\nsc.surf3d(data)\n\n# Use non-default axes and colors\nnx = 20\nny = 50\nx = 10*np.arange(nx)\ny = np.arange(ny) + 100\nz = sc.smooth(np.random.randn(ny,nx))\nc = z**2\nsc.surf3d(x=x, y=y, z=z, c=c, cmap='orangeblue')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "swapdict",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(d)",
+      "summary": "Swap the keys and values of a dictionary. Equivalent to {v:k for k,v in d.items()}",
+      "example": "d1 = {'a':'foo', 'b':'bar'}\nd2 = sc.swapdict(d1) # Returns {'foo':'a', 'bar':'b'}",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "thisdir",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(file=None, path=None, *args, frame=1, aspath=None, **kwargs)",
+      "summary": "Tiny helper function to get the folder for a file, usually the current file. If not supplied, then use the current file.",
+      "example": "thisdir = sc.thisdir() # Get folder of calling file\nthisdir = sc.thisdir('.') # Ditto (usually)\nthisdir = sc.thisdir(__file__) # Ditto (usually)\nfile_in_same_dir = sc.thisdir(path='new_file.txt')\nfile_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file\nnp_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming \"import numpy as np\")",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "thisfile",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(frame=1, aspath=None)",
+      "summary": "Return the full path of the current file.",
+      "example": "my_script_name = sc.thisfile() # Get the name of the current file\ncalling_script = sc.thisfile(frame=2) # Get the name of the script that called this script",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "thispath",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(*args, frame=1, aspath=True, **kwargs)",
+      "summary": "Alias for `sc.thisdir()` that returns a path by default instead of a string.",
+      "example": "thisdir = sc.thisdir() # Get folder of calling file\nthisdir = sc.thisdir('.') # Ditto (usually)\nthisdir = sc.thisdir(__file__) # Ditto (usually)\nfile_in_same_dir = sc.thisdir(path='new_file.txt')\nfile_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file\nnp_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming \"import numpy as np\")",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "tic",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "()",
+      "summary": "With `sc.toc()`, a little pair of functions to calculate a time difference:",
+      "example": "sc.tic()\nslow_func()\nsc.toc()\n\nT = sc.tic()\nslow_func2()\nsc.toc(T, label='slow_func2')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "time",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "()",
+      "summary": "Get current time in seconds -- alias to time.time()",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "timedsleep",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(delay=None, start=None, verbose=False)",
+      "summary": "Pause for the specified amount of time, taking into account how long other operations take.",
+      "example": "# Example for a long(ish) computation\nimport numpy as np\nfor i in range(10):\n    sc.timedsleep('start') # Initialize\n    n = int(2*np.random.rand()*1e6) # Variable computation time\n    for j in range(n):\n        tmp = np.random.rand()\n    sc.timedsleep(1, verbose=True) # Wait for one second per iteration including computation time\n\n# Example illustrating more accurate timing\nimport time\nn = 1000\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "timer",
+      "kind": "class",
+      "module": "sc_datetime",
+      "signature": "(label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs)",
+      "summary": "Simple timer class. Note: `sc.timer()` and `sc.Timer()` are aliases.",
+      "example": ">>> T = sc.timer(auto=True)\n>>> T.toc()\n(0): 2.63 s\n>>> T.toc()\n(1): 5.00 s",
+      "aliases": [
+        "Timer"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "toarray",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(x, keepnone=False, asobject=True, dtype=None, **kwargs)",
+      "summary": "Small function to ensure consistent format for things that should be arrays (note: `sc.toarray()` and `sc.promotetoarray()` are identical).",
+      "example": "sc.toarray(5) # Returns np.array([5])\nsc.toarray([3,5]) # Returns np.array([3,5])\nsc.toarray(None, skipnone=True) # Returns np.array([])\nsc.toarray([1, 'foo']) # Returns np.array([1, 'foo'], dtype=object)",
+      "aliases": [
+        "promotetoarray"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "toc",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit='s', output=False, verbose=None, elapsed=None, **kwargs)",
+      "summary": "With `sc.tic()`, a little pair of functions to calculate a time difference. See also `sc.timer()`.",
+      "example": "sc.tic()\nslow_func()\nsc.toc()\n\nT = sc.tic()\nslow_func2()\nsc.toc(T, label='slow_func2')",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "toctic",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(returntic=False, returntoc=False, *args, **kwargs)",
+      "summary": "A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.",
+      "example": "sc.tic()\nslow_operation_1()\nsc.toctic()\nslow_operation_2()\nsc.toc()",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "tolist",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj=None, objtype=None, keepnone=False, coerce='default')",
+      "summary": "Make sure object is always a list (note: `sc.tolist()`/`sc.promotetolist()` are identical).",
+      "example": "sc.tolist(5) # Returns [5]\nsc.tolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!\nsc.tolist(np.array([3,5]), coerce=np.ndarray) # Returns [3,5], since arrays are coerced to lists\nsc.tolist(None) # Returns []\nsc.tolist(range(3)) # Returns [0,1,2] since range is coerced by default\nsc.tolist(['a', 'b', 'c'], objtype='number') # Raises exception\n\ndef myfunc(data, keys):\n    keys = sc.tolist(keys)\n    for key in keys:\n        print(data[key])\n\n# [...]",
+      "aliases": [
+        "promotetolist"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "traceback",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(exc=None, value=None, tb=None, verbose=False, *args, **kwargs)",
+      "summary": "Shortcut for accessing the traceback",
+      "example": "    # Use automatic exception info\n    mylist = [0,1]\n    try:\n        mylist[2]\n    except:\n        print(f'Error: {sc.traceback()}')\n\n    # Supply exception manually (also illustrating sc.tryexcept())\n    with sc.tryexcept() as te1:\n        dict(a=3)['b']\n\n    with sc.tryexcept() as te2:\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "tracecalls",
+      "kind": "class",
+      "module": "sc_profiling",
+      "signature": "(trace='<default>', exclude='<default>', regex=False, repeats=False, custom=None, verbose=None)",
+      "summary": "Trace all function calls.",
+      "example": "import mymodule as mm\n\n# In context block\nwith sc.tracecalls('mymodule'):\n    mm.big_operation()\n\n# Explicitly\ntc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)\ntc.start()\nmm.big_operation()\ntc.stop()\ntc.df.disp()",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "transposelist",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(obj, fix_uneven=True)",
+      "summary": "Convert e.g. a list of key-value tuples into a list of keys and a list of values.",
+      "example": "o = sc.odict(a=1, b=4, c=9, d=16)\nitemlist = o.enumitems()\ninds, keys, vals = sc.transposelist(itemlist)\n\nlistoflists = [\n    ['a', 1, 3],\n    ['b', 4, 5],\n    ['c', 7, 8, 9, 10]\n]\ntrans = sc.transposelist(listoflists, fix_uneven=True)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "tryexcept",
+      "kind": "class",
+      "module": "sc_utils",
+      "signature": "(message=None, die=None, catch=None, verbose=1, history=None)",
+      "summary": "Simple class to catch exceptions in a single line",
+      "example": "# Basic usage\nvalues = [0,1]\nwith sc.tryexcept(): # Equivalent to contextlib.suppress(Exception)\n    values[2]\n\n# Raise only certain errors\nwith sc.tryexcept(die=IndexError): # Catch everything except IndexError\n    values[2]\n\n# Catch (do not raise) only certain errors, and print full error information\nwith sc.tryexcept(catch=IndexError, verbose=2): # Raise everything except IndexError\n    values[2]\n# [...]",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "turbocolormap",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(apply=False)",
+      "summary": "NOTE: as of Matplotlib 3.4.0, this colormap is included by default, and will soon be removed from Sciris.",
+      "example": "cmap = sc.turbocolormap()\nsc.colormapdemo(cmap=cmap)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "uniquename",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(name=None, namelist=None, style=None, human=False, suffix=None)",
+      "summary": "Given a name and a list of other names, add a counter to the name so that it doesn't conflict with the other names.",
+      "example": "sc.uniquename('out', ['out', 'out1']) # Returns 'out2'\nsc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)', 'myfile'], human=True) # Returns 'file (3)'\nsc.uniquename('results.csv', ['results.csv', 'results1.csv'], suffix='.csv') # Returns 'results2.csv'",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "UnpicklingError",
+      "kind": "class",
+      "module": "sc_fileio",
+      "signature": "(...)",
+      "summary": "An error raised when unpickling an object fails",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "UnpicklingWarning",
+      "kind": "class",
+      "module": "sc_fileio",
+      "signature": "(...)",
+      "summary": "A warning raised when unpickling an object fails",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "unzip",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(filename=None, outfolder='.', folder=None, members=None)",
+      "summary": "Convenience function for reading a zip file",
+      "example": "sc.unzip('my-files.zip', outfolder='my_data') # extracts all files",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "urlopen",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(url, filename=None, save=None, headers=None, params=None, data=None, prefix='http', convert=True, die=False, response='text', verbose=False)",
+      "summary": "Download a single URL.",
+      "example": "html = sc.urlopen('wikipedia.org') # Retrieve into variable html\nsc.urlopen('http://wikipedia.org', filename='wikipedia.html') # Save to file wikipedia.html\nsc.urlopen('https://wikipedia.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, wikipedia.org), with headers\nsc.urlopen('wikipedia.org', response='status') # Only return the HTTP status of the site",
+      "aliases": [
+        "wget"
+      ],
+      "deprecated": false
+    },
+    {
+      "name": "uuid",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kwargs)",
+      "summary": "Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID.",
+      "example": "sc.uuid() # Alias to uuid.uuid4()\nsc.uuid(which='hex') # Creates a length-6 hex string\nsc.uuid(which='ascii', length=10, n=50) # Creates 50 UUIDs of length 10 each using the full ASCII character set",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "vectocolor",
+      "kind": "function",
+      "module": "sc_colors",
+      "signature": "(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None, nancolor=None)",
+      "summary": "This function converts a vector (i.e., 1D array) of N values into an Nx3 matrix of color values according to the current colormap. It automatically scales the vector to provide maximum dynamic range for the color map.",
+      "example": "n = 1000\nx = np.random.randn(n,1);\ny = np.random.randn(n,1);\nc = sc.vectocolor(y);\nplt.scatter(x, y, c=c, s=50)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "yeartodate",
+      "kind": "function",
+      "module": "sc_datetime",
+      "signature": "(year, as_date=True, **kwargs)",
+      "summary": "Convert a decimal year to a date",
+      "example": "sc.yeartodate('2010-07-01') # Returns approximately 2010.5",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "zsave",
+      "kind": "function",
+      "module": "sc_fileio",
+      "signature": "(*args, compression='zstd', **kwargs)",
+      "summary": "Save a file using zstandard (instead of gzip) compression. This is an alias for `sc.save(..., compression='zstd')`; see `sc.save()` for details.",
+      "example": "",
+      "aliases": [],
+      "deprecated": false
+    }
+  ]
+}

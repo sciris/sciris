@@ -8,6 +8,9 @@ project:
   resources:
     - objects.json
     - objects.inv
+    - llms.txt
+    - llms-full.txt
+    - api.json
     - CNAME
 
 website:
@@ -84,8 +87,6 @@ website:
             - tutorials/tut_advanced.qmd
         - href: whatsnew.qmd
           text: "**What's new**"
-        - href: api/index.qmd
-          text: "**API reference**"
         - section: "**Contributing**"
           contents:
             - href: contributing.qmd

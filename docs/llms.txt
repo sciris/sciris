@@ -1,0 +1,341 @@
+# Sciris v3.3.0
+
+> Fast, flexible tools to simplify scientific Python
+
+- Sciris is a library of utilities for scientific computing: containers, file I/O, dates, arrays, plotting, parallelization, and profiling.
+- Everything listed here is available from the top level: `import sciris as sc`, then e.g. `sc.findnearest()`. Do not import submodules directly.
+- Signatures are as introspected from the current version; summaries are the first paragraph of each docstring.
+- Aliases are alternative names for the same object; the canonical name is the one listed, and is the one to prefer when writing new code.
+- A version of this file including a usage example for each function is available at llms-full.txt.
+
+This file lists all 274 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
+
+## Links
+
+- [Documentation](https://docs.sciris.org): tutorials, API reference, and the style guide
+- [Source](https://github.com/sciris/sciris): the Sciris repository
+- [Paper](https://doi.org/10.21105/joss.05076): Sciris: Simplifying scientific software in Python (JOSS 2023)
+
+## Math and arrays (sc_math)
+
+- `sc.approx(val1=None, val2=None, eps=None, **kwargs)`: Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()` and may be removed in future versions.
+- `sc.cat(*args, copy=False, **kwargs)`: Like `numpy.concatenate`, but takes anything and returns an array. Useful for e.g. appending a single number onto the beginning or end of an array.
+- `sc.convolve(a, v)`: Like `numpy.convolve`, but always returns an array the size of the first array (equivalent to mode='same'), and solves the boundary problem present in `numpy.convolve` by adjusting the edges by the weight of the convolution kernel.
+- `sc.count(arr=None, val=None, eps=1e-06, **kwargs)`: Count the number of matching elements.
+- `sc.dataindex(dataarray, index)`: Take an array of data and return either the first or last (or some other) non-NaN entry. [DEPRECATED]
+- `sc.fillnans(data=None, replacenans=True, **kwargs)`: Alias for `sc.sanitize(..., replacenans=True)` with nearest interpolation (or a specified value).
+- `sc.findfirst(*args, **kwargs)`: Alias for `sc.findinds(..., first=True)`. *New in version 1.0.0.*
+- `sc.findinds(arr=None, val=None, *args, eps=1e-06, first=False, last=False, ind=None, die=True, **kwargs)`: Find matches even if two things aren't eactly equal (e.g. floats vs. ints).
+- `sc.findlast(*args, **kwargs)`: Alias for `sc.findinds(..., last=True)`. *New in version 1.0.0.*
+- `sc.findnans(data=None, **kwargs)`: Alias for `sc.findinds(np.isnan(data))`.
+- `sc.findnearest(series=None, value=None)`: Return the index of the nearest match in series to value -- like `sc.findinds()`, but always returns an object with the same type as value (i.e. findnearest with a number returns a number, findnearest with an array returns an array).
+- `sc.gauss1d(x=None, y=None, xi=None, scale=None, use32=True)`: Gaussian 1D smoothing kernel.
+- `sc.gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, yscale=1.0, grid=False, use32=True)`: Gaussian 2D smoothing kernel.
+- `sc.getvaliddata(data=None, filterdata=None, defaultind=0)`: Return the data value indices that are valid based on the validity of the input data. [DEPRECATED]
+- `sc.getvalidinds(data=None, filterdata=None)`: Return the indices that are valid based on the validity of the input data from an arbitrary number of 1-D vector inputs. Note, closely related to `sc.getvaliddata()`. [DEPRECATED]
+- `sc.inclusiverange(*args, stretch=False, **kwargs)`: Like `numpy.arange`/`numpy.linspace`, but includes the start and stop points. Accepts 0-3 args, or the kwargs start, stop, step.
+- `sc.isprime(n, verbose=False)`: Determine if a number is prime.
+- `sc.linregress(x, y, full=False, **kwargs)`: Simple linear regression returning the line of best fit and R value. Similar to `scipy.stats.linregress`` but simpler.
+- `sc.nanequal(arr, *args, scalar=False, equal_nan=True)`: Compare two or more arrays for equality element-wise, treating NaN values as equal.
+- `sc.normalize(arr, minval=0.0, maxval=1.0)`: Rescale an array between a minimum value and a maximum value.
+- `sc.normsum(arr, total=None)`: Multiply a list or array by some normalizing factor so that its sum is equal to the total. Formerly called "`scaleratio`".
+- `sc.numdigits(n, *args, count_minus=False, count_decimal=False)`: Count the number of digits in a number (or list of numbers).
+- `sc.perturb(*args, n=1, span=0.5, randseed=None, normal=False)`: Define an array of numbers uniformly perturbed with a mean of 1.
+- `sc.randround(x)`: Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.
+- `sc.rolling(data, window=7, operation='mean', replacenans=None, **kwargs)`: Alias to `pandas.Series.rolling()` (window) method to smooth a series.
+- `sc.safedivide(numerator=None, denominator=None, default=None, eps=None, warn=False)`: Handle divide-by-zero and divide-by-nan elegantly.
+- `sc.sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die=True, verbose=False, label=None)`: Sanitize input to remove NaNs. (NB: `sc.sanitize()` and `sc.rmnans()` are aliases.) [aliases: sc.rmnans()]
+- `sc.sem(a, axis=None, *args, **kwargs)`: Calculate the standard error of the mean (SEM).
+- `sc.similarity(*args, method='jaccard')`: Compute pair-wise similarity for two or more sets
+- `sc.smooth(data, repeats=None, kernel=None, legacy=False)`: Very simple function to smooth a 1D or 2D array.
+- `sc.smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=True, keepends=True, method='linear')`: Smoothly interpolate over values
+
+## Optimization (sc_asd)
+
+- `sc.asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2, pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None, abstol=1e-06, reltol=0.001, stalliters=None, stoppingfunc=None, randseed=None, label=None, verbose=1, minval=0, die=True, **kwargs)`: Optimization using adaptive stochastic descent (ASD). Can be used as a faster and more powerful alternative to e.g. `scipy.optimize.minimize()`.
+
+## Dictionaries (sc_odict)
+
+- `sc.argparse(parse=True, **kwargs)`: Ultra-simple argument parser
+- `sc.asobj(obj, strict=True)`: Convert any object for which you would normally do `a['b']` to one where you can do `a.b`.
+- `sc.counter(iterable=None, /, **kwds)`: Like `collections.Counter`, but with additional supported mathematical operations.
+- `sc.dictobj(*args, **kwargs)`: Lightweight class to create an object that can also act like a dictionary.
+- `sc.objdict(*args, **kwargs)`: An `odict` that acts like an object -- allow keys to be set/retrieved by object notation.
+- `sc.odict(*args, defaultdict=None, **kwargs)`: Ordered dictionary with integer indexing
+
+## Dataframes (sc_dataframe)
+
+- `sc.dataframe(data=None, index=None, columns=None, dtype=None, copy=None, dtypes=None, nrows=None, **kwargs)`: An extension of the pandas `DataFrame` with additional convenience methods for accessing rows and columns and performing other operations, such as adding rows.
+
+## File I/O (sc_fileio)
+
+- `sc.Blobject(source=None, name=None, filename=None, blob=None)`: A wrapper for a binary file -- rarely used directly.
+- `sc.dumpstr(obj=None, **kwargs)`: Dump an object to a bytes-like string (rarely used by the user); see `sc.save()` instead.
+- `sc.Failed(*args, **kwargs)`: An empty class to represent a failed object loading. Not for use by the user.
+- `sc.getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=True, aspath=None)`: A shortcut for using `glob.glob()`. [aliases: sc.glob()]
+- `sc.getfilepaths(*args, aspath=True, **kwargs)`: Alias for `sc.getfilelist()` that returns paths by default instead of strings.
+- `sc.ispath(obj)`: Alias to isinstance(obj, Path).
+- `sc.jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=True, **kwargs)`: This is the main conversion function for Python data-structures into JSON-compatible data structures (note: `sc.sanitizejson()`/`sc.jsonify()` are identical). [aliases: sc.sanitizejson()]
+- `sc.jsonpickle(obj, filename=None, tostring=False, **kwargs)`: Save any Python object to a JSON using jsonpickle.
+- `sc.jsonunpickle(json=None, filename=None)`: Open a saved JSON pickle
+- `sc.load(filename=None, folder=None, verbose=None, die=False, remapping=None, method=None, auto_remap=True, **kwargs)`: Load a file that has been saved as a gzipped pickle file, e.g. by `sc.save()`. Accepts either a filename (standard usage) or a file object as the first argument. Note that `sc.load()`/`sc.loadobj()` are aliases of each other. [aliases: sc.loadobj()]
+- `sc.loadany(filename, folder=None, verbose=False, **kwargs)`: Load data from a file using all known load functions until one works.
+- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs)`: Convenience function for reading a JSON file (or string).
+- `sc.loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs)`: Load a spreadsheet as a dataframe or a list of lists.
+- `sc.loadstr(string, **kwargs)`: Like `sc.load()`, but for a bytes-like string (rarely used).
+- `sc.loadtext(filename=None, folder=None, splitlines=False)`: Convenience function for reading a text file
+- `sc.loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None)`: Convenience function for reading a YAML file (or string).
+- `sc.loadzip(filename=None, folder=None, load=True, convert=True, **kwargs)`: Load the contents of a zip file into a variable.
+- `sc.makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=False, checkexists=None, sanitize=False, die=True, verbose=False)`: Utility for taking a filename and folder -- or not -- and generating a valid path from them. By default, this function will combine a filename and folder using os.path.join, create the folder(s) if needed with os.makedirs, and return the absolute path.
+- `sc.makepath(*args, aspath=True, **kwargs)`: Alias for `sc.makefilepath()` that returns a path by default instead of a string (with apologies for the confusing terminology, kept for backwards compatibility).
+- `sc.path(*args, **kwargs)`: Alias to `pathlib.Path()` with some additional input sanitization:
+- `sc.printjson(obj, indent=2, **kwargs)`: Print an object as a JSON
+- `sc.readjson(string, **kwargs)`: Read JSON from a string
+- `sc.readyaml(string, **kwargs)`: Read YAML from a string
+- `sc.rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs)`: Remove file(s) and folder(s). Alias to `os.remove()` (for files) and `shutil.rmtree()` (for folders).
+- `sc.sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=False, disallowed=None, aspath=False)`: Takes a potentially Linux- and Windows-unfriendly candidate file name, and returns a "sanitized" version that is more usable.
+- `sc.sanitizepath(*args, aspath=True, **kwargs)`: Alias for `sc.sanitizefilename()` that returns a path by default instead of a string.
+- `sc.save(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip', compresslevel=5, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs)`: Save any object to disk [aliases: sc.saveobj()]
+- `sc.savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, **kwargs)`: Convenience function for saving to a JSON file.
+- `sc.savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, workbook_args=None, formats=None, formatdata=None, verbose=False)`: Semi-simple function to save data nicely to Excel.
+- `sc.savetext(filename=None, string=None, **kwargs)`: Convenience function for saving a text file -- accepts a string or list of strings; can also save an arbitrary object, in which case it will first convert to a string.
+- `sc.saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs)`: Convenience function for saving to a YAML file.
+- `sc.savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True, basename=False, tobytes=True, verbose=True, **kwargs)`: Create a zip file from the supplied list of files (or less commonly, supplied data)
+- `sc.Spreadsheet(*args, **kwargs)`: A class for reading and writing Excel files in binary format. No disk IO needs to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
+- `sc.thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs)`: Tiny helper function to get the folder for a file, usually the current file. If not supplied, then use the current file.
+- `sc.thisfile(frame=1, aspath=None)`: Return the full path of the current file.
+- `sc.thispath(*args, frame=1, aspath=True, **kwargs)`: Alias for `sc.thisdir()` that returns a path by default instead of a string.
+- `sc.UnpicklingError(...)`: An error raised when unpickling an object fails
+- `sc.UnpicklingWarning(...)`: A warning raised when unpickling an object fails
+- `sc.unzip(filename=None, outfolder='.', folder=None, members=None)`: Convenience function for reading a zip file
+- `sc.zsave(*args, compression='zstd', **kwargs)`: Save a file using zstandard (instead of gzip) compression. This is an alias for `sc.save(..., compression='zstd')`; see `sc.save()` for details.
+
+## Versioning and metadata (sc_versioning)
+
+- `sc.compareversions(version1, version2)`: Function to compare versions, expecting both arguments to be a string of the format 1.2.3, but numeric works too. Returns 0 for equality, -1 for v1<v2, and 1 for v1>v2.
+- `sc.freeze(lower=False)`: Alias for pip freeze.
+- `sc.getcaller(frame=2, tostring=True, includelineno=False, includeline=False, relframe=0, die=False)`: Try to get information on the calling function, but fail gracefully. See also `sc.thisfile()`.
+- `sc.gitinfo(path=None, hashlen=7, die=False, verbose=True)`: Retrieve git info
+- `sc.loadarchive(filename, folder=None, loadobj=True, loadmetadata=False, remapping=None, die=True, **kwargs)`: Load a zip file saved with `sc.savearchive()`.
+- `sc.loadmetadata(filename, load_all=False, die=True)`: Read metadata from a saved image; currently only PNG and SVG are supported.
+- `sc.metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=True, user=True, caller=True, git=True, asdict=False, tostring=False, relframe=0, **kwargs)`: Collect common metadata: useful for exactly recreating (or remembering) the environment at a moment in time.
+- `sc.require(reqs=None, *args, message=None, exact=False, detailed=False, die=True, warn=True, verbose=True, **kwargs)`: Check whether environment requirements are met. Alias to pkg_resources.require().
+- `sc.savearchive(filename, obj, files=None, folder=None, comments=None, require=None, user=True, caller=True, git=True, pipfreeze=True, method='dill', allow_nonzip=False, dumpargs=None, **kwargs)`: Save any object as a pickled zip file, including metadata as a separate JSON file.
+
+## Printing and formatting (sc_printing)
+
+- `sc.arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True, doprint=False, **kwargs)`: Quickly calculate the mean and standard deviation of an array.
+- `sc.arraymedian(data, ci=95, sf=3, doprint=False, **kwargs)`: Quickly calculate the median and confidence interval of an array.
+- `sc.blank(n=3)`: Tiny function to print n blank lines, 3 by default
+- `sc.capture(seq='', *args, **kwargs)`: Captures stdout (e.g., from `print()`) as a variable.
+- `sc.classatt(obj, strlen=22, ncol=3, private=False, sort=True, _objkeys=None, _dirkeys=None, return_keys=False)`: Return a sorted string of class attributes for the Python __repr__ method; see `sc.prepr()` for options
+- `sc.colorize(color=None, string=None, doprint=None, output=False, enable=True, showhelp=False, fg=None, bg=None, style=None)`: Colorize output text.
+- `sc.createcollist(items, title=None, strlen=22, ncol=3)`: Creates a string for a nice columnated list (e.g. to use in __repr__ method)
+- `sc.heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter=1, minlength=10, maxlength=200, sep=' ', tight=False, doprint=None, output=False, **kwargs)`: Create a colorful heading. If just supplied with a string (or list of inputs like print()), create blue text with horizontal lines above and below and 3 spaces above. You can customize the color, the divider character, how many spaces appear before the heading, and the minimum length of the divider […]
+- `sc.humanize_bytes(bytesize, decimals=3)`: Convert a number of bytes into a human-readable total.
+- `sc.indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **kwargs)`: Small wrapper to make textwrap more user friendly.
+- `sc.objatt(obj, strlen=22, ncol=3, private=False, sort=True, _keys=None, return_keys=False)`: Return a sorted string of object attributes for the Python __repr__ method; see `sc.prepr()` for options
+- `sc.objectid(obj, showclasses=False)`: Return the object ID as per the default Python `__repr__` method
+- `sc.objmeth(obj, strlen=22, ncol=3, private=False, sort=True, _keys=None, return_keys=False)`: Return a sorted string of object methods for the Python __repr__ method; see `sc.prepr()` for options
+- `sc.objprop(obj, strlen=22, ncol=3, private=False, sort=True, _keys=None, return_keys=False)`: Return a sorted string of object properties for the Python __repr__ method; see `sc.prepr()` for options
+- `sc.objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showclassatt=True, private=False, sort=True, dividerchar='—', dividerlen=72, strlen=22, ncol=3, _objkeys=None, _dirkeys=None)`: Print out a detailed representation of an object: methods, properties, attributes, etc.
+- `sc.percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None)`: Display progress as a percentage.
+- `sc.pr(obj, *args, **kwargs)`: Pretty-print a detailed representation of an object ("pr" is short for "print repr").
+- `sc.prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=72, use_repr=True, private=False, sort=True, strlen=22, ncol=3, maxtime=3, maxrecurse=5, die=False, debug=False)`: Pretty-print a detailed representation of an object.
+- `sc.prettyobj(*args, **kwargs)`: Use pretty repr for objects, instead of just showing the type and memory pointer (the Python default for objects). Can also be used as the base class for custom classes.
+- `sc.printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, dtype=None)`: Print a numpy array nicely.
+- `sc.printblue(s, **kwargs)`: Alias to print(colors.blue(s))
+- `sc.printbold(s, **kwargs)`: Alias to print(colors.bold(s))
+- `sc.printcyan(s, **kwargs)`: Alias to print(colors.cyan(s))
+- `sc.printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False)`: Nicely print a complicated data structure, a la Matlab. [DEPRECATED]
+- `sc.printgreen(s, **kwargs)`: Alias to print(colors.green(s))
+- `sc.printmagenta(s, **kwargs)`: Alias to print(colors.magenta(s))
+- `sc.printmean(*args, doprint=True, **kwargs)`: Alias to `sc.arraymean()` with doprint=True
+- `sc.printmedian(*args, doprint=True, **kwargs)`: Alias to `sc.arraymedian()` with doprint=True
+- `sc.printred(s, **kwargs)`: Alias to print(colors.red(s))
+- `sc.printtologfile(message=None, filename=None)`: Append a message string to a file specified by a filename name/path.
+- `sc.printv(string, thisverbose=1, verbose=2, indent=2, **kwargs)`: Optionally print a message and automatically indent. The idea is that a global or shared "verbose" variable is defined, which is passed to subfunctions, determining how much detail to print out.
+- `sc.printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, color=None)`: Print out a list of variables. Note that the first argument must be locals().
+- `sc.printyellow(s, **kwargs)`: Alias to print(colors.yellow(s))
+- `sc.progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•', newline=False, flush=False, output=False, **kwargs)`: Show a progress bar for a for loop.
+- `sc.progressbars(n=1, total=1, label=None, leave=False, **kwargs)`: Create multiple progress bars
+- `sc.quickobj(*args, **kwargs)`: Like `sc.prettyobj()`, but do not print attribute values.
+- `sc.sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None)`: Return a string representation of variable x with sigfigs number of significant figures [aliases: sc.sigfigs()]
+- `sc.sigfiground(x, sigfigs=4)`: Round number(s) to the specified number of significant figures.
+- `sc.slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False)`: Send a Slack notification when something is finished.
+- `sc.strip_ansi(string)`: Remove ANSI codes (e.g. colors) from a string
+
+## Plotting (sc_plotting)
+
+- `sc.animation(fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename='animation', nametemplate=None, imagefolder=None, anim_args=None, save_args=None, frames=None, tidy=True, verbose=True, **kwargs)`: A class for storing and saving a Matplotlib animation.
+- `sc.ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False, elev=None, azim=None, figkwargs=None, **kwargs)`: Create a 3D axis to plot in.
+- `sc.bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=None, returnfig=False, figkwargs=None, axkwargs=None, **kwargs)`: Plot 2D data as 3D bars
+- `sc.boxoff(ax=None, which=None, removeticks=True)`: Removes the top and right borders ("spines") of a plot.
+- `sc.commaticks(ax=None, axis='y', precision=2, cursor_precision=0)`: Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000).
+- `sc.dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None, rotation=None, locator=None, axis='x', **kwargs)`: Format the x-axis to use a given date formatter.
+- `sc.datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, start=None, end=None, rotation=None)`: Format a numeric x-axis to use dates.
+- `sc.emptyfig(*args, **kwargs)`: The emptiest figure possible
+- `sc.fig3d(num=None, nrows=1, ncols=1, index=1, returnax=False, figkwargs=None, axkwargs=None, **kwargs)`: Shortcut for creating a figure with 3D axes.
+- `sc.figlayout(fig=None, tight=True, keep=None, **kwargs)`: Alias to both `fig.set_layout_engine()` and `fig.subplots_adjust()`.
+- `sc.fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbose=False, die=False, **kwargs)`: List available fonts, or add new ones. Alias to Matplotlib's font manager.
+- `sc.getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remove_extra=True, **kwargs)`: Get the number of rows and columns needed to plot N figures. [aliases: sc.get_rows_cols()]
+- `sc.loadfig(filename=None)`: Load a plot from a file and reanimate it.
+- `sc.maximize(fig=None, die=False)`: Maximize the current (or supplied) figure. Note: not guaranteed to work for all Matplotlib backends (e.g., agg).
+- `sc.movelegend(ax1, ax2=None, invisible=True, **kwargs)`: Move the legend from one axes to another, preserving properties.
+- `sc.orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **kwargs)`: Create a legend with a specified order, or change the order of an existing legend. Can either specify an order, or use the reverse argument to simply reverse the order. Note: you do not need to create the legend before calling this function; if you do, you will need to pass any additional keyword […]
+- `sc.plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=None, axkwargs=None, **kwargs)`: Plot 3D data as a line
+- `sc.savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relframe=0, folder=None, makedirs=True, die=True, verbose=True, **kwargs)`: Save a figure, including metadata
+- `sc.savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, aslist=False, verbose=False, **kwargs)`: Save the requested plots to disk.
+- `sc.savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs)`: Save a set of Matplotlib artists as a movie.
+- `sc.scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False, figkwargs=None, axkwargs=None, **kwargs)`: Plot 3D data as a scatter
+- `sc.ScirisDateFormatter(locator, formats=None, zero_formats=None, show_offset=False, show_year=True, **kwargs)`: An adaptation of Matplotlib's ConciseDateFormatter with a slightly different approach to formatting dates. Specifically:
+- `sc.separatelegend(ax=None, handles=None, labels=None, reverse=False, figsettings=None, legendsettings=None)`: Allows the legend of a figure to be rendered in a separate window instead
+- `sc.setaxislim(which=None, ax=None, data=None)`: A small script to determine how the y limits should be set. Looks at all data (a list of arrays) and computes the lower limit to use, e.g.:
+- `sc.setxlim(data=None, ax=None)`: Alias for `sc.setaxislim(which='x')`
+- `sc.setylim(data=None, ax=None)`: Alias for `sc.setaxislim(which='y')`.
+- `sc.SIticks(ax=None, axis='y', fixed=False)`: Apply SI tick formatting to one axis of a figure (e.g., 34k instead of 34000)
+- `sc.stackedbar(x=None, values=None, colors=None, labels=None, transpose=False, flipud=False, is_cum=False, barh=False, **kwargs)`: Create a stacked bar chart.
+- `sc.surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, colorbar=None, figkwargs=None, axkwargs=None, **kwargs)`: Plot 2D or 3D data as a 3D surface
+
+## Colors and colormaps (sc_colors)
+
+- `sc.alpinecolormap(apply=False)`: This function generates a map based on ascending height. Based on data from Kazakhstan.
+- `sc.arraycolors(arr, **kwargs)`: Map an N-dimensional array of values onto the current colormap. An extension of vectocolor() for multidimensional arrays; see that function for additional arguments.
+- `sc.bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturationscale=None, npts=None, apply=False)`: Map colors onto bands of hue and saturation, with lightness mapped linearly. Unlike most colormaps, this colormap does not aim to be percentually uniform, but rather aims to make it easy to relate colors to as-exact-as-possible numbers (while still maintaining a semblance of overall trend from low […]
+- `sc.bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, apply=False)`: This function generators a two-color map, blue for negative, red for positive changes, with grey in the middle. The input argument is how much of a color gap there is between the red scale and the blue one.
+- `sc.colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True)`: Demonstrate a color map using simulated elevation data, shown in both 2D and 3D. The argument can be either a colormap itself or a string describing a colormap.
+- `sc.gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0, basis='default', demo=False)`: Create a qualitative "color map" by assigning points according to the maximum pairwise distance in the color cube. Basically, the algorithm generates n points that are maximally uniformly spaced in the [R, G, B] color cube.
+- `sc.hex2rgb(string)`: A little helper function to convert e.g. '87bc26' to a pleasing shade of green.
+- `sc.hsv2rgb(colors=None)`: Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets.
+- `sc.manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=None, cmap=None, norm=None, label=None, labelkwargs=None, ticks=None, ticklabels=None, fig=None, ax=None, cax=None, axkwargs=None, **kwargs)`: Add a colorbar to a plot that does not support one by default.
+- `sc.midpointnorm(vcenter=0, vmin=None, vmax=None)`: Alias to Matplotlib's TwoSlopeNorm. Used to place the center of the colormap somewhere other than the center of the data.
+- `sc.orangebluecolormap(apply=False)`: Create an orange-blue colormap; most like RdYlBu but more pleasing. Created by Prashanth Selvaraj.
+- `sc.parulacolormap(apply=False)`: Create a map similar to Viridis, but brighter. Set apply=True to use immediately.
+- `sc.rgb2hex(arr)`: A little helper function to convert e.g. [0.53, 0.74, 0.15] to a pleasing shade of green.
+- `sc.rgb2hsv(colors=None)`: Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets.
+- `sc.sanitizecolor(color, asarray=False, alpha=None, normalize=True)`: Alias to `matplotlib.colors.to_rgb`, but also handles numeric inputs.
+- `sc.shifthue(colors=None, hueshift=0.0)`: Shift the hue of the colors being fed in.
+- `sc.turbocolormap(apply=False)`: NOTE: as of Matplotlib 3.4.0, this colormap is included by default, and will soon be removed from Sciris.
+- `sc.vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None, nancolor=None)`: This function converts a vector (i.e., 1D array) of N values into an Nx3 matrix of color values according to the current colormap. It automatically scales the vector to provide maximum dynamic range for the color map.
+
+## Parallelization (sc_parallel)
+
+- `sc.cpu_count()`: Alias to `multiprocessing.cpu_count()` [aliases: sc.cpucount()]
+- `sc.cpuload(interval=0.1)`: Takes a snapshot of current CPU usage via `psutil` [aliases: sc.cpu_load()]
+- `sc.loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1, maxtime=36000, label=None, verbose=None, **kwargs)`: Delay execution while CPU load is too high -- a very simple load balancer.
+- `sc.memload()`: Takes a snapshot of current fraction of memory usage via `psutil` [aliases: sc.mem_load()]
+- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Parallelization manager
+- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Execute a function in parallel.
+
+## Profiling and resource monitoring (sc_profiling)
+
+- `sc.benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False)`: Benchmark Python performance
+- `sc.checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)`: Checks how much memory the variable or variables in question use by dumping them to file.
+- `sc.checkram(unit='mb', fmt='0.2f', start=0, to_string=True)`: Measure actual memory usage, typically at different points throughout execution.
+- `sc.cprofile(sort='cumtime', columns='default', mintime=0.001, maxitems=100, maxfunclen=40, maxpathlen=40, use_ms=None, stripdirs=True, show=True)`: Function profiler, built off Python's built-in cProfile
+- `sc.LimitExceeded(...)`: Custom exception for use with the `sc.resourcemonitor()` monitor.
+- `sc.listfuncs(*args, private='__init__', include=None, exclude=None, strict=False)`: Enumerate all functions in the supplied arguments; used in `sc.profile()`.
+- `sc.mprofile(run, follow=None, show_results=True, *args, **kwargs)`: Profile the line-by-line memory required by a function. See profile() for a usage example.
+- `sc.profile(run, follow=None, private='__init__', include=None, exclude=None, unwrap=True, skipzero=False, do_run=True, verbose=True, *args, **kwargs)`: Profile the line-by-line time required by a function.
+- `sc.resourcemonitor(mem=0.9, cpu=None, time=None, interval=1.0, label=None, start=True, die=True, kill_children=True, kill_parent=False, callback=None, verbose=None)`: Asynchronously monitor resource (e.g. memory) usage and terminate the process if the specified threshold is exceeded.
+- `sc.tracecalls(trace='<default>', exclude='<default>', regex=False, repeats=False, custom=None, verbose=None)`: Trace all function calls.
+
+## Utilities (sc_utils)
+
+- `sc.asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs)`: Convert an arbitrary Unicode string to ASCII.
+- `sc.autolist(*args)`: A simple extension to a list that defines add methods to simplify appending and extension.
+- `sc.checktype(obj=None, objtype=None, subtype=None, die=False)`: A convenience function for checking instances. If objtype is a type, then this function works exactly like isinstance(). But, it can also be one of the following strings:
+- `sc.cp(obj, die=True)`: Shortcut to perform a shallow copy operation
+- `sc.dcp(obj, memo=None, die=True, verbose=True)`: Shortcut to perform a deep copy operation
+- `sc.download(url, *args, filename=None, save=True, parallel=True, die=True, verbose=True, **kwargs)`: Download one or more URLs in parallel and return output or save them to disk.
+- `sc.fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True)`: Create a fast UID or set of UIDs. Note: for certain applications, `sc.uuid()` is faster than `sc.fast_uuid()`!
+- `sc.flexstr(arg, *args, force=True, join='')`: Try converting any object to a "regular" string (i.e. `str`), but proceed if it fails. Note: this function calls `repr()` rather than `str()` to ensure a more robust representation of objects.
+- `sc.getplatform(expected=None, platform=None, die=False)`: Return the name of the current "main" platform (e.g. 'mac')
+- `sc.getuser()`: Get the current username
+- `sc.htmlify(string, reverse=False, tostring=False)`: Convert a string to its HTML representation by converting unicode characters, characters that need to be escaped, and newlines. If reverse=True, will convert HTML to string. If tostring=True, will convert the bytestring back to Unicode.
+- `sc.ifelse(*args, default=None, check=None)`: For a list of inputs, return the first one that meets the condition
+- `sc.importbyname(module=None, variable=None, path=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs)`: Import modules by name.
+- `sc.importbypath(path, name=None, overwrite=False)`: Import a module by path.
+- `sc.isarray(obj, dtype=None)`: Check whether something is a Numpy array, and optionally check the dtype.
+- `sc.isfunc(obj)`: Quickly check if something is a function.
+- `sc.isiterable(obj, *args, exclude=None, minlen=None)`: Determine whether or not the input is iterable, with optional types to exclude.
+- `sc.isjupyter(detailed=False)`: Check if a command is running inside a Jupyter notebook.
+- `sc.islinux(die=False)`: Alias to `sc.getplatform('linux')`
+- `sc.ismac(die=False)`: Alias to `sc.getplatform('mac')`
+- `sc.ismodule(obj)`: Determine whether or not the input is a module.
+- `sc.isnumber(obj, isnan=None)`: Determine whether or not the input is a number.
+- `sc.isstring(obj)`: Determine whether or not the input is string-like (i.e., str or bytes).
+- `sc.iswindows(die=False)`: Alias to `sc.getplatform('windows')`
+- `sc.KeyNotFoundError(...)`: A tiny class to fix repr for KeyErrors. KeyError prints the repr of the error message, rather than the actual message, so e.g. newline characters print as the character rather than the actual newline.
+- `sc.LazyModule(module, variable, namespace=None, overwrite=True)`: Create a "lazy" module that is loaded if and only if an attribute is called.
+- `sc.Link(obj=None)`: A class to differentiate between an object and a link to an object. The idea is that this object is parsed differently from other objects -- most notably, a recursive method (such as a pickle) would skip over Link objects, and then would fix them up after the other objects had been reinstated.
+- `sc.LinkException(...)`: An exception to raise when links are broken, for exclusive use with the Link class.
+- `sc.mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, _die=True, **kwargs)`: Small function to merge multiple dicts together.
+- `sc.mergelists(*args, coerce='default', copy=False, **kwargs)`: Merge multiple lists together.
+- `sc.newlinejoin(*args)`: Alias to `strjoin(*args, sep='\n')`.
+- `sc.pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwargs)`: Shortcut for pretty-printing the object.
+- `sc.robust_dcp(obj, _memo=None, verbose=False)`: Ultra-robust deepcopying
+- `sc.runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)`: Make it easier to run shell commands.
+- `sc.sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, lower=False, validvariable=False, spacechar='_', symchar='?')`: Remove all non-"standard" characters from a string
+- `sc.sha(obj, digest=False, asint=False, encoding='utf-8')`: Shortcut for the standard hashing (SHA) method
+- `sc.strjoin(*args, sep=', ')`: Like string `join()`, but handles more flexible inputs, converts items to strings. By default, join with commas.
+- `sc.strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True)`: Convenience function to split common types of strings.
+- `sc.suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die=False, which='damerau')`: Return suggested item
+- `sc.swapdict(d)`: Swap the keys and values of a dictionary. Equivalent to {v:k for k,v in d.items()}
+- `sc.toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs)`: Small function to ensure consistent format for things that should be arrays (note: `sc.toarray()` and `sc.promotetoarray()` are identical). [aliases: sc.promotetoarray()]
+- `sc.tolist(obj=None, objtype=None, keepnone=False, coerce='default')`: Make sure object is always a list (note: `sc.tolist()`/`sc.promotetolist()` are identical). [aliases: sc.promotetolist()]
+- `sc.traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs)`: Shortcut for accessing the traceback
+- `sc.transposelist(obj, fix_uneven=True)`: Convert e.g. a list of key-value tuples into a list of keys and a list of values.
+- `sc.tryexcept(message=None, die=None, catch=None, verbose=1, history=None)`: Simple class to catch exceptions in a single line
+- `sc.uniquename(name=None, namelist=None, style=None, human=False, suffix=None)`: Given a name and a list of other names, add a counter to the name so that it doesn't conflict with the other names.
+- `sc.urlopen(url, filename=None, save=None, headers=None, params=None, data=None, prefix='http', convert=True, die=False, response='text', verbose=False)`: Download a single URL. [aliases: sc.wget()]
+- `sc.uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kwargs)`: Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID.
+
+## Dates and times (sc_datetime)
+
+- `sc.date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=None, outformat=None, **kwargs)`: Convert any reasonable object -- a string, integer, or datetime object, or list/array of any of those -- to a date object (or string, pandas, or numpy date).
+- `sc.datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=None, as_date=None, **kwargs)`: Perform calculations on a date string (or date object), returning a string (or a date). Wrapper to `dateutil.relativedelta.relativedelta()`.
+- `sc.daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=None, readformat=None, outformat=None, **kwargs)`: Return a list of dates from the start date to the end date. To convert a list of days (as integers) to dates, use `sc.date()` instead.
+- `sc.datetoyear(dateobj, dateformat=None, **kwargs)`: Convert a date to decimal year.
+- `sc.day(obj, *args, start_date=None, **kwargs)`: Convert a string, date/datetime object, or int to a day (int), the number of days since the start day. See also `sc.date()` and `sc.daydiff()``. If a start day is not supplied, it returns the number of days into the current year.
+- `sc.daydiff(*args)`: Convenience function to find the difference between two or more days. With only one argument, calculate days since Jan. 1st.
+- `sc.elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True)`: Accepts a datetime object or a string in ISO 8601 format and returns a human-readable string explaining when this time was.
+- `sc.getdate(obj=None, astype='str', dateformat=None)`: Alias for converting a date object to a formatted string.
+- `sc.now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=None)`: Get the current time as a datetime object, optionally in UTC time.
+- `sc.randsleep(delay=1.0, var=1.0, low=None, high=None, seed=None)`: Sleep for a nondeterminate period of time (useful for desynchronizing tasks)
+- `sc.readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbose=False)`: Convenience function for loading a date from a string. If dateformat is None, this function tries a list of standard date types. Note: in most cases `sc.date()` should be used instead.
+- `sc.tic()`: With `sc.toc()`, a little pair of functions to calculate a time difference:
+- `sc.time()`: Get current time in seconds -- alias to time.time()
+- `sc.timedsleep(delay=None, start=None, verbose=False)`: Pause for the specified amount of time, taking into account how long other operations take.
+- `sc.timer(label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs)`: Simple timer class. Note: `sc.timer()` and `sc.Timer()` are aliases. [aliases: sc.Timer()]
+- `sc.toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit='s', output=False, verbose=None, elapsed=None, **kwargs)`: With `sc.tic()`, a little pair of functions to calculate a time difference. See also `sc.timer()`.
+- `sc.toctic(returntic=False, returntoc=False, *args, **kwargs)`: A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.
+- `sc.yeartodate(year, as_date=True, **kwargs)`: Convert a decimal year to a date
+
+## Nested objects (sc_nested)
+
+- `sc.Equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, union=True, verbose=None, compare=True, die=False, **kwargs)`: Compare equality between two arbitrary objects -- see `sc.equal()` for full documentation.
+- `sc.equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, union=True, verbose=None, die=False, **kwargs)`: Compare equality between two arbitrary objects
+- `sc.flattendict(nesteddict, sep=None, _prefix=None)`: Flatten nested dictionary
+- `sc.getnested(nested, keylist, safe=False, default=None)`: Get the value for the given list of keys
+- `sc.iternested(nesteddict, _previous=None)`: Return a list of all the twigs in the current dictionary
+- `sc.IterObj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs)`: Object iteration manager
+- `sc.iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, *args, **kwargs)`: Iterate over an object and apply a function to each node (item with or without children).
+- `sc.makenested(obj=None, keylist=None, value=None, overwrite=True, generator=None, copy=False)`: Make or set a nested object (such as a dictionary).
+- `sc.mergenested(dict1, dict2, die=False, verbose=False, _path=None)`: Merge different nested dictionaries
+- `sc.nestedloop(inputs, loop_order)`: Zip list of lists in order
+- `sc.search(obj, query='<sc_nested_custom_None>', key='<sc_nested_custom_None>', value='<sc_nested_custom_None>', type='<sc_nested_custom_None>', method='exact', **kwargs)`: Find a key/attribute or value within a list, dictionary or object.
+- `sc.setnested(obj=None, keylist=None, value=None, **kwargs)`: Set the value for the given list of keys; alias for `sc.makenested()`.
+
+## Settings and help (sc_settings)
+
+- `sc.help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False, debug=False)`: Get help on Sciris in general, or search for a word/expression.
+- `sc.options(*args, **kwargs)`: Set options for Sciris.
+- `sc.parse_env(var, default=None, which='str')`: Simple function to parse environment variables
+- `sc.ScirisOptions()`: Set options for Sciris.
+
+## Other
+
+- `sc.ddict(...)`: defaultdict(default_factory=None, /, [...]) --> dict with default factory
+
+<!-- Generated by `python make_api.py` for Sciris v3.3.0: llms.txt -->

@@ -38,6 +38,15 @@ def update_version():
     return
 
 
+@sc.timer('Build API index')
+def build_api_index():
+    """ Regenerate the machine-readable API index (api.json, llms.txt, llms-full.txt) """
+    import make_api
+    sc.heading('Building machine-readable API index...')
+    make_api.write()
+    return
+
+
 @sc.timer('Build API docs')
 def build_api_docs():
     """ Build the API reference with quartodoc """
@@ -318,6 +327,7 @@ if __name__ == '__main__':
     if 'pre' in sys.argv:
         sc.heading('Starting Quarto docs build', divider='★')
         update_version()
+        build_api_index()
         build_api_docs()
         customize_aliases()
         build_interlinks()

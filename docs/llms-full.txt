@@ -1,0 +1,2112 @@
+# Sciris v3.3.0
+
+> Fast, flexible tools to simplify scientific Python
+
+- Sciris is a library of utilities for scientific computing: containers, file I/O, dates, arrays, plotting, parallelization, and profiling.
+- Everything listed here is available from the top level: `import sciris as sc`, then e.g. `sc.findnearest()`. Do not import submodules directly.
+- Signatures are as introspected from the current version; summaries are the first paragraph of each docstring.
+- Aliases are alternative names for the same object; the canonical name is the one listed, and is the one to prefer when writing new code.
+
+This file lists all 274 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
+
+## Links
+
+- [Documentation](https://docs.sciris.org): tutorials, API reference, and the style guide
+- [Source](https://github.com/sciris/sciris): the Sciris repository
+- [Paper](https://doi.org/10.21105/joss.05076): Sciris: Simplifying scientific software in Python (JOSS 2023)
+
+## Math and arrays (sc_math)
+
+- `sc.approx(val1=None, val2=None, eps=None, **kwargs)`: Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()` and may be removed in future versions.
+
+  ```python
+  sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True
+  sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
+  ```
+
+- `sc.cat(*args, copy=False, **kwargs)`: Like `numpy.concatenate`, but takes anything and returns an array. Useful for e.g. appending a single number onto the beginning or end of an array.
+
+  ```python
+  arr = sc.cat(4, np.ones(3))
+  arr = sc.cat(np.array([1,2,3]), [4,5], 6)
+  arr = sc.cat(np.random.rand(2,4), np.random.rand(2,6), axis=1)
+  ```
+
+- `sc.convolve(a, v)`: Like `numpy.convolve`, but always returns an array the size of the first array (equivalent to mode='same'), and solves the boundary problem present in `numpy.convolve` by adjusting the edges by the weight of the convolution kernel.
+
+  ```python
+  a = np.ones(5)
+  v = np.array([0.3, 0.5, 0.2])
+  c1 = np.convolve(a, v, mode='same') # Returns array([0.8, 1.  , 1.  , 1.  , 0.7])
+  c2 = sc.convolve(a, v)              # Returns array([1., 1., 1., 1., 1.])
+  ```
+
+- `sc.count(arr=None, val=None, eps=1e-06, **kwargs)`: Count the number of matching elements.
+
+  ```python
+  sc.count(rand(10)<0.5) # returns e.g. 4
+  sc.count([2,3,6,3], 3) # returns 2
+  ```
+
+- `sc.dataindex(dataarray, index)`: Take an array of data and return either the first or last (or some other) non-NaN entry. [DEPRECATED]
+- `sc.fillnans(data=None, replacenans=True, **kwargs)`: Alias for `sc.sanitize(..., replacenans=True)` with nearest interpolation (or a specified value).
+- `sc.findfirst(*args, **kwargs)`: Alias for `sc.findinds(..., first=True)`. *New in version 1.0.0.*
+- `sc.findinds(arr=None, val=None, *args, eps=1e-06, first=False, last=False, ind=None, die=True, **kwargs)`: Find matches even if two things aren't eactly equal (e.g. floats vs. ints).
+
+  ```python
+  data = np.random.rand(10)
+  sc.findinds(data<0.5) # Standard usage; returns e.g. array([2, 4, 5, 9])
+  sc.findinds(data>0.1, data<0.5) # Multiple arguments
+
+  sc.findinds([2,3,6,3], 3) # Returs array([1,3])
+  sc.findinds([2,3,6,3], 3, first=True) # Returns 1
+  ```
+
+- `sc.findlast(*args, **kwargs)`: Alias for `sc.findinds(..., last=True)`. *New in version 1.0.0.*
+- `sc.findnans(data=None, **kwargs)`: Alias for `sc.findinds(np.isnan(data))`.
+
+  ```python
+  data = [0, 1, 2, np.nan, 4, np.nan, 6, np.nan, np.nan, np.nan, 10]
+  sc.findnans(data) # Returns array([3, 5, 7, 8, 9])
+  ```
+
+- `sc.findnearest(series=None, value=None)`: Return the index of the nearest match in series to value -- like `sc.findinds()`, but always returns an object with the same type as value (i.e. findnearest with a number returns a number, findnearest with an array returns an array).
+
+  ```python
+  sc.findnearest(rand(10), 0.5) # returns whichever index is closest to 0.5
+  sc.findnearest([2,3,6,3], 6) # returns 2
+  sc.findnearest([2,3,6,3], 6) # returns 2
+  sc.findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
+  ```
+
+- `sc.gauss1d(x=None, y=None, xi=None, scale=None, use32=True)`: Gaussian 1D smoothing kernel.
+
+  ```python
+  # Setup
+  import numpy as np
+  import matplotlib.pyplot as plt
+  import sciris as sc
+
+  x = np.random.rand(40)
+  y = (x-0.3)**2 + 0.2*np.random.rand(40)
+
+  # Smooth
+  yi = sc.gauss1d(x, y)
+  yi2 = sc.gauss1d(x, y, scale=0.3)
+  xi3 = np.linspace(0,1)
+  # [...]
+  ```
+
+- `sc.gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, yscale=1.0, grid=False, use32=True)`: Gaussian 2D smoothing kernel.
+
+  ```python
+  # Setup
+  import numpy as np
+  import matplotlib.pyplot as plt
+
+  x = np.random.rand(40)
+  y = np.random.rand(40)
+  z = 1-(x-0.5)**2 + (y-0.5)**2 # Make a saddle
+
+  # Simple usage -- only works if z is 2D
+  zi0 = sc.gauss2d(np.random.rand(10,10))
+  sc.surf3d(zi0)
+
+  # [...]
+  ```
+
+- `sc.getvaliddata(data=None, filterdata=None, defaultind=0)`: Return the data value indices that are valid based on the validity of the input data. [DEPRECATED]
+
+  ```python
+  sc.getvaliddata(array([3,5,8,13]), array([2000, nan, nan, 2004])) # Returns array([3,13])
+  ```
+
+- `sc.getvalidinds(data=None, filterdata=None)`: Return the indices that are valid based on the validity of the input data from an arbitrary number of 1-D vector inputs. Note, closely related to `sc.getvaliddata()`. [DEPRECATED]
+
+  ```python
+  sc.getvalidinds([3,5,8,13], [2000, nan, nan, 2004]) # Returns array([0,3])
+  ```
+
+- `sc.inclusiverange(*args, stretch=False, **kwargs)`: Like `numpy.arange`/`numpy.linspace`, but includes the start and stop points. Accepts 0-3 args, or the kwargs start, stop, step.
+
+  ```python
+  x = sc.inclusiverange(10)        # Like np.arange(11)
+  x = sc.inclusiverange(3,5,0.2)   # Like np.linspace(3, 5, int((5-3)/0.2+1))
+  x = sc.inclusiverange(stop=5)    # Like np.arange(6)
+  x = sc.inclusiverange(6, step=2) # Like np.arange(0, 7, 2)
+  x = sc.inclusiverange(0, 10, 3) # Like np.arange(0, 10, 3)
+  x = sc.inclusiverange(0, 10, 3, stretch=True) # Like np.linspace(0,10,int(10/3)+1)
+  ```
+
+- `sc.isprime(n, verbose=False)`: Determine if a number is prime.
+
+  ```python
+  for i in range(100): print(i) if sc.isprime(i) else None
+  ```
+
+- `sc.linregress(x, y, full=False, **kwargs)`: Simple linear regression returning the line of best fit and R value. Similar to `scipy.stats.linregress`` but simpler.
+
+  ```python
+  x = range(10)
+  y = sorted(2*np.random.rand(10) + 1)
+  m,b = sc.linregress(x, y) # Simple usage
+  out = sc.linregress(x, y, full=True) # Has out.m, out.b, out.x, out.y, out.corr, etc.
+  plt.scatter(x, y)
+  plt.plot(x, m*x+b)
+  plt.bar(x, out.residuals)
+  plt.title(f'R² = {out.r2}')
+  ```
+
+- `sc.nanequal(arr, *args, scalar=False, equal_nan=True)`: Compare two or more arrays for equality element-wise, treating NaN values as equal.
+
+  ```python
+  arr1 = np.array([1, 2, np.nan])
+  arr2 = [1, 2, np.nan]
+  sc.nanequal(arr1, arr2) # Returns array([ True,  True,  True])
+
+  arr3 = [3, np.nan, 'foo']
+  sc.nanequal(arr3, arr3, arr3, scalar=True) # Returns True
+  ```
+
+- `sc.normalize(arr, minval=0.0, maxval=1.0)`: Rescale an array between a minimum value and a maximum value.
+
+  ```python
+  normarr = sc.normalize([2,3,7,27]) # Returns array([0.  , 0.04, 0.2 , 1.  ])
+  ```
+
+- `sc.normsum(arr, total=None)`: Multiply a list or array by some normalizing factor so that its sum is equal to the total. Formerly called "`scaleratio`".
+
+  ```python
+  normarr = sc.normsum([2,5,3,10], 100) # Scale so sum equals 100; returns [10.0, 25.0, 15.0, 50.0]
+  ```
+
+- `sc.numdigits(n, *args, count_minus=False, count_decimal=False)`: Count the number of digits in a number (or list of numbers).
+
+  ```python
+  sc.numdigits(12345) # Returns 5
+  sc.numdigits(12345.5) # Returns 5
+  sc.numdigits(0) # Returns 1
+  sc.numdigits(-12345) # Returns 5
+  sc.numdigits(-12345, count_minus=True) # Returns 6
+  sc.numdigits(12, 123, 12345) # Returns [2, 3, 5]
+  sc.numdigits(0.01) # Returns -2
+  sc.numdigits(0.01, count_decimal=True) # Returns -4
+  ```
+
+- `sc.perturb(*args, n=1, span=0.5, randseed=None, normal=False)`: Define an array of numbers uniformly perturbed with a mean of 1.
+
+  ```python
+  sc.perturb() # Returns a random number on (0.5, 1.5)
+  sc.perturb(0.1) # Returns a random number on (0.9, 1.1)
+  sc.perturb(5, 0.3) # Returns e.g. array([0.73852362, 0.7088094 , 0.93713658, 1.13150755, 0.87183371])
+  sc.perturb([1,2,3], 0.1, normal=True) # Returns e.g. array([1.03574377, 2.00286363, 3.53437126])
+  ```
+
+- `sc.randround(x)`: Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.
+
+  ```python
+  sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
+  ```
+
+- `sc.rolling(data, window=7, operation='mean', replacenans=None, **kwargs)`: Alias to `pandas.Series.rolling()` (window) method to smooth a series.
+
+  ```python
+  data = [5,5,5,0,0,0,0,7,7,7,7,0,0,3,3,3]
+  rolled = sc.rolling(data, replacenans='nearest')
+  ```
+
+- `sc.safedivide(numerator=None, denominator=None, default=None, eps=None, warn=False)`: Handle divide-by-zero and divide-by-nan elegantly.
+
+  ```python
+  sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1
+  sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5
+  sc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])
+  ```
+
+- `sc.sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die=True, verbose=False, label=None)`: Sanitize input to remove NaNs. (NB: `sc.sanitize()` and `sc.rmnans()` are aliases.) [aliases: sc.rmnans()]
+
+  ```python
+  data = [3, 4, np.nan, 8, 2, np.nan, np.nan, 8]
+  sanitized1, inds = sc.sanitize(data, returninds=True) # Remove NaNs
+  sanitized2 = sc.sanitize(data, replacenans=True) # Replace NaNs using nearest neighbor interpolation
+  sanitized3 = sc.sanitize(data, replacenans='nearest') # Eequivalent to replacenans=True
+  sanitized4 = sc.sanitize(data, replacenans='linear') # Replace NaNs using linear interpolation
+  sanitized5 = sc.sanitize(data, replacenans=0) # Replace NaNs with 0
+  ```
+
+- `sc.sem(a, axis=None, *args, **kwargs)`: Calculate the standard error of the mean (SEM).
+
+  ```python
+  data = np.random.randn(100)
+  sem = sc.sem(data) # Roughly 0.1
+  ```
+
+- `sc.similarity(*args, method='jaccard')`: Compute pair-wise similarity for two or more sets
+- `sc.smooth(data, repeats=None, kernel=None, legacy=False)`: Very simple function to smooth a 1D or 2D array.
+
+  ```python
+  data = np.random.randn(5,5)
+  smoothdata = sc.smooth(data)
+  ```
+
+- `sc.smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, ensurefinite=True, keepends=True, method='linear')`: Smoothly interpolate over values
+
+  ```python
+  import sciris as sc
+  import numpy as np
+  from scipy import interpolate
+
+  origy = np.array([0,0.2,0.1,0.9,0.7,0.8,0.95,1])
+  origx = np.linspace(0,1,len(origy))
+  newx = np.linspace(0,1,5*len(origy))
+  sc_y = sc.smoothinterp(newx, origx, origy, smoothness=5)
+  np_y = np.interp(newx, origx, origy)
+  si_y = interpolate.interp1d(origx, origy, 'cubic')(newx)
+  kw = dict(lw=3, alpha=0.7)
+  plt.plot(newx, np_y, '--', label='NumPy', **kw)
+  # [...]
+  ```
+
+
+## Optimization (sc_asd)
+
+- `sc.asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2, pinitial=None, sinitial=None, xmin=None, xmax=None, maxiters=None, maxtime=None, abstol=1e-06, reltol=0.001, stalliters=None, stoppingfunc=None, randseed=None, label=None, verbose=1, minval=0, die=True, **kwargs)`: Optimization using adaptive stochastic descent (ASD). Can be used as a faster and more powerful alternative to e.g. `scipy.optimize.minimize()`.
+
+  ```python
+  # Basic usage
+  import numpy as np
+  import sciris as sc
+  result = sc.asd(np.linalg.norm, [1, 2, 3])
+  print(result.x)
+
+  # With arguments: positional via args, or dict of keywords, or keyword arguments
+  def my_func(x, scale=1.0, weight=1.0):  # Example function with keywords
+      return abs((x[0] - 1)) + abs(x[1] + 2)*scale + abs(x[2] + 3)*weight
+
+  result = sc.asd(my_func, x=[0, 0, 1], args=[0.5, 0.1]) # Option 1 for passing arguments
+  result = sc.asd(my_func, x=[0, 0, 1], args=dict(scale=0.5, weight=0.1)) # Option 2 for passing arguments
+  # [...]
+  ```
+
+
+## Dictionaries (sc_odict)
+
+- `sc.argparse(parse=True, **kwargs)`: Ultra-simple argument parser
+
+  ```python
+  # Option 1: Supply arguments directly
+  args = sc.argparse(iterations=10, output_file='results.csv')
+
+  # Option 2: Add arguments one by one
+  args = sc.argparse()
+  args.add(iterations=10)
+  args.add(output_file='results.csv')
+  args.parse()
+
+  # Command-line usage
+  python argparse_example.py 100 'data.csv'
+  python argparse_example.py 100 output_file='data.csv'
+  # [...]
+  ```
+
+- `sc.asobj(obj, strict=True)`: Convert any object for which you would normally do `a['b']` to one where you can do `a.b`.
+
+  ```python
+  d = dict(foo=1, bar=2)
+  d_obj = sc.asobj(d)
+  d_obj.foo = 10
+  ```
+
+- `sc.counter(iterable=None, /, **kwds)`: Like `collections.Counter`, but with additional supported mathematical operations.
+
+  ```python
+  vals = [1,1,12,3,4,2,4,2,53,5,5,6,2,3,5]
+  counts = sc.counter(vals)
+  counts.max() # returns 3
+  ```
+
+- `sc.dictobj(*args, **kwargs)`: Lightweight class to create an object that can also act like a dictionary.
+
+  ```python
+  obj = sc.dictobj()
+  obj.a = 5
+  obj['b'] = 10
+  print(obj.items())
+  ```
+
+- `sc.objdict(*args, **kwargs)`: An `odict` that acts like an object -- allow keys to be set/retrieved by object notation.
+
+  ```python
+  import sciris as sc
+
+  obj = sc.objdict(foo=3, bar=2)
+  obj.foo + obj.bar # Gives 5
+  for key in obj.keys(): # It's still a dict
+      obj[key] = 10
+
+  od = sc.objdict({'height':1.65, 'mass':59})
+  od.bmi = od.mass/od.height**2
+  od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
+  od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
+  ```
+
+- `sc.odict(*args, defaultdict=None, **kwargs)`: Ordered dictionary with integer indexing
+
+  ```python
+  # Simple example
+  mydict = sc.odict(foo=[1,2,3], bar=[4,5,6]) # Assignment is the same as ordinary dictionaries
+  mydict['foo'] == mydict[0] # Access by key or by index
+  mydict[:].sum() == 21 # Slices are returned as numpy arrays by default
+  for i,key,value in mydict.enumitems(): # Additional methods for iteration
+      print(f'Item {i} is named {key} and has value {value}')
+
+  # Detailed example
+  foo = sc.odict({'ant':3,'bear':4, 'clam':6, 'donkey': 8}) # Create odict
+  bar = foo.sorted() # Sort the dict
+  assert bar['bear'] == 4 # Show get item by value
+  assert bar[1] == 4 # Show get item by index
+  # [...]
+  ```
+
+
+## Dataframes (sc_dataframe)
+
+- `sc.dataframe(data=None, index=None, columns=None, dtype=None, copy=None, dtypes=None, nrows=None, **kwargs)`: An extension of the pandas `DataFrame` with additional convenience methods for accessing rows and columns and performing other operations, such as adding rows.
+
+  ```python
+  df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame
+  df['x'] # Print out a column
+  df[0] # Print out a row
+  df['x',0] # Print out an element
+  df[0,:] = [123,6]; print(df) # Set values for a whole row
+  df['y'] = [8,5,0]; print(df) # Set values for a whole column
+  df['z'] = [14,14,14]; print(df) # Add new column
+  df.rmcol('z'); print(df) # Remove a column
+  df.addcol('z', [14,14,14]); print(df) # Alternate way to add new column
+  df.poprow(1); print(df) # Remove a row
+  df.append([555,2,14]); print(df) # Append a new row
+  df.insertrow(1,[556,2,14]); print(df) # Insert a new row
+  # [...]
+  ```
+
+
+## File I/O (sc_fileio)
+
+- `sc.Blobject(source=None, name=None, filename=None, blob=None)`: A wrapper for a binary file -- rarely used directly.
+- `sc.dumpstr(obj=None, **kwargs)`: Dump an object to a bytes-like string (rarely used by the user); see `sc.save()` instead.
+- `sc.Failed(*args, **kwargs)`: An empty class to represent a failed object loading. Not for use by the user.
+- `sc.getfilelist(folder=None, pattern=None, fnmatch=None, abspath=False, nopath=False, filesonly=False, foldersonly=False, recursive=True, aspath=None)`: A shortcut for using `glob.glob()`. [aliases: sc.glob()]
+
+  ```python
+  sc.getfilelist() # return all files and folders in current folder
+  sc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder
+  sc.getfilelist('~/temp/*.py') # Like above
+  sc.getfilelist(fnmatch='*.py') # Recursively find all files ending in .py
+  ```
+
+- `sc.getfilepaths(*args, aspath=True, **kwargs)`: Alias for `sc.getfilelist()` that returns paths by default instead of strings.
+
+  ```python
+  sc.getfilelist() # return all files and folders in current folder
+  sc.getfilelist('~/temp', '*.py', abspath=True) # return absolute paths of all Python files in ~/temp folder
+  sc.getfilelist('~/temp/*.py') # Like above
+  sc.getfilelist(fnmatch='*.py') # Recursively find all files ending in .py
+  ```
+
+- `sc.ispath(obj)`: Alias to isinstance(obj, Path).
+- `sc.jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=True, **kwargs)`: This is the main conversion function for Python data-structures into JSON-compatible data structures (note: `sc.sanitizejson()`/`sc.jsonify()` are identical). [aliases: sc.sanitizejson()]
+
+  ```python
+  data = dict(a=np.random.rand(3), b=dict(foo='cat', bar='dog'))
+  json = sc.jsonify(data)
+  jsonstr = sc.jsonify(data, tostring=True, indent=2)
+
+  # Use a custom function for parsing the data
+  custom = {np.ndarray: lambda x: f'It was an array: {x}'}
+  j2 = sc.jsonify(data, custom=custom)
+  ```
+
+- `sc.jsonpickle(obj, filename=None, tostring=False, **kwargs)`: Save any Python object to a JSON using jsonpickle.
+
+  ```python
+  # Create data
+  df1  = sc.dataframe(a=[1,2,3], b=['a','b','c'])
+
+  # Convert to JSON and read back
+  json = sc.jsonpickle(df1)
+  df2  = sc.jsonunpickle(json)
+
+  # Save to JSON and load back
+  sc.jsonpickle(df1, 'my-data.json')
+  df3  = sc.jsonunpickle('my-data.json')
+  ```
+
+- `sc.jsonunpickle(json=None, filename=None)`: Open a saved JSON pickle
+- `sc.load(filename=None, folder=None, verbose=None, die=False, remapping=None, method=None, auto_remap=True, **kwargs)`: Load a file that has been saved as a gzipped pickle file, e.g. by `sc.save()`. Accepts either a filename (standard usage) or a file object as the first argument. Note that `sc.load()`/`sc.loadobj()` are aliases of each other. [aliases: sc.loadobj()]
+
+  ```python
+  obj = sc.load('myfile.obj') # Standard usage
+  old = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files
+  old = sc.load('my-old-file.obj', remapping={'foo.Bar': cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat
+  old = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}, method='robust') # Equivalent to the above but force remapping and don't fail
+  old = sc.load('my-old-file.obj', remapping={'foo.Bar': None}) # Skip mapping foo.Bar and don't fail
+  ```
+
+- `sc.loadany(filename, folder=None, verbose=False, **kwargs)`: Load data from a file using all known load functions until one works.
+
+  ```python
+  data = sc.odict()
+  datafiles = ['headers.json', 'some-data.csv', 'more-data.xlsx', 'final-data.obj']
+  for datafile in datafiles:
+      data[datafile] = sc.loadany(datafile)
+  ```
+
+- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, **kwargs)`: Convenience function for reading a JSON file (or string).
+
+  ```python
+  json = sc.loadjson('my-file.json')
+  json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
+  ```
+
+- `sc.loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs)`: Load a spreadsheet as a dataframe or a list of lists.
+
+  ```python
+  df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel(header=1)
+  wb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook
+  data = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd
+  ```
+
+- `sc.loadstr(string, **kwargs)`: Like `sc.load()`, but for a bytes-like string (rarely used).
+
+  ```python
+  obj = sc.objdict(a=1, b=2)
+  bytestring = sc.dumpstr(obj)
+  obj2 = sc.loadstr(bytestring)
+  assert obj == obj2
+  ```
+
+- `sc.loadtext(filename=None, folder=None, splitlines=False)`: Convenience function for reading a text file
+
+  ```python
+  mytext = sc.loadtext('my-document.txt')
+  ```
+
+- `sc.loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None)`: Convenience function for reading a YAML file (or string).
+
+  ```python
+  yaml = sc.loadyaml('my-file.yaml')
+  yaml = sc.loadyaml(string='{"a":null, "b":[1,2,3]}')
+  ```
+
+- `sc.loadzip(filename=None, folder=None, load=True, convert=True, **kwargs)`: Load the contents of a zip file into a variable.
+
+  ```python
+  data = sc.loadzip('my-files.zip')
+  ```
+
+- `sc.makefilepath(filename=None, folder=None, ext=None, default=None, split=False, aspath=None, abspath=True, makedirs=False, checkexists=None, sanitize=False, die=True, verbose=False)`: Utility for taking a filename and folder -- or not -- and generating a valid path from them. By default, this function will combine a filename and folder using os.path.join, create the folder(s) if needed with os.makedirs, and return the absolute path.
+
+  ```python
+  filepath = sc.makefilepath('myfile.obj') # Equivalent to os.path.abspath(os.path.expanduser('myfile.obj'))
+  ```
+
+- `sc.makepath(*args, aspath=True, **kwargs)`: Alias for `sc.makefilepath()` that returns a path by default instead of a string (with apologies for the confusing terminology, kept for backwards compatibility).
+
+  ```python
+  filepath = sc.makefilepath('myfile.obj') # Equivalent to os.path.abspath(os.path.expanduser('myfile.obj'))
+  ```
+
+- `sc.path(*args, **kwargs)`: Alias to `pathlib.Path()` with some additional input sanitization:
+
+  ```python
+  sc.path('thisfile.py') # Returns PosixPath('thisfile.py')
+
+  sc.path('/a/folder', None, 'a_file.txt') # Returns PosixPath('/a/folder/a_file.txt')
+  ```
+
+- `sc.printjson(obj, indent=2, **kwargs)`: Print an object as a JSON
+
+  ```python
+  data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
+  sc.printjson(data)
+  ```
+
+- `sc.readjson(string, **kwargs)`: Read JSON from a string
+
+  ```python
+  string = '{"this":1, "is":2, "a":3, "JSON":4}'
+  json = sc.readjson(string)
+  ```
+
+- `sc.readyaml(string, **kwargs)`: Read YAML from a string
+
+  ```python
+  string = '{"this":1, "is":2, "a":3, "YAML":4} # YAML allows comments!'
+  yaml = sc.readyaml(string)
+  ```
+
+- `sc.rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs)`: Remove file(s) and folder(s). Alias to `os.remove()` (for files) and `shutil.rmtree()` (for folders).
+
+  ```python
+  sc.rmpath('myobj.obj') # Remove a single file
+  sc.rmpath('myobj1.obj', 'myobj2.obj', 'myobj3.obj') # Remove multiple files
+  sc.rmpath(['myobj.obj', 'tests']) # Remove a file and a folder interactively
+  sc.rmpath(sc.getfilelist('tests/*.obj')) # Example of removing multiple files
+  ```
+
+- `sc.sanitizefilename(filename, sub='_', allowspaces=False, asciify=True, strict=False, disallowed=None, aspath=False)`: Takes a potentially Linux- and Windows-unfriendly candidate file name, and returns a "sanitized" version that is more usable.
+
+  ```python
+  bad = 'Nöt*a   file&name?!.doc'
+  good = sc.sanitizefilename(bad)
+  ```
+
+- `sc.sanitizepath(*args, aspath=True, **kwargs)`: Alias for `sc.sanitizefilename()` that returns a path by default instead of a string.
+
+  ```python
+  bad = 'Nöt*a   file&name?!.doc'
+  good = sc.sanitizefilename(bad)
+  ```
+
+- `sc.save(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip', compresslevel=5, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs)`: Save any object to disk [aliases: sc.saveobj()]
+
+  ```python
+  # Standard usage
+  my_obj = ['this', 'is', 'my', 'custom', {'object':44}]
+  sc.save('myfile.obj', my_obj)
+  loaded = sc.load('myfile.obj')
+  assert loaded == my_obj
+
+  # Use dill instead, to save custom classes as well
+  class MyClass:
+      def __init__(self, x):
+          self.data = np.random.rand(100) + x
+      def sum(self):
+          return self.data.sum()
+  # [...]
+  ```
+
+- `sc.savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=False, sanitizepath=True, **kwargs)`: Convenience function for saving to a JSON file.
+
+  ```python
+  json = {'foo':'bar', 'data':[1,2,3]}
+  sc.savejson('my-file.json', json)
+  ```
+
+- `sc.savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, close=True, workbook_args=None, formats=None, formatdata=None, verbose=False)`: Semi-simple function to save data nicely to Excel.
+
+  ```python
+  import numpy as np
+  import sciris as sc
+  import matplotlib.pyplot as plt
+
+  # Simple example
+  testdata1 = np.random.rand(8,3)
+  sc.savespreadsheet(filename='test1.xlsx', data=testdata1)
+
+  # Include column headers
+  test2headers = [['A','B','C']] # Need double brackets to get right shape
+  test2values = np.random.rand(8,3).tolist()
+  testdata2 = test2headers + test2values
+  # [...]
+  ```
+
+- `sc.savetext(filename=None, string=None, **kwargs)`: Convenience function for saving a text file -- accepts a string or list of strings; can also save an arbitrary object, in which case it will first convert to a string.
+
+  ```python
+  text = ['Here', 'is', 'a', 'poem']
+  sc.savetext('my-poem.txt', text)
+  ```
+
+- `sc.saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True, die=True, keepnone=False, dumpall=False, sanitizepath=True, **kwargs)`: Convenience function for saving to a YAML file.
+
+  ```python
+  yaml = {'foo':'bar', 'data':[1,2,3]}
+  sc.saveyaml('my-file.yaml', yaml, sort_keys=False) # Save to file and do not sort the keys
+
+  string = sc.saveyaml(obj=yaml) # Export to string
+  ```
+
+- `sc.savezip(filename=None, files=None, data=None, folder=None, sanitizepath=True, basename=False, tobytes=True, verbose=True, **kwargs)`: Create a zip file from the supplied list of files (or less commonly, supplied data)
+
+  ```python
+  scripts = sc.getfilelist('./code/*.py')
+  sc.savezip('scripts.zip', scripts)
+
+  sc.savezip('mydata.zip', data=dict(var1='test', var2=np.random.rand(3)))
+  ```
+
+- `sc.Spreadsheet(*args, **kwargs)`: A class for reading and writing Excel files in binary format. No disk IO needs to happen to manipulate the spreadsheets with openpyxl (or xlrd or pandas).
+- `sc.thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs)`: Tiny helper function to get the folder for a file, usually the current file. If not supplied, then use the current file.
+
+  ```python
+  thisdir = sc.thisdir() # Get folder of calling file
+  thisdir = sc.thisdir('.') # Ditto (usually)
+  thisdir = sc.thisdir(__file__) # Ditto (usually)
+  file_in_same_dir = sc.thisdir(path='new_file.txt')
+  file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
+  np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
+  ```
+
+- `sc.thisfile(frame=1, aspath=None)`: Return the full path of the current file.
+
+  ```python
+  my_script_name = sc.thisfile() # Get the name of the current file
+  calling_script = sc.thisfile(frame=2) # Get the name of the script that called this script
+  ```
+
+- `sc.thispath(*args, frame=1, aspath=True, **kwargs)`: Alias for `sc.thisdir()` that returns a path by default instead of a string.
+
+  ```python
+  thisdir = sc.thisdir() # Get folder of calling file
+  thisdir = sc.thisdir('.') # Ditto (usually)
+  thisdir = sc.thisdir(__file__) # Ditto (usually)
+  file_in_same_dir = sc.thisdir(path='new_file.txt')
+  file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
+  np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
+  ```
+
+- `sc.UnpicklingError(...)`: An error raised when unpickling an object fails
+- `sc.UnpicklingWarning(...)`: A warning raised when unpickling an object fails
+- `sc.unzip(filename=None, outfolder='.', folder=None, members=None)`: Convenience function for reading a zip file
+
+  ```python
+  sc.unzip('my-files.zip', outfolder='my_data') # extracts all files
+  ```
+
+- `sc.zsave(*args, compression='zstd', **kwargs)`: Save a file using zstandard (instead of gzip) compression. This is an alias for `sc.save(..., compression='zstd')`; see `sc.save()` for details.
+
+## Versioning and metadata (sc_versioning)
+
+- `sc.compareversions(version1, version2)`: Function to compare versions, expecting both arguments to be a string of the format 1.2.3, but numeric works too. Returns 0 for equality, -1 for v1<v2, and 1 for v1>v2.
+
+  ```python
+  sc.compareversions('1.2.3', '2.3.4') # returns -1
+  sc.compareversions(2, '2') # returns 0
+  sc.compareversions('3.1', '2.99') # returns 1
+  sc.compareversions('3.1', '>=2.99') # returns True
+  sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
+  sc.compareversions(mymodule, '>=1.0') # alias to the above
+  ```
+
+- `sc.freeze(lower=False)`: Alias for pip freeze.
+
+  ```python
+  assert 'numpy' in sc.freeze() # One way to check for versions
+  ```
+
+- `sc.getcaller(frame=2, tostring=True, includelineno=False, includeline=False, relframe=0, die=False)`: Try to get information on the calling function, but fail gracefully. See also `sc.thisfile()`.
+
+  ```python
+  sc.getcaller()
+  sc.getcaller(tostring=False)['filename'] # Equivalent to sc.getcaller()
+  sc.getcaller(frame=3) # Descend one level deeper than usual
+  sc.getcaller(frame=1, tostring=False, includeline=True) # See the line that called sc.getcaller()
+  ```
+
+- `sc.gitinfo(path=None, hashlen=7, die=False, verbose=True)`: Retrieve git info
+
+  ```python
+  info = sc.gitinfo() # Get git info for current script repository
+  info = sc.gitinfo(my_package.__file__) # Get git info for a particular Python package
+  ```
+
+- `sc.loadarchive(filename, folder=None, loadobj=True, loadmetadata=False, remapping=None, die=True, **kwargs)`: Load a zip file saved with `sc.savearchive()`.
+
+  ```python
+  obj = MyClass() # Create an arbitrary object
+  sc.savearchive('my-class.zip', obj)
+
+  # Much later...
+  data = sc.loadarchive('my-class.zip', loadmetadata=True)
+  metadata, obj = data['metadata'], data['obj']
+  ```
+
+- `sc.loadmetadata(filename, load_all=False, die=True)`: Read metadata from a saved image; currently only PNG and SVG are supported.
+
+  ```python
+  plt.plot([1,2,3], [4,2,6])
+  sc.savefig('example.png')
+  sc.loadmetadata('example.png')
+  ```
+
+- `sc.metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=True, user=True, caller=True, git=True, asdict=False, tostring=False, relframe=0, **kwargs)`: Collect common metadata: useful for exactly recreating (or remembering) the environment at a moment in time.
+
+  ```python
+  metadata = sc.metadata()
+  sc.compareversions(metadata.versions.pandas, '1.5.0')
+
+  sc.metadata('my-metadata.json') # Save to disk
+  ```
+
+- `sc.require(reqs=None, *args, message=None, exact=False, detailed=False, die=True, warn=True, verbose=True, **kwargs)`: Check whether environment requirements are met. Alias to pkg_resources.require().
+
+  ```python
+  sc.require('numpy')
+  sc.require(numpy='')
+  sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
+  sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False, message='Requirements <MISSING> not met, but continuing anyway')
+  sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
+  ```
+
+- `sc.savearchive(filename, obj, files=None, folder=None, comments=None, require=None, user=True, caller=True, git=True, pipfreeze=True, method='dill', allow_nonzip=False, dumpargs=None, **kwargs)`: Save any object as a pickled zip file, including metadata as a separate JSON file.
+
+  ```python
+  obj = MyClass() # Create an arbitrary object
+  sc.savearchive('my-class.zip', obj)
+
+  # Much later...
+  obj = sc.loadarchive('my-class.zip')
+  ```
+
+
+## Printing and formatting (sc_printing)
+
+- `sc.arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True, doprint=False, **kwargs)`: Quickly calculate the mean and standard deviation of an array.
+- `sc.arraymedian(data, ci=95, sf=3, doprint=False, **kwargs)`: Quickly calculate the median and confidence interval of an array.
+- `sc.blank(n=3)`: Tiny function to print n blank lines, 3 by default
+- `sc.capture(seq='', *args, **kwargs)`: Captures stdout (e.g., from `print()`) as a variable.
+- `sc.classatt(obj, strlen=22, ncol=3, private=False, sort=True, _objkeys=None, _dirkeys=None, return_keys=False)`: Return a sorted string of class attributes for the Python __repr__ method; see `sc.prepr()` for options
+- `sc.colorize(color=None, string=None, doprint=None, output=False, enable=True, showhelp=False, fg=None, bg=None, style=None)`: Colorize output text.
+- `sc.createcollist(items, title=None, strlen=22, ncol=3)`: Creates a string for a nice columnated list (e.g. to use in __repr__ method)
+- `sc.heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter=1, minlength=10, maxlength=200, sep=' ', tight=False, doprint=None, output=False, **kwargs)`: Create a colorful heading. If just supplied with a string (or list of inputs like print()), create blue text with horizontal lines above and below and 3 spaces above. You can customize the color, the divider character, how many spaces appear before the heading, and the minimum length of the divider […]
+- `sc.humanize_bytes(bytesize, decimals=3)`: Convert a number of bytes into a human-readable total.
+- `sc.indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **kwargs)`: Small wrapper to make textwrap more user friendly.
+- `sc.objatt(obj, strlen=22, ncol=3, private=False, sort=True, _keys=None, return_keys=False)`: Return a sorted string of object attributes for the Python __repr__ method; see `sc.prepr()` for options
+- `sc.objectid(obj, showclasses=False)`: Return the object ID as per the default Python `__repr__` method
+- `sc.objmeth(obj, strlen=22, ncol=3, private=False, sort=True, _keys=None, return_keys=False)`: Return a sorted string of object methods for the Python __repr__ method; see `sc.prepr()` for options
+- `sc.objprop(obj, strlen=22, ncol=3, private=False, sort=True, _keys=None, return_keys=False)`: Return a sorted string of object properties for the Python __repr__ method; see `sc.prepr()` for options
+- `sc.objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showclassatt=True, private=False, sort=True, dividerchar='—', dividerlen=72, strlen=22, ncol=3, _objkeys=None, _dirkeys=None)`: Print out a detailed representation of an object: methods, properties, attributes, etc.
+- `sc.percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None)`: Display progress as a percentage.
+- `sc.pr(obj, *args, **kwargs)`: Pretty-print a detailed representation of an object ("pr" is short for "print repr").
+- `sc.prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='—', dividerlen=72, use_repr=True, private=False, sort=True, strlen=22, ncol=3, maxtime=3, maxrecurse=5, die=False, debug=False)`: Pretty-print a detailed representation of an object.
+- `sc.prettyobj(*args, **kwargs)`: Use pretty repr for objects, instead of just showing the type and memory pointer (the Python default for objects). Can also be used as the base class for custom classes.
+- `sc.printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, dtype=None)`: Print a numpy array nicely.
+- `sc.printblue(s, **kwargs)`: Alias to print(colors.blue(s))
+- `sc.printbold(s, **kwargs)`: Alias to print(colors.bold(s))
+- `sc.printcyan(s, **kwargs)`: Alias to print(colors.cyan(s))
+- `sc.printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False)`: Nicely print a complicated data structure, a la Matlab. [DEPRECATED]
+- `sc.printgreen(s, **kwargs)`: Alias to print(colors.green(s))
+- `sc.printmagenta(s, **kwargs)`: Alias to print(colors.magenta(s))
+- `sc.printmean(*args, doprint=True, **kwargs)`: Alias to `sc.arraymean()` with doprint=True
+- `sc.printmedian(*args, doprint=True, **kwargs)`: Alias to `sc.arraymedian()` with doprint=True
+- `sc.printred(s, **kwargs)`: Alias to print(colors.red(s))
+- `sc.printtologfile(message=None, filename=None)`: Append a message string to a file specified by a filename name/path.
+- `sc.printv(string, thisverbose=1, verbose=2, indent=2, **kwargs)`: Optionally print a message and automatically indent. The idea is that a global or shared "verbose" variable is defined, which is passed to subfunctions, determining how much detail to print out.
+- `sc.printvars(localvars=None, varlist=None, label=None, divider=True, spaces=1, color=None)`: Print out a list of variables. Note that the first argument must be locals().
+- `sc.printyellow(s, **kwargs)`: Alias to print(colors.yellow(s))
+- `sc.progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—', full='•', newline=False, flush=False, output=False, **kwargs)`: Show a progress bar for a for loop.
+- `sc.progressbars(n=1, total=1, label=None, leave=False, **kwargs)`: Create multiple progress bars
+- `sc.quickobj(*args, **kwargs)`: Like `sc.prettyobj()`, but do not print attribute values.
+- `sc.sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None)`: Return a string representation of variable x with sigfigs number of significant figures [aliases: sc.sigfigs()]
+- `sc.sigfiground(x, sigfigs=4)`: Round number(s) to the specified number of significant figures.
+- `sc.slacknotification(message=None, webhook=None, to=None, fromuser=None, verbose=2, die=False)`: Send a Slack notification when something is finished.
+- `sc.strip_ansi(string)`: Remove ANSI codes (e.g. colors) from a string
+
+## Plotting (sc_plotting)
+
+- `sc.animation(fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename='animation', nametemplate=None, imagefolder=None, anim_args=None, save_args=None, frames=None, tidy=True, verbose=True, **kwargs)`: A class for storing and saving a Matplotlib animation.
+
+  ```python
+  anim = sc.animation()
+
+  plt.figure()
+  repeats = 21
+  colors = sc.vectocolor(repeats, cmap='turbo')
+  for i in range(repeats):
+      scale = 1/np.sqrt(i+1)
+      x = scale*np.random.randn(10)
+      y = scale*np.random.randn(10)
+      label = str(i) if not(i%5) else None
+      plt.scatter(x, y, c=[colors[i]], label=label)
+      plt.title(f'Scale = 1/√{i}')
+  # [...]
+  ```
+
+- `sc.ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False, elev=None, azim=None, figkwargs=None, **kwargs)`: Create a 3D axis to plot in.
+- `sc.bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=None, returnfig=False, figkwargs=None, axkwargs=None, **kwargs)`: Plot 2D data as 3D bars
+
+  ```python
+  # Simple example
+  data = np.random.rand(5,4)
+  sc.bar3d(data)
+
+  # Use non-default axes and colors (note: this one is pretty!)
+  nx = 5
+  ny = 6
+  x = 10*np.arange(nx)
+  y = np.arange(ny) + 10
+  z = -np.random.rand(ny,nx)
+  dz = -2*z
+  c = z**2
+  # [...]
+  ```
+
+- `sc.boxoff(ax=None, which=None, removeticks=True)`: Removes the top and right borders ("spines") of a plot.
+
+  ```python
+  plt.figure()
+  plt.plot([2,5,3])
+  sc.boxoff()
+
+  fig, ax = plt.subplots()
+  plt.plot([1,4,1,4])
+  sc.boxoff(ax=ax, which='all')
+
+  fig = plt.figure()
+  plt.scatter(np.arange(100), np.random.rand(100))
+  sc.boxoff('top, bottom')
+  ```
+
+- `sc.commaticks(ax=None, axis='y', precision=2, cursor_precision=0)`: Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000).
+
+  ```python
+  data = np.random.rand(10)*1e4
+  plt.plot(data)
+  sc.commaticks()
+  ```
+
+- `sc.dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None, rotation=None, locator=None, axis='x', **kwargs)`: Format the x-axis to use a given date formatter.
+
+  ```python
+  # Reformat date data
+  plt.figure()
+  x = sc.daterange('2021-04-04', '2022-05-05', asdate=True)
+  y = sc.smooth(np.random.rand(len(x)))
+  plt.plot(x, y)
+  sc.dateformatter()
+
+  # Configure with Matplotlib's Concise formatter
+  fig,ax = plt.subplots()
+  plt.plot(sc.date(np.arange(365), start_date='2022-01-01'), np.random.randn(365))
+  sc.dateformatter(ax=ax, style='concise')
+  ```
+
+- `sc.datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, start=None, end=None, rotation=None)`: Format a numeric x-axis to use dates.
+
+  ```python
+  # Automatically configure a non-date axis with default options
+  plt.plot(np.arange(365), np.random.rand(365))
+  sc.datenumformatter(start_date='2021-01-01')
+
+  # Manually configure
+  fig,ax = plt.subplots()
+  ax.plot(np.arange(60), np.random.random(60))
+  formatter = sc.datenumformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+  ```
+
+- `sc.emptyfig(*args, **kwargs)`: The emptiest figure possible
+- `sc.fig3d(num=None, nrows=1, ncols=1, index=1, returnax=False, figkwargs=None, axkwargs=None, **kwargs)`: Shortcut for creating a figure with 3D axes.
+- `sc.figlayout(fig=None, tight=True, keep=None, **kwargs)`: Alias to both `fig.set_layout_engine()` and `fig.subplots_adjust()`.
+
+  ```python
+  fig,axs = sc.get_rows_cols(37, make=True, tight=False) # Create 7x6 subplots, squished together
+  sc.figlayout(bottom=0.3)
+  ```
+
+- `sc.fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbose=False, die=False, **kwargs)`: List available fonts, or add new ones. Alias to Matplotlib's font manager.
+
+  ```python
+  sc.fonts() # List available font names
+  sc.fonts(fullfont=True) # List available font objects
+  sc.fonts('myfont.ttf', use=True) # Add this font and immediately set to default
+  sc.fonts(['/folder1', '/folder2']) # Add all fonts in both folders
+  sc.fonts(rebuild=True) # Run this if added fonts aren't appearing
+  ```
+
+- `sc.getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remove_extra=True, **kwargs)`: Get the number of rows and columns needed to plot N figures. [aliases: sc.get_rows_cols()]
+
+  ```python
+  nrows,ncols = sc.get_rows_cols(36) # Returns 6,6
+  nrows,ncols = sc.get_rows_cols(37) # Returns 7,6
+  nrows,ncols = sc.get_rows_cols(100, ratio=2) # Returns 15,7
+  nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
+  fig,axs     = sc.getrowscols(37, make=True) # Create 7x6 subplots, using the alias
+  ```
+
+- `sc.loadfig(filename=None)`: Load a plot from a file and reanimate it.
+
+  ```python
+  import matplotlib.pyplot as plt
+  import sciris as sc
+  fig = plt.figure(); plt.plot(np.random.rand(10))
+  sc.savefigs(fig, filetype='fig', filename='example.fig')
+  ```
+
+- `sc.maximize(fig=None, die=False)`: Maximize the current (or supplied) figure. Note: not guaranteed to work for all Matplotlib backends (e.g., agg).
+
+  ```python
+  plt.plot([2,3,5])
+  sc.maximize()
+  ```
+
+- `sc.movelegend(ax1, ax2=None, invisible=True, **kwargs)`: Move the legend from one axes to another, preserving properties.
+
+  ```python
+  import numpy as np
+  import sciris as sc
+
+  fig, axs = sc.getrowscols(3, make=True)
+
+  for i,ax in enumerate(fig.axes):
+      for j in range(4):
+          ax.plot(np.random.rand(50)*(1+j), 'o', label=f'Scale = {j}')
+
+  ax4 = fig.add_subplot(2,2,4)
+  sc.movelegend(ax, ax4) # Can be any of the axes since they have the same legend
+  ```
+
+- `sc.orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **kwargs)`: Create a legend with a specified order, or change the order of an existing legend. Can either specify an order, or use the reverse argument to simply reverse the order. Note: you do not need to create the legend before calling this function; if you do, you will need to pass any additional keyword […]
+
+  ```python
+  plt.plot([1,4,3], label='A')
+  plt.plot([5,7,8], label='B')
+  plt.plot([2,5,2], label='C')
+  sc.orderlegend(reverse=True) # Legend order C, B, A
+  sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
+  plt.legend() # Restore original legend order A, B, C
+  ```
+
+- `sc.plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=None, axkwargs=None, **kwargs)`: Plot 3D data as a line
+
+  ```python
+  x,y,z = np.random.rand(3,10)
+  sc.plot3d(x, y, z)
+
+  fig = plt.figure()
+  n = 100
+  x = np.array(sorted(np.random.rand(n)))
+  y = x + np.random.randn(n)
+  z = np.random.randn(n)
+  c = np.arange(n)
+  sc.plot3d(x, y, z, c=c, fig=fig)
+  ```
+
+- `sc.savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relframe=0, folder=None, makedirs=True, die=True, verbose=True, **kwargs)`: Save a figure, including metadata
+
+  ```python
+  plt.plot([1,3,7])
+
+  sc.savefig('example1.png')
+  print(sc.loadmetadata('example1.png'))
+
+  sc.savefig('example2.png', comments='My figure', freeze=True)
+  sc.pp(sc.loadmetadata('example2.png'))
+  ```
+
+- `sc.savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, aslist=False, verbose=False, **kwargs)`: Save the requested plots to disk.
+
+  ```python
+  import matplotlib.pyplot as plt
+  import sciris as sc
+  fig1 = plt.figure(); plt.plot(np.random.rand(10))
+  fig2 = plt.figure(); plt.plot(np.random.rand(10))
+  sc.savefigs([fig1, fig2]) # Save everything to one PDF file
+  sc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})
+  sc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')
+  sc.savefigs(fig1, position=[0.3,0.3,0.5,0.5])
+  ```
+
+- `sc.savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs)`: Save a set of Matplotlib artists as a movie.
+
+  ```python
+  import matplotlib.pyplot as plt
+  import sciris as sc
+
+  # Simple example (takes ~5 s)
+  plt.figure()
+  frames = [pl.plot(np.cumsum(np.random.randn(100))) for i in range(20)] # Create frames
+  sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
+
+  # Complicated example (takes ~15 s)
+  plt.figure()
+  nframes = 100 # Set the number of frames
+  ndots = 100 # Set the number of dots
+  # [...]
+  ```
+
+- `sc.scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False, figkwargs=None, axkwargs=None, **kwargs)`: Plot 3D data as a scatter
+
+  ```python
+  # Implicit coordinates, color by height (z-value)
+  data = np.random.randn(10, 10)
+  sc.scatter3d(data)
+
+  # Explicit coordinates, color by index (i.e. ordering)
+  x,y,z = np.random.rand(3,50)
+  sc.scatter3d(x, y, z, c='index')
+  ```
+
+- `sc.ScirisDateFormatter(locator, formats=None, zero_formats=None, show_offset=False, show_year=True, **kwargs)`: An adaptation of Matplotlib's ConciseDateFormatter with a slightly different approach to formatting dates. Specifically:
+- `sc.separatelegend(ax=None, handles=None, labels=None, reverse=False, figsettings=None, legendsettings=None)`: Allows the legend of a figure to be rendered in a separate window instead
+- `sc.setaxislim(which=None, ax=None, data=None)`: A small script to determine how the y limits should be set. Looks at all data (a list of arrays) and computes the lower limit to use, e.g.:
+
+  ```python
+  sc.setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)
+  ```
+
+- `sc.setxlim(data=None, ax=None)`: Alias for `sc.setaxislim(which='x')`
+- `sc.setylim(data=None, ax=None)`: Alias for `sc.setaxislim(which='y')`.
+
+  ```python
+  plt.plot([124,146,127])
+  sc.setylim() # Equivalent to plt.ylim(bottom=0)
+  ```
+
+- `sc.SIticks(ax=None, axis='y', fixed=False)`: Apply SI tick formatting to one axis of a figure (e.g., 34k instead of 34000)
+
+  ```python
+  data = np.random.rand(10)*1e4
+  plt.plot(data)
+  sc.SIticks()
+  ```
+
+- `sc.stackedbar(x=None, values=None, colors=None, labels=None, transpose=False, flipud=False, is_cum=False, barh=False, **kwargs)`: Create a stacked bar chart.
+
+  ```python
+  values = np.random.rand(3,5)
+  sc.stackedbar(values, labels=['bottom','middle','top'])
+  plt.legend()
+  ```
+
+- `sc.surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, colorbar=None, figkwargs=None, axkwargs=None, **kwargs)`: Plot 2D or 3D data as a 3D surface
+
+  ```python
+  # Simple example
+  data = sc.smooth(np.random.rand(30,50))
+  sc.surf3d(data)
+
+  # Use non-default axes and colors
+  nx = 20
+  ny = 50
+  x = 10*np.arange(nx)
+  y = np.arange(ny) + 100
+  z = sc.smooth(np.random.randn(ny,nx))
+  c = z**2
+  sc.surf3d(x=x, y=y, z=z, c=c, cmap='orangeblue')
+  ```
+
+
+## Colors and colormaps (sc_colors)
+
+- `sc.alpinecolormap(apply=False)`: This function generates a map based on ascending height. Based on data from Kazakhstan.
+
+  ```python
+  sc.colormapdemo('alpine')
+  ```
+
+- `sc.arraycolors(arr, **kwargs)`: Map an N-dimensional array of values onto the current colormap. An extension of vectocolor() for multidimensional arrays; see that function for additional arguments.
+
+  ```python
+  n = 1000
+  ncols = 5
+  arr = np.random.rand(n,ncols)
+  for c in range(ncols):
+      arr[:,c] += c
+  x = np.random.rand(n)
+  y = np.random.rand(n)
+  colors = sc.arraycolors(arr)
+  plt.figure(figsize=(20,16))
+  for c in range(ncols):
+      plt.scatter(x+c, y, s=50, c=colors[:,c])
+  ```
+
+- `sc.bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturationscale=None, npts=None, apply=False)`: Map colors onto bands of hue and saturation, with lightness mapped linearly. Unlike most colormaps, this colormap does not aim to be percentually uniform, but rather aims to make it easy to relate colors to as-exact-as-possible numbers (while still maintaining a semblance of overall trend from low […]
+
+  ```python
+  cmap = sc.bandedcolormap(minvalue=0, minsaturation=0)
+  sc.colormapdemo(cmap=cmap)
+  ```
+
+- `sc.bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, apply=False)`: This function generators a two-color map, blue for negative, red for positive changes, with grey in the middle. The input argument is how much of a color gap there is between the red scale and the blue one.
+
+  ```python
+  sc.bicolormap(gap=0, mingreen=0, redbluemix=1, epsilon=0) # From pure red to pure blue with white in the middle
+  sc.bicolormap(gap=0, mingreen=0, redbluemix=0, epsilon=0.1) # Red -> yellow -> gray -> turquoise -> blue
+  sc.bicolormap(gap=0.3, mingreen=0.2, redbluemix=0, epsilon=0.01) # Red and blue with a sharp distinction between
+  ```
+
+- `sc.colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True)`: Demonstrate a color map using simulated elevation data, shown in both 2D and 3D. The argument can be either a colormap itself or a string describing a colormap.
+
+  ```python
+  sc.colormapdemo('inferno') # Use a registered Matplotlib colormap
+  sc.colormapdemo('parula') # Use a registered Sciris colormap
+  sc.colormapdemo(sc.alpinecolormap(), n=200, smoothing=20, randseed=2942) # Use a colormap object
+  ```
+
+- `sc.gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, reverse=False, hueshift=0, basis='default', demo=False)`: Create a qualitative "color map" by assigning points according to the maximum pairwise distance in the color cube. Basically, the algorithm generates n points that are maximally uniformly spaced in the [R, G, B] color cube.
+
+  ```python
+  import numpy as np
+  import matplotlib.pyplot as plt
+  import sciris as sc
+
+  ncolors = 10
+  piedata = np.random.rand(ncolors)
+  colors = sc.gridcolors(ncolors)
+  plt.pie(piedata, colors=colors)
+  sc.gridcolors(ncolors, demo=True)
+  plt.show()
+  ```
+
+- `sc.hex2rgb(string)`: A little helper function to convert e.g. '87bc26' to a pleasing shade of green.
+
+  ```python
+  rgb = sc.hex2rgb('#87bc26') # Returns array([0.52941176, 0.7372549 , 0.14901961])
+  ```
+
+- `sc.hsv2rgb(colors=None)`: Shortcut to Matplotlib's hsv_to_rgb method, accepts a color triplet or a list/array of color triplets.
+
+  ```python
+  rgb = sc.hsv2rgb([0.23, 0.80, 0.74]) # Returns array([0.51504, 0.74   , 0.148  ])
+  ```
+
+- `sc.manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=None, cmap=None, norm=None, label=None, labelkwargs=None, ticks=None, ticklabels=None, fig=None, ax=None, cax=None, axkwargs=None, **kwargs)`: Add a colorbar to a plot that does not support one by default.
+
+  ```python
+  # Create a default colorbar
+  sc.manualcolorbar()
+
+  # Add a colorbar to non-mappable data (e.g. a scatterplot)
+  n = 1000
+  x = np.random.randn(n)
+  y = np.random.randn(n)
+  c = x**2 + y**2
+  plt.scatter(x, y, c=c)
+  sc.manualcolorbar(c)
+
+  # Create a custom colorbar with a custom label
+  # [...]
+  ```
+
+- `sc.midpointnorm(vcenter=0, vmin=None, vmax=None)`: Alias to Matplotlib's TwoSlopeNorm. Used to place the center of the colormap somewhere other than the center of the data.
+
+  ```python
+  data = np.random.rand(10,10) - 0.2
+  plt.pcolor(data, cmap='bi', norm=sc.midpointnorm())
+  ```
+
+- `sc.orangebluecolormap(apply=False)`: Create an orange-blue colormap; most like RdYlBu but more pleasing. Created by Prashanth Selvaraj.
+
+  ```python
+  cmap = sc.orangebluecolormap()
+  sc.colormapdemo(cmap=cmap)
+  ```
+
+- `sc.parulacolormap(apply=False)`: Create a map similar to Viridis, but brighter. Set apply=True to use immediately.
+
+  ```python
+  cmap = sc.parulacolormap()
+  sc.colormapdemo(cmap=cmap)
+  ```
+
+- `sc.rgb2hex(arr)`: A little helper function to convert e.g. [0.53, 0.74, 0.15] to a pleasing shade of green.
+
+  ```python
+  hx = sc.rgb2hex([0.53, 0.74, 0.15]) # Returns '#87bc26'
+  ```
+
+- `sc.rgb2hsv(colors=None)`: Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets.
+
+  ```python
+  hsv = sc.rgb2hsv([0.53, 0.74, 0.15]) # Returns array([0.2259887, 0.7972973, 0.74     ])
+  ```
+
+- `sc.sanitizecolor(color, asarray=False, alpha=None, normalize=True)`: Alias to `matplotlib.colors.to_rgb`, but also handles numeric inputs.
+
+  ```python
+  green1 = sc.sanitizecolor('g')
+  green2 = sc.sanitizecolor('tab:green')
+  crimson1 = sc.sanitizecolor('crimson')
+  crimson2 = sc.sanitizecolor((220, 20, 60))
+  midgrey = sc.sanitizecolor(0.5)
+  ```
+
+- `sc.shifthue(colors=None, hueshift=0.0)`: Shift the hue of the colors being fed in.
+
+  ```python
+  colors = sc.shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
+  ```
+
+- `sc.turbocolormap(apply=False)`: NOTE: as of Matplotlib 3.4.0, this colormap is included by default, and will soon be removed from Sciris.
+
+  ```python
+  cmap = sc.turbocolormap()
+  sc.colormapdemo(cmap=cmap)
+  ```
+
+- `sc.vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None, nancolor=None)`: This function converts a vector (i.e., 1D array) of N values into an Nx3 matrix of color values according to the current colormap. It automatically scales the vector to provide maximum dynamic range for the color map.
+
+  ```python
+  n = 1000
+  x = np.random.randn(n,1);
+  y = np.random.randn(n,1);
+  c = sc.vectocolor(y);
+  plt.scatter(x, y, c=c, s=50)
+  ```
+
+
+## Parallelization (sc_parallel)
+
+- `sc.cpu_count()`: Alias to `multiprocessing.cpu_count()` [aliases: sc.cpucount()]
+- `sc.cpuload(interval=0.1)`: Takes a snapshot of current CPU usage via `psutil` [aliases: sc.cpu_load()]
+- `sc.loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1, maxtime=36000, label=None, verbose=None, **kwargs)`: Delay execution while CPU load is too high -- a very simple load balancer.
+
+  ```python
+  # Simplest usage -- delay if CPU or memory load is >80%
+  sc.loadbalancer()
+
+  # Use a maximum CPU load of 50%, maximum memory of 90%, and stagger the start by process number
+  for nproc in processlist:
+      sc.loadbalancer(maxload=0.5, maxmem=0.8, index=nproc)
+  ```
+
+- `sc.memload()`: Takes a snapshot of current fraction of memory usage via `psutil` [aliases: sc.mem_load()]
+- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Parallelization manager
+
+  ```python
+  import sciris as sc
+
+  def slowfunc(i):
+      sc.randsleep(seed=i)
+      return i**2
+
+  # Standard usage
+  P = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')
+  P.run_async()
+  P.monitor()
+  P.finalize()
+  print(P.times)
+  ```
+
+- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Execute a function in parallel.
+
+  ```python
+  def f(x):
+      return x*x
+
+  results = sc.parallelize(f, [1,2,3])
+  ```
+
+
+## Profiling and resource monitoring (sc_profiling)
+
+- `sc.benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False)`: Benchmark Python performance
+
+  ```python
+  sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
+
+  numpy_mops = sc.benchmark(which='numpy')
+  if numpy_mops < 100:
+      print('Your computer is slow')
+  elif numpy_mops > 400:
+      print('Your computer is fast')
+  else:
+      print('Your computer is normal')
+
+  sc.benchmark(parallel=True) # Use all CPUs
+  ```
+
+- `sc.checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)`: Checks how much memory the variable or variables in question use by dumping them to file.
+
+  ```python
+  import numpy as np
+  import sciris as sc
+
+  list_obj = ['label', np.random.rand(2483,589)])
+  sc.checkmem(list_obj)
+
+  nested_dict = dict(
+      foo = dict(
+          a = np.random.rand(5,10),
+          b = np.random.rand(5,20),
+          c = np.random.rand(5,50),
+      ),
+  # [...]
+  ```
+
+- `sc.checkram(unit='mb', fmt='0.2f', start=0, to_string=True)`: Measure actual memory usage, typically at different points throughout execution.
+
+  ```python
+  import sciris as sc
+  import numpy as np
+  start = sc.checkram(to_string=False)
+  a = np.random.random((1_000, 10_000))
+  print(sc.checkram(start=start))
+  ```
+
+- `sc.cprofile(sort='cumtime', columns='default', mintime=0.001, maxitems=100, maxfunclen=40, maxpathlen=40, use_ms=None, stripdirs=True, show=True)`: Function profiler, built off Python's built-in cProfile
+
+  ```python
+  import sciris as sc
+  import numpy as np
+
+  class Slow:
+
+      def math(self):
+          n = 1_000_000
+          self.a = np.arange(n)
+          self.b = sum(self.a)
+
+      def plain(self):
+          n = 100_000
+  # [...]
+  ```
+
+- `sc.LimitExceeded(...)`: Custom exception for use with the `sc.resourcemonitor()` monitor.
+- `sc.listfuncs(*args, private='__init__', include=None, exclude=None, strict=False)`: Enumerate all functions in the supplied arguments; used in `sc.profile()`.
+- `sc.mprofile(run, follow=None, show_results=True, *args, **kwargs)`: Profile the line-by-line memory required by a function. See profile() for a usage example.
+- `sc.profile(run, follow=None, private='__init__', include=None, exclude=None, unwrap=True, skipzero=False, do_run=True, verbose=True, *args, **kwargs)`: Profile the line-by-line time required by a function.
+
+  ```python
+  def slow_fn():
+      n = 10000
+      int_list = []
+      int_dict = {}
+      for i in range(n):
+          int_list.append(i)
+          int_dict[i] = i
+      return
+
+  class Foo:
+      def __init__(self, a=0):
+          self.a = a
+  # [...]
+  ```
+
+- `sc.resourcemonitor(mem=0.9, cpu=None, time=None, interval=1.0, label=None, start=True, die=True, kill_children=True, kill_parent=False, callback=None, verbose=None)`: Asynchronously monitor resource (e.g. memory) usage and terminate the process if the specified threshold is exceeded.
+
+  ```python
+  # Using with-as:
+  with sc.resourcemonitor(mem=0.8) as resmon:
+      memory_heavy_job()
+
+  # As a standalone (don't forget to call stop!)
+  resmon = sc.resourcemonitor(mem=0.95, cpu=0.9, time=3600, label='Load checker', die=False, callback=post_to_slack)
+  long_cpu_heavy_job()
+  resmon.stop()
+  print(resmon.to_df())
+  ,
+  ```
+
+- `sc.tracecalls(trace='<default>', exclude='<default>', regex=False, repeats=False, custom=None, verbose=None)`: Trace all function calls.
+
+  ```python
+  import mymodule as mm
+
+  # In context block
+  with sc.tracecalls('mymodule'):
+      mm.big_operation()
+
+  # Explicitly
+  tc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)
+  tc.start()
+  mm.big_operation()
+  tc.stop()
+  tc.df.disp()
+  ```
+
+
+## Utilities (sc_utils)
+
+- `sc.asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs)`: Convert an arbitrary Unicode string to ASCII.
+
+  ```python
+  sc.asciify('föö→λ ∈ ℝ') # Returns 'foo  R'
+  ```
+
+- `sc.autolist(*args)`: A simple extension to a list that defines add methods to simplify appending and extension.
+
+  ```python
+  ls = sc.autolist(3) # Quickly convert a scalar to a list
+
+  ls = sc.autolist()
+  for i in range(5):
+      ls += i # No need for ls += [i]
+  ```
+
+- `sc.checktype(obj=None, objtype=None, subtype=None, die=False)`: A convenience function for checking instances. If objtype is a type, then this function works exactly like isinstance(). But, it can also be one of the following strings:
+
+  ```python
+  sc.checktype(rand(10), 'array', 'number') # Returns True
+  sc.checktype(['a','b','c'], 'listlike') # Returns True
+  sc.checktype(['a','b','c'], 'arraylike') # Returns False
+  sc.checktype([{'a':3}], list, dict) # Returns True
+  ```
+
+- `sc.cp(obj, die=True)`: Shortcut to perform a shallow copy operation
+- `sc.dcp(obj, memo=None, die=True, verbose=True)`: Shortcut to perform a deep copy operation
+- `sc.download(url, *args, filename=None, save=True, parallel=True, die=True, verbose=True, **kwargs)`: Download one or more URLs in parallel and return output or save them to disk.
+
+  ```python
+  html = sc.download('http://sciris.org') # Download a single URL
+  data = sc.download('http://sciris.org', 'http://covasim.org', save=False) # Download two in parallel
+  sc.download({'sciris.html':'http://sciris.org', 'covasim.html':'http://covasim.org'}) # Download two and save to disk
+  sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
+  data = sc.download(dict(sciris='http://sciris.org', covasim='http://covasim.org'), save=False) # Download and store in memory
+  ```
+
+- `sc.fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True)`: Create a fast UID or set of UIDs. Note: for certain applications, `sc.uuid()` is faster than `sc.fast_uuid()`!
+
+  ```python
+  uuids = sc.fast_uuid(n=100) # Generate 100 UUIDs
+  ```
+
+- `sc.flexstr(arg, *args, force=True, join='')`: Try converting any object to a "regular" string (i.e. `str`), but proceed if it fails. Note: this function calls `repr()` rather than `str()` to ensure a more robust representation of objects.
+
+  ```python
+  sc.flexstr(b'foo', 'bar', [1,2]) # Returns 'foobar[1, 2]'
+  ```
+
+- `sc.getplatform(expected=None, platform=None, die=False)`: Return the name of the current "main" platform (e.g. 'mac')
+
+  ```python
+  sc.getplatform() # Get current name of platform
+  sc.getplatform('windows', die=True) # Raise an exception if not on Windows
+  sc.getplatform(platform='darwin') # Normalize to 'mac'
+  ```
+
+- `sc.getuser()`: Get the current username
+
+  ```python
+  sc.getuser()
+  ```
+
+- `sc.htmlify(string, reverse=False, tostring=False)`: Convert a string to its HTML representation by converting unicode characters, characters that need to be escaped, and newlines. If reverse=True, will convert HTML to string. If tostring=True, will convert the bytestring back to Unicode.
+
+  ```python
+  output = sc.htmlify('foo&\nbar') # Returns b'foo&amp;<br>bar'
+  output = sc.htmlify('föö&\nbar', tostring=True) # Returns 'f&#246;&#246;&amp;&nbsp;&nbsp;&nbsp;&nbsp;bar'
+  output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\nbar'
+  ```
+
+- `sc.ifelse(*args, default=None, check=None)`: For a list of inputs, return the first one that meets the condition
+
+  ```python
+  # 1. Standard usage
+  a = None
+  b = 3
+  out = sc.ifelse(a, b)
+
+  ## Equivalent to:
+  out = a if a is not None else b
+
+  # 2. Boolean usage
+  args = ['', False, {}, 'ok']
+  out = sc.ifelse(*args, check=bool)
+
+  # [...]
+  ```
+
+- `sc.importbyname(module=None, variable=None, path=None, namespace=None, lazy=False, overwrite=True, die=True, verbose=True, **kwargs)`: Import modules by name.
+
+  ```python
+  np = sc.importbyname('numpy') # Standard usage
+  sc.importbyname(pd='pandas', np='numpy') # Use dictionary syntax to assign to namespace
+  plt = sc.importbyname(plt='matplotlib.pyplot', lazy=True) # Won't actually import until e.g. plt.figure() is called
+  mymod = sc.importbyname(path='/path/to/mymod') # Import by path rather than name
+  ```
+
+- `sc.importbypath(path, name=None, overwrite=False)`: Import a module by path.
+
+  ```python
+  # Load a module that isn't importable otherwise
+  mymod = sc.importbypath('my file with spaces.py')
+
+  # Load two versions of the same module
+  old = sc.importbypath('/path/to/old/mylib')
+  new = sc.importbypath('/path/to/new/mylib')
+  assert new.__version__ > old.__version__ # Example version comparison (see also sc.compareverisons())
+  ```
+
+- `sc.isarray(obj, dtype=None)`: Check whether something is a Numpy array, and optionally check the dtype.
+
+  ```python
+  sc.isarray(np.array([1,2,3]), dtype=float) # False, dtype is int
+  ```
+
+- `sc.isfunc(obj)`: Quickly check if something is a function.
+
+  ```python
+  sc.isfunc(list) # Returns False
+  callable(list) # Returns True
+  ```
+
+- `sc.isiterable(obj, *args, exclude=None, minlen=None)`: Determine whether or not the input is iterable, with optional types to exclude.
+
+  ```python
+  obj1 = [1,2,3]
+  obj2 = 'abc'
+  obj3 = set()
+
+  sc.isiterable(obj1) # Returns True
+  sc.isiterable(obj1, obj2, obj3, exclude=str, minlen=1) # returns [True, False, False]
+  ```
+
+- `sc.isjupyter(detailed=False)`: Check if a command is running inside a Jupyter notebook.
+
+  ```python
+  if sc.isjupyter():
+      sc.options(jupyter=True)
+
+  if sc.isjupyter(detailed=True) == 'colab':
+      print('You are running on Google Colab')
+  ```
+
+- `sc.islinux(die=False)`: Alias to `sc.getplatform('linux')`
+- `sc.ismac(die=False)`: Alias to `sc.getplatform('mac')`
+- `sc.ismodule(obj)`: Determine whether or not the input is a module.
+- `sc.isnumber(obj, isnan=None)`: Determine whether or not the input is a number.
+- `sc.isstring(obj)`: Determine whether or not the input is string-like (i.e., str or bytes).
+- `sc.iswindows(die=False)`: Alias to `sc.getplatform('windows')`
+- `sc.KeyNotFoundError(...)`: A tiny class to fix repr for KeyErrors. KeyError prints the repr of the error message, rather than the actual message, so e.g. newline characters print as the character rather than the actual newline.
+
+  ```python
+  raise sc.KeyNotFoundError('The key "foo" is not available, but these are: "bar", "cat"')
+  ```
+
+- `sc.LazyModule(module, variable, namespace=None, overwrite=True)`: Create a "lazy" module that is loaded if and only if an attribute is called.
+
+  ```python
+  pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas
+  df = pd.DataFrame() # Not only does this work, but pd is now actually pandas
+  ```
+
+- `sc.Link(obj=None)`: A class to differentiate between an object and a link to an object. The idea is that this object is parsed differently from other objects -- most notably, a recursive method (such as a pickle) would skip over Link objects, and then would fix them up after the other objects had been reinstated.
+- `sc.LinkException(...)`: An exception to raise when links are broken, for exclusive use with the Link class.
+- `sc.mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, _die=True, **kwargs)`: Small function to merge multiple dicts together.
+
+  ```python
+  d0 = sc.mergedicts(user_args) # Useful if user_args might be None, but d0 is always a dict
+  d1 = sc.mergedicts({'a':1}, {'b':2}) # Returns {'a':1, 'b':2}
+  d2 = sc.mergedicts({'a':1, 'b':2}, {'b':3, 'c':4}, None) # Returns {'a':1, 'b':3, 'c':4}
+  d3 = sc.mergedicts(sc.odict({'b':3, 'c':4}), {'a':1, 'b':2}) # Returns sc.odict({'b':2, 'c':4, 'a':1})
+  d4 = sc.mergedicts({'b':3, 'c':4}, {'a':1, 'b':2}, _overwrite=False) # Raises exception
+  ```
+
+- `sc.mergelists(*args, coerce='default', copy=False, **kwargs)`: Merge multiple lists together.
+
+  ```python
+  # Simple usage
+  sc.mergelists(None)                                # Returns []
+  sc.mergelists([1,2,3], [4,5,6])                    # Returns [1, 2, 3, 4, 5, 6]
+  sc.mergelists([1,2,3], 4, 5, 6)                    # Returns [1, 2, 3, 4, 5, 6]
+  sc.mergelists([(1,2), (3,4)], (5,6))               # Returns [(1, 2), (3, 4), (5, 6)]
+  sc.mergelists((1,2), (3,4), (5,6))                 # Returns [(1, 2), (3, 4), (5, 6)]
+  sc.mergelists((1,2), (3,4), (5,6), coerce='tuple') # Returns [1, 2, 3, 4, 5, 6]
+
+  # Usage for handling flexible input arguments
+  def my_func(arg=None, *args):
+      arglist = sc.mergelists(arg, list(args))
+      return arglist
+  # [...]
+  ```
+
+- `sc.newlinejoin(*args)`: Alias to `strjoin(*args, sep='\n')`.
+
+  ```python
+  sc.newlinejoin([1,2,3], 4, 'five')
+  ```
+
+- `sc.pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwargs)`: Shortcut for pretty-printing the object.
+
+  ```python
+  d = {'my very': {'large': 'and', 'unwieldy': {'nested': 'dictionary', 'cannot': 'be', 'easily': 'printed'}}}
+  sc.pp(d)
+  ```
+
+- `sc.robust_dcp(obj, _memo=None, verbose=False)`: Ultra-robust deepcopying
+- `sc.runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)`: Make it easier to run shell commands.
+
+  ```python
+  myfiles = sc.runcommand('ls').split('\n') # Get a list of files in the current folder
+  sc.runcommand('sshpass -f %s scp myfile.txt me@myserver:myfile.txt' % 'pa55w0rd', printinput=True, printoutput=True) # Copy a file remotely
+  sc.runcommand('sleep 600; mkdir foo', wait=False) # Waits 10 min, then creates the folder "foo", but the function returns immediately
+  sc.runcommand('find', wait=False) # Equivalent to executing 'find' in a terminal
+  ```
+
+- `sc.sanitizestr(string=None, alphanumeric=False, nospaces=False, asciify=False, lower=False, validvariable=False, spacechar='_', symchar='?')`: Remove all non-"standard" characters from a string
+
+  ```python
+  string1 = 'This Is a String'
+  sc.sanitizestr(string1, lower=True) # Returns 'this is a string'
+
+  string2 = 'Lukáš wanted €500‽'
+  sc.sanitizestr(string2, asciify=True, nospaces=True, symchar='*') # Returns 'Lukas_wanted_*500*'
+
+  string3 = '"Ψ scattering", María said, "at ≤5 μm?"'
+  sc.sanitizestr(string3, asciify=True, alphanumeric=True, nospaces=True, spacechar='') # Returns '??scattering??Mariasaid??at?5?m??'
+
+  string4 = '4 path/names/to variable!'
+  sc.sanitizestr(string4, validvariable=True, spacechar='') # Returns '_4pathnamestovariable'
+  ```
+
+- `sc.sha(obj, digest=False, asint=False, encoding='utf-8')`: Shortcut for the standard hashing (SHA) method
+
+  ```python
+  sha1 = sc.sha(dict(foo=1, bar=2), True)
+  sha2 = sc.sha(dict(foo=1, bar=2), digest=True)
+  sha3 = sc.sha(dict(foo=1, bar=3), digest=True)
+  assert sha1 == sha2
+  assert sha2 != sha3
+  ```
+
+- `sc.strjoin(*args, sep=', ')`: Like string `join()`, but handles more flexible inputs, converts items to strings. By default, join with commas.
+
+  ```python
+  sc.strjoin([1,2,3], 4, 'five')
+  ```
+
+- `sc.strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True)`: Convenience function to split common types of strings.
+- `sc.suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die=False, which='damerau')`: Return suggested item
+
+  ```python
+  >>> sc.suggest('foo', ['Foo','Bar'])
+  'Foo'
+  >>> sc.suggest('foo', ['FOO','Foo'])
+  'Foo'
+  >>> sc.suggest('foo', ['Foo ','boo'])
+  'Foo '
+  ```
+
+- `sc.swapdict(d)`: Swap the keys and values of a dictionary. Equivalent to {v:k for k,v in d.items()}
+
+  ```python
+  d1 = {'a':'foo', 'b':'bar'}
+  d2 = sc.swapdict(d1) # Returns {'foo':'a', 'bar':'b'}
+  ```
+
+- `sc.toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs)`: Small function to ensure consistent format for things that should be arrays (note: `sc.toarray()` and `sc.promotetoarray()` are identical). [aliases: sc.promotetoarray()]
+
+  ```python
+  sc.toarray(5) # Returns np.array([5])
+  sc.toarray([3,5]) # Returns np.array([3,5])
+  sc.toarray(None, skipnone=True) # Returns np.array([])
+  sc.toarray([1, 'foo']) # Returns np.array([1, 'foo'], dtype=object)
+  ```
+
+- `sc.tolist(obj=None, objtype=None, keepnone=False, coerce='default')`: Make sure object is always a list (note: `sc.tolist()`/`sc.promotetolist()` are identical). [aliases: sc.promotetolist()]
+
+  ```python
+  sc.tolist(5) # Returns [5]
+  sc.tolist(np.array([3,5])) # Returns [np.array([3,5])] -- not [3,5]!
+  sc.tolist(np.array([3,5]), coerce=np.ndarray) # Returns [3,5], since arrays are coerced to lists
+  sc.tolist(None) # Returns []
+  sc.tolist(range(3)) # Returns [0,1,2] since range is coerced by default
+  sc.tolist(['a', 'b', 'c'], objtype='number') # Raises exception
+
+  def myfunc(data, keys):
+      keys = sc.tolist(keys)
+      for key in keys:
+          print(data[key])
+
+  # [...]
+  ```
+
+- `sc.traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs)`: Shortcut for accessing the traceback
+
+  ```python
+      # Use automatic exception info
+      mylist = [0,1]
+      try:
+          mylist[2]
+      except:
+          print(f'Error: {sc.traceback()}')
+
+      # Supply exception manually (also illustrating sc.tryexcept())
+      with sc.tryexcept() as te1:
+          dict(a=3)['b']
+
+      with sc.tryexcept() as te2:
+  # [...]
+  ```
+
+- `sc.transposelist(obj, fix_uneven=True)`: Convert e.g. a list of key-value tuples into a list of keys and a list of values.
+
+  ```python
+  o = sc.odict(a=1, b=4, c=9, d=16)
+  itemlist = o.enumitems()
+  inds, keys, vals = sc.transposelist(itemlist)
+
+  listoflists = [
+      ['a', 1, 3],
+      ['b', 4, 5],
+      ['c', 7, 8, 9, 10]
+  ]
+  trans = sc.transposelist(listoflists, fix_uneven=True)
+  ```
+
+- `sc.tryexcept(message=None, die=None, catch=None, verbose=1, history=None)`: Simple class to catch exceptions in a single line
+
+  ```python
+  # Basic usage
+  values = [0,1]
+  with sc.tryexcept(): # Equivalent to contextlib.suppress(Exception)
+      values[2]
+
+  # Raise only certain errors
+  with sc.tryexcept(die=IndexError): # Catch everything except IndexError
+      values[2]
+
+  # Catch (do not raise) only certain errors, and print full error information
+  with sc.tryexcept(catch=IndexError, verbose=2): # Raise everything except IndexError
+      values[2]
+  # [...]
+  ```
+
+- `sc.uniquename(name=None, namelist=None, style=None, human=False, suffix=None)`: Given a name and a list of other names, add a counter to the name so that it doesn't conflict with the other names.
+
+  ```python
+  sc.uniquename('out', ['out', 'out1']) # Returns 'out2'
+  sc.uniquename(name='file', namelist=['file', 'file (1)', 'file (2)', 'myfile'], human=True) # Returns 'file (3)'
+  sc.uniquename('results.csv', ['results.csv', 'results1.csv'], suffix='.csv') # Returns 'results2.csv'
+  ```
+
+- `sc.urlopen(url, filename=None, save=None, headers=None, params=None, data=None, prefix='http', convert=True, die=False, response='text', verbose=False)`: Download a single URL. [aliases: sc.wget()]
+
+  ```python
+  html = sc.urlopen('wikipedia.org') # Retrieve into variable html
+  sc.urlopen('http://wikipedia.org', filename='wikipedia.html') # Save to file wikipedia.html
+  sc.urlopen('https://wikipedia.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, wikipedia.org), with headers
+  sc.urlopen('wikipedia.org', response='status') # Only return the HTTP status of the site
+  ```
+
+- `sc.uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kwargs)`: Shortcut for creating a UUID; default is to create a UUID4. Can also convert a UUID.
+
+  ```python
+  sc.uuid() # Alias to uuid.uuid4()
+  sc.uuid(which='hex') # Creates a length-6 hex string
+  sc.uuid(which='ascii', length=10, n=50) # Creates 50 UUIDs of length 10 each using the full ASCII character set
+  ```
+
+
+## Dates and times (sc_datetime)
+
+- `sc.date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=None, outformat=None, **kwargs)`: Convert any reasonable object -- a string, integer, or datetime object, or list/array of any of those -- to a date object (or string, pandas, or numpy date).
+
+  ```python
+  sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
+  sc.date([35,36,37], start_date='2020-01-01', to='str') # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+  sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
+  ```
+
+- `sc.datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=None, as_date=None, **kwargs)`: Perform calculations on a date string (or date object), returning a string (or a date). Wrapper to `dateutil.relativedelta.relativedelta()`.
+
+  ```python
+  sc.datedelta('2021-07-07', 3) # Add 3 days
+  sc.datedelta('2021-07-07', days=-4) # Subtract 4 days
+  sc.datedelta('2021-07-07', weeks=4, months=-1, as_date=True) # Add 4 weeks but subtract a month, and return a dateobj
+  sc.datedelta(days=3) # Alias to du.relativedelta.relativedelta(days=3)
+  sc.datedelta(['2021-07-07', '2022-07-07'], months=1) # Increment multiple dates
+  sc.datedelta('2020-06-01', years=0.25) # Use a fractional number of years (to the nearest day)
+  ```
+
+- `sc.daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_date=None, readformat=None, outformat=None, **kwargs)`: Return a list of dates from the start date to the end date. To convert a list of days (as integers) to dates, use `sc.date()` instead.
+
+  ```python
+  dates1 = sc.daterange('2020-03-01', '2020-04-04')
+  dates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2), asdate=True)
+  dates3 = sc.daterange('2020-03-01', weeks=5)
+  ```
+
+- `sc.datetoyear(dateobj, dateformat=None, **kwargs)`: Convert a date to decimal year.
+
+  ```python
+  sc.datetoyear('2010-07-01') # Returns approximately 2010.5
+  sc.datetoyear(2010.5) # Returns datetime.date(2010, 7, 2)
+  ```
+
+- `sc.day(obj, *args, start_date=None, **kwargs)`: Convert a string, date/datetime object, or int to a day (int), the number of days since the start day. See also `sc.date()` and `sc.daydiff()``. If a start day is not supplied, it returns the number of days into the current year.
+
+  ```python
+  sc.day(sc.now()) # Returns how many days into the year we are
+  sc.day(['2021-01-21', '2024-04-04'], start_date='2022-02-22') # Days can be positive or negative
+  ```
+
+- `sc.daydiff(*args)`: Convenience function to find the difference between two or more days. With only one argument, calculate days since Jan. 1st.
+
+  ```python
+  diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
+  diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
+
+  doy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01
+  ```
+
+- `sc.elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True)`: Accepts a datetime object or a string in ISO 8601 format and returns a human-readable string explaining when this time was.
+
+  ```python
+  yesterday = sc.datedelta(sc.now(), days=-1)
+  sc.elapsedtimestr(yesterday)
+  ```
+
+- `sc.getdate(obj=None, astype='str', dateformat=None)`: Alias for converting a date object to a formatted string.
+
+  ```python
+  sc.getdate() # Returns a string for the current date
+  sc.getdate(astype='float') # Convert today's time to a timestamp
+  ```
+
+- `sc.now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=None)`: Get the current time as a datetime object, optionally in UTC time.
+
+  ```python
+  sc.now() # Return current local time, e.g. 2019-03-14 15:09:26
+  sc.now(timezone='US/Pacific') # Return the time now in a specific timezone
+  sc.now(utc=True) # Return the time in UTC
+  sc.now(astype='str') # Return the current time as a string instead of a date object; use 'int' for seconds
+  sc.now(tostring=True) # Backwards-compatible alias for astype='str'
+  sc.now(dateformat='%Y-%b-%d') # Return a different date format
+  ```
+
+- `sc.randsleep(delay=1.0, var=1.0, low=None, high=None, seed=None)`: Sleep for a nondeterminate period of time (useful for desynchronizing tasks)
+
+  ```python
+  sc.randsleep(1) # Sleep for 0-2 s (average 1.0)
+  sc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)
+  sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
+  sc.randsleeep(low=0.5, high=1.5) # Ditto
+  ```
+
+- `sc.readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbose=False)`: Convenience function for loading a date from a string. If dateformat is None, this function tries a list of standard date types. Note: in most cases `sc.date()` should be used instead.
+
+  ```python
+  dateobj  = sc.readdate('2020-03-03') # Standard format, so works
+  dateobj  = sc.readdate('04-03-2020', dateformat='dmy') # Date is ambiguous, so need to specify day-month-year order
+  dateobj  = sc.readdate(1611661666) # Can read timestamps as well
+  dateobj  = sc.readdate(16166, dateformat='ordinal') # Or ordinal numbers of days, as used by Matplotlib
+  dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m') # Can read custom date formats
+  dateobjs = sc.readdate('20200321', 1611661666) # Can mix and match formats
+  ```
+
+- `sc.tic()`: With `sc.toc()`, a little pair of functions to calculate a time difference:
+
+  ```python
+  sc.tic()
+  slow_func()
+  sc.toc()
+
+  T = sc.tic()
+  slow_func2()
+  sc.toc(T, label='slow_func2')
+  ```
+
+- `sc.time()`: Get current time in seconds -- alias to time.time()
+- `sc.timedsleep(delay=None, start=None, verbose=False)`: Pause for the specified amount of time, taking into account how long other operations take.
+
+  ```python
+  # Example for a long(ish) computation
+  import numpy as np
+  for i in range(10):
+      sc.timedsleep('start') # Initialize
+      n = int(2*np.random.rand()*1e6) # Variable computation time
+      for j in range(n):
+          tmp = np.random.rand()
+      sc.timedsleep(1, verbose=True) # Wait for one second per iteration including computation time
+
+  # Example illustrating more accurate timing
+  import time
+  n = 1000
+  # [...]
+  ```
+
+- `sc.timer(label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs)`: Simple timer class. Note: `sc.timer()` and `sc.Timer()` are aliases. [aliases: sc.Timer()]
+
+  ```python
+  >>> T = sc.timer(auto=True)
+  >>> T.toc()
+  (0): 2.63 s
+  >>> T.toc()
+  (1): 5.00 s
+  ```
+
+- `sc.toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit='s', output=False, verbose=None, elapsed=None, **kwargs)`: With `sc.tic()`, a little pair of functions to calculate a time difference. See also `sc.timer()`.
+
+  ```python
+  sc.tic()
+  slow_func()
+  sc.toc()
+
+  T = sc.tic()
+  slow_func2()
+  sc.toc(T, label='slow_func2')
+  ```
+
+- `sc.toctic(returntic=False, returntoc=False, *args, **kwargs)`: A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.
+
+  ```python
+  sc.tic()
+  slow_operation_1()
+  sc.toctic()
+  slow_operation_2()
+  sc.toc()
+  ```
+
+- `sc.yeartodate(year, as_date=True, **kwargs)`: Convert a decimal year to a date
+
+  ```python
+  sc.yeartodate('2010-07-01') # Returns approximately 2010.5
+  ```
+
+
+## Nested objects (sc_nested)
+
+- `sc.Equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, union=True, verbose=None, compare=True, die=False, **kwargs)`: Compare equality between two arbitrary objects -- see `sc.equal()` for full documentation.
+- `sc.equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, union=True, verbose=None, die=False, **kwargs)`: Compare equality between two arbitrary objects
+
+  ```python
+  o1 = dict(
+      a = [1,2,3],
+      b = np.array([4,5,6]),
+      c = dict(
+          df = sc.dataframe(q=[sc.date('2022-02-02'), sc.date('2023-02-02')])
+      )
+  )
+
+  # Identical object
+  o2 = sc.dcp(o1)
+
+  # Non-identical object
+  # [...]
+  ```
+
+- `sc.flattendict(nesteddict, sep=None, _prefix=None)`: Flatten nested dictionary
+
+  ```python
+  >>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}})
+  {('a', 'b'): 1, ('a', 'c', 'd'): 2, ('a', 'c', 'e'): 3}
+  >>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}}, sep='_')
+  {'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}
+  ```
+
+- `sc.getnested(nested, keylist, safe=False, default=None)`: Get the value for the given list of keys
+
+  ```python
+  sc.getnested(foo, ['a','b']) # Gets foo['a']['b']
+  ```
+
+- `sc.iternested(nesteddict, _previous=None)`: Return a list of all the twigs in the current dictionary
+
+  ```python
+  twigs = sc.iternested(foo)
+  ```
+
+- `sc.IterObj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs)`: Object iteration manager
+
+  ```python
+  import sciris as sc
+
+  # Create a simple class for storing data
+  class DataObj(sc.prettyobj):
+      def __init__(self, **kwargs):
+          self.keys   = tuple(kwargs.keys())
+          self.values = tuple(kwargs.values())
+
+  # Create the data
+  obj1 = DataObj(a=[1,2,3], b=[4,5,6])
+  obj2 = DataObj(c=[7,8,9], d=[10])
+  obj = DataObj(obj1=obj1, obj2=obj2)
+  # [...]
+  ```
+
+- `sc.iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, *args, **kwargs)`: Iterate over an object and apply a function to each node (item with or without children).
+
+  ```python
+  data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
+
+  # Search through an object
+  def check_int(obj):
+      return isinstance(obj, int)
+
+  out = sc.iterobj(data, check_int)
+  print(out)
+
+  # Modify in place -- collapse mutliple short lines into one
+  def collapse(obj, maxlen):
+      string = str(obj)
+  # [...]
+  ```
+
+- `sc.makenested(obj=None, keylist=None, value=None, overwrite=True, generator=None, copy=False)`: Make or set a nested object (such as a dictionary).
+
+  ```python
+  foo = {}
+  sc.makenested(foo, ['a','b'])
+  foo['a']['b'] = 3
+  print(sc.getnested(foo, ['a','b'])) # 3
+  sc.setnested(foo, ['a','b'], 7)
+  print(sc.getnested(foo, ['a','b'])) # 7
+  sc.makenested(foo, ['bar','cat'], value='in the hat')
+  print(foo['bar'])  # {'cat': 'in the hat'}
+  ```
+
+- `sc.mergenested(dict1, dict2, die=False, verbose=False, _path=None)`: Merge different nested dictionaries
+- `sc.nestedloop(inputs, loop_order)`: Zip list of lists in order
+- `sc.search(obj, query='<sc_nested_custom_None>', key='<sc_nested_custom_None>', value='<sc_nested_custom_None>', type='<sc_nested_custom_None>', method='exact', **kwargs)`: Find a key/attribute or value within a list, dictionary or object.
+
+  ```python
+  # Create a nested dictionary
+  nested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':3, 'cat':[1,2,4,8]}}
+
+  # Find keys
+  keymatches = sc.search(nested, 'bar', flatten=True)
+
+  # Find values
+  val = 4
+  valmatches = sc.search(nested, value=val).keys()[0] # Returns  ('b', 'cat', 2)
+  assert sc.getnested(nested, valmatches) == val # Get from the original nested object
+
+  # Find values with a function
+  # [...]
+  ```
+
+- `sc.setnested(obj=None, keylist=None, value=None, **kwargs)`: Set the value for the given list of keys; alias for `sc.makenested()`.
+
+  ```python
+  sc.setnested(foo, ['a','b'], 3) # Sets foo['a']['b'] = 3
+  ```
+
+
+## Settings and help (sc_settings)
+
+- `sc.help(pattern=None, source=False, ignorecase=True, flags=None, context=False, output=False, debug=False)`: Get help on Sciris in general, or search for a word/expression.
+
+  ```python
+  sc.help()
+  sc.help('smooth')
+  sc.help('JSON', ignorecase=False, context=True)
+  sc.help('pickle', source=True, context=True)
+  ```
+
+- `sc.options(*args, **kwargs)`: Set options for Sciris.
+
+  ```python
+  sc.options(dpi=150) # Larger size
+  sc.options(style='simple', font='Rosario') # Change to the "simple" Sciris style with a custom font
+  sc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
+  sc.options(interactive=False) # Turn off interactive plots
+  sc.options(jupyter=True) # Defaults for Jupyter
+  sc.options('defaults') # Reset to default options
+  ```
+
+- `sc.parse_env(var, default=None, which='str')`: Simple function to parse environment variables
+
+  ```python
+  sc.parse_env('MY_FACTOR', default=3.5, which=float)
+  ```
+
+- `sc.ScirisOptions()`: Set options for Sciris.
+
+  ```python
+  sc.options(dpi=150) # Larger size
+  sc.options(style='simple', font='Rosario') # Change to the "simple" Sciris style with a custom font
+  sc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
+  sc.options(interactive=False) # Turn off interactive plots
+  sc.options(jupyter=True) # Defaults for Jupyter
+  sc.options('defaults') # Reset to default options
+  ```
+
+
+## Other
+
+- `sc.ddict(...)`: defaultdict(default_factory=None, /, [...]) --> dict with default factory
+
+<!-- Generated by `python make_api.py` for Sciris v3.3.0: llms-full.txt -->
