@@ -12,6 +12,7 @@ project:
 
 website:
   title: "Sciris"
+  site-url: https://docs.sciris.org
   image: /assets/sciris-logo.png
   favicon: /assets/favicon.ico
 
