@@ -3,12 +3,12 @@ Functions for checking and saving versioning information, such as Python package
 versions, git versions, etc.
 
 Highlights:
-    - :func:`sc.freeze() <freeze>`: programmatically store "pip freeze" output
-    - :func:`sc.require() <require>`: require a specific version of a package
-    - :func:`sc.gitinfo() <gitinfo>`: gets the git information (if available) of a given file
-    - :func:`sc.compareversions() <compareversions>`: easy way to compare version numbers
-    - :func:`sc.metadata() <metadata>`: collects relevant metadata into a dictionary
-    - :func:`sc.savearchive() <savearchive>`: saves data as a zip file including versioning metadata
+    - `sc.freeze()`: programmatically store "pip freeze" output
+    - `sc.require()`: require a specific version of a package
+    - `sc.gitinfo()`: gets the git information (if available) of a given file
+    - `sc.compareversions()`: easy way to compare version numbers
+    - `sc.metadata()`: collects relevant metadata into a dictionary
+    - `sc.savearchive()`: saves data as a zip file including versioning metadata
 """
 
 import os
@@ -41,12 +41,14 @@ def freeze(lower=False):
     Args:
         lower (bool): convert all keys to lowercase
 
-    **Example**::
+    **Example**:
 
-        assert 'numpy' in sc.freeze() # One way to check for versions
+    ```python
+    assert 'numpy' in sc.freeze() # One way to check for versions
+    ```
 
-    | *New in version 1.2.2.*
-    | *New in version 3.1.3:* use ``importlib`` instead of ``pkg_resources``
+    - *New in version 1.2.2.*
+    - *New in version 3.1.3:* use `importlib` instead of `pkg_resources`
     """
     raw = {dist.metadata['Name']:dist.version for dist in imd.distributions()}
     keys = sorted(raw.keys())
@@ -84,18 +86,20 @@ def require(reqs=None, *args, message=None, exact=False, detailed=False, die=Tru
         warn (bool): if not die, raise a warning if requirements aren't met
         verbose (bool): print out the exception if it's not being raised or warned
 
-    **Examples**::
+    **Examples**:
 
-        sc.require('numpy')
-        sc.require(numpy='')
-        sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
-        sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False, message='Requirements <MISSING> not met, but continuing anyway')
-        sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
+    ```python
+    sc.require('numpy')
+    sc.require(numpy='')
+    sc.require(reqs={'numpy':'1.19.1', 'matplotlib':'3.2.2'})
+    sc.require('numpy>=1.19.1', 'matplotlib==3.2.2', die=False, message='Requirements <MISSING> not met, but continuing anyway')
+    sc.require(numpy='1.19.1', matplotlib='==4.2.2', die=False, detailed=True)
+    ```
 
-    | *New in version 1.2.2.*
-    | *New in version 3.0.0:* "warn" argument
-    | *New in version 3.1.3:* "message" argument
-    | *New in version 3.1.6:* replace pkg_resources dependency with packaging
+    - *New in version 1.2.2.*
+    - *New in version 3.0.0:* "warn" argument
+    - *New in version 3.1.3:* "message" argument
+    - *New in version 3.1.6:* replace pkg_resources dependency with packaging
     """
 
     # Handle inputs
@@ -168,8 +172,8 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
     Retrieve git info
 
     This function reads git branch and commit information from a .git directory.
-    Given a path, it will check for a ``.git`` directory. If the path doesn't contain
-    that directory, it will search parent directories for ``.git`` until it finds one.
+    Given a path, it will check for a `.git` directory. If the path doesn't contain
+    that directory, it will search parent directories for `.git` until it finds one.
     Then, the current information will be parsed.
 
     Note: if direct directory reading fails, it will attempt to use the gitpython
@@ -184,10 +188,12 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
     Returns:
         Dictionary containing the branch, hash, and commit date
 
-    **Examples**::
+    **Examples**:
 
-        info = sc.gitinfo() # Get git info for current script repository
-        info = sc.gitinfo(my_package.__file__) # Get git info for a particular Python package
+    ```python
+    info = sc.gitinfo() # Get git info for current script repository
+    info = sc.gitinfo(my_package.__file__) # Get git info for a particular Python package
+    ```
     """
 
     if path is None:
@@ -273,18 +279,19 @@ def compareversions(version1, version2):
     format 1.2.3, but numeric works too. Returns 0 for equality, -1 for v1<v2, and
     1 for v1>v2.
 
-    If ``version2`` starts with >, >=, <, <=, or ==, the function returns True or
+    If `version2` starts with >, >=, <, <=, or ==, the function returns True or
     False depending on the result of the comparison.
 
-    **Examples**::
+    **Examples**:
 
-        sc.compareversions('1.2.3', '2.3.4') # returns -1
-        sc.compareversions(2, '2') # returns 0
-        sc.compareversions('3.1', '2.99') # returns 1
-        sc.compareversions('3.1', '>=2.99') # returns True
-        sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
-        sc.compareversions(mymodule, '>=1.0') # alias to the above
-
+    ```python
+    sc.compareversions('1.2.3', '2.3.4') # returns -1
+    sc.compareversions(2, '2') # returns 0
+    sc.compareversions('3.1', '2.99') # returns 1
+    sc.compareversions('3.1', '>=2.99') # returns True
+    sc.compareversions(mymodule.__version__, '>=1.0') # common usage pattern
+    sc.compareversions(mymodule, '>=1.0') # alias to the above
+    ```
     *New in version 1.2.1:* relational operators
     """
     # Handle inputs
@@ -333,7 +340,7 @@ def compareversions(version1, version2):
 def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, relframe=0, die=False):
     """
     Try to get information on the calling function, but fail gracefully. See also
-    :func:`sc.thisfile() <sciris.sc_fileio.thisfile>`.
+    `sc.thisfile()`.
 
     Frame 1 is the file calling this function, so not very useful. Frame 2 is
     the default assuming it is being called directly. Frame 3 is used if
@@ -342,24 +349,26 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
     Args:
         frame (int): how many frames to descend (e.g. the caller of the caller of the...), default 2
         tostring (bool): whether to return a string instead of a dict with filename and line number
-        includelineno (bool): if ``tostring``, whether to also include the line number
-        includeline (bool): if not ``tostring``, also store the line contents
+        includelineno (bool): if `tostring`, whether to also include the line number
+        includeline (bool): if not `tostring`, also store the line contents
         relframe (int): relative frame -- another way of specifying the frame; added to "frame"
         die (bool): whether to raise an exception if calling information cannot be retrieved
 
     Returns:
         output (str/dict): the filename (and line number) of the calling function, either as a string or dict
 
-    **Examples**::
+    **Examples**:
 
-        sc.getcaller()
-        sc.getcaller(tostring=False)['filename'] # Equivalent to sc.getcaller()
-        sc.getcaller(frame=3) # Descend one level deeper than usual
-        sc.getcaller(frame=1, tostring=False, includeline=True) # See the line that called sc.getcaller()
+    ```python
+    sc.getcaller()
+    sc.getcaller(tostring=False)['filename'] # Equivalent to sc.getcaller()
+    sc.getcaller(frame=3) # Descend one level deeper than usual
+    sc.getcaller(frame=1, tostring=False, includeline=True) # See the line that called sc.getcaller()
+    ```
 
-    | *New in version 1.0.0.*
-    | *New in version 1.3.3:* do not include line by default
-    | *New in version 3.0.0:* "relframe" argument; "die" argument
+    - *New in version 1.0.0.*
+    - *New in version 1.3.3:* do not include line by default
+    - *New in version 3.0.0:* "relframe" argument; "die" argument
     """
     try:
         import inspect
@@ -416,13 +425,14 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
         A dictionary with information on the date, plateform, executable, versions
         of key libraries (Sciris, Numpy, pandas, and Matplotlib), and the Python environment
 
-    **Examples**::
+    **Examples**:
 
-        metadata = sc.metadata()
-        sc.compareversions(metadata.versions.pandas, '1.5.0')
+    ```python
+    metadata = sc.metadata()
+    sc.compareversions(metadata.versions.pandas, '1.5.0')
 
-        sc.metadata('my-metadata.json') # Save to disk
-
+    sc.metadata('my-metadata.json') # Save to disk
+    ```
     *New in version 3.0.0.*
     """
 
@@ -490,21 +500,23 @@ def loadmetadata(filename, load_all=False, die=True):
     """
     Read metadata from a saved image; currently only PNG and SVG are supported.
 
-    Only for use with images saved with :func:`sc.savefig() <sciris.sc_plotting.savefig>`. Metadata retrieval for PDF
-    is not currently supported. To load metadata saved with :func:`sc.metadata() <metadata>`,
-    you can also use :func:`sc.loadjson() <sciris.sc_fileio.loadjson>` instead. To load metadata saved with :func:`sc.savearchive() <savearchive>`,
-    use :func:`sc.loadarchive() <loadarchive>` instead.
+    Only for use with images saved with `sc.savefig()`. Metadata retrieval for PDF
+    is not currently supported. To load metadata saved with `sc.metadata()`,
+    you can also use `sc.loadjson()` instead. To load metadata saved with `sc.savearchive()`,
+    use `sc.loadarchive()` instead.
 
     Args:
         filename (str): the name of the file to load the data from
         load_all (bool): whether to load all metadata available in an image (else, just load what was saved by Sciris)
         die (bool): whether to raise an exception if the metadata can't be found
 
-    **Example**::
+    **Example**:
 
-        plt.plot([1,2,3], [4,2,6])
-        sc.savefig('example.png')
-        sc.loadmetadata('example.png')
+    ```python
+    plt.plot([1,2,3], [4,2,6])
+    sc.savefig('example.png')
+    sc.loadmetadata('example.png')
+    ```
     """
 
     # Initialize
@@ -620,23 +632,24 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
         files (str/list): any additional files or folders to save
         comments (str/dict): other comments/information to store in the metadata (must be JSON-compatible)
         require (str/dict): if provided, an additional manual set of requirements
-        caller (bool): store information on the current user in the metadata (see :func:`sc.metadata() <metadata>`)
-        caller (bool): store information on the calling file in the metadata (see :func:`sc.metadata() <metadata>`)
-        git (bool): store the git version in the metadata (see :func:`sc.metadata() <metadata>`)
-        pipfreeze (bool): store the output of "pip freeze" in the metadata (see :func:`sc.metadata() <metadata>`)
+        caller (bool): store information on the current user in the metadata (see `sc.metadata()`)
+        caller (bool): store information on the calling file in the metadata (see `sc.metadata()`)
+        git (bool): store the git version in the metadata (see `sc.metadata()`)
+        pipfreeze (bool): store the output of "pip freeze" in the metadata (see `sc.metadata()`)
         method (str): the method to use saving the data; default "dill" for more robustness, but "pickle" is faster
         allow_nonzip (bool): whether to permit extensions other than .zip (note, may cause problems!)
-        dumpargs (dict): passed to :func:`sc.dumpstr() <sciris.sc_fileio.dumpstr>`
-        kwargs (dict): passed to :func:`sc.savezip() <sciris.sc_fileio.savezip>`
+        dumpargs (dict): passed to `sc.dumpstr()`
+        kwargs (dict): passed to `sc.savezip()`
 
-    **Example**::
+    **Example**:
 
-        obj = MyClass() # Create an arbitrary object
-        sc.savearchive('my-class.zip', obj)
+    ```python
+    obj = MyClass() # Create an arbitrary object
+    sc.savearchive('my-class.zip', obj)
 
-        # Much later...
-        obj = sc.loadarchive('my-class.zip')
-
+    # Much later...
+    obj = sc.loadarchive('my-class.zip')
+    ```
     *New in version 3.0.0.*
     """
     filename = sc.makepath(filename=filename, folder=folder, makedirs=True)
@@ -665,7 +678,7 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
 def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
                      remapping=None, die=True, **kwargs):
     """
-    Load a zip file saved with :func:`sc.savearchive() <savearchive>`.
+    Load a zip file saved with `sc.savearchive()`.
 
     **Note**: Since this function relies on pickle, it can potentially execute arbitrary
     code, so you should only use it with sources you trust. For more information, see:
@@ -678,26 +691,27 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
         loadmetadata (bool): whether to load the metadata as well
         remapping (dict): any known module remappings between the saved pickle version and the current libraries
         die (bool): whether to fail if an exception is raised (else, just return the metadata)
-        kwargs (dict): passed to :func:`sc.load() <sciris.sc_fileio.load>`
+        kwargs (dict): passed to `sc.load()`
 
     Returns:
         If loadobj=True and loadmetadata=False, return the object;
         If loadobj=False and loadmetadata=True, return the metadata
         If loadobj=True and loadmetadata=True, return a dictionary of both
 
-    **Example**::
+    **Example**:
 
-        obj = MyClass() # Create an arbitrary object
-        sc.savearchive('my-class.zip', obj)
+    ```python
+    obj = MyClass() # Create an arbitrary object
+    sc.savearchive('my-class.zip', obj)
 
-        # Much later...
-        data = sc.loadarchive('my-class.zip', loadmetadata=True)
-        metadata, obj = data['metadata'], data['obj']
-
+    # Much later...
+    data = sc.loadarchive('my-class.zip', loadmetadata=True)
+    metadata, obj = data['metadata'], data['obj']
+    ```
     Note: This function expects the zip file to contain two files in it, one called
     "metadata.json" and one called "sciris_pickle.obj". If you need to change these,
-    you can manually modify ``sc.sc_versioning._metadata_filename`` and
-    ``sc.sc_versioning._obj_filename``, respectively. However, you almost certainly
+    you can manually modify `sc.sc_versioning._metadata_filename` and
+    `sc.sc_versioning._obj_filename`, respectively. However, you almost certainly
     should not do so!
 
     *New in version 3.0.0.*

@@ -1,16 +1,18 @@
 """
 Define options for Sciris, mostly plotting options.
 
-All options should be set using ``set()`` or directly, e.g.::
+All options should be set using `set()` or directly, e.g.:
 
-    sc.options(font_size=18)
+```python
+sc.options(font_size=18)
+```
+To reset default options, use:
 
-To reset default options, use::
-
-    sc.options.reset()
-
+```python
+sc.options.reset()
+```
 Note: "options" is used to refer to the choices available (e.g., DPI), while "settings"
-is used to refer to the choices made (e.g., ``dpi=150``).
+is used to refer to the choices made (e.g., `dpi=150`).
 """
 
 import os
@@ -75,12 +77,14 @@ def parse_env(var, default=None, which='str'):
         default (any): default value
         which (str): what type to convert to (if None, don't convert)
 
-    **Example**::
+    **Example**:
 
-        sc.parse_env('MY_FACTOR', default=3.5, which=float)
+    ```python
+    sc.parse_env('MY_FACTOR', default=3.5, which=float)
+    ```
 
-    | *New in version 2.0.0.*
-    | *New in version 3.2.1:* allow actual types
+    - *New in version 2.0.0.*
+    - *New in version 3.2.1:* allow actual types
     """
     val = os.getenv(var, default)
     if which is None:
@@ -117,16 +121,16 @@ class ScirisOptions(sc.objdict):
     Set options for Sciris.
 
     Note: this class should not be invoked directly. An instance is created automatically,
-    which is the accessible via ``sc.options``.
+    which is the accessible via `sc.options`.
 
-    Use :meth:`sc.options.reset() <ScirisOptions.reset>` to reset all values to default, or :meth:`sc.options.set(dpi='default')  <ScirisOptions.set>`
-    to reset one parameter to default. See :meth:`sc.options.help(detailed=True) <ScirisOptions.help>` for
+    Use `sc.options.reset()` to reset all values to default, or `sc.options.set(dpi='default')`
+    to reset one parameter to default. See `sc.options.help(detailed=True)` for
     more information.
 
-    Options can also be saved and loaded using :meth:`sc.options.save() <ScirisOptions.save>` and :meth:`sc.options.load() <ScirisOptions.load>`.
-    See :meth:`sc.options.with_style() <ScirisOptions.with_style>` to set options temporarily.
+    Options can also be saved and loaded using `sc.options.save()` and `sc.options.load()`.
+    See `sc.options.with_style()` to set options temporarily.
 
-    Common options are (see also :meth:`sc.options.help(detailed=True) <ScirisOptions.help>`):
+    Common options are (see also `sc.options.help(detailed=True)`):
 
         - dpi:            the overall DPI (i.e. size) of the figures
         - font:           the font family/face used for the plots
@@ -140,19 +144,21 @@ class ScirisOptions(sc.objdict):
     Note also the environment variable SCIRIS_LAZY, which imports Sciris lazily
     (i.e. does not import submodules).
 
-    **Examples**::
+    **Examples**:
 
-        sc.options(dpi=150) # Larger size
-        sc.options(style='simple', font='Rosario') # Change to the "simple" Sciris style with a custom font
-        sc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
-        sc.options(interactive=False) # Turn off interactive plots
-        sc.options(jupyter=True) # Defaults for Jupyter
-        sc.options('defaults') # Reset to default options
+    ```python
+    sc.options(dpi=150) # Larger size
+    sc.options(style='simple', font='Rosario') # Change to the "simple" Sciris style with a custom font
+    sc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
+    sc.options(interactive=False) # Turn off interactive plots
+    sc.options(jupyter=True) # Defaults for Jupyter
+    sc.options('defaults') # Reset to default options
+    ```
 
-    | *New in version 1.3.0.*
-    | *New in version 2.0.0:* revamped with additional options ``interactive`` and ``jupyter``, plus styles
-    | *New in version 3.0.0:* renamed from Options to ScirisOptions to avoid potential confusion with ``sc.options``
-    | *New in version 3.2.5:* locked attributes to prevent accidental modification
+    - *New in version 1.3.0.*
+    - *New in version 2.0.0:* revamped with additional options `interactive` and `jupyter`, plus styles
+    - *New in version 3.0.0:* renamed from Options to ScirisOptions to avoid potential confusion with `sc.options`
+    - *New in version 3.2.5:* locked attributes to prevent accidental modification
     """
 
     def __init__(self):
@@ -166,7 +172,7 @@ class ScirisOptions(sc.objdict):
 
 
     def __call__(self, *args, **kwargs):
-        """Allow ``sc.options(dpi=150)`` instead of ``sc.options.set(dpi=150)`` """
+        """Allow `sc.options(dpi=150)` instead of `sc.options.set(dpi=150)` """
         return self.set(*args, **kwargs)
 
 
@@ -238,7 +244,7 @@ class ScirisOptions(sc.objdict):
     def get_orig_options():
         """
         Set the default options for Sciris -- not to be called by the user, use
-        :meth:`sc.options.set('defaults') <ScirisOptions.set>` instead.
+        `sc.options.set('defaults')` instead.
         """
 
         # Options acts like a class, but is actually an objdict for simplicity
@@ -283,7 +289,7 @@ class ScirisOptions(sc.objdict):
 
     def set(self, key=None, value=None, use=True, **kwargs):
         """
-        Actually change the style. See :meth:`sc.options.help() <ScirisOptions.help>` for more information.
+        Actually change the style. See `sc.options.help()` for more information.
 
         Args:
             key    (str):    the parameter to modify, or 'defaults' to reset everything to default values
@@ -291,9 +297,11 @@ class ScirisOptions(sc.objdict):
             use    (bool):   whether to immediately apply the change (to Matplotlib)
             kwargs (dict):   if supplied, set multiple key-value pairs
 
-        **Example**::
+        **Example**:
 
-            sc.options.set(dpi=50) # Equivalent to sc.options(dpi=50)
+        ```python
+        sc.options.set(dpi=50) # Equivalent to sc.options(dpi=50)
+        ```
         """
 
         # Reset to defaults
@@ -361,7 +369,7 @@ class ScirisOptions(sc.objdict):
         """
         Alias to set() for non-plotting options, for use in a "with" block.
 
-        Note: for plotting options, use :meth:`sc.options.with_style() <ScirisOptions.with_style>`, which is linked
+        Note: for plotting options, use `sc.options.with_style()`, which is linked
         to Matplotlib's context manager. If you set plotting options with this,
         they won't have any effect.
         """
@@ -475,9 +483,11 @@ class ScirisOptions(sc.objdict):
             detailed (bool): whether to print out full help
             output (bool): whether to return a list of the options
 
-        **Example**::
+        **Example**:
 
-            sc.options.help(detailed=True)
+        ```python
+        sc.options.help(detailed=True)
+        ```
         """
 
         # If not detailed, just print the docstring for sc.options
@@ -534,7 +544,7 @@ class ScirisOptions(sc.objdict):
 
         Args:
             filename (str): file to load
-            kwargs (dict): passed to :func:`sc.loadjson() <sciris.sc_fileio.loadjson>`
+            kwargs (dict): passed to `sc.loadjson()`
         """
         json = sc.loadjson(filename=filename, **kwargs)
         current = self.to_dict()
@@ -550,7 +560,7 @@ class ScirisOptions(sc.objdict):
 
         Args:
             filename (str): file to save to
-            kwargs (dict): passed to :func:`sc.savejson() <sciris.sc_fileio.savejson>`
+            kwargs (dict): passed to `sc.savejson()`
         """
         json = self.to_dict()
         output = sc.savejson(filename=filename, obj=json, **kwargs)
@@ -589,12 +599,12 @@ class ScirisOptions(sc.objdict):
         Combine all Matplotlib style information, and either apply it directly
         or create a style context.
 
-        To set globally, use :meth:`sc.options.use_style() <ScirisOptions.use_style>`. Otherwise, use :meth:`sc.options.with_style() <ScirisOptions.with_style>`
-        as part of a ``with`` block to set the style just for that block (using
-        this function outsde of a with block and with ``use=False`` has no effect, so
+        To set globally, use `sc.options.use_style()`. Otherwise, use `sc.options.with_style()`
+        as part of a `with` block to set the style just for that block (using
+        this function outsde of a with block and with `use=False` has no effect, so
         don't do that!).
 
-        Note: you can also just use :func:`plt.style.context() <matplotlib.style.context>`.
+        Note: you can also just use `plt.style.context()`.
 
         Args:
             style_args (dict): a dictionary of style arguments
@@ -603,22 +613,24 @@ class ScirisOptions(sc.objdict):
 
         Valid style arguments are:
 
-            - ``dpi``:       the figure DPI
-            - ``font``:      font (typeface)
-            - ``fontsize``:  font size
-            - ``grid``:      whether or not to plot gridlines
-            - ``facecolor``: color of the axes behind the plot
-            - any of the entries in :class:`plt.rcParams <matplotlib.RcParams>`
+            - `dpi`:       the figure DPI
+            - `font`:      font (typeface)
+            - `fontsize`:  font size
+            - `grid`:      whether or not to plot gridlines
+            - `facecolor`: color of the axes behind the plot
+            - any of the entries in `plt.rcParams`
 
-        **Examples**::
+        **Examples**:
 
-            with sc.options.with_style(dpi=300): # Use default options, but higher DPI
-                plt.figure()
-                plt.plot([1,3,6])
+        ```python
+        with sc.options.with_style(dpi=300): # Use default options, but higher DPI
+            plt.figure()
+            plt.plot([1,3,6])
 
-            with sc.options.with_style(style='fancy'): # Use the "fancy" style
-                plt.figure()
-                plt.plot([6,1,3])
+        with sc.options.with_style(style='fancy'): # Use the "fancy" style
+            plt.figure()
+            plt.plot([6,1,3])
+        ```
         """
 
         # Handle inputs
@@ -677,15 +689,17 @@ class ScirisOptions(sc.objdict):
         """
         Shortcut to set Sciris's current style as the global default.
 
-        **Example**::
+        **Example**:
 
-            sc.options.use_style() # Set Sciris options as default
-            plt.figure()
-            plt.plot([1,3,7])
+        ```python
+        sc.options.use_style() # Set Sciris options as default
+        plt.figure()
+        plt.plot([1,3,7])
 
-            plt.style.use('ggplot') # to something else
-            plt.figure()
-            plt.plot([3,1,4])
+        plt.style.use('ggplot') # to something else
+        plt.figure()
+        plt.plot([3,1,4])
+        ```
         """
         return self.with_style(style=style, use=True, **kwargs)
 
@@ -704,20 +718,22 @@ def help(pattern=None, source=False, ignorecase=True, flags=None, context=False,
     Args:
         pattern    (str):  the word, phrase, or regex to search for
         source     (bool): whether to search source code instead of docstrings for matches
-        ignorecase (bool): whether to ignore case (equivalent to ``flags=re.I``)
-        flags      (list): additional flags to pass to :func:`re.findall()`
+        ignorecase (bool): whether to ignore case (equivalent to `flags=re.I`)
+        flags      (list): additional flags to pass to `re.findall()`
         context    (bool): whether to show the line(s) of matches
         output     (bool): whether to return the dictionary of matches
 
-    **Examples**::
+    **Examples**:
 
-        sc.help()
-        sc.help('smooth')
-        sc.help('JSON', ignorecase=False, context=True)
-        sc.help('pickle', source=True, context=True)
+    ```python
+    sc.help()
+    sc.help('smooth')
+    sc.help('JSON', ignorecase=False, context=True)
+    sc.help('pickle', source=True, context=True)
+    ```
 
-    | *New in version 1.3.0.*
-    | *New in version 1.3.1:* "source" argument
+    - *New in version 1.3.0.*
+    - *New in version 1.3.1:* "source" argument
     """
     defaultmsg = '''
 For general help using Sciris, the best place to start is the docs:

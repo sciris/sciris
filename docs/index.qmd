@@ -1,0 +1,37 @@
+---
+pagetitle: "Sciris"
+---
+
+![](assets/sciris-logo.png){.mx-auto .d-block width=40%}
+
+{{< include ../README.md >}}
+
+## Learn more
+
+::: {.grid}
+
+::: {.g-col-12 .g-col-md-6}
+[**Overview**](overview.qmd)
+
+Find out more detail about the Sciris project, see some use cases, and learn about the most important features.
+:::
+
+::: {.g-col-12 .g-col-md-6}
+[**Tutorials**](tutorials.qmd)
+
+An interactive tour of Sciris' key features, including containers, parallelization, file loading and saving, and more.
+:::
+
+::: {.g-col-12 .g-col-md-6}
+[**API reference**](api/index.qmd)
+
+All the gory detail of every function and class.
+:::
+
+::: {.g-col-12 .g-col-md-6}
+[**What's new**](whatsnew.qmd)
+
+See what's hot off the press.
+:::
+
+:::

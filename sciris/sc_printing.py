@@ -2,12 +2,12 @@
 Printing/notification functions.
 
 Highlights:
-    - :func:`sc.heading() <heading>`: print text as a 'large' heading
-    - :func:`sc.colorize() <colorize>`: print text in a certain color
-    - :func:`sc.pr() <pr>`: print full representation of an object, including methods and each attribute
-    - :func:`sc.sigfig() <sigfig>`: truncate a number to a certain number of significant figures
-    - :func:`sc.progressbar() <progressbar>`: show a (text-based) progress bar
-    - :func:`sc.capture() <capture>`: capture text output (e.g., stdout) as a variable
+    - `sc.heading()`: print text as a 'large' heading
+    - `sc.colorize()`: print text in a certain color
+    - `sc.pr()`: print full representation of an object, including methods and each attribute
+    - `sc.sigfig()`: truncate a number to a certain number of significant figures
+    - `sc.progressbar()`: show a (text-based) progress bar
+    - `sc.capture()`: capture text output (e.g., stdout) as a variable
 """
 
 import io
@@ -71,7 +71,7 @@ def createcollist(items, title=None, strlen=_strlen, ncol=_ncol):
 
 def objectid(obj, showclasses=False):
     """
-    Return the object ID as per the default Python ``__repr__`` method
+    Return the object ID as per the default Python `__repr__` method
 
     *New in version 3.1.0:* "showclasses" argument
     """
@@ -115,7 +115,7 @@ def _is_meth(obj, attr, die=False):
     """
     Helper function to check if an attribute is a method; do not distinguish between bound and unbound
 
-    | *New in version 3.2.0:* use method and function types instead of callable()
+    - *New in version 3.2.0:* use method and function types instead of callable()
     """
     try:
         obj = getattr(obj, attr, None)
@@ -140,7 +140,7 @@ def _is_prop(obj, attr, die=False):
 
 
 def objatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None, return_keys=False):
-    """ Return a sorted string of object attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
+    """ Return a sorted string of object attributes for the Python __repr__ method; see `sc.prepr()` for options """
     keys = _get_obj_keys(obj, private=private, sort=sort) if _keys is None else _keys
     if return_keys:
         return keys
@@ -150,7 +150,7 @@ def objatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None
 
 
 def classatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _objkeys=None, _dirkeys=None, return_keys=False):
-    """ Return a sorted string of class attributes for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
+    """ Return a sorted string of class attributes for the Python __repr__ method; see `sc.prepr()` for options """
     objkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=False) if _objkeys is None else _objkeys
     dirkeys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True)  if _dirkeys is None else _dirkeys
     keys = set(dirkeys) - set(objkeys) # Find attributes in dir() that are not in __dict__
@@ -164,7 +164,7 @@ def classatt(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _objkeys
 
 
 def objmeth(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None, return_keys=False):
-    """ Return a sorted string of object methods for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
+    """ Return a sorted string of object methods for the Python __repr__ method; see `sc.prepr()` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
         _keys = [meth for meth in _keys if _is_meth(obj, meth)]
@@ -178,7 +178,7 @@ def objmeth(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=Non
 
 
 def objprop(obj, strlen=_strlen, ncol=_ncol, private=False, sort=True, _keys=None, return_keys=False):
-    """ Return a sorted string of object properties for the Python __repr__ method; see :func:`sc.prepr() <prepr>` for options """
+    """ Return a sorted string of object properties for the Python __repr__ method; see `sc.prepr()` for options """
     try: # In very rare cases this fails, so put it in a try-except loop
         _keys = _get_obj_keys(obj, private=private, sort=sort, use_dir=True) if _keys is None else _keys
         keys = [prop for prop in _keys if _is_prop(obj, prop)]
@@ -196,9 +196,9 @@ def objrepr(obj, showid=True, showmeth=True, showprop=True, showatt=True, showcl
     """
     Print out a detailed representation of an object: methods, properties, attributes, etc.
 
-    Similar to ``sc.prepr(obj, vals=False)``.
+    Similar to `sc.prepr(obj, vals=False)`.
 
-    See :func:`sc.prepr() <prepr>` for an explanation of arguments.
+    See `sc.prepr()` for an explanation of arguments.
     """
 
     # Call the object twice to get the keys
@@ -230,12 +230,12 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
     This function returns a pretty (and pretty detailed) representation of an object --
     all attributes (except any that are skipped), plus methods and ID.
 
-    This function is usually used via the interactive :func:`sc.pr() <pr>` (which prints),
+    This function is usually used via the interactive `sc.pr()` (which prints),
     rather than this function (which returns a string).
 
     Args:
         obj (anything): the object to be represented
-        vals (bool): whether to show attribute values (else, just list attributes; similar to :func:`sc.objrepr() <objrepr>`)
+        vals (bool): whether to show attribute values (else, just list attributes; similar to `sc.objrepr()`)
         maxlen (int): maximum number of characters to show for each attribute
         maxitems (int): maximum number of attribute to show in the object
         skip (list): any attributes to skip
@@ -248,22 +248,24 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
         die (bool): whether to raise an exception if an error is encountered
         debug (bool): print out detail during string construction
 
-    | *New in version 3.0.0:* "debug" argument
-    | *New in version 3.1.4:* more robust handling of invalid object properties
-    | *New in version 3.1.5:* "vals" argument to turn off printing attribute values
-    | *New in version 3.1.6:* "maxrecurse" argument, and checking for recursion
+    - *New in version 3.0.0:* "debug" argument
+    - *New in version 3.1.4:* more robust handling of invalid object properties
+    - *New in version 3.1.5:* "vals" argument to turn off printing attribute values
+    - *New in version 3.1.6:* "maxrecurse" argument, and checking for recursion
 
-    **Examples**::
+    **Examples**:
 
-        # Default options
-        df = sc.dataframe(a=[1,2,3], b=[4,5,6])
-        print(df) # See just the data
-        sc.pr(df) # See all the methods too
-        sc.pr(df, vals=False) # Only see methods, not the values
+    ``python
+    # Default options
+    df = sc.dataframe(a=[1,2,3], b=[4,5,6])
+    print(df) # See just the data
+    sc.pr(df) # See all the methods too
+    sc.pr(df, vals=False) # Only see methods, not the values
 
-        # Demonstrate options
-        obj = sc.prettyobj({k:k for k in [l + str(n) for n in range(10) for l in 'abcde']}) # Big object
-        sc.pr(obj, maxitems=20, sort=False, dividerchar='•', dividerlen=43, private=True)
+    # Demonstrate options
+    obj = sc.prettyobj({k:k for k in [l + str(n) for n in range(10) for l in 'abcde']}) # Big object
+    sc.pr(obj, maxitems=20, sort=False, dividerchar='•', dividerlen=43, private=True)
+    ``
     """
     # Check recursion before we proceed -- adds about 2-5 ms per call, but prevents infinite recursion
     if maxrecurse:
@@ -403,10 +405,10 @@ def pr(obj, *args, **kwargs):
     """
     Pretty-print a detailed representation of an object ("pr" is short for "print repr").
 
-    See :func:`sc.prepr() <prepr>` for arguments and examples.
+    See `sc.prepr()` for arguments and examples.
 
-    Note: :func:`sc.prepr() <prepr>` creates a string, while ``sc.pr()`` prints
-    the output, i.e. ``sc.pr(obj)`` is an alias to ``print(sc.prepr(obj))``.
+    Note: `sc.prepr()` creates a string, while `sc.pr()` prints
+    the output, i.e. `sc.pr(obj)` is an alias to `print(sc.prepr(obj))`.
     """
     print(prepr(obj, *args, **kwargs))
     return
@@ -418,68 +420,71 @@ class prettyobj:
     (the Python default for objects). Can also be used as the base class for custom
     classes.
 
-    See :class:`sc.quickobj() <quickobj>` for a similar class that does not print
+    See `sc.quickobj()` for a similar class that does not print
     attribute values (better for large objects that take a while to display).
 
     Args:
         args (dict): dictionaries which are used to assign attributes
         kwargs (any): can also be used to assign attributes
 
-    **Example 1**::
+    **Example 1**:
 
-        myobj = sc.prettyobj(a=3)
-        print(myobj)
+    ``python
+    myobj = sc.prettyobj(a=3)
+    print(myobj)
 
-        # <sciris.sc_printing.prettyobj at 0x7fbba4a97f40>
-        # ————————————————————————————————————————————————————————————
-        # Methods:
-        #   Methods N/A
-        # ————————————————————————————————————————————————————————————
-        # a: 3
-        # ————————————————————————————————————————————————————————————
+    # <sciris.sc_printing.prettyobj at 0x7fbba4a97f40>
+    # ————————————————————————————————————————————————————————————
+    # Methods:
+    #   Methods N/A
+    # ————————————————————————————————————————————————————————————
+    # a: 3
+    # ————————————————————————————————————————————————————————————
+    ``
+    **Example 2**:
 
-    **Example 2**::
+    ``python
+    myobj = sc.prettyobj(a=3)
+    myobj.b = {'a':6}
+    print(myobj)
 
-        myobj = sc.prettyobj(a=3)
-        myobj.b = {'a':6}
-        print(myobj)
+    # <sciris.sc_printing.prettyobj at 0x7ffa1e243910>
+    # ————————————————————————————————————————————————————————————
+    # Methods:
+    #   Methods N/A
+    # ————————————————————————————————————————————————————————————
+    # a: 3
+    # b: {'a': 6}
+    # ————————————————————————————————————————————————————————————
+    ``
+    **Example 3**:
 
-        # <sciris.sc_printing.prettyobj at 0x7ffa1e243910>
-        # ————————————————————————————————————————————————————————————
-        # Methods:
-        #   Methods N/A
-        # ————————————————————————————————————————————————————————————
-        # a: 3
-        # b: {'a': 6}
-        # ————————————————————————————————————————————————————————————
+    ``python
+    class MyObj(sc.prettyobj):
 
+        def __init__(self, a, b):
+            self.a = a
+            self.b = b
 
-    **Example 3**::
+        def mult(self):
+            return self.a * self.b
 
-        class MyObj(sc.prettyobj):
+    myobj = MyObj(a=4, b=6)
+    print(myobj)
 
-            def __init__(self, a, b):
-                self.a = a
-                self.b = b
+    # <__main__.MyObj at 0x7fd9acd96c10>
+    # ————————————————————————————————————————————————————————————
+    # Methods:
+    #   mult()
+    # ————————————————————————————————————————————————————————————
+    # a: 4
+    # b: 6
+    # ————————————————————————————————————————————————————————————
+    ``
 
-            def mult(self):
-                return self.a * self.b
-
-        myobj = MyObj(a=4, b=6)
-        print(myobj)
-
-        # <__main__.MyObj at 0x7fd9acd96c10>
-        # ————————————————————————————————————————————————————————————
-        # Methods:
-        #   mult()
-        # ————————————————————————————————————————————————————————————
-        # a: 4
-        # b: 6
-        # ————————————————————————————————————————————————————————————
-
-    | *New in version 2.0.0:* allow positional arguments
-    | *New in version 3.1.4:* moved from sc_utils to sc_printing
-    | *New in version 3.1.6:* linked back to sc_utils to prevent unpickling errors
+    - *New in version 2.0.0:* allow positional arguments
+    - *New in version 3.1.4:* moved from sc_utils to sc_printing
+    - *New in version 3.1.6:* linked back to sc_utils to prevent unpickling errors
     """
     def __init__(self, *args, **kwargs):
         """ Simple initialization """
@@ -498,20 +503,22 @@ scu.prettyobj = prettyobj
 
 class quickobj(prettyobj):
     """
-    Like :class:`sc.prettyobj() <prettyobj>`, but do not print attribute values.
+    Like `sc.prettyobj()`, but do not print attribute values.
 
     This class is better for large objects that take a while to display. It is
     somewhat similar to calling dir() on an object.
 
-    This class also defines a ``disp()`` method, which calls :func:`sc.pr() <pr>` on the object.
+    This class also defines a `disp()` method, which calls `sc.pr()` on the object.
 
-    **Example**::
+    **Example**:
 
-        import numpy as np
-        myobj = sc.quickobj(big1=np.random.rand(100,100), big2=sc.dataframe(a=np.arange(1000)))
-        print(myobj)
+    ``python
+    import numpy as np
+    myobj = sc.quickobj(big1=np.random.rand(100,100), big2=sc.dataframe(a=np.arange(1000)))
+    print(myobj)
+    ``
 
-    | *New in version 3.1.5.*
+    - *New in version 3.1.5.*
     """
     def __repr__(self):
         """ Use a more detailed repr than default, but less detailed that prettyobj """
@@ -548,16 +555,17 @@ def indent(prefix=None, text=None, suffix='\n', n=0, pretty=False, width=70, **k
         n (int): if prefix is not specified, the size of the indent
         pretty (bool): whether to use pprint to format the text
         width (int): maximum width before wrapping (if None, don't wrap)
-        kwargs (dict): passed to :func:`textwrap.fill()`
+        kwargs (dict): passed to `textwrap.fill()`
 
-    **Examples**::
+    **Examples**:
 
-        prefix = 'and then they said: '
-        text = 'blah '*100
-        print(sc.indent(prefix, text))
+    ``python
+    prefix = 'and then they said: '
+    text = 'blah '*100
+    print(sc.indent(prefix, text))
 
-        print('my fave is: ' + sc.indent(text=rand(100), n=12))
-
+    print('my fave is: ' + sc.indent(text=rand(100), n=12))
+    ``
     *New in version 1.3.1:* more flexibility in arguments
     """
     # If "prefix" is given but text isn't, swap them
@@ -601,7 +609,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None):
     """
     Return a string representation of variable x with sigfigs number of significant figures
 
-    Note: :func:`sc.sigfig() <sigfig>` and :func:`sc.sigfigs() <sigfigs>` are aliases.
+    Note: `sc.sigfig()` and `sc.sigfigs()` are aliases.
 
     Args:
         x (int/float/list/arr): the number(s) to round
@@ -611,19 +619,21 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None):
         keepints (bool): never round ints
         formats (str/list): custom format suffixes; if str (e.g. 'kmb'), split into chars; if list (e.g. ['k','m','bn']), use as-is for 1e3, 1e6, etc.
 
-    **Examples**::
+    **Examples**:
 
-        x = 3432.3842
-        sc.sigfig(x, SI=True) # Returns '3.432K'
-        sc.sigfig(x, sep=True) # Returns '3,432'
-        sc.sigfig(x, SI=True, formats='kmb') # Returns '3.432k' (lowercase)
-        sc.sigfig(x, sigfigs=None) # Returns '3432.38' (uses 'g' format)
+    ``python
+    x = 3432.3842
+    sc.sigfig(x, SI=True) # Returns '3.432K'
+    sc.sigfig(x, sep=True) # Returns '3,432'
+    sc.sigfig(x, SI=True, formats='kmb') # Returns '3.432k' (lowercase)
+    sc.sigfig(x, sigfigs=None) # Returns '3432.38' (uses 'g' format)
 
-        vals = np.random.rand(5)
-        sc.sigfig(vals, sigfigs=3)
+    vals = np.random.rand(5)
+    sc.sigfig(vals, sigfigs=3)
+    ``
 
-    | *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple; changed SI suffixes to uppercase
-    | *New in version 3.2.6:* "formats" argument; use 'g' format when sigfigs=None
+    - *New in version 3.0.0:* changed default number of significant figures from 5 to 4; return list rather than tuple; changed SI suffixes to uppercase
+    - *New in version 3.2.6:* "formats" argument; use 'g' format when sigfigs=None
     """
     output = []
 
@@ -699,13 +709,15 @@ def sigfiground(x, sigfigs=4):
         x (int/float/list/arr): the number(s) to round
         sigfigs (int): number of significant figures to round to
 
-    **Examples**::
+    **Examples**:
 
-        sc.sigfiground(3.28343) # Returns 3.283
-        sc.sigfiground(834_875, 5)  # Returns 834880
-        sc.sigfiground([3.28343, 834_874, 0, -83_742], 2) # Returns [3.3, 830000, 0, -84000]
+    ``python
+    sc.sigfiground(3.28343) # Returns 3.283
+    sc.sigfiground(834_875, 5)  # Returns 834880
+    sc.sigfiground([3.28343, 834_874, 0, -83_742], 2) # Returns [3.3, 830000, 0, -84000]
+    ``
 
-    | *New in version 3.2.0.*
+    - *New in version 3.2.0.*
     """
 
     def round_arr(arr, sigfigs):
@@ -747,15 +759,17 @@ def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True,
         mean_sf (int): if provided, use this number of significant figures for the mean rather than the auto-calculated
         err_sf (int): ditto, but for the error (standard deviation)
         doprint (bool): whether to print (else, return the string)
-        kwargs (dict): passed to :func:`sc.sigfig() <sigfig>`
+        kwargs (dict): passed to `sc.sigfig()`
 
-    **Example**::
+    **Example**:
 
-        data = [1210, 1072, 1722, 1229, 1902]
-        sc.arraymean(data) # Returns 1430 ± 320
+    ``python
+    data = [1210, 1072, 1722, 1229, 1902]
+    sc.arraymean(data) # Returns 1430 ± 320
+    ``
 
-    | *New in version 3.0.0.*
-    | *New in version 3.2.0:* "axis" argument, "tostring" argument (allow numerical output)
+    - *New in version 3.0.0.*
+    - *New in version 3.2.0:* "axis" argument, "tostring" argument (allow numerical output)
     """
     vsf = mean_sf # vsf = "value significant figures"
     esf = err_sf if err_sf is not None else 2
@@ -800,13 +814,14 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
         ci (int/float/list/str): the confidence interval to use to use (see above for details)
         sf (int): number of significant figures to use
         doprint (bool): whether to print (else, return the string)
-        kwargs (dict): passed to :func:`sc.sigfig() <sigfig>`
+        kwargs (dict): passed to `sc.sigfig()`
 
-    **Examples**::
+    **Examples**:
 
-        data = [1210, 1072, 1722, 1229, 1902]
-        sc.printmedian(data, 80) # Returns '1230 (80.0% CI: 1130, 1830)'
-
+    ``python
+    data = [1210, 1072, 1722, 1229, 1902]
+    sc.printmedian(data, 80) # Returns '1230 (80.0% CI: 1130, 1830)'
+    ``
     *New in version 3.0.0.*
     """
     # Handle quantiles
@@ -861,12 +876,12 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
 
 
 def printmean(*args, doprint=True, **kwargs):
-    """ Alias to :func:`sc.arraymean() <arraymean>` with doprint=True """
+    """ Alias to `sc.arraymean()` with doprint=True """
     return arraymean(*args, doprint=doprint, **kwargs)
 
 
 def printmedian(*args, doprint=True, **kwargs):
-    """ Alias to :func:`sc.arraymedian() <arraymedian>` with doprint=True """
+    """ Alias to `sc.arraymedian()` with doprint=True """
     return arraymedian(*args, doprint=doprint, **kwargs)
 
 
@@ -878,10 +893,11 @@ def humanize_bytes(bytesize, decimals=3):
         bytesize (int): the number of bytes
         decimals (int): the number of decimal places to show
 
-    **Example**::
+    **Example**:
 
-        sc.humansize(2.3423887e6, decimals=2) # Returns '2.34 MB'
-
+    ``python
+    sc.humansize(2.3423887e6, decimals=2) # Returns '2.34 MB'
+    ``
     See the humansize library for more flexibility.
 
     *New in version 3.0.0.*
@@ -914,13 +930,14 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
         decimals (int): number of decimal places to print
         doprint (bool): whether to print (else, return the string)
 
-    **Examples**::
+    **Examples**:
 
-        numeric = np.random.randn(3,7,4)**10
-        mixed = np.array([['cat', 'nudibranch'], [23, 2423482]], dtype=object)
-        sc.printarr(numeric)
-        sc.printarr(mixed)
-
+    ``python
+    numeric = np.random.randn(3,7,4)**10
+    mixed = np.array([['cat', 'nudibranch'], [23, 2423482]], dtype=object)
+    sc.printarr(numeric)
+    sc.printarr(mixed)
+    ``
     *New in version 2.0.3:* "fmt", "colsep", "vsep", "decimals", and "dtype" arguments
     *New in version 3.0.0:* "doprint" argument
     """
@@ -1079,24 +1096,25 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
         string (str): the text to be colored
         doprint (bool): whether to print the string (default true unless output)
         output (bool): whether to return the modified version of the string (default false)
-        enable (bool): switch to allow :func:`sc.colorize() <colorize>` to be easily turned off without converting to a :func:`print()` statement
+        enable (bool): switch to allow `sc.colorize()` to be easily turned off without converting to a `print()` statement
         showhelp (bool): show help rather than changing colors
         fg (str): foreground colour
         bg (str): background colour
         style (str): font style (eg, italic, underline, bold)
 
-    **Examples**::
+    **Examples**:
 
-        sc.colorize('green', 'hi') # Simple example
-        sc.colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); colorize() # Colorize all output in between
-        bluearray = sc.colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
-        sc.colorize('magenta') # Now type in magenta for a while
-        sc.colorize() # Stop typing in magenta
-        sc.colorize('cat in the hat', fg='#ffa044', bg='blue', style='italic+underline') # Alternate usage example
+    ``python
+    sc.colorize('green', 'hi') # Simple example
+    sc.colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); colorize() # Colorize all output in between
+    bluearray = sc.colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
+    sc.colorize('magenta') # Now type in magenta for a while
+    sc.colorize() # Stop typing in magenta
+    sc.colorize('cat in the hat', fg='#ffa044', bg='blue', style='italic+underline') # Alternate usage example
+    ``
+    To get available colors, type `sc.colorize(showhelp=True)`.
 
-    To get available colors, type :func:`sc.colorize(showhelp=True) <colorize>`.
-
-    | *New in version 1.3.1:* "doprint" argument; ansicolors shortcut
+    - *New in version 1.3.1:* "doprint" argument; ansicolors shortcut
     """
 
     # Handle short-circuit case
@@ -1186,11 +1204,12 @@ def strip_ansi(string):
     Args:
         string (str): the string to remove the ANSI codes from
 
-    **Example**::
+    **Example**:
 
-        colored = sc.colorize('red', 'hello', output=True)
-        plain = sc.strip_ansi(colored) # Returns 'hello'
-
+    ``python
+    colored = sc.colorize('red', 'hello', output=True)
+    plain = sc.strip_ansi(colored) # Returns 'hello'
+    ``
     *New in version 3.3.0.*
     """
     return ansi.strip_color(str(string))
@@ -1249,21 +1268,24 @@ def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter
         minlength   (int):  minimum length of the divider (default 10)
         maxlength   (int):  maximum length of the divider (default 200)
         sep         (str):  if multiple arguments are supplied, use this separator to join them
-        tight       (bool): if True, use 1 space before the heading and none after (i.e. ``spaces=1, spacesafter=0``)
+        tight       (bool): if True, use 1 space before the heading and none after (i.e. `spaces=1, spacesafter=0`)
         doprint     (bool): whether to print the string (default true if no output)
         output      (bool): whether to return the string as output (else, print)
-        kwargs      (dict): passed to :func:`sc.colorize() <colorize>`
+        kwargs      (dict): passed to `sc.colorize()`
 
     Returns:
-        Formatted string if ``output=True``
+        Formatted string if `output=True`
 
-    **Examples**::
-        sc.heading('This is a heading')
-        sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
-        sc.heading('This is a compact heading', tight=True)
+    **Examples**:
 
-    | *New in version 1.3.1.*: "spacesafter"
-    | *New in version 3.3.0.*: "tight"
+    ``python
+    sc.heading('This is a heading')
+    sc.heading(string='This is also a heading', color='red', divider='*', spaces=0, minlength=50)
+    sc.heading('This is a compact heading', tight=True)
+    ``
+
+    - *New in version 1.3.1.*: "spacesafter"
+    - *New in version 3.3.0.*: "tight"
     """
     # Handle tight spacing
     if tight:
@@ -1321,7 +1343,7 @@ def printv(string, thisverbose=1, verbose=2, indent=2, **kwargs):
         thisverbose (int): level of verbosity at which to print this message
         verbose (int): global verbose variable
         indent (int): amount by which to indent based on verbosity level
-        kwargs (dict): passed to :func:`print()`
+        kwargs (dict): passed to `print()`
 
     *New in version 3.0.0:* "kwargs" argument; removed "newline" argument
     """
@@ -1350,11 +1372,12 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
         verbose (bool): How much detail to display.
         die (bool): If false, prints warnings. If true, raises exceptions.
 
-    **Example**::
+    **Example**:
 
-        sc.slacknotification('Long process is finished')
-        sc.slacknotification(webhook='/.slackurl', channel='@username', message='Hi, how are you going?')
-
+    ``python
+    sc.slacknotification('Long process is finished')
+    sc.slacknotification(webhook='/.slackurl', channel='@username', message='Hi, how are you going?')
+    ``
     What's the point? Add this to the end of a very long-running script to notify
     your loved ones that the script has finished.
 
@@ -1433,23 +1456,24 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
     """
     Display progress as a percentage.
 
-    **Examples**::
+    **Examples**:
 
-        maxiters = 500
+    ``python
+    maxiters = 500
 
-        # Will print on every 5th iteration
-        for i in range(maxiters):
-            sc.percentcomplete(i, maxiters)
+    # Will print on every 5th iteration
+    for i in range(maxiters):
+        sc.percentcomplete(i, maxiters)
 
-        # Will print on every 50th iteration
-        for i in range(maxiters):
-            sc.percentcomplete(i, maxiters, stepsize=10)
+    # Will print on every 50th iteration
+    for i in range(maxiters):
+        sc.percentcomplete(i, maxiters, stepsize=10)
 
-        # Will print e.g. 'Completeness: 1%'
-        for i in range(maxiters):
-            sc.percentcomplete(i, maxiters, prefix='Completeness: ')
-
-    See also :func:`sc.progressbar() <progressbar>` for a progress bar.
+    # Will print e.g. 'Completeness: 1%'
+    for i in range(maxiters):
+        sc.percentcomplete(i, maxiters, prefix='Completeness: ')
+    ``
+    See also `sc.progressbar()` for a progress bar.
     """
     if prefix is None:
         prefix = ' '
@@ -1469,7 +1493,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
 
     It can be called manually inside each iteration of the loop, or it can be used
     to wrap the object being iterated. In the latter case, it acts as an alias
-    for the ``tqdm.tqdm()`` progress bar.
+    for the `tqdm.tqdm()` progress bar.
 
     Args:
         i        (int/iterable): current iteration (for text output), or iterable object (for tqdm)
@@ -1482,30 +1506,31 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
         newline  (bool): whether to print each iteration on a new line (else overwrite it; only works in terminals)
         flush    (bool): whether to force-flush the buffer
         output   (bool): whether to return the string (else print)
-        kwargs   (dict): passed to ``tqdm.tqdm()``; see its documentation for full options
+        kwargs   (dict): passed to `tqdm.tqdm()`; see its documentation for full options
 
-    **Examples**::
+    **Examples**:
 
-        # Direct usage inside a loop
-        for i in range(20):
-            sc.progressbar(i+1, 20)
-            sc.timedsleep(0.05)
+    ``python
+    # Direct usage inside a loop
+    for i in range(20):
+        sc.progressbar(i+1, 20)
+        sc.timedsleep(0.05)
 
-        # Direct usage inside a loop with custom formatting
-        for i in range(1000):
-            sc.progressbar(i+1, 1000, every=100, length=10, empty=' ', full='✓', newline=True)
-            sc.timedsleep(0.001)
+    # Direct usage inside a loop with custom formatting
+    for i in range(1000):
+        sc.progressbar(i+1, 1000, every=100, length=10, empty=' ', full='✓', newline=True)
+        sc.timedsleep(0.001)
 
-        # Used to wrap an iterable, using tqdm
-        x = np.arange(100)
-        for i in sc.progressbar(x):
-            plt.pause(0.01)
-
+    # Used to wrap an iterable, using tqdm
+    x = np.arange(100)
+    for i in sc.progressbar(x):
+        plt.pause(0.01)
+    ``
     Adapted from example by Greenstick (https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console)
 
-    | *New in version 1.3.3:* "every" argument
-    | *New in version 3.0.0:* wrapper for tqdm
-    | *New in version 3.3.0:* "output" argument
+    - *New in version 1.3.3:* "every" argument
+    - *New in version 3.0.0:* wrapper for tqdm
+    - *New in version 3.3.0:* "output" argument
     """
     if i is None or sc.isiterable(i):
         desc = kwargs.pop('desc', label)
@@ -1548,10 +1573,10 @@ class tqdm_pickle(tqdm.tqdm):
     """
     Simple subclass of tqdm that allows pickling
 
-    Usually not used directly by the user; used via :func:`sc.progressbars() <progressbars>` instead.
-    Pickling is required for passing ``tqdm`` instances between processes.
+    Usually not used directly by the user; used via `sc.progressbars()` instead.
+    Pickling is required for passing `tqdm` instances between processes.
 
-    Based on ``tqdm`` 4.65.0; may become deprecated in future ``tqdm`` releases.
+    Based on `tqdm` 4.65.0; may become deprecated in future `tqdm` releases.
 
     *New in version 3.0.0.*
     """
@@ -1574,7 +1599,7 @@ class progressbars(prettyobj):
     Create multiple progress bars
 
     Useful for tracking the progress of multiple long-running tasks. Unlike regular
-    ``tqdm`` instances, this uses a pickable version so it can be used directly
+    `tqdm` instances, this uses a pickable version so it can be used directly
     in multiprocessing instances.
 
     Args:
@@ -1582,40 +1607,41 @@ class progressbars(prettyobj):
         total (float): length of the progress bars
         label (str/list): an optional prefix for the progress bar, or list of all labels
         leave (bool): whether to remove the progress bars when they're done
-        kwargs (dict): passed to ``tqdm.tqdm()``
+        kwargs (dict): passed to `tqdm.tqdm()`
 
     **Note**: bars are supposed to update in-place, but may appear on separate lines
     instead if not run in the terminal (e.g. if run in IPython environments like
     Spyder or Jupyter).
 
-    **Example**::
+    **Example**:
 
-        import sciris as sc
-        import random
+    ``python
+    import sciris as sc
+    import random
 
-        def run_sim(index, ndays, pbs):
-            for i in range(ndays):
-                val = random.random()
-                sc.timedsleep(val*5/ndays)
-                pbs.update(index) # Update this progress bar based on the index
-            return
+    def run_sim(index, ndays, pbs):
+        for i in range(ndays):
+            val = random.random()
+            sc.timedsleep(val*5/ndays)
+            pbs.update(index) # Update this progress bar based on the index
+        return
 
-        nsims = 5
-        ndays = 365
+    nsims = 5
+    ndays = 365
 
-        # Create progress bars
-        pbs = sc.progressbars(nsims, total=ndays, label='Sim')
+    # Create progress bars
+    pbs = sc.progressbars(nsims, total=ndays, label='Sim')
 
-        # Run tasks
-        sc.parallelize(run_sim, iterarg=range(nsims), ndays=ndays, pbs=pbs)
+    # Run tasks
+    sc.parallelize(run_sim, iterarg=range(nsims), ndays=ndays, pbs=pbs)
 
-        # Produces output like:
-        # Sim 0:  39%|███████████████████████████▊           | 143/365 [00:01<00:01, 137.17it/s]
-        # Sim 1:  42%|████████████████████████████▉          | 154/365 [00:01<00:01, 148.70it/s]
-        # Sim 2:  45%|████████████████████████████████       | 165/365 [00:01<00:01, 144.19it/s]
-        # Sim 3:  44%|███████████████████████████████        | 160/365 [00:01<00:01, 151.22it/s]
-        # Sim 4:  42%|████████████████████████████▏          | 145/365 [00:01<00:01, 136.75it/s]
-
+    # Produces output like:
+    # Sim 0:  39%|███████████████████████████▊           | 143/365 [00:01<00:01, 137.17it/s]
+    # Sim 1:  42%|████████████████████████████▉          | 154/365 [00:01<00:01, 148.70it/s]
+    # Sim 2:  45%|████████████████████████████████       | 165/365 [00:01<00:01, 144.19it/s]
+    # Sim 3:  44%|███████████████████████████████        | 160/365 [00:01<00:01, 151.22it/s]
+    # Sim 4:  42%|████████████████████████████▏          | 145/365 [00:01<00:01, 136.75it/s]
+    ``
     *New in version 3.0.0.*
     """
 
@@ -1660,30 +1686,31 @@ class progressbars(prettyobj):
 
 class capture(co.UserString, str, redirect_stdout):
     """
-    Captures stdout (e.g., from :func:`print()`) as a variable.
+    Captures stdout (e.g., from `print()`) as a variable.
 
-    Based on :obj:`contextlib.redirect_stdout`, but saves the user the trouble of
+    Based on `contextlib.redirect_stdout`, but saves the user the trouble of
     defining and reading from an IO stream. Useful for testing the output of functions
     that are supposed to print certain output.
 
-    **Examples**::
+    **Examples**:
 
-        # Using with...as
-        with sc.capture() as txt1:
-            print('Assign these lines')
-            print('to a variable')
+    ``python
+    # Using with...as
+    with sc.capture() as txt1:
+        print('Assign these lines')
+        print('to a variable')
 
-        # Using start()...stop()
-        txt2 = sc.capture().start()
-        print('This works')
-        print('the same way')
-        txt2.stop()
+    # Using start()...stop()
+    txt2 = sc.capture().start()
+    print('This works')
+    print('the same way')
+    txt2.stop()
 
-        print('txt1:')
-        print(txt1)
-        print('txt2:')
-        print(txt2)
-
+    print('txt1:')
+    print(txt1)
+    print('txt2:')
+    print(txt2)
+    ``
     *New in version 1.3.3.*
     """
 

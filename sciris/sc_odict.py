@@ -2,8 +2,8 @@
 The "odict" class, combining features from an OrderedDict and a list/array.
 
 Highlights:
-    - :class:`sc.odict() <odict>`: flexible container representing the best-of-all-worlds across dicts, lists, and arrays
-    - :class:`objdict`: like an odict, but allows get/set via e.g. ``foo.bar`` instead of ``foo['bar']``
+    - `sc.odict()`: flexible container representing the best-of-all-worlds across dicts, lists, and arrays
+    - `objdict`: like an odict, but allows get/set via e.g. `foo.bar` instead of `foo['bar']`
 """
 import re
 import sys
@@ -23,18 +23,20 @@ _fundamental_attrs = ['__class__', '__reduce__', '__reduce_ex__', '__getstate__'
 
 class counter(co.Counter):
     """
-    Like ``collections.Counter``, but with additional supported mathematical operations.
+    Like `collections.Counter`, but with additional supported mathematical operations.
 
-    ``sc.counter`` has an "array" property, which converts the values to a NumPy array;
-    methods not available to a ``Counter`` object are performed on the array instead.
+    `sc.counter` has an "array" property, which converts the values to a NumPy array;
+    methods not available to a `Counter` object are performed on the array instead.
 
-    **Examples**::
+    **Examples**:
 
-        vals = [1,1,12,3,4,2,4,2,53,5,5,6,2,3,5]
-        counts = sc.counter(vals)
-        counts.max() # returns 3
+    ```python
+    vals = [1,1,12,3,4,2,4,2,53,5,5,6,2,3,5]
+    counts = sc.counter(vals)
+    counts.max() # returns 3
+    ```
 
-    | *New in version 3.2.3.*
+    - *New in version 3.2.3.*
     """
     @property
     def array(self):
@@ -73,57 +75,58 @@ class odict(dict):
 
     An ordered dictionary, like the OrderedDict class, but supports list methods like integer
     indexing, key slicing, and item inserting. It can also replicate defaultdict behavior
-    via the ``defaultdict`` argument.
+    via the `defaultdict` argument.
 
     Args:
-        args (dict): convert an existing dict, e.g. ``sc.odict({'a':1})``
+        args (dict): convert an existing dict, e.g. `sc.odict({'a':1})`
         defaultdict (class): if provided, create as a defaultdict as well
-        kwargs (dict): additional keyword arguments, e.g. ``sc.odict(a=1)``
+        kwargs (dict): additional keyword arguments, e.g. `sc.odict(a=1)`
 
-    **Examples**::
+    **Examples**:
 
-        # Simple example
-        mydict = sc.odict(foo=[1,2,3], bar=[4,5,6]) # Assignment is the same as ordinary dictionaries
-        mydict['foo'] == mydict[0] # Access by key or by index
-        mydict[:].sum() == 21 # Slices are returned as numpy arrays by default
-        for i,key,value in mydict.enumitems(): # Additional methods for iteration
-            print(f'Item {i} is named {key} and has value {value}')
+    ```python
+    # Simple example
+    mydict = sc.odict(foo=[1,2,3], bar=[4,5,6]) # Assignment is the same as ordinary dictionaries
+    mydict['foo'] == mydict[0] # Access by key or by index
+    mydict[:].sum() == 21 # Slices are returned as numpy arrays by default
+    for i,key,value in mydict.enumitems(): # Additional methods for iteration
+        print(f'Item {i} is named {key} and has value {value}')
 
-        # Detailed example
-        foo = sc.odict({'ant':3,'bear':4, 'clam':6, 'donkey': 8}) # Create odict
-        bar = foo.sorted() # Sort the dict
-        assert bar['bear'] == 4 # Show get item by value
-        assert bar[1] == 4 # Show get item by index
-        assert (bar[0:2] == [3,4]).all() # Show get item by slice
-        assert (bar['clam':'donkey'] == [6,8]).all() # Show alternate slice notation
-        assert (bar[np.array([2,1])] == [6,4]).all() # Show get item by list
-        assert (bar[:] == [3,4,6,8]).all() # Show slice with everything
-        assert (bar[2:] == [6,8]).all() # Show slice without end
-        bar[3] = [3,4,5] # Show assignment by item
-        bar[0:2] = ['the', 'power'] # Show assignment by slice
-        bar[[0,3]] = ['hill', 'trip'] # Show assignment by list
-        bar.rename('clam','oyster') # Show rename
-        print(bar) # Print results
+    # Detailed example
+    foo = sc.odict({'ant':3,'bear':4, 'clam':6, 'donkey': 8}) # Create odict
+    bar = foo.sorted() # Sort the dict
+    assert bar['bear'] == 4 # Show get item by value
+    assert bar[1] == 4 # Show get item by index
+    assert (bar[0:2] == [3,4]).all() # Show get item by slice
+    assert (bar['clam':'donkey'] == [6,8]).all() # Show alternate slice notation
+    assert (bar[np.array([2,1])] == [6,4]).all() # Show get item by list
+    assert (bar[:] == [3,4,6,8]).all() # Show slice with everything
+    assert (bar[2:] == [6,8]).all() # Show slice without end
+    bar[3] = [3,4,5] # Show assignment by item
+    bar[0:2] = ['the', 'power'] # Show assignment by slice
+    bar[[0,3]] = ['hill', 'trip'] # Show assignment by list
+    bar.rename('clam','oyster') # Show rename
+    print(bar) # Print results
 
-        # Defaultdict examples
-        dd = sc.odict(a=[1,2,3], defaultdict=list)
-        dd['c'].append(4)
+    # Defaultdict examples
+    dd = sc.odict(a=[1,2,3], defaultdict=list)
+    dd['c'].append(4)
 
-        nested = sc.odict(a=0, defaultdict='nested') # Create a infinitely nested dictionary (NB: may behave strangely on IPython)
-        nested['b']['c']['d'] = 2
-
+    nested = sc.odict(a=0, defaultdict='nested') # Create a infinitely nested dictionary (NB: may behave strangely on IPython)
+    nested['b']['c']['d'] = 2
+    ```
     Note: by default, integers are used as an alias to string keys, so cannot be used
-    as keys directly. However, you can force regular-dict behavior using :meth:`setitem() <odict.setitem>`,
-    and you can convert a dictionary with integer keys to an odict using :meth:`sc.odict.makefrom() <odict.makefrom>`.
+    as keys directly. However, you can force regular-dict behavior using `setitem()`,
+    and you can convert a dictionary with integer keys to an odict using `sc.odict.makefrom()`.
     If an odict has integer keys and the keys do not match the key positions, then the
-    key itself will take precedence (e.g., ``od[3]`` is equivalent to ``dict(od)[3]``,
-    not ``dict(od)[od.keys()[3]]``). This usage is discouraged.
+    key itself will take precedence (e.g., `od[3]` is equivalent to `dict(od)[3]`,
+    not `dict(od)[od.keys()[3]]`). This usage is discouraged.
 
-    | *New in version 1.1.0:* "defaultdict" argument
-    | *New in version 1.3.1:* allow integer keys via ``makefrom()``; removed ``to_OD``; performance improvements
-    | *New in version 2.0.1:* allow deletion by index
-    | *New in version 3.0.0:* allow numeric indices; inherit from dict rather than OrderedDict
-    | *New in version 3.1.1:* allow steps in slices; ``copy()`` now behaves as a standard dict
+    - *New in version 1.1.0:* "defaultdict" argument
+    - *New in version 1.3.1:* allow integer keys via `makefrom()`; removed `to_OD`; performance improvements
+    - *New in version 2.0.1:* allow deletion by index
+    - *New in version 3.0.0:* allow numeric indices; inherit from dict rather than OrderedDict
+    - *New in version 3.1.1:* allow steps in slices; `copy()` now behaves as a standard dict
     """
 
     def __init__(self, *args, defaultdict=None, **kwargs):
@@ -265,7 +268,7 @@ class odict(dict):
 
 
     def setitem(self, key, value):
-        """ Use regular dictionary ``setitem``, rather than odict's """
+        """ Use regular dictionary `setitem`, rather than odict's """
         self._setattr('_stale', True) # Flag to refresh the cached keys
         self._setitem(key, value)
         return
@@ -407,11 +410,13 @@ class odict(dict):
         """
         Allow two dictionaries to be added (merged).
 
-        **Example**::
+        **Example**:
 
-            dict1 = sc.odict(a=3, b=4)
-            dict2 = sc.odict(c=5, d=7)
-            dict3 = dict1 + dict2
+        ```python
+        dict1 = sc.odict(a=3, b=4)
+        dict2 = sc.odict(c=5, d=7)
+        dict3 = dict1 + dict2
+        ```
         """
         return sc.mergedicts(self, dict2)
 
@@ -439,11 +444,13 @@ class odict(dict):
         """
         Print out flexible representation, short by default.
 
-        **Example**::
+        **Example**:
 
-            z = sc.odict().make(keys=['a','b','c'], vals=[4.293487,3,6])
-            z.disp(sigfigs=3)
-            z.disp(numformat='%0.6f')
+        ```python
+        z = sc.odict().make(keys=['a','b','c'], vals=[4.293487,3,6])
+        z.disp(sigfigs=3)
+        z.disp(numformat='%0.6f')
+        ```
         """
         kwargs = sc.mergedicts(dict(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None, maxitems=maxitems), kwargs)
         print(self.__repr__(**kwargs))
@@ -626,11 +633,13 @@ class odict(dict):
         Returns the key(s) that match a given value -- reverse of findbykey, except here
         uses exact matches to the value or values provided.
 
-        **Example**::
+        **Example**:
 
-            z = sc.odict({'dog':[2,3], 'cat':[4,6], 'mongoose':[4,6]})
-            z.findbyval([4,6]) # returns 'cat'
-            z.findbyval([4,6], first=False) # returns ['cat', 'mongoose']
+        ```python
+        z = sc.odict({'dog':[2,3], 'cat':[4,6], 'mongoose':[4,6]})
+        z.findbyval([4,6]) # returns 'cat'
+        z.findbyval([4,6], first=False) # returns ['cat', 'mongoose']
+        ```
         """
         keys = []
         for key,val in self.items():
@@ -652,15 +661,15 @@ class odict(dict):
 
         Filter the odict keys and return a new odict which is a subset. If keys is a list,
         then uses that for matching. If the first argument is a string, then treats as a pattern
-        for matching using :meth:`findkeys() <odict.findkeys`.
+        for matching using `findkeys() <odict.findkeys`.
 
         Args:
             keys (list): the list of keys to keep (or exclude)
-            pattern (str): the pattern by which to match keys; see :meth:`findkeys() <odict.findkeys` for details
-            method (str): the method by which to match keys; see :meth:`findkeys() <odict.findkeys` for details
+            pattern (str): the pattern by which to match keys; see `findkeys() <odict.findkeys` for details
+            method (str): the method by which to match keys; see `findkeys() <odict.findkeys` for details
             exclude (bool): if exclude=True, then exclude rather than include matches
 
-        See also :meth:`sort() <odict.sort>`, which includes filtering by position.
+        See also `sort()`, which includes filtering by position.
         """
         if sc.isstring(keys) and pattern is None: # Assume first argument, transfer
             pattern = keys
@@ -702,13 +711,15 @@ class odict(dict):
         """
         Function to do insert a key -- note, computationally inefficient.
 
-        **Example**::
+        **Example**:
 
-            z = sc.odict()
-            z['foo'] = 1492
-            z.insert(1604)
-            z.insert(0, 'ganges', 1444)
-            z.insert(2, 'mekong', 1234)
+        ```python
+        z = sc.odict()
+        z['foo'] = 1492
+        z.insert(1604)
+        z.insert(0, 'ganges', 1444)
+        z.insert(2, 'mekong', 1234)
+        ```
         """
 
         # Handle inputs
@@ -756,14 +767,16 @@ class odict(dict):
         Args:
             deep (bool): if True, do a deep rather than shallow copy
 
-        **Examples**::
+        **Examples**:
 
-            d1 = sc.odict(a=[1,2,3], b='foo')
-            d2 = d1.copy()
-            d3 = d1.copy(deep=True)
+        ```python
+        d1 = sc.odict(a=[1,2,3], b='foo')
+        d2 = d1.copy()
+        d3 = d1.copy(deep=True)
 
-            d1.pop('b') # affects d1 but not d2 or d3
-            d1[0].append(4) # affects d1 and d2 but not d3
+        d1.pop('b') # affects d1 but not d2 or d3
+        d1[0].append(4) # affects d1 and d2 but not d3
+        ```
         """
         if not deep:
             new = self._new(super().copy())
@@ -776,7 +789,7 @@ class odict(dict):
         """
         Shortcut to odict.copy(deep=True).
 
-        | *New in version 3.2.3.*
+        - *New in version 3.2.3.*
         """
         return self.copy(deep=True)
 
@@ -815,11 +828,11 @@ class odict(dict):
         Args:
             sortby (str or list): what to sort by; see above for options
             reverse (bool): whether to return results in reverse order
-            copy (bool): whether to return a copy (same as :meth:`sorted() <odict.sorted>`)
+            copy (bool): whether to return a copy (same as `sorted()`)
 
-        For filtering by string matching on keys, see :meth:`filter() <odict.filter>`.
+        For filtering by string matching on keys, see `filter()`.
 
-        | *New in version 3.0.0:* removed "verbose" argument
+        - *New in version 3.0.0:* removed "verbose" argument
         """
         origkeys = self.keys()
         if (sortby is None) or (isinstance(sortby, str) and sortby == 'keys'):
@@ -854,7 +867,7 @@ class odict(dict):
 
 
     def sorted(self, sortby=None, reverse=False):
-        """ Shortcut for making a copy of the sorted odict -- see :meth:`sort() <odict.sort>` for options """
+        """ Shortcut for making a copy of the sorted odict -- see `sort()` for options """
         return self.sort(sortby=sortby, copy=True, reverse=reverse)
 
 
@@ -882,17 +895,18 @@ class odict(dict):
             keys3 (list/int): for a third level of nesting
             coerce (str): what types to coerce into being separate dict entries
 
-        **Examples**::
+        **Examples**:
 
-            a = sc.odict().make(5) # Make an odict of length 5, populated with Nones and default key names
-            b = sc.odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
-            c = sc.odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
-            d = sc.odict().make(['a','b'], 0) # Make an odict with keys 'a' and 'b', initialized to 0
-            e = sc.odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
-            f = sc.odict().make(keys=['a','b'], vals=np.array([1,2])) # As above, since arrays are coerced into lists
-            g = sc.odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
-            h = sc.odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
-
+        ```python
+        a = sc.odict().make(5) # Make an odict of length 5, populated with Nones and default key names
+        b = sc.odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
+        c = sc.odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
+        d = sc.odict().make(['a','b'], 0) # Make an odict with keys 'a' and 'b', initialized to 0
+        e = sc.odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
+        f = sc.odict().make(keys=['a','b'], vals=np.array([1,2])) # As above, since arrays are coerced into lists
+        g = sc.odict({'a':34, 'b':58}).make(['c','d'],[99,45]) # Add extra keys to an exising odict
+        h = sc.odict().make(keys=['a','b','c'], keys2=['A','B','C'], keys3=['x','y','z'], vals=0) # Make a triply nested odict
+        ```
         *New in version 1.2.2:* "coerce" argument
         """
         # Handle keys
@@ -949,19 +963,21 @@ class odict(dict):
             keynames (list): names of keys if source is not a dict
             force (bool): whether to force conversion to an odict even if e.g. the source has numeric keys
 
-        **Examples**::
+        **Examples**:
 
-            a = 'cat'
-            b = 'dog'
-            o = sc.odict.makefrom(source=locals(), include=['a','b']) # Make use of fact that variables are stored in a dictionary
+        ```python
+        a = 'cat'
+        b = 'dog'
+        o = sc.odict.makefrom(source=locals(), include=['a','b']) # Make use of fact that variables are stored in a dictionary
 
-            d = {'a':'cat', 'b':'dog'}
-            o = sc.odict.makefrom(d) # Same as sc.odict(d)
-            l = ['cat', 'monkey', 'dog']
-            o = sc.odict.makefrom(source=l, include=[0,2], keynames=['a','b'])
+        d = {'a':'cat', 'b':'dog'}
+        o = sc.odict.makefrom(d) # Same as sc.odict(d)
+        l = ['cat', 'monkey', 'dog']
+        o = sc.odict.makefrom(source=l, include=[0,2], keynames=['a','b'])
 
-            d = {12:'monkeys', 3:'musketeers'}
-            o = sc.odict.makefrom(d)
+        d = {12:'monkeys', 3:'musketeers'}
+        o = sc.odict.makefrom(d)
+        ```
         """
         # Initialize new odict
         out = cls()
@@ -1005,11 +1021,13 @@ class odict(dict):
         Apply a function to each element of the odict, returning
         a new odict with the same keys.
 
-        **Example**::
+        **Example**:
 
-            cat = sc.odict({'a':[1,2], 'b':[3,4]})
-            def myfunc(mylist): return [i**2 for i in mylist]
-            dog = cat.map(myfunc) # Returns odict({'a':[1,4], 'b':[9,16]})
+        ```python
+        cat = sc.odict({'a':[1,2], 'b':[3,4]})
+        def myfunc(mylist): return [i**2 for i in mylist]
+        dog = cat.map(myfunc) # Returns odict({'a':[1,4], 'b':[9,16]})
+        ```
         """
         output = self._new()
         for key in self.keys():
@@ -1023,11 +1041,13 @@ class odict(dict):
         operation to entry. The simplest usage is just to pick an index.
         However, you can also use it to apply a function to each key.
 
-        **Example**::
+        **Example**:
 
-            z = sc.odict({'a':array([1,2,3,4]), 'b':array([5,6,7,8])})
-            z.fromeach(2) # Returns array([3,7])
-            z.fromeach(ind=[1,3], asdict=True) # Returns odict({'a':array([2,4]), 'b':array([6,8])})
+        ```python
+        z = sc.odict({'a':array([1,2,3,4]), 'b':array([5,6,7,8])})
+        z.fromeach(2) # Returns array([3,7])
+        z.fromeach(ind=[1,3], asdict=True) # Returns odict({'a':array([2,4]), 'b':array([6,8])})
+        ```
         """
         output = self._new()
         for key in self.keys():
@@ -1041,11 +1061,13 @@ class odict(dict):
         The inverse of fromeach: partially reset elements within
         each odict key.
 
-        **Example**::
+        **Example**:
 
-            z = sc.odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
-            z.toeach(2, [10,20])    # z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
-            z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
+        ```python
+        z = sc.odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
+        z.toeach(2, [10,20])    # z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})
+        z.toeach(ind=3,val=666) #  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})
+        ```
         """
         nkeys = len(self.keys())
         if not(sc.isiterable(val)): # Assume it's meant to be populated in each
@@ -1104,10 +1126,11 @@ class odict(dict):
         """
         Like promotetolist, but for odicts.
 
-        **Example**::
+        **Example**:
 
-            od = sc.odict.promote(['There','are',4,'keys'])
-
+        ```python
+        od = sc.odict.promote(['There','are',4,'keys'])
+        ```
         Note, in most cases sc.odict(obj) or sc.odict().make(obj) can be used instead.
         """
         if isinstance(obj, odict):
@@ -1175,33 +1198,34 @@ class odict(dict):
 
 class objdict(odict):
     """
-    An ``odict`` that acts like an object -- allow keys to be set/retrieved by object
+    An `odict` that acts like an object -- allow keys to be set/retrieved by object
     notation.
 
-    In general, operations that would normally act on attributes (e.g. ``obj.x = 3``)
-    instead act on dict keys (e.g. ``obj['x'] = 3``). If you want to actually get/set
-    an attribute, use ``obj.getattribute()``/``obj.setattribute()``.
+    In general, operations that would normally act on attributes (e.g. `obj.x = 3`)
+    instead act on dict keys (e.g. `obj['x'] = 3`). If you want to actually get/set
+    an attribute, use `obj.getattribute()`/`obj.setattribute()`.
 
-    For a lighter-weight example (an object that acts like a dict), see :func:`sc.dictobj() <dictobj>`.
+    For a lighter-weight example (an object that acts like a dict), see `sc.dictobj()`.
 
-    **Examples**::
+    **Examples**:
 
-        import sciris as sc
+    ```python
+    import sciris as sc
 
-        obj = sc.objdict(foo=3, bar=2)
-        obj.foo + obj.bar # Gives 5
-        for key in obj.keys(): # It's still a dict
-            obj[key] = 10
+    obj = sc.objdict(foo=3, bar=2)
+    obj.foo + obj.bar # Gives 5
+    for key in obj.keys(): # It's still a dict
+        obj[key] = 10
 
-        od = sc.objdict({'height':1.65, 'mass':59})
-        od.bmi = od.mass/od.height**2
-        od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
-        od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
-
+    od = sc.objdict({'height':1.65, 'mass':59})
+    od.bmi = od.mass/od.height**2
+    od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
+    od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
+    ```
     Nested logic based in part on addict: https://github.com/mewwts/addict
 
-    For a lighter-weight equivalent (based on ``dict`` instead of :class:`odict`), see
-    :func:`sc.dictobj() <dictobj>`.
+    For a lighter-weight equivalent (based on `dict` instead of `odict`), see
+    `sc.dictobj()`.
     """
 
     def __init__(self, *args, **kwargs):
@@ -1314,24 +1338,25 @@ class dictobj(dict):
     """
     Lightweight class to create an object that can also act like a dictionary.
 
-    **Example**::
+    **Example**:
 
-        obj = sc.dictobj()
-        obj.a = 5
-        obj['b'] = 10
-        print(obj.items())
+    ```python
+    obj = sc.dictobj()
+    obj.a = 5
+    obj['b'] = 10
+    print(obj.items())
+    ```
+    For a more powerful alternative, see `sc.objdict()`.
 
-    For a more powerful alternative, see :class:`sc.objdict() <objdict>`.
-
-    **Note**: because ``dictobj`` is halfway between a dict and an object, it can't
-    be automatically converted to a JSON (but will fail silently). Use :meth:`to_json() <dictobj.to_json>`
+    **Note**: because `dictobj` is halfway between a dict and an object, it can't
+    be automatically converted to a JSON (but will fail silently). Use `to_json()`
     instead.
 
-    | *New in version 1.3.0.*
-    | *New in version 1.3.1:* inherit from dict
-    | *New in version 2.0.0:* allow positional arguments
-    | *New in version 3.0.0:* "fromkeys" now a class method; ``to_json()`` method
-    | *New in version 3.1.6:* "copy" returns another dictobj
+    - *New in version 1.3.0.*
+    - *New in version 1.3.1:* inherit from dict
+    - *New in version 2.0.0:* allow positional arguments
+    - *New in version 3.0.0:* "fromkeys" now a class method; `to_json()` method
+    - *New in version 3.1.6:* "copy" returns another dictobj
     """
 
     def __init__(self, *args, **kwargs):
@@ -1345,7 +1370,7 @@ class dictobj(dict):
         return output
 
     def to_json(self):
-        """ Export the dictobj to JSON (NB: regular :func:`json.dumps()` does not work) """
+        """ Export the dictobj to JSON (NB: regular `json.dumps()` does not work) """
         return json.dumps(self.__dict__)
 
     @classmethod
@@ -1378,23 +1403,24 @@ class dictobj(dict):
 
 def asobj(obj, strict=True):
     """
-    Convert any object for which you would normally do ``a['b']`` to one where you
-    can do ``a.b``.
+    Convert any object for which you would normally do `a['b']` to one where you
+    can do `a.b`.
 
     Note: this may lead to unexpected behavior in some cases. Use at your own risk.
     At minimum, objects created using this function have an extremely odd type -- namely
-    ``sciris.sc_odict.asobj.<locals>.objobj``.
+    `sciris.sc_odict.asobj.<locals>.objobj`.
 
     Args:
         obj (anything): the object you want to convert
         strict (bool): whether to raise an exception if an attribute is being set (instead of a key)
 
-    **Example**::
+    **Example**:
 
-        d = dict(foo=1, bar=2)
-        d_obj = sc.asobj(d)
-        d_obj.foo = 10
-
+    ```python
+    d = dict(foo=1, bar=2)
+    d_obj = sc.asobj(d)
+    d_obj.foo = 10
+    ```
     *New in version 1.0.0.*
     """
 
@@ -1453,26 +1479,27 @@ class argparse(objdict):
     Returns:
         args (objdict): a dictionary-like object with the arguments
 
-    **Examples**::
+    **Examples**:
 
-        # Option 1: Supply arguments directly
-        args = sc.argparse(iterations=10, output_file='results.csv')
+    ```python
+    # Option 1: Supply arguments directly
+    args = sc.argparse(iterations=10, output_file='results.csv')
 
-        # Option 2: Add arguments one by one
-        args = sc.argparse()
-        args.add(iterations=10)
-        args.add(output_file='results.csv')
-        args.parse()
+    # Option 2: Add arguments one by one
+    args = sc.argparse()
+    args.add(iterations=10)
+    args.add(output_file='results.csv')
+    args.parse()
 
-        # Command-line usage
-        python argparse_example.py 100 'data.csv'
-        python argparse_example.py 100 output_file='data.csv'
-        python argparse_example.py iterations=100 --output_file='data.csv'
+    # Command-line usage
+    python argparse_example.py 100 'data.csv'
+    python argparse_example.py 100 output_file='data.csv'
+    python argparse_example.py iterations=100 --output_file='data.csv'
 
-        # Result
-        args.iterations == 10
-        args.output_file == 'data.csv'
-
+    # Result
+    args.iterations == 10
+    args.output_file == 'data.csv'
+    ```
     *New in version 3.2.6.*
     """
     def __init__(self, parse=True, **kwargs):

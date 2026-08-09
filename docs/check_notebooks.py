@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+"""
+Run all the tutorials. Usage:
+  ./check_notebooks.py
+
+It will execute all notebooks in parallel, print out any errors
+encountered, and print a summary of results.
+"""
+import sys
+import quarto_utils as qu
+results = qu.execute_notebooks(*sys.argv[1:])
+results

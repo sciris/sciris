@@ -1,0 +1,5 @@
+---
+pagetitle: "Style guide"
+---
+
+{{< include ../STYLE_GUIDE.md >}}

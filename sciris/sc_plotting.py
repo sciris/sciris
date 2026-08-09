@@ -3,13 +3,13 @@
 Extensions to Matplotlib, including 3D plotting and plot customization.
 
 Highlights:
-    - :func:`sc.plot3d() <plot3d>`: easy way to render 3D plots
-    - :func:`sc.boxoff() <boxoff>`: turn off top and right parts of the axes box
-    - :func:`sc.commaticks() <commaticks>`: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
-    - :func:`sc.SIticks() <SIticks>`: convert labels from "10000" and "1e6" to "10k" and "1m"
-    - :func:`sc.maximize() <maximize>`: make the figure fill the whole screen
-    - :func:`sc.savemovie() <savemovie>`: save a sequence of figures as an MP4 or other movie
-    - :func:`sc.fonts() <fonts>`: list available fonts or add new ones
+    - `sc.plot3d()`: easy way to render 3D plots
+    - `sc.boxoff()`: turn off top and right parts of the axes box
+    - `sc.commaticks()`: convert labels from "10000" and "1e6" to "10,000" and "1,000,0000"
+    - `sc.SIticks()`: convert labels from "10000" and "1e6" to "10k" and "1m"
+    - `sc.maximize()`: make the figure fill the whole screen
+    - `sc.savemovie()`: save a sequence of figures as an MP4 or other movie
+    - `sc.fonts()`: list available fonts or add new ones
 """
 
 ##############################################################################
@@ -37,7 +37,7 @@ def fig3d(num=None, nrows=1, ncols=1, index=1, returnax=False, figkwargs=None, a
     """
     Shortcut for creating a figure with 3D axes.
 
-    Usually not invoked directly; kwargs are passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
+    Usually not invoked directly; kwargs are passed to `plt.figure()`
     """
     figkwargs = sc.mergedicts(figkwargs, kwargs, num=num)
     axkwargs = sc.mergedicts(axkwargs)
@@ -55,7 +55,7 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
     """
     Create a 3D axis to plot in.
 
-    Usually not invoked directly; kwargs are passed to ``fig.add_subplot()``
+    Usually not invoked directly; kwargs are passed to `fig.add_subplot()`
 
     Args:
         nrows (int): number of rows of axes in plot
@@ -66,11 +66,11 @@ def ax3d(nrows=None, ncols=None, index=None, fig=None, ax=None, returnfig=False,
         returnfig (bool): whether to return the figure (else just the axes)
         elev (float): the elevation of the 3D viewpoint
         azim (float): the azimuth of the 3D viewpoint
-        figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
-        kwargs (dict): passed to :func:`plt.axes() <matplotlib.pyplot.axes>`
+        figkwargs (dict): passed to `plt.figure()`
+        kwargs (dict): passed to `plt.axes()`
 
-    | *New in version 3.0.0:* nrows, ncols, and index arguments first
-    | *New in version 3.1.0:* improved validation; 'silent' and 'axkwargs' argument removed
+    - *New in version 3.0.0:* nrows, ncols, and index arguments first
+    - *New in version 3.1.0:* improved validation; 'silent' and 'axkwargs' argument removed
     """
     from mpl_toolkits.mplot3d import Axes3D
 
@@ -202,30 +202,31 @@ def plot3d(x, y, z, c='index', fig=True, ax=None, returnfig=False, figkwargs=Non
         x (arr): x coordinate data
         y (arr): y coordinate data
         z (arr): z coordinate data
-        c (str/tuple): color, can be an array or any of the types accepted by :func:`plt.plot() <matplotlib.pyplot.plot>`; if 'index' (default), color by index
+        c (str/tuple): color, can be an array or any of the types accepted by `plt.plot()`; if 'index' (default), color by index
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
-        figkwargs (dict): :func:`plt.figure() <matplotlib.pyplot.figure>`
-        axkwargs (dict): :func:`plt.axes() <matplotlib.pyplot.axes>`
-        kwargs (dict): passed to :func:`plt.plot() <matplotlib.pyplot.plot>`
+        figkwargs (dict): `plt.figure()`
+        axkwargs (dict): `plt.axes()`
+        kwargs (dict): passed to `plt.plot()`
 
     Returns:
         `ax` if returnfig=False; `(fig,ax)` if returnfig=True
 
-    **Examples**::
+    **Examples**:
 
-        x,y,z = np.random.rand(3,10)
-        sc.plot3d(x, y, z)
+    ```python
+    x,y,z = np.random.rand(3,10)
+    sc.plot3d(x, y, z)
 
-        fig = plt.figure()
-        n = 100
-        x = np.array(sorted(np.random.rand(n)))
-        y = x + np.random.randn(n)
-        z = np.random.randn(n)
-        c = np.arange(n)
-        sc.plot3d(x, y, z, c=c, fig=fig)
-
+    fig = plt.figure()
+    n = 100
+    x = np.array(sorted(np.random.rand(n)))
+    y = x + np.random.randn(n)
+    z = np.random.randn(n)
+    c = np.arange(n)
+    sc.plot3d(x, y, z, c=c, fig=fig)
+    ```
     *New in version 3.1.0:* Allow multi-colored line; removed "plotkwargs" argument; "fig" defaults to True
     """
     # Set default arguments
@@ -263,34 +264,36 @@ def scatter3d(x=None, y=None, z=None, c='z', fig=True, ax=None, returnfig=False,
     """
     Plot 3D data as a scatter
 
-    Typically, ``x``, ``y``, and ``z``, are all vectors. However, if a single 2D
-    array is provided, then this will be treated as ``z`` values and ``x`` and ``y``
+    Typically, `x`, `y`, and `z`, are all vectors. However, if a single 2D
+    array is provided, then this will be treated as `z` values and `x` and `y`
     will be inferred on a grid (or they can be provided explicitly).
 
     Args:
-        x (arr): 1D or 2D x coordinate data (or z-coordinate data if 2D and ``z`` is ``None``)
+        x (arr): 1D or 2D x coordinate data (or z-coordinate data if 2D and `z` is `None`)
         y (arr): 1D or 2D y coordinate data
         z (arr): 1D or 2D z coordinate data
-        c (arr): color data; defaults to match z; to use default colors, explicitly pass ``c=None``; to use index, use c='index'
+        c (arr): color data; defaults to match z; to use default colors, explicitly pass `c=None`; to use index, use c='index'
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
-        figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
-        axkwargs (dict): passed to :func:`plt.axes() <matplotlib.pyplot.axes>`
-        kwargs (dict): passed to :func:`plt.scatter() <matplotlib.pyplot.scatter>`
+        figkwargs (dict): passed to `plt.figure()`
+        axkwargs (dict): passed to `plt.axes()`
+        kwargs (dict): passed to `plt.scatter()`
 
-    **Examples**::
+    **Examples**:
 
-        # Implicit coordinates, color by height (z-value)
-        data = np.random.randn(10, 10)
-        sc.scatter3d(data)
+    ```python
+    # Implicit coordinates, color by height (z-value)
+    data = np.random.randn(10, 10)
+    sc.scatter3d(data)
 
-        # Explicit coordinates, color by index (i.e. ordering)
-        x,y,z = np.random.rand(3,50)
-        sc.scatter3d(x, y, z, c='index')
+    # Explicit coordinates, color by index (i.e. ordering)
+    x,y,z = np.random.rand(3,50)
+    sc.scatter3d(x, y, z, c='index')
+    ```
 
-    | *New in version 3.0.0:* Allow 2D input
-    | *New in version 3.1.0:* Allow "index" color argument; removed "plotkwargs" argument; "fig" defaults to True
+    - *New in version 3.0.0:* Allow 2D input
+    - *New in version 3.1.0:* Allow "index" color argument; removed "plotkwargs" argument; "fig" defaults to True
     """
     # Set default arguments
     plotkwargs = sc.mergedicts({'s':200, 'depthshade':False, 'lw':0}, kwargs)
@@ -316,13 +319,13 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
     """
     Plot 2D or 3D data as a 3D surface
 
-    Typically, ``x``, ``y``, and ``z``, are all 2D arrays of the same size. However,
-    if a single 2D array is provided, then this will be treated as ``z`` values and
-    ``x`` and ``y`` will be inferred on a grid (or they can be provided explicitly,
+    Typically, `x`, `y`, and `z`, are all 2D arrays of the same size. However,
+    if a single 2D array is provided, then this will be treated as `z` values and
+    `x` and `y` will be inferred on a grid (or they can be provided explicitly,
     either as vectors or 2D arrays).
 
     Args:
-        x (arr): 1D or 2D array of x coordinates (or z-coordinate data if 2D and ``z`` is ``None``)
+        x (arr): 1D or 2D array of x coordinates (or z-coordinate data if 2D and `z` is `None`)
         y (arr): 1D or 2D array of y coordinates (optional)
         z (arr): 2D array of z coordinates
         c (arr): color data; defaults to match z
@@ -330,25 +333,26 @@ def surf3d(x=None, y=None, z=None, c=None, fig=True, ax=None, returnfig=False, c
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
         colorbar (bool): whether to plot a colorbar (true by default unless color data is provided)
-        figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
-        axkwargs (dict): passed to :func:`plt.axes() <matplotlib.pyplot.axes>`
-        kwargs (dict): passed to :func:`ax.plot_surface() <mpl_toolkits.mplot3d.axes3d.Axes3D.plot_surface>`
+        figkwargs (dict): passed to `plt.figure()`
+        axkwargs (dict): passed to `plt.axes()`
+        kwargs (dict): passed to `ax.plot_surface()`
 
-    **Examples**::
+    **Examples**:
 
-        # Simple example
-        data = sc.smooth(np.random.rand(30,50))
-        sc.surf3d(data)
+    ```python
+    # Simple example
+    data = sc.smooth(np.random.rand(30,50))
+    sc.surf3d(data)
 
-        # Use non-default axes and colors
-        nx = 20
-        ny = 50
-        x = 10*np.arange(nx)
-        y = np.arange(ny) + 100
-        z = sc.smooth(np.random.randn(ny,nx))
-        c = z**2
-        sc.surf3d(x=x, y=y, z=z, c=c, cmap='orangeblue')
-
+    # Use non-default axes and colors
+    nx = 20
+    ny = 50
+    x = 10*np.arange(nx)
+    y = np.arange(ny) + 100
+    z = sc.smooth(np.random.randn(ny,nx))
+    c = z**2
+    sc.surf3d(x=x, y=y, z=z, c=c, cmap='orangeblue')
+    ```
     *New in 3.1.0:* updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument; "fig" defaults to True
     """
 
@@ -387,37 +391,38 @@ def bar3d(x=None, y=None, z=None, c='z', dx=0.8, dy=0.8, dz=None, fig=True, ax=N
     Plot 2D data as 3D bars
 
     Args:
-        x (arr): 1D or 2D array of x coordinates (or z-coordinate data if 2D and ``z`` is ``None``)
+        x (arr): 1D or 2D array of x coordinates (or z-coordinate data if 2D and `z` is `None`)
         y (arr): 1D or 2D array of y coordinates (optional)
-        z (arr): 2D array of z coordinates; interpreted as the heights of the bars unless ``dz`` is also provided
+        z (arr): 2D array of z coordinates; interpreted as the heights of the bars unless `dz` is also provided
         c (arr): color data; defaults to match z
         dx (float/arr): width of the bars
         dy (float/arr): depth of the bars
-        dz (float/arr): height of the bars, in which case ``z`` is interpreted as the base of the bars
+        dz (float/arr): height of the bars, in which case `z` is interpreted as the base of the bars
         fig (fig): an existing figure to draw the plot in (or set to True to create a new figure)
         ax (axes): an existing axes to draw the plot in
         returnfig (bool): whether to return the figure, or just the axes
         colorbar (bool): whether to plot a colorbar (true by default unless color data is provided)
-        figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
-        axkwargs (dict): passed to :func:`plt.axes() <matplotlib.pyplot.axes>`
-        kwargs (dict): passed to :func:`ax.bar3d() <mpl_toolkits.mplot3d.axes3d.Axes3D.bar3d>`
+        figkwargs (dict): passed to `plt.figure()`
+        axkwargs (dict): passed to `plt.axes()`
+        kwargs (dict): passed to `ax.bar3d()`
 
-    **Examples**::
+    **Examples**:
 
-        # Simple example
-        data = np.random.rand(5,4)
-        sc.bar3d(data)
+    ```python
+    # Simple example
+    data = np.random.rand(5,4)
+    sc.bar3d(data)
 
-        # Use non-default axes and colors (note: this one is pretty!)
-        nx = 5
-        ny = 6
-        x = 10*np.arange(nx)
-        y = np.arange(ny) + 10
-        z = -np.random.rand(ny,nx)
-        dz = -2*z
-        c = z**2
-        sc.bar3d(x=x, y=y, z=z, dx=0.5, dy=0.5, dz=dz, c=c, cmap='orangeblue')
-
+    # Use non-default axes and colors (note: this one is pretty!)
+    nx = 5
+    ny = 6
+    x = 10*np.arange(nx)
+    y = np.arange(ny) + 10
+    z = -np.random.rand(ny,nx)
+    dz = -2*z
+    c = z**2
+    sc.bar3d(x=x, y=y, z=z, dx=0.5, dy=0.5, dz=dz, c=c, cmap='orangeblue')
+    ```
     *New in 3.1.0:* updated arguments from "data" to x, y, z, c; removed "plotkwargs" argument; "fig" defaults to True
     """
 
@@ -478,14 +483,15 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
         flipud    (bool)     : whether to flip the array upside down prior to plotting
         is_cum    (bool)     : whether the array is already a cumulative sum
         barh      (bool)     : whether to plot as a horizontal instead of vertical bar
-        kwargs    (dict)     : passed to :func:`plt.bar() <matplotlib.pyplot.bar>`
+        kwargs    (dict)     : passed to `plt.bar()`
 
-    **Example**::
+    **Example**:
 
-        values = np.random.rand(3,5)
-        sc.stackedbar(values, labels=['bottom','middle','top'])
-        plt.legend()
-
+    ```python
+    values = np.random.rand(3,5)
+    sc.stackedbar(values, labels=['bottom','middle','top'])
+    plt.legend()
+    ```
     *New in version 2.0.4.*
     """
     from . import sc_colors as scc # To avoid circular import
@@ -558,7 +564,7 @@ def boxoff(ax=None, which=None, removeticks=True):
     Removes the top and right borders ("spines") of a plot.
 
     Also optionally removes the tick marks, and flips the remaining ones outside.
-    Can be used as an alias to ``plt.axis('off')`` if ``which='all'``.
+    Can be used as an alias to `plt.axis('off')` if `which='all'`.
 
     Args:
         ax (Axes): the axes to remove the spines from (if None, use current)
@@ -566,20 +572,21 @@ def boxoff(ax=None, which=None, removeticks=True):
         removeticks (bool): whether to also remove the ticks from these spines
         flipticks (bool): whether to flip remaining ticks out
 
-    **Examples**::
+    **Examples**:
 
-        plt.figure()
-        plt.plot([2,5,3])
-        sc.boxoff()
+    ```python
+    plt.figure()
+    plt.plot([2,5,3])
+    sc.boxoff()
 
-        fig, ax = plt.subplots()
-        plt.plot([1,4,1,4])
-        sc.boxoff(ax=ax, which='all')
+    fig, ax = plt.subplots()
+    plt.plot([1,4,1,4])
+    sc.boxoff(ax=ax, which='all')
 
-        fig = plt.figure()
-        plt.scatter(np.arange(100), np.random.rand(100))
-        sc.boxoff('top, bottom')
-
+    fig = plt.figure()
+    plt.scatter(np.arange(100), np.random.rand(100))
+    sc.boxoff('top, bottom')
+    ```
     *New in version 1.3.3:* ability to turn off multiple spines; removed "flipticks" arguments
     """
     # Handle axes
@@ -610,17 +617,20 @@ def setaxislim(which=None, ax=None, data=None):
     """
     A small script to determine how the y limits should be set. Looks
     at all data (a list of arrays) and computes the lower limit to
-    use, e.g.::
+    use, e.g.:
 
-        sc.setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)
-
+    ```python
+    sc.setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)
+    ```
     will keep Matplotlib's lower limit, since at least one data value
     is below 0.
 
     Note, if you just want to set the lower limit, you can do that
-    with this function via::
+    with this function via:
 
-        sc.setaxislim()
+    ```python
+    sc.setaxislim()
+    ```
     """
 
     # Handle which axis
@@ -661,18 +671,20 @@ def setaxislim(which=None, ax=None, data=None):
 
 
 def setxlim(data=None, ax=None):
-    """ Alias for :func:`sc.setaxislim(which='x') <setaxislim>` """
+    """ Alias for `sc.setaxislim(which='x')` """
     return setaxislim(data=data, ax=ax, which='x')
 
 
 def setylim(data=None, ax=None):
     """
-    Alias for :func:`sc.setaxislim(which='y') <setaxislim>`.
+    Alias for `sc.setaxislim(which='y')`.
 
-    **Example**::
+    **Example**:
 
-        plt.plot([124,146,127])
-        sc.setylim() # Equivalent to plt.ylim(bottom=0)
+    ```python
+    plt.plot([124,146,127])
+    sc.setylim() # Equivalent to plt.ylim(bottom=0)
+    ```
     """
     return setaxislim(data=data, ax=ax, which='y')
 
@@ -699,7 +711,7 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
     """
     Use commas in formatting the y axis of a figure (e.g., 34,000 instead of 34000).
 
-    To use something other than a comma, set the default separator via e.g. :class:`sc.options(sep='.') <sciris.sc_settings.ScirisOptions>`.
+    To use something other than a comma, set the default separator via e.g. `sc.options(sep='.')`.
 
     Args:
         ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
@@ -707,17 +719,18 @@ def commaticks(ax=None, axis='y', precision=2, cursor_precision=0):
         precision (int): shift how many decimal places to show for small numbers (+ve = more, -ve = fewer)
         cursor_precision (int): ditto, for cursor
 
-    **Example**::
+    **Example**:
 
-        data = np.random.rand(10)*1e4
-        plt.plot(data)
-        sc.commaticks()
-
+    ```python
+    data = np.random.rand(10)*1e4
+    plt.plot(data)
+    sc.commaticks()
+    ```
     See http://stackoverflow.com/questions/25973581/how-to-format-axis-number-format-to-thousands-with-a-comma-in-matplotlib
 
-    | *New in version 1.3.0:* ability to use non-comma thousands separator
-    | *New in version 1.3.1:* added "precision" argument
-    | *New in version 2.0.0:* ability to set x and y axes simultaneously
+    - *New in version 1.3.0:* ability to use non-comma thousands separator
+    - *New in version 1.3.1:* added "precision" argument
+    - *New in version 2.0.0:* ability to set x and y axes simultaneously
     """
     def commaformatter(x, pos=None): # pragma: no cover
         interval = thisaxis.get_view_interval()
@@ -754,11 +767,13 @@ def SIticks(ax=None, axis='y', fixed=False):
         ax (any): axes to modify; if None, use current; else can be a single axes object, a figure, or a list of axes
         axis (str): which axes to change (default 'y')
 
-    **Example**::
+    **Example**:
 
-        data = np.random.rand(10)*1e4
-        plt.plot(data)
-        sc.SIticks()
+    ```python
+    data = np.random.rand(10)*1e4
+    plt.plot(data)
+    sc.SIticks()
+    ```
     """
     def SItickformatter(x, pos=None, *args, **kwargs):  # formatter function takes tick label and tick position # pragma: no cover
         """ Formats axis ticks so that e.g. 34000 becomes 34k -- usually not invoked directly """
@@ -785,9 +800,9 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
     function convert a number (i.e. of plots) to a number of required rows and columns.
     If nrows or ncols is provided, the other will be calculated. Ties are broken
     in favor of more rows (i.e. 7x6 is preferred to 6x7). It can also generate
-    the plots, if ``make=True``.
+    the plots, if `make=True`.
 
-    Note: :func:`sc.getrowscols() <getrowscols>` and :func:`sc.get_rows_cols() <get_rows_cols>` are aliases.
+    Note: `sc.getrowscols()` and `sc.get_rows_cols()` are aliases.
 
     Args:
         n (int): the number (of plots) to accommodate
@@ -802,18 +817,20 @@ def getrowscols(n, nrows=None, ncols=None, ratio=1, make=False, tight=True, remo
     Returns:
         A tuple of ints for the number of rows and the number of columns (which, of course, you can reverse)
 
-    **Examples**::
+    **Examples**:
 
-        nrows,ncols = sc.get_rows_cols(36) # Returns 6,6
-        nrows,ncols = sc.get_rows_cols(37) # Returns 7,6
-        nrows,ncols = sc.get_rows_cols(100, ratio=2) # Returns 15,7
-        nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
-        fig,axs     = sc.getrowscols(37, make=True) # Create 7x6 subplots, using the alias
+    ```python
+    nrows,ncols = sc.get_rows_cols(36) # Returns 6,6
+    nrows,ncols = sc.get_rows_cols(37) # Returns 7,6
+    nrows,ncols = sc.get_rows_cols(100, ratio=2) # Returns 15,7
+    nrows,ncols = sc.get_rows_cols(100, ratio=0.5) # Returns 8,13 since rows are prioritized
+    fig,axs     = sc.getrowscols(37, make=True) # Create 7x6 subplots, using the alias
+    ```
 
-    | *New in version 1.0.0.*
-    | *New in version 1.2.0:* "make", "tight", and "remove_extra" arguments
-    | *New in version 1.3.0:* alias without underscores
-    | *New in version 3.2.2:* extra axes deleted rather than set to invisible
+    - *New in version 1.0.0.*
+    - *New in version 1.2.0:* "make", "tight", and "remove_extra" arguments
+    - *New in version 1.3.0:* alias without underscores
+    - *New in version 3.2.2:* extra axes deleted rather than set to invisible
     """
 
     # Simple cases -- calculate the one missing
@@ -849,22 +866,24 @@ get_rows_cols = getrowscols  # Alias
 
 def figlayout(fig=None, tight=True, keep=None, **kwargs):
     """
-    Alias to both :meth:`fig.set_layout_engine() <matplotlib.figure.Figure.set_layout_engine>`
-    and :meth:`fig.subplots_adjust() <matplotlib.figure.Figure.subplots_adjust>`.
+    Alias to both `fig.set_layout_engine()`
+    and `fig.subplots_adjust()`.
 
     Args:
         fig (Figure): the figure (by default, use current)
-        tight (bool): passed to :meth:`fig.set_layout_engine() <matplotlib.figure.Figure.set_layout_engine>`; default True
+        tight (bool): passed to `fig.set_layout_engine()`; default True
         keep (bool): if True, then leave tight layout on; else, turn it back off to allow additional layout updates (which requires a render, so can be slow)
-        kwargs (dict): passed to :meth:`fig.subplots_adjust() <matplotlib.figure.Figure.subplots_adjust>`
+        kwargs (dict): passed to `fig.subplots_adjust()`
 
-    **Example**::
+    **Example**:
 
-        fig,axs = sc.get_rows_cols(37, make=True, tight=False) # Create 7x6 subplots, squished together
-        sc.figlayout(bottom=0.3)
+    ```python
+    fig,axs = sc.get_rows_cols(37, make=True, tight=False) # Create 7x6 subplots, squished together
+    sc.figlayout(bottom=0.3)
+    ```
 
-    | *New in version 1.2.0.*
-    | *New in version 3.1.1:* ``keep`` defaults to ``True`` to avoid the need to refresh
+    - *New in version 1.2.0.*
+    - *New in version 3.1.1:* `keep` defaults to `True` to avoid the need to refresh
     """
     if isinstance(fig, bool): # pragma: no cover
         fig = None
@@ -899,11 +918,12 @@ def maximize(fig=None, die=False):  # pragma: no cover
         fig (Figure): the figure object; if not supplied, use the current active figure
         die (bool): whether to propagate an exception if encountered (default no)
 
-    **Example**::
+    **Example**:
 
-        plt.plot([2,3,5])
-        sc.maximize()
-
+    ```python
+    plt.plot([2,3,5])
+    sc.maximize()
+    ```
     *New in version 1.0.0.*
     """
     backend = plt.get_backend().lower()
@@ -942,15 +962,17 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
         rebuild (bool): whether to rebuild Matplotlib's font cache (slow)
         verbose (bool): print out information on errors
         die (bool): whether to raise an exception if fonts can't be added
-        kwargs (dict): passed to :func:`matplotlib.font_manager.findSystemFonts()`
+        kwargs (dict): passed to `matplotlib.font_manager.findSystemFonts()`
 
-    **Examples**::
+    **Examples**:
 
-        sc.fonts() # List available font names
-        sc.fonts(fullfont=True) # List available font objects
-        sc.fonts('myfont.ttf', use=True) # Add this font and immediately set to default
-        sc.fonts(['/folder1', '/folder2']) # Add all fonts in both folders
-        sc.fonts(rebuild=True) # Run this if added fonts aren't appearing
+    ```python
+    sc.fonts() # List available font names
+    sc.fonts(fullfont=True) # List available font objects
+    sc.fonts('myfont.ttf', use=True) # Add this font and immediately set to default
+    sc.fonts(['/folder1', '/folder2']) # Add all fonts in both folders
+    sc.fonts(rebuild=True) # Run this if added fonts aren't appearing
+    ```
     """
     fm = mpl.font_manager # Shorten
 
@@ -1059,11 +1081,11 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         - The day and month are always shown.
         - The cursor shows only the date, not the time
 
-    This formatter is not intended to be called directly -- use :func:`sc.dateformatter() <dateformatter>`
+    This formatter is not intended to be called directly -- use `sc.dateformatter()`
     instead. It is also optimized for plotting dates, rather than times -- for those,
     ConciseDateFormatter is better.
 
-    See :func:`sc.dateformatter() <dateformatter>` for explanation of arguments.
+    See `sc.dateformatter()` for explanation of arguments.
 
     *New in version 1.3.0.*
     """
@@ -1151,38 +1173,40 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
     This formatter is a combination of Matplotlib's Concise date formatter, and
     Plotly's date formatter.
 
-    See also :func:`sc.datenumformatter() <datenumformatter>` to convert a numeric axis to date labels.
+    See also `sc.datenumformatter()` to convert a numeric axis to date labels.
 
     Args:
         ax         (axes)     : if supplied, use these axes instead of the current one
         style      (str)      : the style to use if the axis already uses dates; options are "sciris", "auto", "concise", or a Formatter object
-        dateformat (str)      : the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
+        dateformat (str)      : the date format (default `'%Y-%b-%d'`; not needed if x-axis already uses dates)
         start      (str/int)  : if supplied, the lower limit of the axis
         end        (str/int)  : if supplied, the upper limit of the axis
         rotation   (float)    : rotation of the labels, in degrees
-        locator    (Locator)  : if supplied, use this instead of the default ``AutoDateLocator`` locator
+        locator    (Locator)  : if supplied, use this instead of the default `AutoDateLocator` locator
         axis       (str)      : which axis to apply to the formatter to (default 'x')
-        kwargs     (dict)     : passed to the date formatter (e.g., :class:`ScirisDateFormatter`)
+        kwargs     (dict)     : passed to the date formatter (e.g., `ScirisDateFormatter`)
 
-    **Examples**::
+    **Examples**:
 
-        # Reformat date data
-        plt.figure()
-        x = sc.daterange('2021-04-04', '2022-05-05', asdate=True)
-        y = sc.smooth(np.random.rand(len(x)))
-        plt.plot(x, y)
-        sc.dateformatter()
+    ```python
+    # Reformat date data
+    plt.figure()
+    x = sc.daterange('2021-04-04', '2022-05-05', asdate=True)
+    y = sc.smooth(np.random.rand(len(x)))
+    plt.plot(x, y)
+    sc.dateformatter()
 
-        # Configure with Matplotlib's Concise formatter
-        fig,ax = plt.subplots()
-        plt.plot(sc.date(np.arange(365), start_date='2022-01-01'), np.random.randn(365))
-        sc.dateformatter(ax=ax, style='concise')
+    # Configure with Matplotlib's Concise formatter
+    fig,ax = plt.subplots()
+    plt.plot(sc.date(np.arange(365), start_date='2022-01-01'), np.random.randn(365))
+    sc.dateformatter(ax=ax, style='concise')
+    ```
 
-    | *New in version 1.2.0.*
-    | *New in version 1.2.2:* "rotation" argument; renamed "start_day" to "start_date"
-    | *New in version 1.3.0:* refactored to use built-in Matplotlib date formatting
-    | *New in version 1.3.2:* "axis" argument
-    | *New in version 1.3.3:* split ``sc.dateformatter()`` from ``sc.datenumformatter()``
+    - *New in version 1.2.0.*
+    - *New in version 1.2.2:* "rotation" argument; renamed "start_day" to "start_date"
+    - *New in version 1.3.0:* refactored to use built-in Matplotlib date formatting
+    - *New in version 1.3.2:* "axis" argument
+    - *New in version 1.3.3:* split `sc.dateformatter()` from `sc.datenumformatter()`
     """
 
     # Handle deprecation
@@ -1251,33 +1275,35 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
     """
     Format a numeric x-axis to use dates.
 
-    Note: in most cases, :func:`sc.dateformatter() <dateformatter>` should be used instead;
+    Note: in most cases, `sc.dateformatter()` should be used instead;
     use this function only if you want to explicitly specify start and end values,
     i.e., specify the date data rather than simply plot it.
 
     Args:
         ax         (axes)     : if supplied, use these axes instead of the current one
         start_date (str/date) : the start day, either as a string or date object (not needed if x-axis already uses dates)
-        dateformat (str)      : the date format (default ``'%Y-%b-%d'``; not needed if x-axis already uses dates)
+        dateformat (str)      : the date format (default `'%Y-%b-%d'`; not needed if x-axis already uses dates)
         interval   (int)      : if supplied, the interval between ticks (not needed if x-axis already uses dates)
         start      (str/int)  : if supplied, the lower limit of the axis
         end        (str/int)  : if supplied, the upper limit of the axis
         rotation   (float)    : rotation of the labels, in degrees
 
-    **Examples**::
+    **Examples**:
 
-        # Automatically configure a non-date axis with default options
-        plt.plot(np.arange(365), np.random.rand(365))
-        sc.datenumformatter(start_date='2021-01-01')
+    ```python
+    # Automatically configure a non-date axis with default options
+    plt.plot(np.arange(365), np.random.rand(365))
+    sc.datenumformatter(start_date='2021-01-01')
 
-        # Manually configure
-        fig,ax = plt.subplots()
-        ax.plot(np.arange(60), np.random.random(60))
-        formatter = sc.datenumformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+    # Manually configure
+    fig,ax = plt.subplots()
+    ax.plot(np.arange(60), np.random.random(60))
+    formatter = sc.datenumformatter(start_date='2020-04-04', interval=7, start='2020-05-01', end=50, dateformat='%m-%d', ax=ax)
+    ```
 
-    | *New in version 1.2.0.*
-    | *New in version 1.2.2:* "rotation" argument; renamed "start_day" to "start_date"
-    | *New in version 1.3.3:* renamed from ``sc.dateformatter()`` to  ``sc.datenumformatter()``
+    - *New in version 1.2.0.*
+    - *New in version 1.2.2:* "rotation" argument; renamed "start_day" to "start_date"
+    - *New in version 1.3.3:* renamed from `sc.dateformatter()` to  `sc.datenumformatter()`
     """
 
     # Handle axis
@@ -1342,10 +1368,10 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
     """
     Save a figure, including metadata
 
-    Wrapper for Matplotlib's :func:`plt.savefig() <matplotlib.pyplot.savefig>` function which automatically stores
+    Wrapper for Matplotlib's `plt.savefig()` function which automatically stores
     metadata in the figure. By default, it saves (git) information from the calling
     function. Additional comments can be added to the saved file as well. These
-    can be retrieved via :func:`sc.loadmetadata() <sciris.sc_versioning.loadmetadata>`.
+    can be retrieved via `sc.loadmetadata()`.
 
     Metadata can be stored and retrieved for PNG or SVG. Metadata
     can be stored for PDF, but cannot be automatically retrieved.
@@ -1355,26 +1381,28 @@ def savefig(filename, fig=None, dpi=None, comments=None, pipfreeze=False, relfra
         fig       (Figure)   : the figure to save (if None, use current)
         dpi       (int)      : resolution of the figure to save (default 200 or current default, whichever is higher)
         comments  (str)      : additional metadata to save to the figure
-        pipfreeze (bool)     : whether to store the contents of ``pip freeze`` in the metadata
-        relframe  (int)      : which calling file to try to store information from (default 0, the file calling :func:`sc.savefig() <savefig>`)
+        pipfreeze (bool)     : whether to store the contents of `pip freeze` in the metadata
+        relframe  (int)      : which calling file to try to store information from (default 0, the file calling `sc.savefig()`)
         folder    (str/Path) : optional folder to save to (can also be provided as part of the filename)
         makedirs  (bool)     : whether to create folders if they don't already exist
         die       (bool)     : whether to raise an exception if metadata can't be saved
         verbose   (bool)     : if die is False, print a warning if metadata can't be saved
-        kwargs    (dict)     : passed to ``fig.save()``
+        kwargs    (dict)     : passed to `fig.save()`
 
-    **Examples**::
+    **Examples**:
 
-        plt.plot([1,3,7])
+    ```python
+    plt.plot([1,3,7])
 
-        sc.savefig('example1.png')
-        print(sc.loadmetadata('example1.png'))
+    sc.savefig('example1.png')
+    print(sc.loadmetadata('example1.png'))
 
-        sc.savefig('example2.png', comments='My figure', freeze=True)
-        sc.pp(sc.loadmetadata('example2.png'))
+    sc.savefig('example2.png', comments='My figure', freeze=True)
+    sc.pp(sc.loadmetadata('example2.png'))
+    ```
 
-    | *New in version 1.3.3.*
-    | *New in version 3.0.0:* "freeze" renamed "pipfreeze"; "frame" replaced with "relframe"; replaced metadata with ``sc.metadata()``
+    - *New in version 1.3.3.*
+    - *New in version 3.0.0:* "freeze" renamed "pipfreeze"; "frame" replaced with "relframe"; replaced metadata with `sc.metadata()`
     """
     # Handle deprecation
     orig_metadata = kwargs.pop('metadata', {}) # In case metadata is supplied, as it can be for fig.save()
@@ -1433,17 +1461,18 @@ def savefigs(figs=None, filetype=None, filename=None, folder=None, savefigargs=N
         aslist      (bool) : whether or not return a list even for a single file
         varbose     (bool) : whether to print progress
 
-    **Examples**::
+    **Examples**:
 
-        import matplotlib.pyplot as plt
-        import sciris as sc
-        fig1 = plt.figure(); plt.plot(np.random.rand(10))
-        fig2 = plt.figure(); plt.plot(np.random.rand(10))
-        sc.savefigs([fig1, fig2]) # Save everything to one PDF file
-        sc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})
-        sc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')
-        sc.savefigs(fig1, position=[0.3,0.3,0.5,0.5])
-
+    ```python
+    import matplotlib.pyplot as plt
+    import sciris as sc
+    fig1 = plt.figure(); plt.plot(np.random.rand(10))
+    fig2 = plt.figure(); plt.plot(np.random.rand(10))
+    sc.savefigs([fig1, fig2]) # Save everything to one PDF file
+    sc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})
+    sc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')
+    sc.savefigs(fig1, position=[0.3,0.3,0.5,0.5])
+    ```
     If saved as 'fig', then can load and display the plot using sc.loadfig().
 
     Version: 2018aug26
@@ -1508,16 +1537,19 @@ def loadfig(filename=None):
     """
     Load a plot from a file and reanimate it.
 
-    **Example usage**::
+    **Example usage**:
 
-        import matplotlib.pyplot as plt
-        import sciris as sc
-        fig = plt.figure(); plt.plot(np.random.rand(10))
-        sc.savefigs(fig, filetype='fig', filename='example.fig')
+    ```python
+    import matplotlib.pyplot as plt
+    import sciris as sc
+    fig = plt.figure(); plt.plot(np.random.rand(10))
+    sc.savefigs(fig, filetype='fig', filename='example.fig')
+    ```
+    **Later**:
 
-    **Later**::
-
-        example = sc.loadfig('example.fig')
+    ```python
+    example = sc.loadfig('example.fig')
+    ```
     """
     plt.ion() # Without this, it doesn't show up
     try:
@@ -1635,14 +1667,16 @@ def orderlegend(order=None, ax=None, handles=None, labels=None, reverse=None, **
         reverse (bool): if supplied, simply reverse the legend order
         kwargs (dict): passed to ax.legend()
 
-    **Examples**::
+    **Examples**:
 
-        plt.plot([1,4,3], label='A')
-        plt.plot([5,7,8], label='B')
-        plt.plot([2,5,2], label='C')
-        sc.orderlegend(reverse=True) # Legend order C, B, A
-        sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
-        plt.legend() # Restore original legend order A, B, C
+    ```python
+    plt.plot([1,4,3], label='A')
+    plt.plot([5,7,8], label='B')
+    plt.plot([2,5,2], label='C')
+    sc.orderlegend(reverse=True) # Legend order C, B, A
+    sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
+    plt.legend() # Restore original legend order A, B, C
+    ```
     """
 
     # Get handles and labels
@@ -1666,29 +1700,31 @@ def movelegend(ax1, ax2=None, invisible=True, **kwargs):
     Note 1: does not require the first legend to actually exist, just that handles
     exist (e.g. by plotting with the "label" argument); see example below.
 
-    Note 2: see ``seaborn.move_legend()`` for a similar function.
+    Note 2: see `seaborn.move_legend()` for a similar function.
 
     Args:
         ax1 (plt.Axes): the axes to move the legend from
         ax2 (plt.Axes): the axes to move the legend to (if None, use current axes)
         invisible (bool): if True, set the axis to be invisible (just showing the legend) if no artists are in the destination axes
-        kwargs (dict): passed to ``plt.legend()``
+        kwargs (dict): passed to `plt.legend()`
 
-    **Example**::
+    **Example**:
 
-        import numpy as np
-        import sciris as sc
+    ```python
+    import numpy as np
+    import sciris as sc
 
-        fig, axs = sc.getrowscols(3, make=True)
+    fig, axs = sc.getrowscols(3, make=True)
 
-        for i,ax in enumerate(fig.axes):
-            for j in range(4):
-                ax.plot(np.random.rand(50)*(1+j), 'o', label=f'Scale = {j}')
+    for i,ax in enumerate(fig.axes):
+        for j in range(4):
+            ax.plot(np.random.rand(50)*(1+j), 'o', label=f'Scale = {j}')
 
-        ax4 = fig.add_subplot(2,2,4)
-        sc.movelegend(ax, ax4) # Can be any of the axes since they have the same legend
+    ax4 = fig.add_subplot(2,2,4)
+    sc.movelegend(ax, ax4) # Can be any of the axes since they have the same legend
+    ```
 
-    | *New in version 3.2.2.*
+    - *New in version 3.2.2.*
     """
     def get_legend_props(leg):
         """ Helper function to copy legend properties over """
@@ -1783,14 +1819,14 @@ class animation(sc.prettyobj):
     """
     A class for storing and saving a Matplotlib animation.
 
-    See also :func:`sc.savemovie() <savemovie>`, which works directly with Matplotlib artists rather
+    See also `sc.savemovie()`, which works directly with Matplotlib artists rather
     than an entire figure. Depending on your use case, one is likely easier to use
-    than the other. Use :func:`sc.animation() <animation>` if you want to animate a complex figure
-    including non-artist objects (e.g., titles and legends); use :func:`sc.savemovie() <savemovie>`
+    than the other. Use `sc.animation()` if you want to animate a complex figure
+    including non-artist objects (e.g., titles and legends); use `sc.savemovie()`
     if you just want to animate a set of artists (e.g., lines).
 
     This class works by saving snapshots of the figure to disk as image files, then
-    reloading them either via ``ffmpeg`` or as a Matplotlib animation. While (slightly)
+    reloading them either via `ffmpeg` or as a Matplotlib animation. While (slightly)
     slower than working with artists directly, it means that anything that can be
     rendered to a figure can be animated.
 
@@ -1805,34 +1841,36 @@ class animation(sc.prettyobj):
         basename     (str):  name for temporary image files, e.g. 'myanimation'
         nametemplate (str):  as an alternative to imageformat and basename, specify the full name template, e.g. 'myanimation%004d.jpg'
         imagefolder  (str):  location to store temporary image files; default current folder, or use 'tempfile' to create a temporary folder
-        anim_args    (dict): passed to :obj:`matplotlib.animation.ArtistAnimation` or ``ffmpeg.input()``
-        save_args    (dict): passed to :meth:`animation.save() <matplotlib.animation.Animation.save>` or ``ffmpeg.run()``
+        anim_args    (dict): passed to `matplotlib.animation.ArtistAnimation` or `ffmpeg.input()`
+        save_args    (dict): passed to `animation.save()` or `ffmpeg.run()`
         tidy         (bool): whether to delete temporary files
         verbose      (bool): whether to print progress
-        kwargs       (dict): also passed to :meth:`animation.save() <matplotlib.animation.Animation.save>`
+        kwargs       (dict): also passed to `animation.save()`
 
-    **Example**::
+    **Example**:
 
-        anim = sc.animation()
+    ```python
+    anim = sc.animation()
 
-        plt.figure()
-        repeats = 21
-        colors = sc.vectocolor(repeats, cmap='turbo')
-        for i in range(repeats):
-            scale = 1/np.sqrt(i+1)
-            x = scale*np.random.randn(10)
-            y = scale*np.random.randn(10)
-            label = str(i) if not(i%5) else None
-            plt.scatter(x, y, c=[colors[i]], label=label)
-            plt.title(f'Scale = 1/√{i}')
-            plt.legend()
-            sc.boxoff('all')
-            anim.addframe()
+    plt.figure()
+    repeats = 21
+    colors = sc.vectocolor(repeats, cmap='turbo')
+    for i in range(repeats):
+        scale = 1/np.sqrt(i+1)
+        x = scale*np.random.randn(10)
+        y = scale*np.random.randn(10)
+        label = str(i) if not(i%5) else None
+        plt.scatter(x, y, c=[colors[i]], label=label)
+        plt.title(f'Scale = 1/√{i}')
+        plt.legend()
+        sc.boxoff('all')
+        anim.addframe()
 
-        anim.save('dots.mp4')
+    anim.save('dots.mp4')
+    ```
 
-    | *New in version 1.3.3.*
-    | *New in version 2.0.0:* ``ffmpeg`` option.
+    - *New in version 1.3.3.*
+    - *New in version 2.0.0:* `ffmpeg` option.
     """
     def __init__(self, fig=None, filename=None, dpi=200, fps=10, imageformat='png', basename='animation', nametemplate=None,
                  imagefolder=None, anim_args=None, save_args=None, frames=None, tidy=True, verbose=True, **kwargs):
@@ -2010,7 +2048,7 @@ class animation(sc.prettyobj):
 
     def save(self, filename=None, fps=None, dpi=None, engine='ffmpeg', anim_args=None,
              save_args=None, frames=None, tidy=None, verbose=True, **kwargs):
-        """ Save the animation -- arguments the same as :func:`sc.animation() <animation>` and :func:`sc.savemovie() <savemovie>`, and are described there """
+        """ Save the animation -- arguments the same as `sc.animation()` and `sc.savemovie()`, and are described there """
 
         # Handle engine
         if engine == 'ffmpeg':
@@ -2100,7 +2138,7 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     """
     Save a set of Matplotlib artists as a movie.
 
-    Note: in most cases, it is preferable to use :func:`sc.animation() <animation>`.
+    Note: in most cases, it is preferable to use `sc.animation()`.
 
     Args:
         frames (list): The list of frames to animate
@@ -2108,53 +2146,54 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
         fps (int): The number of frames per second (default 10)
         quality (string): The quality of the movie, in terms of dpi (default "high" = 300 dpi)
         dpi (int): Instead of using quality, set an exact dpi
-        writer (str or object): Specify the writer to be passed to :meth:`animation.save() <matplotlib.animation.Animation.save>` (default "ffmpeg")
+        writer (str or object): Specify the writer to be passed to `animation.save()` (default "ffmpeg")
         bitrate (int): The bitrate. Note, may be ignored; best to specify in a writer and to pass in the writer as an argument
         interval (int): The interval between frames; alternative to using fps
         repeat (bool): Whether or not to loop the animation (default False)
         repeat_delay (bool): Delay between repeats, if repeat=True (default None)
         blit (bool): Whether or not to "blit" the frames (default False, since otherwise does not detect changes )
         verbose (bool): Whether to print statistics on finishing.
-        kwargs (dict): Passed to :meth:`animation.save() <matplotlib.animation.Animation.save>`
+        kwargs (dict): Passed to `animation.save()`
 
     Returns:
         A Matplotlib animation object
 
-    **Examples**::
+    **Examples**:
 
-        import matplotlib.pyplot as plt
-        import sciris as sc
+    ```python
+    import matplotlib.pyplot as plt
+    import sciris as sc
 
-        # Simple example (takes ~5 s)
-        plt.figure()
-        frames = [pl.plot(np.cumsum(np.random.randn(100))) for i in range(20)] # Create frames
-        sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
+    # Simple example (takes ~5 s)
+    plt.figure()
+    frames = [pl.plot(np.cumsum(np.random.randn(100))) for i in range(20)] # Create frames
+    sc.savemovie(frames, 'dancing_lines.gif') # Save movie as medium-quality gif
 
-        # Complicated example (takes ~15 s)
-        plt.figure()
-        nframes = 100 # Set the number of frames
-        ndots = 100 # Set the number of dots
-        axislim = 5*pl.sqrt(nframes) # Pick axis limits
-        dots = plt.zeros((ndots, 2)) # Initialize the dots
-        frames = [] # Initialize the frames
-        old_dots = sc.dcp(dots) # Copy the dots we just made
-        fig = plt.figure(figsize=(10,8)) # Create a new figure
-        for i in range(nframes): # Loop over the frames
-            dots += np.random.randn(ndots, 2) # Move the dots randomly
-            color = plt.norm(dots, axis=1) # Set the dot color
-            old = plt.array(old_dots) # Turn into an array
-            plot1 = plt.scatter(old[:,0], old[:,1], c='k') # Plot old dots in black
-            plot2 = plt.scatter(dots[:,0], dots[:,1], c=color) # Note: Frames will be separate in the animation
-            plt.xlim((-axislim, axislim)) # Set x-axis limits
-            plt.ylim((-axislim, axislim)) # Set y-axis limits
-            kwargs = {'transform':pl.gca().transAxes, 'horizontalalignment':'center'} # Set the "title" properties
-            title = plt.text(0.5, 1.05, f'Iteration {i+1}/{nframes}', **kwargs) # Unfortunately plt.title() can't be dynamically updated
-            plt.xlabel('Latitude') # But static labels are fine
-            plt.ylabel('Longitude') # Ditto
-            frames.append((plot1, plot2, title)) # Store updated artists
-            old_dots = plt.vstack([old_dots, dots]) # Store the new dots as old dots
-        sc.savemovie(frames, 'fleeing_dots.mp4', fps=20, quality='high') # Save movie as a high-quality mp4
-
+    # Complicated example (takes ~15 s)
+    plt.figure()
+    nframes = 100 # Set the number of frames
+    ndots = 100 # Set the number of dots
+    axislim = 5*pl.sqrt(nframes) # Pick axis limits
+    dots = plt.zeros((ndots, 2)) # Initialize the dots
+    frames = [] # Initialize the frames
+    old_dots = sc.dcp(dots) # Copy the dots we just made
+    fig = plt.figure(figsize=(10,8)) # Create a new figure
+    for i in range(nframes): # Loop over the frames
+        dots += np.random.randn(ndots, 2) # Move the dots randomly
+        color = plt.norm(dots, axis=1) # Set the dot color
+        old = plt.array(old_dots) # Turn into an array
+        plot1 = plt.scatter(old[:,0], old[:,1], c='k') # Plot old dots in black
+        plot2 = plt.scatter(dots[:,0], dots[:,1], c=color) # Note: Frames will be separate in the animation
+        plt.xlim((-axislim, axislim)) # Set x-axis limits
+        plt.ylim((-axislim, axislim)) # Set y-axis limits
+        kwargs = {'transform':pl.gca().transAxes, 'horizontalalignment':'center'} # Set the "title" properties
+        title = plt.text(0.5, 1.05, f'Iteration {i+1}/{nframes}', **kwargs) # Unfortunately plt.title() can't be dynamically updated
+        plt.xlabel('Latitude') # But static labels are fine
+        plt.ylabel('Longitude') # Ditto
+        frames.append((plot1, plot2, title)) # Store updated artists
+        old_dots = plt.vstack([old_dots, dots]) # Store the new dots as old dots
+    sc.savemovie(frames, 'fleeing_dots.mp4', fps=20, quality='high') # Save movie as a high-quality mp4
+    ```
     Version: 2019aug21
     """
     from matplotlib import animation as mpl_anim # Place here since specific only to this function
