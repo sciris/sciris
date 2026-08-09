@@ -18,7 +18,7 @@ Using conda: `conda install -c conda-forge sciris`
 
 Using uv: `uv add sciris`
 
-*Requires Python >= 3.9*.
+*Requires Python >= 3.10*.
 
 ## AI integration
 

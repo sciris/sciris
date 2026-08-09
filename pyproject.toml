@@ -7,7 +7,7 @@ name = "sciris"
 dynamic = ["version"]
 description = "Fast, flexible tools to simplify scientific Python"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 keywords = ["scientific Python", "utilities", "dates", "file I/O", "data structures", "dataframes", "plotting", "colormaps", "parallelization", "math", "optimization", "versioning"]
@@ -22,11 +22,11 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development",
     "Topic :: Scientific/Engineering",
 ]

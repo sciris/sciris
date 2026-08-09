@@ -59,7 +59,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Development Setup
 - **Install package:** `pip install -e .` (editable install from pyproject.toml)
 - **Test requirements:** `pip install -r tests/requirements.txt`
-- **Python version:** Requires Python >=3.9
+- **Python version:** Requires Python >=3.10
 
 ### Git Workflow
 - **Main branch:** `main` (use this as base for PRs)
