@@ -2,10 +2,10 @@
 Profiling and CPU/memory management functions.
 
 Highlights:
-    - :func:`sc.profile() <profile>`: a line profiler
-    - :func:`sc.cprofile() <cprofile>`: a function profiler
-    - :func:`sc.benchmark() <benchmark>`: quickly check your computer's performance
-    - :func:`sc.resourcemonitor() <resourcemonitor>`: a monitor to kill processes that exceed memory or other limits
+    - `sc.profile()`: a line profiler
+    - `sc.cprofile()`: a function profiler
+    - `sc.benchmark()`: quickly check your computer's performance
+    - `sc.resourcemonitor()`: a monitor to kill processes that exceed memory or other limits
 """
 
 import re
@@ -41,9 +41,9 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
 
     Note on the different functions:
 
-        - :func:`sc.memload() <memload>` checks current total system memory consumption
-        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
-        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
+        - `sc.memload()` checks current total system memory consumption
+        - `sc.checkram()` checks RAM (virtual memory) used by the current Python process
+        - `sc.checkmem()` checks memory consumption by a given object
 
     Args:
         var (any): the variable being checked
@@ -54,32 +54,32 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         subtotals (bool): whether to include subtotals for different levels of depth
         plot (bool): if descending, show the results as a pie chart
         verbose (bool or int): detail to print, if >1, print repr of objects along the way
-        **kwargs (dict): passed to :func:`sc.load() <sciris.sc_fileio.load>`
+        **kwargs (dict): passed to `sc.load()`
 
-    **Examples**::
+    **Examples**:
 
-        import numpy as np
-        import sciris as sc
+    ```python
+    import numpy as np
+    import sciris as sc
 
-        list_obj = ['label', np.random.rand(2483,589)])
-        sc.checkmem(list_obj)
+    list_obj = ['label', np.random.rand(2483,589)])
+    sc.checkmem(list_obj)
 
-
-        nested_dict = dict(
-            foo = dict(
-                a = np.random.rand(5,10),
-                b = np.random.rand(5,20),
-                c = np.random.rand(5,50),
-            ),
-            bar = [
-                np.random.rand(5,100),
-                np.random.rand(5,200),
-                np.random.rand(5,500),
-            ],
-            cat = np.random.rand(5,10),
-        )
-        sc.checkmem(nested_dict)
-
+    nested_dict = dict(
+        foo = dict(
+            a = np.random.rand(5,10),
+            b = np.random.rand(5,20),
+            c = np.random.rand(5,50),
+        ),
+        bar = [
+            np.random.rand(5,100),
+            np.random.rand(5,200),
+            np.random.rand(5,500),
+        ],
+        cat = np.random.rand(5,10),
+    )
+    sc.checkmem(nested_dict)
+    ```
     *New in version 3.0.0:* descend multiple levels; dataframe output; "alphabetical" renamed "order"
     """
 
@@ -181,18 +181,19 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
 
     Note on the different functions:
 
-        - :func:`sc.memload() <memload>` checks current total system memory consumption
-        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
-        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
+        - `sc.memload()` checks current total system memory consumption
+        - `sc.checkram()` checks RAM (virtual memory) used by the current Python process
+        - `sc.checkmem()` checks memory consumption by a given object
 
-    **Example**::
+    **Example**:
 
-        import sciris as sc
-        import numpy as np
-        start = sc.checkram(to_string=False)
-        a = np.random.random((1_000, 10_000))
-        print(sc.checkram(start=start))
-
+    ```python
+    import sciris as sc
+    import numpy as np
+    start = sc.checkram(to_string=False)
+    a = np.random.random((1_000, 10_000))
+    print(sc.checkram(start=start))
+    ```
     *New in version 1.0.0.*
     """
     process = psutil.Process(os.getpid())
@@ -233,23 +234,25 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
     Returns:
         A dict with keys "python" and "numpy" for the number of MOPS for each
 
-    **Examples**::
+    **Examples**:
 
-        sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
+    ```python
+    sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
 
-        numpy_mops = sc.benchmark(which='numpy')
-        if numpy_mops < 100:
-            print('Your computer is slow')
-        elif numpy_mops > 400:
-            print('Your computer is fast')
-        else:
-            print('Your computer is normal')
+    numpy_mops = sc.benchmark(which='numpy')
+    if numpy_mops < 100:
+        print('Your computer is slow')
+    elif numpy_mops > 400:
+        print('Your computer is fast')
+    else:
+        print('Your computer is normal')
 
-        sc.benchmark(parallel=True) # Use all CPUs
+    sc.benchmark(parallel=True) # Use all CPUs
+    ```
 
-    | *New in version 3.0.0.*
-    | *New in version 3.1.0:* "parallel" argument; increased default scale
-    | *New in version 3.2.4:* replaced "python" and "numpy" arguments with "which"
+    - *New in version 3.0.0.*
+    - *New in version 3.1.0:* "parallel" argument; increased default scale
+    - *New in version 3.2.4:* replaced "python" and "numpy" arguments with "which"
     """
     # Handle which
     python = True if 'python' in which else False
@@ -350,14 +353,14 @@ class profile(sc.prettyobj):
 
     Interface to the line_profiler library.
 
-    Note: :func:`sc.profile() <profile>` shows the time taken by each line of code, in the order
-    the code appears in. :class:`sc.cprofile() <cprofile>` shows the time taken by each function,
+    Note: `sc.profile()` shows the time taken by each line of code, in the order
+    the code appears in. `sc.cprofile()` shows the time taken by each function,
     regardless of where in the code it appears.
 
     Args:
         run (function): The function to be run
         follow (function): The function, list of functions, class, or module to be followed in the profiler; if None, defaults to the run function
-        private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default ``'__init__'``)
+        private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default `'__init__'`)
         include (str): if a class/module is supplied, include only functions matching this string
         exclude (str): if a class/module is supplied, exclude functions matching this string
         unwrap (bool): if true (default), then unwrap functions wrapped by decorators (otherwise, the decorator is profiled)
@@ -371,43 +374,45 @@ class profile(sc.prettyobj):
     Returns:
         LineProfiler (by default, the profile output is also printed to stdout)
 
-    **Example**::
+    **Example**:
 
-        def slow_fn():
-            n = 10000
-            int_list = []
-            int_dict = {}
-            for i in range(n):
-                int_list.append(i)
-                int_dict[i] = i
-            return
+    ```python
+    def slow_fn():
+        n = 10000
+        int_list = []
+        int_dict = {}
+        for i in range(n):
+            int_list.append(i)
+            int_dict[i] = i
+        return
 
-        class Foo:
-            def __init__(self, a=0):
-                self.a = a
+    class Foo:
+        def __init__(self, a=0):
+            self.a = a
 
-            def outer(self):
-                for i in range(100):
-                    self.inner()
+        def outer(self):
+            for i in range(100):
+                self.inner()
 
-            def inner(self):
-                for i in range(1000):
-                    self.a += 1
+        def inner(self):
+            for i in range(1000):
+                self.a += 1
 
-        # Profile a function
-        sc.profile(slow_fn)
+    # Profile a function
+    sc.profile(slow_fn)
 
-        # Profile a class or class instance
-        foo = Foo()
-        sc.profile(run=foo.outer, follow=foo)
+    # Profile a class or class instance
+    foo = Foo()
+    sc.profile(run=foo.outer, follow=foo)
 
-        # Profile the constructor for Foo
-        f = lambda a: Foo(a)
-        sc.profile(run=f, follow=Foo.__init__, a=10) # "a" is passed to the function
+    # Profile the constructor for Foo
+    f = lambda a: Foo(a)
+    sc.profile(run=f, follow=Foo.__init__, a=10) # "a" is passed to the function
+    ```
 
-    | *New in version 3.2.0:* allow class and module arguments for "follow"; "private" argument
-    | *New in version 3.2.2:* converted to a class
-    | *New in version 3.2.4:* "merge" method, "unwrap" argument
+    - *New in version 3.2.0:* allow class and module arguments for "follow"; "private" argument
+    - *New in version 3.2.2:* converted to a class
+    - *New in version 3.2.4:* "merge" method, "unwrap" argument
     """
     def __init__(self, run, follow=None, private='__init__', include=None, exclude=None,
                 unwrap=True, skipzero=False, do_run=True, verbose=True, *args, **kwargs):
@@ -510,7 +515,7 @@ class profile(sc.prettyobj):
             swap (bool): if True, put "other" first
             overwrite (bool): if True, overwrite duplicates (with the one that took more time)
 
-        | *New in version 3.2.4.*
+        - *New in version 3.2.4.*
         """
         if not isinstance(other, profile):
             errormsg = f'Can only add two sc.profile() instances, not {type(other)}'
@@ -734,8 +739,8 @@ class profile(sc.prettyobj):
         Args:
             bytime (bool): if True, order events by total time rather than actual order
             maxentries (int): how many entries to show
-            figkwargs (dict): passed to ``plt.figure()``
-            barkwargs (dict): passed to ``plt.bar()``
+            figkwargs (dict): passed to `plt.figure()`
+            barkwargs (dict): passed to `plt.bar()`
         """
         # Assemble data
         df = self.to_df(bytime, maxentries)
@@ -831,11 +836,11 @@ class cprofile(sc.prettyobj):
     """
     Function profiler, built off Python's built-in cProfile
 
-    Note: :func:`sc.profile() <profile>` shows the time taken by each line of code, in the order
-    the code appears in. :class:`sc.cprofile() <cprofile>` shows the time taken by each function,
+    Note: `sc.profile()` shows the time taken by each line of code, in the order
+    the code appears in. `sc.cprofile()` shows the time taken by each function,
     regardless of where in the code it appears.
 
-    The profiler can be used either with the ``enable()`` and ``disable()`` commands,
+    The profiler can be used either with the `enable()` and `disable()` commands,
     or as a context block. See examples below for details.
 
     Default columns of output are:
@@ -859,45 +864,47 @@ class cprofile(sc.prettyobj):
         stripdirs (bool): whether to strip folder information from the file paths
         show (bool): whether to show results of the profiling as soon as it's complete
 
-    **Examples**::
+    **Examples**:
 
-        import sciris as sc
-        import numpy as np
+    ```python
+    import sciris as sc
+    import numpy as np
 
-        class Slow:
+    class Slow:
 
-            def math(self):
-                n = 1_000_000
-                self.a = np.arange(n)
-                self.b = sum(self.a)
+        def math(self):
+            n = 1_000_000
+            self.a = np.arange(n)
+            self.b = sum(self.a)
 
-            def plain(self):
-                n = 100_000
-                self.int_list = []
-                self.int_dict = {}
-                for i in range(n):
-                    self.int_list.append(i)
-                    for j in range(10):
-                        self.int_dict[i+j] = i+j
+        def plain(self):
+            n = 100_000
+            self.int_list = []
+            self.int_dict = {}
+            for i in range(n):
+                self.int_list.append(i)
+                for j in range(10):
+                    self.int_dict[i+j] = i+j
 
-            def run(self):
-                self.math()
-                self.plain()
+        def run(self):
+            self.math()
+            self.plain()
 
-        # Option 1: as a context block
-        with sc.cprofile() as cpr:
-            slow = Slow()
-            slow.run()
-
-        # Option 2: with start and stop
-        cpr = sc.cprofile()
-        cpr.start()
+    # Option 1: as a context block
+    with sc.cprofile() as cpr:
         slow = Slow()
         slow.run()
-        cpr.stop()
 
-    | *New in version 3.1.6.*
-    | *New in version 3.2.4:* "use_ms" argument
+    # Option 2: with start and stop
+    cpr = sc.cprofile()
+    cpr.start()
+    slow = Slow()
+    slow.run()
+    cpr.stop()
+    ```
+
+    - *New in version 3.1.6.*
+    - *New in version 3.2.4:* "use_ms" argument
     """
     def __init__(self, sort='cumtime', columns='default', mintime=1e-3, maxitems=100,
                  maxfunclen=40, maxpathlen=40, use_ms=None, stripdirs=True, show=True):
@@ -999,7 +1006,7 @@ class cprofile(sc.prettyobj):
         return self.df
 
     def disp(self, *args, **kwargs):
-        """ Display the results of the profiling; arguments are passed to ``to_df()`` """
+        """ Display the results of the profiling; arguments are passed to `to_df()` """
         if self.df is None or args or kwargs:
             self.to_df(*args, **kwargs)
         self.df.disp()
@@ -1040,13 +1047,13 @@ def listfuncs(*args, private='__init__', include=None, exclude=None, strict=Fals
 
     Args:
         args (list): the arguments to parse for functions; can be modules, classes, or functions.
-        private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default ``'__init__'``)
+        private (bool/str/list): if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default `'__init__'`)
         include (str): if a class/module is supplied, include only functions matching this string
         exclude (str): if a class/module is supplied, exclude functions matching this string
         strict (bool): if True, raise an exception if something is not a function, rather than recurse into it
 
-    | *New in version 3.2.2.*
-    | *New in version 3.2.4:* "strict" argument
+    - *New in version 3.2.2.*
+    - *New in version 3.2.4:* "strict" argument
     """
     orig_list = sc.mergelists(*args)
 
@@ -1113,7 +1120,7 @@ class tracecalls(sc.prettyobj):
     """
     Trace all function calls.
 
-    Alias to ``sys.steprofile()``.
+    Alias to `sys.steprofile()`.
 
     Args:
         trace (str/list/regex): the module(s)/file(s) to trace calls from ('' matches all, but this is usually undesirable)
@@ -1123,23 +1130,25 @@ class tracecalls(sc.prettyobj):
         custom (func): if provided, use this rather than the built in logic for checking for matches
         verbose (bool): how much information to print (False=silent, None=default, True=debug)
 
-    **Examples**::
+    **Examples**:
 
-        import mymodule as mm
+    ```python
+    import mymodule as mm
 
-        # In context block
-        with sc.tracecalls('mymodule'):
-            mm.big_operation()
-
-        # Explicitly
-        tc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)
-        tc.start()
+    # In context block
+    with sc.tracecalls('mymodule'):
         mm.big_operation()
-        tc.stop()
-        tc.df.disp()
 
-    | *New in version 3.2.0.*
-    | *New in version 3.2.1:* "custom" argument added; "kwargs" removed
+    # Explicitly
+    tc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)
+    tc.start()
+    mm.big_operation()
+    tc.stop()
+    tc.df.disp()
+    ```
+
+    - *New in version 3.2.0.*
+    - *New in version 3.2.1:* "custom" argument added; "kwargs" removed
     """
     def __init__(self, trace='<default>', exclude='<default>', regex=False, repeats=False,
                  custom=None, verbose=None):
@@ -1296,15 +1305,17 @@ class tracecalls(sc.prettyobj):
             expected (set/list/any): if a list of set of strings, check those function names; if object(s) or classes are supplied, check each method
             die (bool): raise an exception if any expected function calls were not called
 
-        **Example**::
+        **Example**:
 
-            # Check which methods of a class are called
-            with sc.tracecalls() as tc:
-                my_obj = MyObj()
-                my_obj.run()
+        ```python
+        # Check which methods of a class are called
+        with sc.tracecalls() as tc:
+            my_obj = MyObj()
+            my_obj.run()
 
-            expected = tc.check_expected(MyObj) # Equivalent to tc.check_expected(my_obj)
-            print(expected)
+        expected = tc.check_expected(MyObj) # Equivalent to tc.check_expected(my_obj)
+        print(expected)
+        ```
         """
         # Handle input
         if not isinstance(expected, set):
@@ -1346,10 +1357,10 @@ __all__ += ['LimitExceeded', 'resourcemonitor']
 
 class LimitExceeded(MemoryError, KeyboardInterrupt):
     """
-    Custom exception for use with the :func:`sc.resourcemonitor() <resourcemonitor>` monitor.
+    Custom exception for use with the `sc.resourcemonitor()` monitor.
 
-    It inherits from :obj:`MemoryError` since this is the most similar built-in Python
-    except, and it inherits from :obj:`KeyboardInterrupt` since this is the means by
+    It inherits from `MemoryError` since this is the most similar built-in Python
+    except, and it inherits from `KeyboardInterrupt` since this is the means by
     which the monitor interrupts the main Python thread.
     """
     pass
@@ -1366,25 +1377,27 @@ class resourcemonitor(sc.prettyobj): # pragma: no cover # For some reason pycov 
         time (float): maximum time limit in seconds
         interval (float): how frequently to check memory/CPU usage (in seconds)
         label (str): an optional label to use while printing out progress
-        start (bool): whether to start the resource monitor on initialization (else call :meth:`start() <resourcemonitor.start>`)
+        start (bool): whether to start the resource monitor on initialization (else call `start()`)
         die (bool): whether to raise an exception if the resource limit is exceeded
         kill_children (bool): whether to kill child processes (if False, will not work with multiprocessing)
         kill_parent (bool): whether to also kill the parent process (will usually exit Python interpreter in the process)
         callback (func): optional callback if the resource limit is exceeded
         verbose (bool): detail to print out (default: if exceeded; True: every step; False: no output)
 
-    **Examples**::
+    **Examples**:
 
-        # Using with-as:
-        with sc.resourcemonitor(mem=0.8) as resmon:
-            memory_heavy_job()
+    ```python
+    # Using with-as:
+    with sc.resourcemonitor(mem=0.8) as resmon:
+        memory_heavy_job()
 
-        # As a standalone (don't forget to call stop!)
-        resmon = sc.resourcemonitor(mem=0.95, cpu=0.9, time=3600, label='Load checker', die=False, callback=post_to_slack)
-        long_cpu_heavy_job()
-        resmon.stop()
-        print(resmon.to_df())
-        ,
+    # As a standalone (don't forget to call stop!)
+    resmon = sc.resourcemonitor(mem=0.95, cpu=0.9, time=3600, label='Load checker', die=False, callback=post_to_slack)
+    long_cpu_heavy_job()
+    resmon.stop()
+    print(resmon.to_df())
+    ,
+    ```
     """
     def __init__(self, mem=0.9, cpu=None, time=None, interval=1.0, label=None, start=True,
                  die=True, kill_children=True, kill_parent=False, callback=None, verbose=None):

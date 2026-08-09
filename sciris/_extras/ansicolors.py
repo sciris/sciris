@@ -54,7 +54,7 @@ def _color_code(spec, base):
 
     "Base" is either 30 or 40, signifying the base value for color encoding
     (foreground and background respectively). Low values are added directly
-    to the base. Higher values use ``base + 8`` (i.e. 38 or 48) then extended codes.
+    to the base. Higher values use `base + 8` (i.e. 38 or 48) then extended codes.
 
     Args:
         spec (str|int|tuple|list): Unparsed color specification

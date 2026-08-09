@@ -7,6 +7,7 @@ rows/columns and concatenating data.
 #%% Dataframe
 ##############################################################################
 
+import io # For reading CSV strings
 import numbers # For numeric type
 import numpy as np
 import pandas as pd
@@ -22,14 +23,14 @@ __all__ = ['dataframe']
 
 class dataframe(pd.DataFrame):
     """
-    An extension of the pandas :class:`DataFrame <pandas.DataFrame>` with additional convenience methods for
+    An extension of the pandas `DataFrame` with additional convenience methods for
     accessing rows and columns and performing other operations, such as adding rows.
 
     Args:
-        data (dict/array/dataframe): the data to use; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
-        index (array): the index to use; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
+        data (dict/array/dataframe): the data to use; passed to `pd.DataFrame()`
+        index (array): the index to use; passed to `pd.DataFrame()`
         columns (list): column labels (if a dict is supplied, the value sets the dtype)
-        dtype (type): a dtype for the whole dataframe; passed to :class:`pd.DataFrame() <pandas.DataFrame>`
+        dtype (type): a dtype for the whole dataframe; passed to `pd.DataFrame()`
         copy (bool): whether to copy the data (ignored in pandas ≥ 3.0.0 due to Copy-on-Write behavior)
         dtypes (list/dict): alternatively, list of data types to set each column to
         nrows (int): the number of arrows to preallocate (default 0)
@@ -38,35 +39,36 @@ class dataframe(pd.DataFrame):
     *Hint*: Run the example below line by line to get a sense of how the dataframe
     changes.
 
-    **Examples**::
+    **Examples**:
 
-        df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame
-        df['x'] # Print out a column
-        df[0] # Print out a row
-        df['x',0] # Print out an element
-        df[0,:] = [123,6]; print(df) # Set values for a whole row
-        df['y'] = [8,5,0]; print(df) # Set values for a whole column
-        df['z'] = [14,14,14]; print(df) # Add new column
-        df.rmcol('z'); print(df) # Remove a column
-        df.addcol('z', [14,14,14]); print(df) # Alternate way to add new column
-        df.poprow(1); print(df) # Remove a row
-        df.append([555,2,14]); print(df) # Append a new row
-        df.insertrow(1,[556,2,14]); print(df) # Insert a new row
-        df.sort(); print(df) # Sort by the first column
-        df.sort('y'); print(df) # Sort by the second column
-        df.findrow(123) # Return the row starting with value 123
-        df.rmrow(); print(df) # Remove last row
-        df.rmrow(555); print(df) # Remove the row starting with element '555'
+    ```python
+    df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame
+    df['x'] # Print out a column
+    df[0] # Print out a row
+    df['x',0] # Print out an element
+    df[0,:] = [123,6]; print(df) # Set values for a whole row
+    df['y'] = [8,5,0]; print(df) # Set values for a whole column
+    df['z'] = [14,14,14]; print(df) # Add new column
+    df.rmcol('z'); print(df) # Remove a column
+    df.addcol('z', [14,14,14]); print(df) # Alternate way to add new column
+    df.poprow(1); print(df) # Remove a row
+    df.append([555,2,14]); print(df) # Append a new row
+    df.insertrow(1,[556,2,14]); print(df) # Insert a new row
+    df.sort(); print(df) # Sort by the first column
+    df.sort('y'); print(df) # Sort by the second column
+    df.findrow(123) # Return the row starting with value 123
+    df.rmrow(); print(df) # Remove last row
+    df.rmrow(555); print(df) # Remove the row starting with element '555'
 
-        # Direct setting of data
-        df = sc.dataframe(a=[1,2,3], b=[4,5,6])
-
+    # Direct setting of data
+    df = sc.dataframe(a=[1,2,3], b=[4,5,6])
+    ```
     The dataframe can be used for both numeric and non-numeric data.
 
-    | *New in version 2.0.0:* subclass pandas DataFrame
-    | *New in version 3.0.0:* "dtypes" argument; handling of item setting
-    | *New in version 3.1.0:* use panda's equality operator by default (unless an exception is raised); new "equal" method; "cat" can be an instance method now
-    | *New in version 3.2.5:* pandas 3.0.0 compatibility
+    - *New in version 2.0.0:* subclass pandas DataFrame
+    - *New in version 3.0.0:* "dtypes" argument; handling of item setting
+    - *New in version 3.1.0:* use panda's equality operator by default (unless an exception is raised); new "equal" method; "cat" can be an instance method now
+    - *New in version 3.2.5:* pandas 3.0.0 compatibility
     """
 
     def __init__(self, data=None, index=None, columns=None, dtype=None, copy=None,
@@ -131,7 +133,7 @@ class dataframe(pd.DataFrame):
 
     def set_dtypes(self, dtypes):
         """
-        Set dtypes in-place (see :meth:`df.astype() <pandas.DataFrame.astype>` for the user-facing version)
+        Set dtypes in-place (see `df.astype()` for the user-facing version)
 
         *New in version 3.0.0.*
         """
@@ -144,22 +146,23 @@ class dataframe(pd.DataFrame):
 
     def col_index(self, col=None, *args, die=True):
         """
-        Get the index of the column named ``col``.
+        Get the index of the column named `col`.
 
-        Similar to ``df.columns.get_loc(col)``, and opposite of :meth:`df.col_name <dataframe.col_name>`.
+        Similar to `df.columns.get_loc(col)`, and opposite of `df.col_name`.
 
         Args:
             col (str/list): the column(s) to get the index of (return 0 if None)
             args (list): additional column(s) to get the index of
             die (bool): whether to raise an exception if the column could not be found (else, return None)
 
-        **Examples**::
+        **Examples**:
 
-            df = sc.dataframe(dict(a=[1,2,3], b=[4,5,6], c=[7,8,9]))
-            df.col_index('b') # Returns 1
-            df.col_index(1) # Returns 1
-            df.col_index('a', 'c') # Returns [0, 2]
-
+        ```python
+        df = sc.dataframe(dict(a=[1,2,3], b=[4,5,6], c=[7,8,9]))
+        df.col_index('b') # Returns 1
+        df.col_index(1) # Returns 1
+        df.col_index('a', 'c') # Returns [0, 2]
+        ```
         *New in version 3.0.0:* renamed from "_sanitizecols"; multiple arguments
         """
         arglist = sc.mergelists(col, list(args), keepnone=True)
@@ -192,12 +195,12 @@ class dataframe(pd.DataFrame):
 
     def col_name(self, col=None, *args, die=True):
         """
-        Get the name of the column(s) with index ``col``.
+        Get the name of the column(s) with index `col`.
 
-        Similar to ``df.columns[col]``, and opposite of :meth:`df.col_index <dataframe.col_index>`.
+        Similar to `df.columns[col]`, and opposite of `df.col_index`.
 
-        **Note**: This method always looks for named columns first. If ``col`` is
-        name of a column, it will return ``col`` rather than ``columns[col]``. See
+        **Note**: This method always looks for named columns first. If `col` is
+        name of a column, it will return `col` rather than `columns[col]`. See
         example below for more information.
 
         Args:
@@ -205,13 +208,14 @@ class dataframe(pd.DataFrame):
             args (list): additional column(s) to get the index of
             die (bool): whether to raise an exception if the column could not be found (else, return None)
 
-        **Examples**::
+        **Examples**:
 
-            df = sc.dataframe(dict(a=[1,2,3], b=[4,5,6], c=[7,8,9]))
-            df.col_name(1) # Returns 'b'
-            df.col_name('b') # Returns 'b'
-            df.col_name(0, 2) # Returns ['a', 'c']
-
+        ```python
+        df = sc.dataframe(dict(a=[1,2,3], b=[4,5,6], c=[7,8,9]))
+        df.col_name(1) # Returns 'b'
+        df.col_name('b') # Returns 'b'
+        df.col_name(0, 2) # Returns ['a', 'c']
+        ```
         *New in version 3.0.0.*
         """
         arglist = sc.mergelists(col, list(args), keepnone=True)
@@ -330,10 +334,12 @@ class dataframe(pd.DataFrame):
             cast (bool): attempt to cast to an all-numeric array
             default (any): the value to return if the column(s)/row(s) can't be found
 
-        **Example**::
+        **Example**:
 
-            df = sc.dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
-            df.flexget(cols=['x','z'], rows=[0,2])
+        ```python
+        df = sc.dataframe(cols=['x','y','z'],data=[[1238,2,-1],[384,5,-2],[666,7,-3]]) # Create data frame
+        df.flexget(cols=['x','z'], rows=[0,2])
+        ```
         """
         if cols is None: # pragma: no cover
             colindices = Ellipsis
@@ -359,7 +365,7 @@ class dataframe(pd.DataFrame):
 
     def __eq__(self, other):
         """
-        Try the default ``__eq__()``, but fall back on the more robust ``equal()``
+        Try the default `__eq__()`, but fall back on the more robust `equal()`
 
         *New in version 3.0.0.*
         """
@@ -372,19 +378,20 @@ class dataframe(pd.DataFrame):
     def equal(cls, *args, equal_nan=True):
         """
         Class method returning boolean true/false equals that allows for more robust equality checks:
-        same type, size, columns, and values. See :meth:`df.equals() <dataframe.equals>` for
+        same type, size, columns, and values. See `df.equals()` for
         equivalent instance method.
 
-        **Examples**::
+        **Examples**:
 
-            df1 = sc.dataframe(a=[1, 2, np.nan])
-            df2 = sc.dataframe(a=[1, 2, 4])
+        ```python
+        df1 = sc.dataframe(a=[1, 2, np.nan])
+        df2 = sc.dataframe(a=[1, 2, 4])
 
-            sc.dataframe.equal(df1, df1) # Returns True
-            sc.dataframe.equal(df1, df1, equal_nan=False) # Returns False
-            sc.dataframe.equal(df1, df2) # Returns False
-            sc.dataframe.equal(df1, df1, df2) # Also returns False
-
+        sc.dataframe.equal(df1, df1) # Returns True
+        sc.dataframe.equal(df1, df1, equal_nan=False) # Returns False
+        sc.dataframe.equal(df1, df2) # Returns False
+        sc.dataframe.equal(df1, df1, df2) # Also returns False
+        ```
         *New in version 3.1.0.*
         """
         if len(args) < 2: # pragma: no cover
@@ -427,8 +434,8 @@ class dataframe(pd.DataFrame):
 
     def equals(self, other, *args, equal_nan=True):
         """
-        Try the default :meth:`equals() <pandas.DataFrame.equals>`, but fall back
-        on the more robust :meth:`sc.dataframe.equal() <dataframe.equal>` if that
+        Try the default `equals()`, but fall back
+        on the more robust `sc.dataframe.equal()` if that
         fails.
 
         *New in version 3.1.0.*
@@ -450,15 +457,16 @@ class dataframe(pd.DataFrame):
             ncols (int): maximum number of columns to show (default: all)
             width (int): maximum screen width (default: 999)
             precision (int): number of decimal places to show (default: 4)
-            options (dict): an optional dictionary of additional options, passed to :class:`pd.option_context() <pandas.option_context>`
-            kwargs (dict): also passed to :class:`pd.option_context() <pandas.option_context>`, with 'display.' preprended if needed
+            options (dict): an optional dictionary of additional options, passed to `pd.option_context()`
+            kwargs (dict): also passed to `pd.option_context()`, with 'display.' preprended if needed
 
-        **Examples**::
+        **Examples**:
 
-            df = sc.dataframe(data=np.random.rand(100,10))
-            df.disp()
-            df.disp(precision=1, ncols=5, colheader_justify='left')
-
+        ```python
+        df = sc.dataframe(data=np.random.rand(100,10))
+        df.disp()
+        df.disp(precision=1, ncols=5, colheader_justify='left')
+        ```
         *New in version 2.0.1.*
         """
         kwdict = {}
@@ -485,7 +493,7 @@ class dataframe(pd.DataFrame):
     def replacedata(self, newdata=None, newdf=None, reset_index=True, inplace=True):
         """
         Replace data in the dataframe with other data; usually not used directly
-        by the user, but used as part of e.g. :meth:`df.concat() <dataframe.concat>`.
+        by the user, but used as part of e.g. `df.concat()`.
 
         Args:
             newdata (array): replace the dataframe's data with these data
@@ -515,8 +523,8 @@ class dataframe(pd.DataFrame):
         """
         Add row(s) to the end of the dataframe.
 
-        See also :meth:`df.concat() <dataframe.concat>` and :meth:`df.insertrow() <dataframe.insertrow>`. Similar to the pandas operation
-        ``df.iloc[-1] = ...``, but faster and provides additional type checking.
+        See also `df.concat()` and `df.insertrow()`. Similar to the pandas operation
+        `df.iloc[-1] = ...`, but faster and provides additional type checking.
 
         Args:
             value (array): the row(s) to append
@@ -530,19 +538,20 @@ class dataframe(pd.DataFrame):
         performance, construct the data in large chunks and then add to the dataframe
         all at once, rather than adding row by row.
 
-        **Example**::
+        **Example**:
 
-            import sciris as sc
-            import numpy as np
+        ```python
+        import sciris as sc
+        import numpy as np
 
-            df = sc.dataframe(dict(
-                a = ['foo','bar'],
-                b = [1,2],
-                c = np.random.rand(2)
-            ))
-            df.appendrow(['cat', 3, 0.3])           # Append a list
-            df.appendrow(dict(a='dog', b=4, c=0.7)) # Append a dict
-
+        df = sc.dataframe(dict(
+            a = ['foo','bar'],
+            b = [1,2],
+            c = np.random.rand(2)
+        ))
+        df.appendrow(['cat', 3, 0.3])           # Append a list
+        df.appendrow(dict(a='dog', b=4, c=0.7)) # Append a dict
+        ```
         *New in version 3.0.0:* renamed "value" to "row"; improved performance
         """
         return self.concat(row, reset_index=reset_index, inplace=inplace)
@@ -550,12 +559,12 @@ class dataframe(pd.DataFrame):
 
     def append(self, row, reset_index=True, inplace=True):
         """
-        Alias to :meth:`appendrow() <dataframe.appendrow>`.
+        Alias to `appendrow()`.
 
         **Note**: `pd.DataFrame.append` was deprecated in pandas version 2.0; see
         https://github.com/pandas-dev/pandas/issues/35407 for details. Since this
-        method is implemented using :func:`pd.concat() <pandas.concat>`, it does
-        not suffer from the performance problems that ``append`` did.
+        method is implemented using `pd.concat()`, it does
+        not suffer from the performance problems that `append` did.
 
         *New in version 3.0.0.*
         """
@@ -564,8 +573,8 @@ class dataframe(pd.DataFrame):
 
     def insertrow(self, index=0, value=None, reset_index=True, inplace=True, die=True, **kwargs):
         """
-        Insert row(s) at the specified location. See also :meth:`df.concat() <dataframe.concat>`
-        and :meth:`df.appendrow() <dataframe.appendrow>`.
+        Insert row(s) at the specified location. See also `df.concat()`
+        and `df.appendrow()`.
 
         Args:
             index (int): index at which to insert new row(s)
@@ -573,27 +582,29 @@ class dataframe(pd.DataFrame):
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
             die (bool): raise an exception if the length/columns of the inserted row do not match the existing dataframe
-            kwargs (dict): passed to `:meth:`df.concat() <dataframe.concat>`
+            kwargs (dict): passed to ``df.concat()`
 
         Warning: modifying dataframes in-place is quite inefficient. For highest
         performance, construct the data in large chunks and then add to the dataframe
         all at once, rather than adding row by row.
 
-        **Example**::
+        **Example**:
 
-            import sciris as sc
-            import numpy as np
+        ```python
+        import sciris as sc
+        import numpy as np
 
-            df = sc.dataframe(dict(
-                a = ['foo','cat'],
-                b = [1,3],
-                c = np.random.rand(2)
-            ))
-            df.insertrow(1, ['bar', 2, 0.2])           # Insert a list
-            df.insertrow(0, dict(a='rat', b=0, c=0.7)) # Insert a dict
+        df = sc.dataframe(dict(
+            a = ['foo','cat'],
+            b = [1,3],
+            c = np.random.rand(2)
+        ))
+        df.insertrow(1, ['bar', 2, 0.2])           # Insert a list
+        df.insertrow(0, dict(a='rat', b=0, c=0.7)) # Insert a dict
+        ```
 
-        | *New in version 3.0.0:* renamed "row" to "index"
-        | *New in version 3.2.3:* "die" argument
+        - *New in version 3.0.0:* renamed "row" to "index"
+        - *New in version 3.2.3:* "die" argument
         """
         # Validation
         if die:
@@ -641,8 +652,8 @@ class dataframe(pd.DataFrame):
         """
         Concatenate additional data onto the current dataframe.
 
-        Similar to :meth:`df.appendrow() <dataframe.appendrow>` and :meth:`df.insertrow() <dataframe.insertrow>`;
-        see also :meth:`sc.dataframe.cat() <dataframe.cat>` for the equivalent class method.
+        Similar to `df.appendrow()` and `df.insertrow()`;
+        see also `sc.dataframe.cat()` for the equivalent class method.
 
         Args:
             data (dataframe/array): the data to concatenate
@@ -651,16 +662,18 @@ class dataframe(pd.DataFrame):
             reset_index (bool): update the index
             inplace (bool): whether to append in place
             dfargs (dict): arguments passed to construct each dataframe
-            **kwargs (dict): passed to :func:`pd.concat() <pandas.concat>`
+            **kwargs (dict): passed to `pd.concat()`
 
-        **Example**::
+        **Example**:
 
-            arr1 = np.random.rand(6,3)
-            df2 = sc.dataframe(np.random.rand(4,3))
-            df3 = df2.concat(arr1)
+        ```python
+        arr1 = np.random.rand(6,3)
+        df2 = sc.dataframe(np.random.rand(4,3))
+        df3 = df2.concat(arr1)
+        ```
 
-        | *New in version 2.0.2:* "inplace" defaults to False
-        | *New in version 3.0.0:* improved type handling
+        - *New in version 2.0.2:* "inplace" defaults to False
+        - *New in version 3.0.0:* improved type handling
         """
         dfargs = sc.mergedicts(dfargs)
         dfs = [self]
@@ -676,21 +689,22 @@ class dataframe(pd.DataFrame):
     @classmethod
     def cat(cls, data, *args, dfargs=None, **kwargs):
         """
-        Convenience class method for concatenating multiple dataframes. See :meth:`df.concat() <dataframe.concat>`
+        Convenience class method for concatenating multiple dataframes. See `df.concat()`
         for the equivalent instance method.
 
         Args:
             data (dataframe/array): the dataframe/data to use as the basis of the new dataframe
             args (list): additional dataframes (or object that can be converted to dataframes) to concatenate
             dfargs (dict): arguments passed to construct each dataframe
-            kwargs (dict): passed to :func:`df.concat() <dataframe.concat>`
+            kwargs (dict): passed to `df.concat()`
 
-        **Example**::
+        **Example**:
 
-            arr1 = np.random.rand(6,3)
-            df2 = pd.DataFrame(np.random.rand(4,3))
-            df3 = sc.dataframe.cat(arr1, df2)
-
+        ```python
+        arr1 = np.random.rand(6,3)
+        df2 = pd.DataFrame(np.random.rand(4,3))
+        df3 = sc.dataframe.cat(arr1, df2)
+        ```
         *New in version 2.0.2.*
         """
         dfargs = sc.mergedicts(dfargs)
@@ -702,20 +716,22 @@ class dataframe(pd.DataFrame):
 
     def merge(self, *args, reset_index=True, inplace=False, **kwargs):
         """
-        Alias to :func:`pd.merge <pandas.merge>`, except merge in place.
+        Alias to `pd.merge`, except merge in place.
 
         Args:
             reset_index (bool): update the index
             inplace (bool): whether to append in place
-            **kwargs (dict): passed to :func:`pd.concat() <pandas.concat>`
+            **kwargs (dict): passed to `pd.concat()`
 
         *New in version 3.0.0.*
 
-        **Example**::
+        **Example**:
 
-            df = sc.dataframe(dict(x=[1,2,3], y=[4,5,6]))
-            df2 = sc.dataframe(dict(x=[1,2,3], z=[9,8,7]))
-            df.merge(df2, on='x', inplace=True)
+        ```python
+        df = sc.dataframe(dict(x=[1,2,3], y=[4,5,6]))
+        df2 = sc.dataframe(dict(x=[1,2,3], z=[9,8,7]))
+        df.merge(df2, on='x', inplace=True)
+        ```
         """
         newdf = self._constructor(pd.merge(self, *args, **kwargs))
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
@@ -737,7 +753,7 @@ class dataframe(pd.DataFrame):
         """
         Add new column(s) to the data frame
 
-        See also :meth:`assign() <pandas.DataFrame.assign>`, which is similar, but
+        See also `assign()`, which is similar, but
         returns a new dataframe by default.
 
         Args:
@@ -749,11 +765,13 @@ class dataframe(pd.DataFrame):
 
         NB: a single argument is interpreted as "data"
 
-        **Example**::
+        **Example**:
 
-            df = sc.dataframe(dict(x=[1,2,3], y=[4,5,6]))
-            new_cols = dict(z=[1,2,3], a=[9,8,7])
-            df.addcol(new_cols)
+        ```python
+        df = sc.dataframe(dict(x=[1,2,3], y=[4,5,6]))
+        new_cols = dict(z=[1,2,3], a=[9,8,7])
+        df.addcol(new_cols)
+        ```
         """
         # Parse into a data dict
         if isinstance(key, dict):
@@ -780,7 +798,7 @@ class dataframe(pd.DataFrame):
         """
         Remove a column or columns from the data frame.
 
-        Alias to :meth:`pop() <pandas.DataFrame.pop>`, except allowing multiple
+        Alias to `pop()`, except allowing multiple
         columns to be popped.
 
         Args:
@@ -788,10 +806,12 @@ class dataframe(pd.DataFrame):
             args (list): additional columns to pop
             die (bool): whether to raise an exception if a column is not found
 
-        **Example**::
+        **Example**:
 
-            df = sc.dataframe(cols=['a','b','c','d'], data=np.random.rand(3,4))
-            df.popcols('a','c')
+        ```python
+        df = sc.dataframe(cols=['a','b','c','d'], data=np.random.rand(3,4))
+        df.popcols('a','c')
+        ```
         """
         cols = sc.mergelists(col, list(args), keepnone=True)
         for col in cols:
@@ -808,10 +828,9 @@ class dataframe(pd.DataFrame):
         """
         Find the row index for a given value and column.
 
-        See :meth:`df.findrow() <dataframe.findrow>` for the equivalent to return the row itself
-        rather than the index of the row. See :meth:`df.col_index() <dataframe.col_index>` for the column
+        See `df.findrow()` for the equivalent to return the row itself
+        rather than the index of the row. See `df.col_index()` for the column
         equivalent.
-
 
         Args:
             value (any): the value to look for (default: return last row index)
@@ -819,14 +838,15 @@ class dataframe(pd.DataFrame):
             closest (bool): if true, return the closest match if an exact match is not found
             die (bool): whether to raise an exception if the value is not found (otherwise, return None)
 
-        **Example**::
+        **Example**:
 
-            df = sc.dataframe(data=[[2016,0.3],[2017,0.5]], columns=['year','val'])
-            df.findind(2016) # returns 0
-            df.findind(0.5, 'val') # returns 1
-            df.findind(2013) # returns None, or exception if die is True
-            df.findind(2013, closest=True) # returns 0
-
+        ```python
+        df = sc.dataframe(data=[[2016,0.3],[2017,0.5]], columns=['year','val'])
+        df.findind(2016) # returns 0
+        df.findind(0.5, 'val') # returns 1
+        df.findind(2013) # returns None, or exception if die is True
+        df.findind(2013, closest=True) # returns 0
+        ```
         *New in version 3.0.0:* renamed from "_rowindex"
         """
         col = self.col_index(col)
@@ -860,7 +880,7 @@ class dataframe(pd.DataFrame):
         """
         Remove a row from the data frame.
 
-        Alias to :meth:`drop <pandas.DataFrame.drop>`, except drop by position
+        Alias to `drop`, except drop by position
         rather than label, and modify in-place. To pop multiple rows, see
         meth:`df.poprows() <dataframe.poprows>`.
 
@@ -868,7 +888,7 @@ class dataframe(pd.DataFrame):
             row (int): index of the row to pop
             returnval (bool): whether to return the row that was popped
 
-        To pop a column, see :meth:`df.pop() <pandas.DataFrame.pop>`.
+        To pop a column, see `df.pop()`.
 
         *New in version 3.0.0:* "key" argument renamed "row"
         """
@@ -895,19 +915,21 @@ class dataframe(pd.DataFrame):
 
         Args:
             inds (list): the rows to remove
-            values (list): alternatively, search for these values to remove; see :meth:`df.findinds <dataframe.findinds>` for details
+            values (list): alternatively, search for these values to remove; see `df.findinds` for details
             col (str): if removing by value, use this column to find the values
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
-            kwargs (dict): passed to :meth:`df.findinds <dataframe.findinds>`
+            kwargs (dict): passed to `df.findinds`
 
-        **Examples**::
+        **Examples**:
 
-            df = sc.dataframe(np.random.rand(10,3))
-            df.poprows([3,4,5])
+        ```python
+        df = sc.dataframe(np.random.rand(10,3))
+        df.poprows([3,4,5])
 
-            df = sc.dataframe(dict(x=[0,1,2,3,4], y=[2,3,2,7,8]))
-            df.poprows(value=2, col='y')
+        df = sc.dataframe(dict(x=[0,1,2,3,4], y=[2,3,2,7,8]))
+        df.poprows(value=2, col='y')
+        ```
         """
         if value is not None:
             inds = self.findinds(value=value, col=col, **kwargs)
@@ -921,20 +943,22 @@ class dataframe(pd.DataFrame):
         """
         Efficiently enumerate the rows of the dataframe
 
-        Similar to :meth:`df.iterrows() <pandas.DataFrame.iterrows>`, but up to
-        30x faster since uses tuples instead of ``pd.Series``.
+        Similar to `df.iterrows()`, but up to
+        30x faster since uses tuples instead of `pd.Series`.
 
         Args:
             cols (list): the list of columns to include in the enumeration (by default, all)
             type (str/type): the output type for each row: options are 'objdict' (default), tuple (fastest), list (very fast), dict (pretty fast)
 
-        **Examples**::
+        **Examples**:
 
-            df = sc.dataframe(dict(x=[0,1,2,3,4], y=[2,3,2,7,8], z=[5,5,4,3,2]))
-            for i,row in df.enumrows(): print(i, row.x+row.y) # Typical use case
-            for i,row in df.enumrows(type=tuple): print(i, row[0]+row[1]) # Fastest
-            for i,row in df.enumrows(type=dict): print(i, row['x']+row['y']) # Still fast
-            for i,(x,y) in df.enumrows(cols=['x', 'y'], type=tuple): print(i, x+y) # Even faster
+        ```python
+        df = sc.dataframe(dict(x=[0,1,2,3,4], y=[2,3,2,7,8], z=[5,5,4,3,2]))
+        for i,row in df.enumrows(): print(i, row.x+row.y) # Typical use case
+        for i,row in df.enumrows(type=tuple): print(i, row[0]+row[1]) # Fastest
+        for i,row in df.enumrows(type=dict): print(i, row['x']+row['y']) # Still fast
+        for i,(x,y) in df.enumrows(cols=['x', 'y'], type=tuple): print(i, x+y) # Even faster
+        ```
         """
         # Handle the columns
         if cols is None: cols = self.columns
@@ -996,8 +1020,8 @@ class dataframe(pd.DataFrame):
         """
         Return a row by searching for a matching value.
 
-        See :meth:`df.findind() <dataframe.findind>` for the equivalent to return the index of the row
-        rather than the row itself, and :meth:`df.findinds() <dataframe.findinds>`
+        See `df.findind()` for the equivalent to return the index of the row
+        rather than the row itself, and `df.findinds()`
         to find multiple row indices.
 
         Args:
@@ -1008,13 +1032,15 @@ class dataframe(pd.DataFrame):
             asdict (bool): whether to return results as dict rather than list
             die (bool): whether to raise an exception if the value is not found
 
-        **Examples**::
+        **Examples**:
 
-            df = sc.dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5], [2018, 0.3]])
-            df.findrow(2016) # returns array([2016, 0.3], dtype=object)
-            df.findrow(2013) # returns None, or exception if die is True
-            df.findrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
-            df.findrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
+        ```python
+        df = sc.dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5], [2018, 0.3]])
+        df.findrow(2016) # returns array([2016, 0.3], dtype=object)
+        df.findrow(2013) # returns None, or exception if die is True
+        df.findrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
+        df.findrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
+        ```
         """
         index = self.findind(value=value, col=col, die=(die and default is None), closest=closest)
         if index is not None:
@@ -1033,12 +1059,14 @@ class dataframe(pd.DataFrame):
         Args:
             value (any): the value to look for
             col (str): the column to look in
-            kwargs (dict): passed to :func:`sc.findinds() <sciris.sc_math.findinds>`
+            kwargs (dict): passed to `sc.findinds()`
 
-        **Example**::
+        **Example**:
 
-            df = sc.dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5], [2018, 0.3]])
-            df.findinds(0.3, 'val') # Returns array([0,2])
+        ```python
+        df = sc.dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5], [2018, 0.3]])
+        df.findinds(0.3, 'val') # Returns array([0,2])
+        ```
         """
         col = self.col_index(col)
         coldata = self.iloc[:,col].values # Get data for this column
@@ -1058,14 +1086,14 @@ class dataframe(pd.DataFrame):
 
     def filterin(self, inds=None, value=None, col=None, verbose=False, reset_index=True, inplace=False):
         """
-        Keep only rows matching a criterion; see also :meth:`df.filterout() <dataframe.filterout>`
+        Keep only rows matching a criterion; see also `df.filterout()`
         """
         return self._filterrows(inds=inds, value=value, col=col, keep=True, verbose=verbose, reset_index=reset_index, inplace=inplace)
 
 
     def filterout(self, inds=None, value=None, col=None, verbose=False, reset_index=True, inplace=False):
         """
-        Remove rows matching a criterion (in place); see also :meth:`df.filterin() <dataframe.filterin>`
+        Remove rows matching a criterion (in place); see also `df.filterin()`
         """
         return self._filterrows(inds=inds, value=value, col=col, keep=False, verbose=verbose, reset_index=reset_index, inplace=inplace)
 
@@ -1082,11 +1110,13 @@ class dataframe(pd.DataFrame):
             reset_index (bool): update the index
             inplace (bool): whether to modify in-place
 
-        **Examples**::
+        **Examples**:
 
-            df = sc.dataframe(cols=['a','b','c','d'], data=np.random.rand(3,4))
-            df2 = df.filtercols('a','b') # Keeps columns 'a' and 'b'
-            df3 = df.filtercols('a','c', keep=False) # Keeps columns 'b' and 'd'
+        ```python
+        df = sc.dataframe(cols=['a','b','c','d'], data=np.random.rand(3,4))
+        df2 = df.filtercols('a','b') # Keeps columns 'a' and 'b'
+        df3 = df.filtercols('a','c', keep=False) # Keeps columns 'b' and 'd'
+        ```
         """
         cols = sc.mergelists(cols, list(args), keepnone=True)
         order = []
@@ -1113,8 +1143,8 @@ class dataframe(pd.DataFrame):
         """
         Sort the dataframe rows in place by the specified column(s).
 
-        Similar to :meth:`df.sort_values() <pandas.DataFrame.sort_values>`, except defaults to sorting in place, and
-        optionally returns the indices used for sorting (like :func:`np.argsort() <numpy.argsort>`).
+        Similar to `df.sort_values()`, except defaults to sorting in place, and
+        optionally returns the indices used for sorting (like `np.argsort()`).
 
         Args:
             col (str or int): column to sort by (default, first column)
@@ -1122,7 +1152,7 @@ class dataframe(pd.DataFrame):
             returninds (bool): whether to return the indices used to sort instead of the dataframe
             reset_index (bool): update the index
             inplace (bool): whether to modify the dataframe in-place
-            kwargs (dict): passed to :meth:`df.sort_values() <pandas.DataFrame.sort_values>`
+            kwargs (dict): passed to `df.sort_values()`
 
         *New in version 3.0.0:* "inplace" argument; "col" argument renamed "by"
         """
@@ -1146,7 +1176,7 @@ class dataframe(pd.DataFrame):
 
     def sort(self, by=None, reverse=False, returninds=False, inplace=True, **kwargs):
         """
-        Alias to :meth:`sortrows() <dataframe.sortrows>`.
+        Alias to `sortrows()`.
 
         *New in version 3.0.0.*
         """
@@ -1179,12 +1209,39 @@ class dataframe(pd.DataFrame):
 
     @classmethod
     def read_csv(cls, *args, **kwargs):
-        """ Alias to :func:`pd.read_csv <pandas.read_csv`, returning a Sciris dataframe """
+        """ Alias to `pd.read_csv <pandas.read_csv`, returning a Sciris dataframe """
         return cls(pd.read_csv(*args, **kwargs))
 
     @classmethod
+    def read_csv_string(cls, string, strip=True, **kwargs):
+        """
+        Read a CSV from a string rather than a file
+
+        Shortcut to `sc.dataframe.read_csv(io.StringIO(string))`.
+
+        Args:
+            string (str): the string to parse as CSV data
+            strip (bool): whether to strip leading/trailing whitespace from the string first
+            kwargs (dict): passed to `pd.read_csv`
+
+        **Example**:
+
+        ```python
+        df = sc.dataframe.read_csv_string('''
+        a,b
+        1,2
+        3,4
+        ''')
+        ```
+        *New in version 3.3.0.*
+        """
+        if strip:
+            string = string.strip()
+        return cls.read_csv(io.StringIO(string), **kwargs)
+
+    @classmethod
     def read_excel(cls, *args, **kwargs):
-        """ Alias to :func:`pd.read_excel <pandas.read_excel`, returning a Sciris dataframe """
+        """ Alias to `pd.read_excel <pandas.read_excel`, returning a Sciris dataframe """
         out = pd.read_excel(*args, **kwargs)
         if isinstance(out, pd.DataFrame):
             out = cls(out)
@@ -1196,5 +1253,5 @@ class dataframe(pd.DataFrame):
 
     @property
     def _constructor(self):
-        """ Overload pandas method to ensure correct type; replaces :class:`pd.DataFrame() <pandas.DataFrame>` """
+        """ Overload pandas method to ensure correct type; replaces `pd.DataFrame()` """
         return self.__class__ # To allow subclassing

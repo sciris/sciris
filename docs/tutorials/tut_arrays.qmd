@@ -1,0 +1,189 @@
+---
+title: Math and array tools
+jupyter: python3
+---
+
+Arrays are the basis of science [[citation needed]](https://en.wikipedia.org/wiki/Wikipedia:Citation_needed). This tutorial walks you through some tools to make your life working with arrays a little more pleasant.
+
+```{python}
+#| include: false
+# Hide this cell from output, just include so we have reproducible results
+import numpy as np
+np.random.seed(4) # 4 looks nice
+```
+
+## Array indexing
+
+Let's create some data.
+
+```{python}
+import numpy as np
+
+data = np.random.rand(100)
+
+print(f'{data = }')
+```
+
+What if we want to do something super simple, like find the indices of the values above 0.9? In NumPy, it's not super straightforward:
+
+```{python}
+inds = (data>0.9).nonzero()[0]
+
+print(f'{inds = }')
+```
+
+In Sciris, there's a function for doing exactly this:
+
+```{python}
+import sciris as sc
+
+inds = sc.findinds(data>0.9)
+
+print(f'{inds = }')
+```
+
+Likewise, what if we want to find the value closest to, say, 0.5? In NumPy, that would be
+
+```{python}
+target = 0.5
+nearest = np.argmin(abs(data-target))
+
+print(f'{nearest = }, {data[nearest] = }')
+```
+
+Which is not _too_ long, but it's a little harder to remember than the Sciris equivalent:
+
+```{python}
+nearest = sc.findnearest(data, target)
+
+print(f'{nearest = }, {data[nearest] = }')
+```
+
+The Sciris functions also work on anything "data like": for example,
+
+```{python}
+target = 50
+data = [81, 78, 66, 25,  6,  8, 53, 96, 64, 23]
+
+# With NumPy
+ind = np.argmin(abs(np.array(data)-target))
+
+# With Sciris
+ind = sc.findnearest(data, 50)
+
+print(f'{ind=}, {data[ind]=}')
+```
+
+These have been simple examples, but you can see how Sciris functions can do the same things with less typing.
+
+### Interlude on creating arrays
+
+Speaking of which, here's a pretty fast way to create an array:
+
+```{python}
+sc.cat(1,2,3)
+```
+
+`sc.cat()` will take anything array-like and turn it into an actual array. For example:
+
+```{python}
+# Create a 2x2 matrix
+data = np.random.rand(2,2)
+
+# Add a row with NumPy
+data = np.concatenate([data, np.atleast_2d(np.array([1,2]))])
+
+# Add a row with Sciris
+data = sc.cat(data, [1,2])
+
+print(f'{data = }')
+```
+
+Yes, the NumPy command really does end with `]))])`.
+
+## Missing values
+
+Now that we know some tools for indexing arrays, let's look at ways to actually change them.
+
+We all know that missing data is one of humanity's greatest scourges. Luckily, it can be swiftly eradicated with Sciris: either removed entirely or replaced:
+
+```{python}
+d0 = [1, 2, np.nan, 4, np.nan, 6, np.nan, np.nan, np.nan, 10]
+
+d1 = sc.rmnans(d0) # Remove nans
+d2 = sc.fillnans(d0, 0) # Replace NaNs with 0s
+d3 = sc.fillnans(d0, 'linear') # Replace NaNs with linearly interpolated values
+
+print(f'{d0 = }')
+print(f'{d1 = }')
+print(f'{d2 = }')
+print(f'{d3 = }') # This is more impressive than ChatGPT, imo
+```
+
+## Data smoothing
+
+What if we have some seriously lumpy data we want to smooth out? We have a few options for doing that:
+
+```{python}
+# Make data
+n = 50
+x = np.arange(n)
+data = 20*np.random.randn(n)**2
+data = sc.randround(data) # Stochastically round to the nearest integer -- e.g. 0.7 is rounded up 70% of the time
+
+# Simple smoothing
+smooth = sc.smooth(data, 7)
+
+# Use a rolling average
+roll = sc.rolling(data, 7)
+
+# Plot results
+import matplotlib.pyplot as plt
+sc.options(jupyter=True)
+plt.scatter(x, data, c='k', label='Data')
+plt.plot(x, smooth, label='Smoothed')
+plt.plot(x, roll, label='Rolling average')
+plt.legend();
+```
+
+We can also smooth 2D data:
+
+```{python}
+# Create the data
+raw = np.random.rand(20,20)
+
+# Smooth it
+smooth = sc.gauss2d(raw, scale=2)
+
+# Plot
+fig = plt.figure(figsize=(8,4))
+
+ax1 = sc.ax3d(121)
+sc.bar3d(raw, ax=ax1)
+plt.title('Raw')
+
+ax2 = sc.ax3d(122)
+sc.bar3d(smooth, ax=ax2)
+plt.title('Smoothed');
+```
+
+## Finding a line of best fit
+
+It's also easy to do a very simple linear regression in Sciris:
+
+```{python}
+# Generate the data
+n = 100
+x = np.arange(n)
+y = x*np.random.rand() + 0.2*np.random.randn(n)*x
+
+# Calcualte the line of best fit
+m,b = sc.linregress(x, y)
+
+# Plot
+plt.style.use('sciris.simple')
+plt.scatter(x, y, c='k', alpha=0.2, label='Data')
+plt.plot(x, m*x+b, c='forestgreen', label=f'Line of best fit: {m:0.2f}*x + {b:0.2f}')
+plt.legend();
+```
+

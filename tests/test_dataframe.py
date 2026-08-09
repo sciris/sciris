@@ -190,6 +190,10 @@ def test_io():
 
     assert sc.dataframe.equal(df, df2, df3)
 
+    with open(f.csv) as fh:
+        df4 = sc.dataframe.read_csv_string(fh.read())
+    assert sc.dataframe.equal(df, df4)
+
     sc.rmpath(f.values())
 
     return df

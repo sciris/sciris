@@ -2,9 +2,9 @@
 Functions for working on nested (multi-level) dictionaries and objects.
 
 Highlights:
-    - :func:`sc.getnested() <getnested>`: get a value from a highly nested dictionary
-    - :func:`sc.search() <search>`: find a value in a nested object
-    - :func:`sc.equal() <equal>`: check complex objects for equality
+    - `sc.getnested()`: get a value from a highly nested dictionary
+    - `sc.search()`: find a value in a nested object
+    - `sc.equal()`: check complex objects for equality
 """
 
 import re
@@ -51,55 +51,58 @@ def makenested(obj=None, keylist=None, value=None, overwrite=True, generator=Non
 
     Functions to get and set data from nested dictionaries (including objects).
 
-    ``sc.getnested()`` will get the value for the given list of keys:
+    `sc.getnested()` will get the value for the given list of keys:
 
     >>> sc.getnested(foo, ['a','b'])
 
-    ``sc.setnested`` will set the value for the given list of keys:
+    `sc.setnested` will set the value for the given list of keys:
 
     >>> sc.setnested(foo, ['a','b'], 3)
 
-    ``sc.makenested`` will recursively update a dictionary with the given list of keys:
+    `sc.makenested` will recursively update a dictionary with the given list of keys:
 
     >>> sc.makenested(foo, ['a','b'])
 
-    ``sc.iternested`` will return a list of all the twigs in the current dictionary:
+    `sc.iternested` will return a list of all the twigs in the current dictionary:
 
     >>> twigs = sc.iternested(foo)
 
-    **Example 1**::
+    **Example 1**:
 
-        foo = {}
-        sc.makenested(foo, ['a','b'])
-        foo['a']['b'] = 3
-        print(sc.getnested(foo, ['a','b'])) # 3
-        sc.setnested(foo, ['a','b'], 7)
-        print(sc.getnested(foo, ['a','b'])) # 7
-        sc.makenested(foo, ['bar','cat'], value='in the hat')
-        print(foo['bar'])  # {'cat': 'in the hat'}
+    ```python
+    foo = {}
+    sc.makenested(foo, ['a','b'])
+    foo['a']['b'] = 3
+    print(sc.getnested(foo, ['a','b'])) # 3
+    sc.setnested(foo, ['a','b'], 7)
+    print(sc.getnested(foo, ['a','b'])) # 7
+    sc.makenested(foo, ['bar','cat'], value='in the hat')
+    print(foo['bar'])  # {'cat': 'in the hat'}
+    ```
+    **Example 2**:
 
-    **Example 2**::
+    ```python
+    foo = {}
+    sc.makenested(foo, ['a','x'])
+    sc.makenested(foo, ['a','y'])
+    sc.makenested(foo, ['a','z'])
+    sc.makenested(foo, ['b','a','x'])
+    sc.makenested(foo, ['b','a','y'])
+    count = 0
+    for twig in sc.iternested(foo):
+        count += 1
+        sc.setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
+    ```
+    **Example 3**:
 
-        foo = {}
-        sc.makenested(foo, ['a','x'])
-        sc.makenested(foo, ['a','y'])
-        sc.makenested(foo, ['a','z'])
-        sc.makenested(foo, ['b','a','x'])
-        sc.makenested(foo, ['b','a','y'])
-        count = 0
-        for twig in sc.iternested(foo):
-            count += 1
-            sc.setnested(foo, twig, count)   # {'a': {'y': 1, 'x': 2, 'z': 3}, 'b': {'a': {'y': 4, 'x': 5}}}
+    ```python
+    foo = sc.makenested(sc.prettyobj(), ['level1', 'level2', 'level3'], 'done')
+    assert foo.level1.level2.level3 == 'done'
+    ```
 
-    **Example 3**::
-
-        foo = sc.makenested(sc.prettyobj(), ['level1', 'level2', 'level3'], 'done')
-        assert foo.level1.level2.level3 == 'done'
-
-
-    | *New in version 2014nov29.*
-    | *New in version 3.2.0:* operate on arbitrary objects; "overwrite" defaults to True; returns object
-    | *New in version 3.2.3:* explicitly replace setnested functionality
+    - *New in version 2014nov29.*
+    - *New in version 3.2.0:* operate on arbitrary objects; "overwrite" defaults to True; returns object
+    - *New in version 3.2.3:* explicitly replace setnested functionality
     """
     if obj is None:
         obj = {}
@@ -184,7 +187,7 @@ def get_from_obj(ndict, key, safe=False, default=None, **kwargs):
         key (any): the key to get
         safe (bool): whether to return None if the key is not found (default False)
         default (any): the value to return if the key is not found and safe=True
-        kwargs (dict): passed to ``check_iter_type()``
+        kwargs (dict): passed to `check_iter_type()`
     """
     if default is not None:
         safe = True
@@ -249,11 +252,12 @@ def getnested(nested, keylist, safe=False, default=None):
         safe (bool): whether to return the "default" value if the key is not found
         default (any): the value to return if the key is not found (sets safe=True if provided)
 
-    **Example**::
+    **Example**:
 
-        sc.getnested(foo, ['a','b']) # Gets foo['a']['b']
-
-    See :func:`sc.makenested() <makenested>` for full documentation.
+    ```python
+    sc.getnested(foo, ['a','b']) # Gets foo['a']['b']
+    ```
+    See `sc.makenested()` for full documentation.
     """
     if default is not None:
         safe = True
@@ -265,19 +269,20 @@ def getnested(nested, keylist, safe=False, default=None):
 
 def setnested(obj=None, keylist=None, value=None, **kwargs):
     """
-    Set the value for the given list of keys; alias for :func:`sc.makenested() <makenested>`.
+    Set the value for the given list of keys; alias for `sc.makenested()`.
 
     Args:
         obj (any): the nested object (dict, list, or object) to modify
         keylist (list): the list of keys to use
         value (any): the value to set
-        **kwargs (dict): passed to :func:`sc.makenested() <makenested>`
+        **kwargs (dict): passed to `sc.makenested()`
 
-    **Example**::
+    **Example**:
 
-        sc.setnested(foo, ['a','b'], 3) # Sets foo['a']['b'] = 3
-
-    See :func:`sc.makenested() <makenested>` for full documentation.
+    ```python
+    sc.setnested(foo, ['a','b'], 3) # Sets foo['a']['b'] = 3
+    ```
+    See `sc.makenested()` for full documentation.
     """
     return makenested(obj=obj, keylist=keylist, value=value, **kwargs)
 
@@ -289,11 +294,12 @@ def iternested(nesteddict, _previous=None):
     Args:
         nesteddict (dict): the dictionary
 
-    **Example**::
+    **Example**:
 
-        twigs = sc.iternested(foo)
-
-    See :func:`sc.makenested() <makenested>` for full documentation.
+    ```python
+    twigs = sc.iternested(foo)
+    ```
+    See `sc.makenested()` for full documentation.
     """
     if _previous is None:
         _previous = []
@@ -310,7 +316,7 @@ class IterObj:
     """
     Object iteration manager
 
-    For arguments and usage documentation, see :func:`sc.iterobj() <iterobj>`.
+    For arguments and usage documentation, see `sc.iterobj()`.
     Use this class only if you want more control over how the object is iterated over.
 
     Class-specific args:
@@ -320,50 +326,52 @@ class IterObj:
         custom_get  (func): a custom function for getting an item from an object
         custom_set  (func): a custom function for setting an item in an object
 
-    **Example**::
+    **Example**:
 
-        import sciris as sc
+    ```python
+    import sciris as sc
 
-        # Create a simple class for storing data
-        class DataObj(sc.prettyobj):
-            def __init__(self, **kwargs):
-                self.keys   = tuple(kwargs.keys())
-                self.values = tuple(kwargs.values())
+    # Create a simple class for storing data
+    class DataObj(sc.prettyobj):
+        def __init__(self, **kwargs):
+            self.keys   = tuple(kwargs.keys())
+            self.values = tuple(kwargs.values())
 
-        # Create the data
-        obj1 = DataObj(a=[1,2,3], b=[4,5,6])
-        obj2 = DataObj(c=[7,8,9], d=[10])
-        obj = DataObj(obj1=obj1, obj2=obj2)
+    # Create the data
+    obj1 = DataObj(a=[1,2,3], b=[4,5,6])
+    obj2 = DataObj(c=[7,8,9], d=[10])
+    obj = DataObj(obj1=obj1, obj2=obj2)
 
-        # Define custom methods for iterating over tuples and the DataObj
-        def custom_iter(obj):
-            if isinstance(obj, tuple):
-                return enumerate(obj)
-            if isinstance(obj, DataObj):
-                return [(k,v) for k,v in zip(obj.keys, obj.values)]
+    # Define custom methods for iterating over tuples and the DataObj
+    def custom_iter(obj):
+        if isinstance(obj, tuple):
+            return enumerate(obj)
+        if isinstance(obj, DataObj):
+            return [(k,v) for k,v in zip(obj.keys, obj.values)]
 
-        # Define custom method for getting data from each
-        def custom_get(obj, key):
-            if isinstance(obj, tuple):
-                return obj[key]
-            elif isinstance(obj, DataObj):
-                return obj.values[obj.keys.index(key)]
+    # Define custom method for getting data from each
+    def custom_get(obj, key):
+        if isinstance(obj, tuple):
+            return obj[key]
+        elif isinstance(obj, DataObj):
+            return obj.values[obj.keys.index(key)]
 
-        # Gather all data into one list
-        all_data = []
-        def gather_data(obj, all_data=all_data):
-            if isinstance(obj, list):
-                all_data += obj
+    # Gather all data into one list
+    all_data = []
+    def gather_data(obj, all_data=all_data):
+        if isinstance(obj, list):
+            all_data += obj
 
-        # Run the iteration
-        io = sc.IterObj(obj, func=gather_data, custom_type=(tuple, DataObj), custom_iter=custom_iter, custom_get=custom_get)
-        print(all_data)
+    # Run the iteration
+    io = sc.IterObj(obj, func=gather_data, custom_type=(tuple, DataObj), custom_iter=custom_iter, custom_get=custom_get)
+    print(all_data)
+    ```
 
-    | *New in version 3.1.2.*
-    | *New in version 3.1.5:* "norecurse" argument; better handling of atomic classes
-    | *New in version 3.1.6:* "depthfirst" argument; replace recursion with a queue; "to_df()" method
-    | *New in version 3.2.1:* improved recursion handling; "disp()" method
-    | *New in version 3.2.4:* gracefully handle objects that do not have a `__dict__` attribute; handle slots
+    - *New in version 3.1.2.*
+    - *New in version 3.1.5:* "norecurse" argument; better handling of atomic classes
+    - *New in version 3.1.6:* "depthfirst" argument; replace recursion with a queue; "to_df()" method
+    - *New in version 3.2.1:* improved recursion handling; "disp()" method
+    - *New in version 3.2.4:* gracefully handle objects that do not have a `__dict__` attribute; handle slots
     """
     def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
                  atomic='default', skip=None, rootkey='root', verbose=False, iterate=True,
@@ -641,17 +649,17 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     """
     Iterate over an object and apply a function to each node (item with or without children).
 
-    Can modify an object in-place, or return a value. See also :func:`sc.search() <search>`
+    Can modify an object in-place, or return a value. See also `sc.search()`
     for a function to search through complex objects.
 
     By default, lists, dictionaries, and objects are iterated over. For custom iteration
-    options, see :class:`sc.IterObj() <IterObj>`.
+    options, see `sc.IterObj()`.
 
     Note: there are three different output possibilities, depending on the keywords:
 
-        - ``inplace=False``, ``copy=False`` (default): collate the output of the function into a flat dictionary, with keys corresponding to each node of the project
-        - ``inplace=True``, ``copy=False``: modify the actual object in-place, such that the original object is modified
-        - ``inplace=True``, ``copy=True``: make a deep copy of the object, modify that object, and return it (the original is unchanged)
+        - `inplace=False`, `copy=False` (default): collate the output of the function into a flat dictionary, with keys corresponding to each node of the project
+        - `inplace=True`, `copy=False`: modify the actual object in-place, such that the original object is modified
+        - `inplace=True`, `copy=True`: make a deep copy of the object, modify that object, and return it (the original is unchanged)
 
     Args:
         obj (any): the object to iterate over
@@ -661,45 +669,46 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         leaf (bool): whether to apply the function only to leaf nodes of the object
         recursion (int): number of recursive steps to allow, i.e. parsing the same objects multiple times (default 0)
         depthfirst (bool): whether to parse the object depth-first (default) or breadth-first
-        atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. tuple, ``np.array``, ``pd.DataFrame``); if 'default-tuple', use defaults except for tuples
+        atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. tuple, `np.array`, `pd.DataFrame`); if 'default-tuple', use defaults except for tuples
         skip (list/dict): a list of objects to skip over entirely; can also be a dict with "keys", "ids", "subclasses", and/or "instances", which skip each of those
-        rootkey (str): the key to list as the root of the object (default ``'root'``)
+        rootkey (str): the key to list as the root of the object (default `'root'`)
         verbose (bool): whether to print progress
         flatten (bool): whether to use flattened traces (single strings) rather than tuples
         to_df (bool): whether to return a dataframe of the output instead of a dictionary (not valid with inplace=True)
         *args (list): passed to func()
         **kwargs (dict): passed to func()
 
-    **Examples**::
+    **Examples**:
 
-        data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
+    ```python
+    data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
 
-        # Search through an object
-        def check_int(obj):
-            return isinstance(obj, int)
+    # Search through an object
+    def check_int(obj):
+        return isinstance(obj, int)
 
-        out = sc.iterobj(data, check_int)
-        print(out)
+    out = sc.iterobj(data, check_int)
+    print(out)
 
+    # Modify in place -- collapse mutliple short lines into one
+    def collapse(obj, maxlen):
+        string = str(obj)
+        if len(string) < maxlen:
+            return string
+        else:
+            return obj
 
-        # Modify in place -- collapse mutliple short lines into one
-        def collapse(obj, maxlen):
-            string = str(obj)
-            if len(string) < maxlen:
-                return string
-            else:
-                return obj
+    sc.printjson(data)
+    sc.iterobj(data, collapse, inplace=True, maxlen=10) # Note passing of keyword argument to function
+    sc.printjson(data)
+    ```
 
-        sc.printjson(data)
-        sc.iterobj(data, collapse, inplace=True, maxlen=10) # Note passing of keyword argument to function
-        sc.printjson(data)
-
-    | *New in version 3.0.0.*
-    | *New in version 3.1.0:* default ``func``, renamed "twigs_only" to "leaf", "atomic" argument
-    | *New in version 3.1.2:* ``copy`` defaults to ``False``; refactored into class
-    | *New in version 3.1.3:* "rootkey" argument
-    | *New in version 3.1.5:* "recursion" argument; better handling of atomic classes
-    | *New in version 3.1.6:* "skip", "depthfirst", "to_df", and "flatten" arguments
+    - *New in version 3.0.0.*
+    - *New in version 3.1.0:* default `func`, renamed "twigs_only" to "leaf", "atomic" argument
+    - *New in version 3.1.2:* `copy` defaults to `False`; refactored into class
+    - *New in version 3.1.3:* "rootkey" argument
+    - *New in version 3.1.5:* "recursion" argument; better handling of atomic classes
+    - *New in version 3.1.6:* "skip", "depthfirst", "to_df", and "flatten" arguments
     """
     # Create the object
     io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, depthfirst=depthfirst,
@@ -758,16 +767,17 @@ def flattendict(nesteddict, sep=None, _prefix=None):
         nesteddict (dict): the dictionary to flatten
         sep (str): the separator used to separate keys
 
-    **Example**::
+    **Example**:
 
-        >>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}})
-        {('a', 'b'): 1, ('a', 'c', 'd'): 2, ('a', 'c', 'e'): 3}
-        >>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}}, sep='_')
-        {'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}
-
+    ```python
+    >>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}})
+    {('a', 'b'): 1, ('a', 'c', 'd'): 2, ('a', 'c', 'e'): 3}
+    >>> sc.flattendict({'a':{'b':1,'c':{'d':2,'e':3}}}, sep='_')
+    {'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}
+    ```
     Args:
         nesteddict (dict): Input dictionary potentially containing dicts as values
-        sep        (str): Concatenate keys using string separator. If ``None`` the returned dictionary will have tuples as keys
+        sep        (str): Concatenate keys using string separator. If `None` the returned dictionary will have tuples as keys
         _prefix: Internal argument for recursively accumulating the nested keys
 
     Returns:
@@ -854,48 +864,50 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
     Find a key/attribute or value within a list, dictionary or object.
 
     This function facilitates finding nested key(s) or attributes within an object,
-    by searching recursively through keys or attributes. See :func:`sc.iterobj() <iterobj>`
+    by searching recursively through keys or attributes. See `sc.iterobj()`
     for more detail.
 
     Args:
         obj (any): A dict, list, or object
-        query (any): The key or value to search for (or a function or a type); equivalent to setting both ``key`` and ``value``
+        query (any): The key or value to search for (or a function or a type); equivalent to setting both `key` and `value`
         key (any): The key to search for
         value (any): The value to search for
         type (type): The type (or list of types) to match against (for values only)
         method (str): if the query is a string, choose how to check for matches: 'exact' (test equality), 'partial' (partial/lowercase string match), or 'regex' (treat as a regex expression)
-        kwargs (dict): passed to :func:`sc.iterobj() <iterobj>`
+        kwargs (dict): passed to `sc.iterobj()`
 
     Returns:
-        A dictionary of matching attributes; like :func:`sc.iterobj() <iterobj>`,
+        A dictionary of matching attributes; like `sc.iterobj()`,
         but filtered to only include matches.
 
-    **Examples**::
+    **Examples**:
 
-        # Create a nested dictionary
-        nested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':3, 'cat':[1,2,4,8]}}
+    ```python
+    # Create a nested dictionary
+    nested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':3, 'cat':[1,2,4,8]}}
 
-        # Find keys
-        keymatches = sc.search(nested, 'bar', flatten=True)
+    # Find keys
+    keymatches = sc.search(nested, 'bar', flatten=True)
 
-        # Find values
-        val = 4
-        valmatches = sc.search(nested, value=val).keys()[0] # Returns  ('b', 'cat', 2)
-        assert sc.getnested(nested, valmatches) == val # Get from the original nested object
+    # Find values
+    val = 4
+    valmatches = sc.search(nested, value=val).keys()[0] # Returns  ('b', 'cat', 2)
+    assert sc.getnested(nested, valmatches) == val # Get from the original nested object
 
-        # Find values with a function
-        def find(v):
-            return True if isinstance(v, int) and v >= 3 else False
+    # Find values with a function
+    def find(v):
+        return True if isinstance(v, int) and v >= 3 else False
 
-        found = sc.search(nested, value=find)
+    found = sc.search(nested, value=find)
 
-        # Find partial or regex matches
-        found = sc.search(nested, value='oat', method='partial', leaf=True) # Search keys only
-        keys,vals = sc.search(nested, '^.ar', method='regex', verbose=True)
+    # Find partial or regex matches
+    found = sc.search(nested, value='oat', method='partial', leaf=True) # Search keys only
+    keys,vals = sc.search(nested, '^.ar', method='regex', verbose=True)
+    ```
 
-    | *New in version 3.0.0:* ability to search for values as well as keys/attributes; "aslist" argument
-    | *New in version 3.1.0:* "query", "method", and "verbose" keywords; improved searching for lists
-    | *New in version 3.2.0:* allow type matching; removed "return_values"; renamed "aslist" to "flatten" (reversed)
+    - *New in version 3.0.0:* ability to search for values as well as keys/attributes; "aslist" argument
+    - *New in version 3.1.0:* "query", "method", and "verbose" keywords; improved searching for lists
+    - *New in version 3.2.0:* allow type matching; removed "return_values"; renamed "aslist" to "flatten" (reversed)
     """
 
     def check_match(source, target):
@@ -973,10 +985,10 @@ class Equal(sc.prettyobj):
     def __init__(self, obj, obj2, *args, method=None, detailed=False, equal_nan=True,
                  leaf=False, union=True, verbose=None, compare=True, die=False, **kwargs):
         """
-        Compare equality between two arbitrary objects -- see :func:`sc.equal() <equal>` for full documentation.
+        Compare equality between two arbitrary objects -- see `sc.equal()` for full documentation.
 
         Args:
-            obj, obj2, etc: see :func:`sc.equal() <equal>`
+            obj, obj2, etc: see `sc.equal()`
             compare (bool): whether to perform the comparison on object creation
 
         *New in version 3.1.0.*
@@ -1058,7 +1070,7 @@ class Equal(sc.prettyobj):
 
 
     def walk(self):
-        """ Use :func:`sc.iterobj() <iterobj>` to convert the objects into dictionaries """
+        """ Use `sc.iterobj()` to convert the objects into dictionaries """
 
         # Walk the objects
         for obj in self.objs:
@@ -1293,7 +1305,7 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
     it returns true/false for whether or not the objects match, but it can also
     return a detailed comparison of exactly which attributes (or keys, etc) match
     or don't match between the two objects. It works by first parsing the entire
-    object into "leaves" via :func:`sc.iterobj() <iterobj>`, and then comparing each
+    object into "leaves" via `sc.iterobj()`, and then comparing each
     "leaf" via one of the methods described below.
 
     There is no universal way to check equality between objects in Python. Some
@@ -1302,13 +1314,13 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
     For this reasons, different ways of checking equality may give different results
     in edge cases. The available methods are:
 
-        - ``'eq'``: uses the objects' built-in ``__eq__()`` methods (most accurate, but most likely to fail)
-        - ``'pickle'``: converts the object to a binary pickle (most robust)
-        - ``'json'``: converts the object to a JSON via ``jsonpickle`` (gives most detailed object structure, but can be lossy)
-        - ``'str'``: converts the object to its string representation (least amount of detail)
+        - `'eq'`: uses the objects' built-in `__eq__()` methods (most accurate, but most likely to fail)
+        - `'pickle'`: converts the object to a binary pickle (most robust)
+        - `'json'`: converts the object to a JSON via `jsonpickle` (gives most detailed object structure, but can be lossy)
+        - `'str'`: converts the object to its string representation (least amount of detail)
         - In addition, any custom function can be provided
 
-    By default, 'eq' is tried first, and if that raises an exception, 'pickle' is tried (equivalent to ``method=['eq', 'pickle']``).
+    By default, 'eq' is tried first, and if that raises an exception, 'pickle' is tried (equivalent to `method=['eq', 'pickle']`).
 
     Args:
         obj (any): the first object to compare
@@ -1316,37 +1328,39 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
         args (list): additional objects to compare
         method (str): see above
         detailed (int): whether to compute a detailed comparison of the objects, and return a dataframe of the results (if detailed=2, return the value of each object as well)
-        equal_nan (bool): whether matching ``np.nan`` should compare as true (default True; NB, False not guaranteed to work with ``method='pickle'`` or ``'str'``, which includes the default; True not guaranteed to work with ``method='json'``)
+        equal_nan (bool): whether matching `np.nan` should compare as true (default True; NB, False not guaranteed to work with `method='pickle'` or `'str'`, which includes the default; True not guaranteed to work with `method='json'`)
         leaf (bool): if True, only compare the object's leaf nodes (those with no children); otherwise, compare everything
         union (bool): if True, construct the comparison tree as the union of the trees of each object (i.e., an extra attribute in one object will show up as an additional row in the comparison; otherwise rows correspond to the attributes of the first object)
         verbose (bool): level of detail to print
         die (bool): whether to raise an exception if an error is encountered (else return False)
-        kwargs (dict): passed to :func:`sc.iterobj() <iterobj>`
+        kwargs (dict): passed to `sc.iterobj()`
 
-    **Examples**::
+    **Examples**:
 
-        o1 = dict(
-            a = [1,2,3],
-            b = np.array([4,5,6]),
-            c = dict(
-                df = sc.dataframe(q=[sc.date('2022-02-02'), sc.date('2023-02-02')])
-            )
+    ```python
+    o1 = dict(
+        a = [1,2,3],
+        b = np.array([4,5,6]),
+        c = dict(
+            df = sc.dataframe(q=[sc.date('2022-02-02'), sc.date('2023-02-02')])
         )
+    )
 
-        # Identical object
-        o2 = sc.dcp(o1)
+    # Identical object
+    o2 = sc.dcp(o1)
 
-        # Non-identical object
-        o3 = sc.dcp(o1)
-        o3['b'][2] = 8
+    # Non-identical object
+    o3 = sc.dcp(o1)
+    o3['b'][2] = 8
 
-        sc.equal(o1, o2) # Returns True
-        sc.equal(o1, o3) # Returns False
-        e = sc.Equal(o1, o2, o3, detailed=True) # Create an object
-        e.df.disp() # Show results as a dataframe
+    sc.equal(o1, o2) # Returns True
+    sc.equal(o1, o3) # Returns False
+    e = sc.Equal(o1, o2, o3, detailed=True) # Create an object
+    e.df.disp() # Show results as a dataframe
+    ```
 
-    | *New in version 3.1.0.*
-    | *New in version 3.1.3:* "union" argument; more detailed output
+    - *New in version 3.1.0.*
+    - *New in version 3.1.3:* "union" argument; more detailed output
     """
     e = Equal(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, leaf=leaf, verbose=verbose, die=die, **kwargs)
     if detailed:

@@ -1,12 +1,12 @@
 """
 Functions to allow parallelization to be performed easily.
 
-NB: Uses ``multiprocess`` instead of :mod:`multiprocessing` under the hood for
+NB: Uses `multiprocess` instead of `multiprocessing` under the hood for
 broadest support  across platforms (e.g. Jupyter notebooks).
 
 Highlights:
-    - :func:`sc.parallelize() <parallelize>`: as-easy-as-possible parallelization
-    - :func:`sc.loadbalancer() <loadbalancer>`: very simple load balancer
+    - `sc.parallelize()`: as-easy-as-possible parallelization
+    - `sc.loadbalancer()`: very simple load balancer
 """
 
 import time
@@ -46,12 +46,47 @@ def _jobkey(index):
     return f'_job{index}'
 
 
-def _progressbar(globaldict, njobs, started, **kwargs):
-    """ Define a progress bar based on the global dictionary """
-    try:
-        done = sum([globaldict[k] for k in globaldict.keys() if str(k).startswith('_job')])
-    except Exception as E:
-        done = '<unknown>' + str(E)
+class _Counter:
+    """
+    A counter of the number of completed jobs, shared between processes; not for the user.
+
+    Used instead of summing the global dictionary, which requires one round-trip to
+    the manager process per job, and hence scales as O(n^2) with the number of jobs.
+
+    The count is stored as the length of a list rather than as an integer since appending
+    to a list is atomic, while incrementing an integer is not (it is a separate read and
+    write, so no lock is needed here).
+    """
+    def __init__(self, manager=None):
+        self.jobs = manager.list() if manager else [] # A manager list is shared between processes; for serial/thread, an ordinary list is fine
+        return
+
+    def __deepcopy__(self, memo):
+        """ Never copy the counter (it can't be, and shouldn't be: it's shared between jobs) """
+        return self
+
+    __copy__ = __deepcopy__
+
+    def increment(self):
+        """ Increase the count by one; safe to call from multiple processes """
+        try:
+            self.jobs.append(1)
+        except Exception: # pragma: no cover # Don't let a progress-tracking failure break the run
+            pass
+        return
+
+    @property
+    def value(self):
+        """ The number of jobs completed so far """
+        try:
+            return len(self.jobs)
+        except Exception: # pragma: no cover
+            return 0
+
+
+def _progressbar(counter, njobs, started, **kwargs):
+    """ Define a progress bar based on the number of jobs completed """
+    done = counter.value if counter is not None else 0
     elapsed = (sc.now() - started).total_seconds()
     sc.progressbar(done, njobs, label=f'Job {done}/{njobs} ({elapsed:.1f} s)', **kwargs)
     return
@@ -61,7 +96,7 @@ class Parallel:
     """
     Parallelization manager
 
-    For arguments and usage documentation, see :func:`sc.parallelize() <parallelize>`. Briefly,
+    For arguments and usage documentation, see `sc.parallelize()`. Briefly,
     this class validates input arguments, sets the number of CPUs, creates a
     process (or thread) pool, starts the jobs running, retrieves the results from
     each job, and processes them into outputs.
@@ -83,23 +118,25 @@ class Parallel:
         exceptions (list): if not, store the exceptions that were raised
         times (dict): timing information on when the jobs were started, when they finished, and how long each job took
 
-    **Example**::
+    **Example**:
 
-        import sciris as sc
+    ```python
+    import sciris as sc
 
-        def slowfunc(i):
-            sc.randsleep(seed=i)
-            return i**2
+    def slowfunc(i):
+        sc.randsleep(seed=i)
+        return i**2
 
-        # Standard usage
-        P = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')
-        P.run_async()
-        P.monitor()
-        P.finalize()
-        print(P.times)
+    # Standard usage
+    P = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')
+    P.run_async()
+    P.monitor()
+    P.finalize()
+    print(P.times)
+    ```
 
-    | *New in version 3.0.0.*
-    | *New in version 3.1.0:* "globaldict" argument
+    - *New in version 3.0.0.*
+    - *New in version 3.1.0:* "globaldict" argument
     """
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
@@ -150,6 +187,7 @@ class Parallel:
         self.pool         = None
         self.manager      = None
         self.globaldict   = None
+        self.counter      = None
         self.map_func     = None
         self.is_async     = None
         self.jobs         = None
@@ -387,6 +425,7 @@ class Parallel:
         self.pool       = pool
         self.manager    = manager
         self.globaldict = globaldict
+        self.counter    = _Counter(manager) # Count completed jobs, for the progress bar
         self.map_func   = map_func
         self.is_async   = is_async
         self.jobs       = None
@@ -433,7 +472,7 @@ class Parallel:
                 func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict, args=self.args,
                 kwargs=self.kwargs, lbkwargs=self.lbkwargs, embarrassing=self.embarrassing, callback=self.callback,
                 progress=self.progress, globaldict=self.globaldict, useglobal=useglobal, started=self.times.started,
-                capture=self.capture, die=self.die
+                capture=self.capture, die=self.die, counter=self.counter
             )
 
             argslist.append(taskargs)
@@ -526,7 +565,7 @@ class Parallel:
         while self.running or final_iter:
             if not self.running and final_iter:
                 final_iter = False
-            _progressbar(self.globaldict, njobs=self.njobs, started=self.times.started, **kwargs)
+            _progressbar(self.counter, njobs=self.njobs, started=self.times.started, **kwargs)
             sc.timedsleep(interval)
         return
 
@@ -601,21 +640,21 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     """
     Execute a function in parallel.
 
-    Most simply, :func:`sc.parallelize() <parallelize>` acts as a shortcut for using :meth:`pool.map <multiprocessing.pool.Pool.map>`.
+    Most simply, `sc.parallelize()` acts as a shortcut for using `pool.map`.
     However, it also provides flexibility in how arguments are passed to the function,
     load balancing, etc.
 
-    Either or both of ``iterarg`` or ``iterkwargs`` can be used. ``iterarg`` can
+    Either or both of `iterarg` or `iterkwargs` can be used. `iterarg` can
     be an iterable or an integer; if the latter, it will run the function that number
     of times and not pass the argument to the function (which may be useful for
-    running "embarrassingly parallel" simulations). ``iterkwargs`` is a dict of
-    iterables; each iterable must be the same length (and the same length of ``iterarg``,
+    running "embarrassingly parallel" simulations). `iterkwargs` is a dict of
+    iterables; each iterable must be the same length (and the same length of `iterarg`,
     if it exists), and each dict key will be used as a kwarg to the called function.
-    Any other kwargs passed to :func:`sc.parallelize() <parallelize>` will also be passed to the function.
+    Any other kwargs passed to `sc.parallelize()` will also be passed to the function.
 
     This function can either use a fixed number of CPUs or allocate dynamically
-    based on load. If ``ncpus`` is ``None``, then it will allocate the number of
-    CPUs dynamically. Memory (``maxmem``) and CPU load (``maxcpu``) limits can also
+    based on load. If `ncpus` is `None`, then it will allocate the number of
+    CPUs dynamically. Memory (`maxmem`) and CPU load (`maxcpu`) limits can also
     be specified.
 
     Args:
@@ -625,142 +664,145 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         args         (list)      : positional arguments for each process, the same for all processes
         kwargs       (dict)      : keyword arguments for each process, the same for all processes
         ncpus        (int/float) : number of CPUs to use (if <1, treat as a fraction of the total available; if None, use loadbalancer)
-        maxcpu       (float)     : maximum CPU load; otherwise, delay the start of the next process (not used if ``ncpus`` is specified)
+        maxcpu       (float)     : maximum CPU load; otherwise, delay the start of the next process (not used if `ncpus` is specified)
         maxmem       (float)     : maximum fraction of virtual memory (RAM); otherwise, delay the start of the next process
         interval     (float)     : number of seconds to pause between starting processes for checking load
         parallelizer (str/func)  : parallelization function; default 'multiprocess' (see below for details)
-        serial       (bool)      : whether to skip parallelization and run in serial (useful for debugging; equivalent to ``parallelizer='serial'``)
+        serial       (bool)      : whether to skip parallelization and run in serial (useful for debugging; equivalent to `parallelizer='serial'`)
         progress     (bool)      : whether to show a progress bar
         callback     (func)      : an optional function to call from each worker
         globaldict   (dict)      : an optional global dictionary to pass to each worker via the kwarg "globaldict" (note: may not update properly with low task latency)
         capture      (bool)      : if True, capture the output of the task rather than printing it
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
-        lbkwargs     (dict)      : if provided, passed to :class:`sc.loadbalancer() <loadbalancer>`
+        lbkwargs     (dict)      : if provided, passed to `sc.loadbalancer()`
         func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
         List of outputs from each process
 
+    **Example 1 -- simple usage as a shortcut to multiprocess.map()**:
 
-    **Example 1 -- simple usage as a shortcut to multiprocess.map()**::
+    ```python
+    def f(x):
+        return x*x
 
-        def f(x):
-            return x*x
+    results = sc.parallelize(f, [1,2,3])
+    ```
+    **Example 2 -- simple usage for "embarrassingly parallel" processing**:
 
-        results = sc.parallelize(f, [1,2,3])
+    ```python
+    import numpy as np
 
-    **Example 2 -- simple usage for "embarrassingly parallel" processing**::
+    def rnd():
+        np.random.seed()
+        return np.random.random()
 
-        import numpy as np
+    results = sc.parallelize(rnd, 10, ncpus=4)
+    ```
+    **Example 3 -- three different equivalent ways to use multiple arguments**:
 
-        def rnd():
-            np.random.seed()
-            return np.random.random()
+    ```python
+    def f(x,y):
+        return x*y
 
-        results = sc.parallelize(rnd, 10, ncpus=4)
+    results1 = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
+    results2 = sc.parallelize(func=f, iterkwargs={'x':[1,2,3], 'y':[2,3,4]})
+    results3 = sc.parallelize(func=f, iterkwargs=[{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}])
+    assert results1 == results2 == results3
+    ```
+    **Example 4 -- using non-iterated arguments and dynamic load balancing**:
 
-    **Example 3 -- three different equivalent ways to use multiple arguments**::
+    ```python
+    def myfunc(i, x, y):
+        np.random.seed()
+        xy = [x+i*np.random.randn(100), y+i*np.random.randn(100)]
+        return xy
 
-        def f(x,y):
-            return x*y
+    xylist1 = sc.parallelize(myfunc, iterarg=range(5), kwargs={'x':3, 'y':8}, maxcpu=0.8, interval=0.2) # Use kwargs dict
+    xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[0,1,2], parallelizer='multiprocessing') # Supply kwargs directly and use a different parallelizer
 
-        results1 = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
-        results2 = sc.parallelize(func=f, iterkwargs={'x':[1,2,3], 'y':[2,3,4]})
-        results3 = sc.parallelize(func=f, iterkwargs=[{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}])
-        assert results1 == results2 == results3
+    for p,xylist in enumerate([xylist1, xylist2]):
+        plt.subplot(2,1,p+1)
+        for i,xy in enumerate(reversed(xylist)):
+            plt.scatter(xy[0], xy[1], label='Run %i'%i)
+        plt.legend()
+    ```
+    **Example 5 -- using a custom parallelization function**:
 
-    **Example 4 -- using non-iterated arguments and dynamic load balancing**::
+    ```python
+    def f(x,y):
+        return [x]*y
 
-        def myfunc(i, x, y):
-            np.random.seed()
-            xy = [x+i*np.random.randn(100), y+i*np.random.randn(100)]
-            return xy
+    import multiprocessing as mp
+    pool = mp.Pool(processes=2)
+    results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=pool.map) # Note: parallelizer is pool.map, not pool
+    ```
+    **Example 6 -- using Sciris as an interface to Dask**:
 
-        xylist1 = sc.parallelize(myfunc, iterarg=range(5), kwargs={'x':3, 'y':8}, maxcpu=0.8, interval=0.2) # Use kwargs dict
-        xylist2 = sc.parallelize(myfunc, x=5, y=10, iterarg=[0,1,2], parallelizer='multiprocessing') # Supply kwargs directly and use a different parallelizer
+    ```python
+    def f(x,y):
+        return [x]*y
 
-        for p,xylist in enumerate([xylist1, xylist2]):
-            plt.subplot(2,1,p+1)
-            for i,xy in enumerate(reversed(xylist)):
-                plt.scatter(xy[0], xy[1], label='Run %i'%i)
-            plt.legend()
+    def dask_map(task, argslist):
+        import dask
+        queued = [dask.delayed(task)(args) for args in argslist]
+        return list(dask.compute(*queued))
 
-    **Example 5 -- using a custom parallelization function**::
-
-        def f(x,y):
-            return [x]*y
-
-        import multiprocessing as mp
-        pool = mp.Pool(processes=2)
-        results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=pool.map) # Note: parallelizer is pool.map, not pool
-
-
-    **Example 6 -- using Sciris as an interface to Dask**::
-
-        def f(x,y):
-            return [x]*y
-
-        def dask_map(task, argslist):
-            import dask
-            queued = [dask.delayed(task)(args) for args in argslist]
-            return list(dask.compute(*queued))
-
-        results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=dask_map)
-
-
-    **Note 1**: the default parallelizer ``"multiprocess"`` uses ``dill`` for pickling, so
+    results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=dask_map)
+    ```
+    **Note 1**: the default parallelizer `"multiprocess"` uses `dill` for pickling, so
     is the most versatile (e.g., it can pickle non-top-level functions). However,
     it is also the slowest for passing large amounts of data. You can switch between
-    these with ``parallelizer='fast'`` (``concurrent.futures``) and ``parallelizer='robust'``
-    (``multiprocess``).
+    these with `parallelizer='fast'` (`concurrent.futures`) and `parallelizer='robust'`
+    (`multiprocess`).
 
-    The ``parallelizer`` argument allows a wide range of different parallelizers
+    The `parallelizer` argument allows a wide range of different parallelizers
     (including different aliases for each), and also supports user-supplied ones.
     Note that in most cases, the default parallelizer will suffice. However, the
     full list of options is:
 
-        - ``None``, ``'default'``, ``'robust'``, ``'multiprocess'``: the slow but robust dill-based parallelizer ``multiprocess``
-        - ``'fast'``, ``'concurrent'``, ``'concurrent.futures'``: the faster but more fragile pickle-based Python-default parallelizer :mod:`concurrent.futures`
-        - ``'multiprocessing'``: the previous pickle-based Python default parallelizer, :mod:`multiprocessing`
-        - ``'serial'``, ``'serial-copy'``: no parallelization (single-threaded); with "-copy", force pickling
-        - ``'thread'``', ``'threadpool'``', ``'thread-copy'``': thread- rather than process-based parallelization ("-copy" as above)
-        - User supplied: any :func:`map`-like function that takes in a function and an argument list
-
+        - `None`, `'default'`, `'robust'`, `'multiprocess'`: the slow but robust dill-based parallelizer `multiprocess`
+        - `'fast'`, `'concurrent'`, `'concurrent.futures'`: the faster but more fragile pickle-based Python-default parallelizer `concurrent.futures`
+        - `'multiprocessing'`: the previous pickle-based Python default parallelizer, `multiprocessing`
+        - `'serial'`, `'serial-copy'`: no parallelization (single-threaded); with "-copy", force pickling
+        - `'thread'`', `'threadpool'`', `'thread-copy'`': thread- rather than process-based parallelization ("-copy" as above)
+        - User supplied: any `map`-like function that takes in a function and an argument list
 
     **Note 2**: If parallelizing figure generation, use a non-interactive backend,
     or make sure (a) figure is closed inside the function call, and (b) the figure
     object is not returned. Otherwise, parallelization won't increase speed (and
     might even be slower than serial!).
 
+    **Note 3**: to use on Windows, parallel calls must contained with an `if __name__ == '__main__'` block.
 
-    **Note 3**: to use on Windows, parallel calls must contained with an ``if __name__ == '__main__'`` block.
+    For example:
 
-    For example::
+    ```python
+    import sciris as sc
 
-        import sciris as sc
+    def f(x,y):
+        return x*y
 
-        def f(x,y):
-            return x*y
-
-        if __name__ == '__main__':
-            results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
-            print(results)
-
+    if __name__ == '__main__':
+        results = sc.parallelize(func=f, iterarg=[(1,2),(2,3),(3,4)])
+        print(results)
+    ```
     **Note 4**: In Python 3.14, the default process start method on Linux was changed from "fork" to "forkserver".
     This does not use copy-on-write to share memory with worker processes but rather behaves more like "spawn" on
     Mac/Windows. It can also result in an `EOFError` when using WSL on Windows. To restore the previous behaviour,
-    after importing `sciris`, set the start method to "fork" as follows::
+    after importing `sciris`, set the start method to "fork" as follows:
 
-        import multiprocessing
-        multiprocessing.set_start_method("fork", force=True)
+    ```python
+    import multiprocessing
+    multiprocessing.set_start_method("fork", force=True)
+    ```
 
-
-    | *New in version 1.1.1:* "serial" argument
-    | *New in version 2.0.0:* changed default parallelizer from ``multiprocess.Pool`` to ``concurrent.futures.ProcessPoolExecutor``; replaced ``maxload`` with ``maxcpu``/``maxmem``; added ``returnpool`` argument
-    | *New in version 2.0.4:* added "die" argument; changed exception handling
-    | *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
-    | *New in version 3.1.0:* new "globaldict" argument
-    | *New in version 3.2.5:* "capture" and "lbkwargs" arguments
+    - *New in version 1.1.1:* "serial" argument
+    - *New in version 2.0.0:* changed default parallelizer from `multiprocess.Pool` to `concurrent.futures.ProcessPoolExecutor`; replaced `maxload` with `maxcpu`/`maxmem`; added `returnpool` argument
+    - *New in version 2.0.4:* added "die" argument; changed exception handling
+    - *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
+    - *New in version 3.1.0:* new "globaldict" argument
+    - *New in version 3.2.5:* "capture" and "lbkwargs" arguments
     """
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs,
@@ -783,11 +825,11 @@ class TaskArgs(sc.prettyobj):
         """
         A class to hold the arguments for the parallel task -- not to be invoked by the user.
 
-        Arguments must match both :func:`sc.parallelize() <parallelize>` and ``sc._task()``
+        Arguments must match both `sc.parallelize()` and `sc._task()`
         """
         def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, lbkwargs,
                      embarrassing, callback, progress, globaldict, useglobal, started,
-                     capture=False, die=True):
+                     capture=False, die=True, counter=None):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -804,6 +846,7 @@ class TaskArgs(sc.prettyobj):
             self.started      = started      # The time when the parallelization was started
             self.capture      = capture      # Whether to capture output as text
             self.die          = die          # Whether to raise an exception if the child task encounters one
+            self.counter      = counter      # A shared counter of how many jobs have finished, used for the progress bar
             return
 
 
@@ -874,8 +917,12 @@ def _task(taskargs):
     end = sc.time()
     elapsed = end - start
 
+    # Update the count of finished jobs, and show progress if requested
+    counter = taskargs.counter
+    if counter is not None:
+        counter.increment()
     if taskargs.progress:
-        _progressbar(globaldict, njobs=taskargs.njobs, started=taskargs.started, flush=True)
+        _progressbar(counter, njobs=taskargs.njobs, started=taskargs.started, flush=True)
 
     # Generate output
     outdict = dict(
@@ -899,41 +946,47 @@ def _task(taskargs):
 #%% Load balancing functions
 ##############################################################################
 
-__all__ += ['cpu_count', 'cpuload', 'memload', 'loadbalancer']
+__all__ += ['cpu_count', 'cpucount', 'cpuload', 'cpu_load', 'memload', 'mem_load', 'loadbalancer']
 
 
 def cpu_count():
-    """ Alias to :func:`multiprocessing.cpu_count()` """
+    """ Alias to `multiprocessing.cpu_count()` """
     return mp.cpu_count()
 
 
 def cpuload(interval=0.1):
     """
-    Takes a snapshot of current CPU usage via :mod:`psutil`
+    Takes a snapshot of current CPU usage via `psutil`
 
     Args:
         interval (float): number of seconds over which to estimate CPU load
 
     Returns:
-        a float between 0-1 representing the fraction of :func:`psutil.cpu_percent()` currently used.
+        a float between 0-1 representing the fraction of `psutil.cpu_percent()` currently used.
     """
     return psutil.cpu_percent(interval=interval)/100
 
 
 def memload():
     """
-    Takes a snapshot of current fraction of memory usage via :mod:`psutil`
+    Takes a snapshot of current fraction of memory usage via `psutil`
 
     Note on the different functions:
 
-        - :func:`sc.memload() <memload>` checks current total system memory consumption
-        - :func:`sc.checkram() <checkram>` checks RAM (virtual memory) used by the current Python process
-        - :func:`sc.checkmem() <checkmem>` checks memory consumption by a given object
+        - `sc.memload()` checks current total system memory consumption
+        - `sc.checkram()` checks RAM (virtual memory) used by the current Python process
+        - `sc.checkmem()` checks memory consumption by a given object
 
     Returns:
-        a float between 0-1 representing the fraction of :func:`psutil.virtual_memory()` currently used.
+        a float between 0-1 representing the fraction of `psutil.virtual_memory()` currently used.
     """
     return psutil.virtual_memory().percent / 100
+
+
+# Aliases so that either naming convention works (*New in version 3.3.0*)
+cpucount = cpu_count
+cpu_load = cpuload
+mem_load = memload
 
 
 def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1,
@@ -951,18 +1004,20 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
         label        (str)   : the label to print out when outputting information about task delay or start (default None)
         verbose      (bool)  : whether or not to print information about task delay or start (default None, which shows if a task is delayed)
 
-    **Examples**::
+    **Examples**:
 
-        # Simplest usage -- delay if CPU or memory load is >80%
-        sc.loadbalancer()
+    ```python
+    # Simplest usage -- delay if CPU or memory load is >80%
+    sc.loadbalancer()
 
-        # Use a maximum CPU load of 50%, maximum memory of 90%, and stagger the start by process number
-        for nproc in processlist:
-            sc.loadbalancer(maxload=0.5, maxmem=0.8, index=nproc)
+    # Use a maximum CPU load of 50%, maximum memory of 90%, and stagger the start by process number
+    for nproc in processlist:
+        sc.loadbalancer(maxload=0.5, maxmem=0.8, index=nproc)
+    ```
 
-    | *New in version 2.0.0:* ``maxmem`` argument; ``maxload`` renamed ``maxcpu``
-    | *New in version 3.0.0:* ``maxcpu`` and ``maxmem`` set to 0.9 by default
-    | *New in version 3.2.5:* moved from sc_profiling to sc_parallel
+    - *New in version 2.0.0:* `maxmem` argument; `maxload` renamed `maxcpu`
+    - *New in version 3.0.0:* `maxcpu` and `maxmem` set to 0.9 by default
+    - *New in version 3.2.5:* moved from sc_profiling to sc_parallel
     """
 
     # Handle deprecation

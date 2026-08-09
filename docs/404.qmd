@@ -1,0 +1,46 @@
+---
+title: "Page not found"
+sidebar: false
+toc: false
+include-in-header:
+  text: |
+    <script>
+    // Redirect old Sphinx/Read the Docs URLs to their Quarto equivalents. GitHub Pages
+    // serves this page for any missing path, and the fragment (#anchor) is not sent to
+    // the server but is still available here, so it can be carried across the redirect.
+    (function() {
+      var path = window.location.pathname;
+      var hash = window.location.hash;
+
+      // Strip the Read the Docs language/version prefix, e.g. /en/latest or /en/v3.2.0
+      var rest = path.replace(/^\/en\/[^\/]+/, '');
+      if (rest === '' || rest === '/') rest = '/index.html';
+
+      var target = null;
+      var match;
+
+      if ((match = rest.match(/^\/api\/_autosummary\/sciris\.([A-Za-z0-9_]+)\.(.+)\.html$/))) {
+        target = '/api/' + match[1] + '.html'; // Each object used to have its own page; now they are sections of the module page
+        if (!hash) hash = '#sciris.' + match[1] + '.' + match[2];
+      } else if ((match = rest.match(/^\/api\/_autosummary\/sciris\.([A-Za-z0-9_]+)\.html$/))) {
+        target = '/api/' + match[1] + '.html';
+      } else if ((match = rest.match(/^\/_modules\/sciris\/([A-Za-z0-9_]+)\.html$/))) {
+        target = '/api/' + match[1] + '.html'; // Sphinx source-code pages
+      } else if (rest === '/tutorials/' || rest === '/tutorials/index.html') {
+        target = '/tutorials.html';
+      } else if (rest === '/genindex.html' || rest === '/py-modindex.html' || rest === '/search.html') {
+        target = '/api/index.html';
+      } else if (rest !== path && /(\.html|\/)$/.test(rest)) {
+        target = rest; // Everything else kept its name, and just lost the version prefix
+      }
+
+      if (target && target !== path) {
+        window.location.replace(target + hash);
+      }
+    })();
+    </script>
+---
+
+Sorry, that page doesn't exist. It may have moved when the documentation was rebuilt: the [API reference](api/index.qmd) is now organized by module rather than one page per function, and the tutorials are listed on the [tutorials page](tutorials.qmd).
+
+Try the search box above, or head back to the [home page](index.qmd).

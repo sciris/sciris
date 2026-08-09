@@ -2,10 +2,10 @@
 Time/date utilities.
 
 Highlights:
-    - :func:`sc.tic() <tic>` / :func:`sc.toc() <toc>` / :class:`sc.timer() <timer>`: simple methods for timing durations
-    - :func:`sc.readdate() <readdate>`: convert strings to dates using common formats
-    - :func:`sc.daterange() <daterange>`: create a list of dates
-    - :func:`sc.datedelta() <datedelta>`: perform calculations on date strings
+    - `sc.tic()` / `sc.toc()` / `sc.timer()`: simple methods for timing durations
+    - `sc.readdate()`: convert strings to dates using common formats
+    - `sc.daterange()`: create a list of dates
+    - `sc.datedelta()`: perform calculations on date strings
 """
 
 import time as pytime
@@ -32,7 +32,7 @@ def time():
     """
     Get current time in seconds -- alias to time.time()
 
-    See also :func:`sc.now() <now>` to return a datetime object, and :func:`sc.getdate() <getdate>` to
+    See also `sc.now()` to return a datetime object, and `sc.getdate()` to
     return a string.
 
     *New in version 3.0.0.*
@@ -44,24 +44,25 @@ def now(astype='dateobj', timezone=None, utc=False, tostring=False, dateformat=N
     """
     Get the current time as a datetime object, optionally in UTC time.
 
-    :func:`sc.now() <now>` is similar to :func:`sc.getdate() <getdate>`, but :func:`sc.now() <now>` returns a datetime
-    object by default, while :func:`sc.getdate() <getdate>` returns a string by default.
+    `sc.now()` is similar to `sc.getdate()`, but `sc.now()` returns a datetime
+    object by default, while `sc.getdate()` returns a string by default.
 
     Args:
-        astype     (str)  : what to return; choices are "dateobj", "str", "float"; see :func:`sc.getdate() <getdate>` for more
+        astype     (str)  : what to return; choices are "dateobj", "str", "float"; see `sc.getdate()` for more
         timezone   (str)  : the timezone to set the itme to
         utc        (bool) : whether the time is specified in UTC time
-        dateformat (str)  : if ``astype`` is ``'str'``, use this output format
+        dateformat (str)  : if `astype` is `'str'`, use this output format
 
-    **Examples**::
+    **Examples**:
 
-        sc.now() # Return current local time, e.g. 2019-03-14 15:09:26
-        sc.now(timezone='US/Pacific') # Return the time now in a specific timezone
-        sc.now(utc=True) # Return the time in UTC
-        sc.now(astype='str') # Return the current time as a string instead of a date object; use 'int' for seconds
-        sc.now(tostring=True) # Backwards-compatible alias for astype='str'
-        sc.now(dateformat='%Y-%b-%d') # Return a different date format
-
+    ```python
+    sc.now() # Return current local time, e.g. 2019-03-14 15:09:26
+    sc.now(timezone='US/Pacific') # Return the time now in a specific timezone
+    sc.now(utc=True) # Return the time in UTC
+    sc.now(astype='str') # Return the current time as a string instead of a date object; use 'int' for seconds
+    sc.now(tostring=True) # Backwards-compatible alias for astype='str'
+    sc.now(dateformat='%Y-%b-%d') # Return a different date format
+    ```
     *New in version 1.3.0:* made "astype" the first argument; removed "tostring" argument
     """
     if isinstance(utc, str): timezone = utc # Assume it's a timezone
@@ -81,17 +82,19 @@ def getdate(obj=None, astype='str', dateformat=None):
         """
         Alias for converting a date object to a formatted string.
 
-        See also :func:`sc.now() <now>`.
+        See also `sc.now()`.
 
         Args:
             obj (datetime): the datetime object to convert
             astype (str): what to return; choices are "str" (default), "dateobj", "float" (full timestamp), "int" (timestamp to second precision)
-            dateformat (str): if ``astype`` is ``'str'``, use this output format
+            dateformat (str): if `astype` is `'str'`, use this output format
 
-        **Examples**::
+        **Examples**:
 
-            sc.getdate() # Returns a string for the current date
-            sc.getdate(astype='float') # Convert today's time to a timestamp
+        ```python
+        sc.getdate() # Returns a string for the current date
+        sc.getdate(astype='float') # Convert today's time to a timestamp
+        ```
         """
         if obj is None:
             obj = now()
@@ -125,11 +128,11 @@ def getdate(obj=None, astype='str', dateformat=None):
 def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbose=False):
     """
     Convenience function for loading a date from a string. If dateformat is None,
-    this function tries a list of standard date types. Note: in most cases :func:`sc.date() <date>`
+    this function tries a list of standard date types. Note: in most cases `sc.date()`
     should be used instead.
 
     By default, a numeric date is treated as a POSIX (Unix) timestamp. This can be changed
-    with the ``dateformat`` argument, specifically:
+    with the `dateformat` argument, specifically:
 
     - 'posix'/None: treat as a POSIX timestamp, in seconds from 1970
     - 'ordinal'/'matplotlib': treat as an ordinal number of days from 1970 (Matplotlib default)
@@ -144,14 +147,16 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
     Returns:
         dateobj (datetime): a datetime object
 
-    **Examples**::
+    **Examples**:
 
-        dateobj  = sc.readdate('2020-03-03') # Standard format, so works
-        dateobj  = sc.readdate('04-03-2020', dateformat='dmy') # Date is ambiguous, so need to specify day-month-year order
-        dateobj  = sc.readdate(1611661666) # Can read timestamps as well
-        dateobj  = sc.readdate(16166, dateformat='ordinal') # Or ordinal numbers of days, as used by Matplotlib
-        dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m') # Can read custom date formats
-        dateobjs = sc.readdate('20200321', 1611661666) # Can mix and match formats
+    ```python
+    dateobj  = sc.readdate('2020-03-03') # Standard format, so works
+    dateobj  = sc.readdate('04-03-2020', dateformat='dmy') # Date is ambiguous, so need to specify day-month-year order
+    dateobj  = sc.readdate(1611661666) # Can read timestamps as well
+    dateobj  = sc.readdate(16166, dateformat='ordinal') # Or ordinal numbers of days, as used by Matplotlib
+    dateobjs = sc.readdate(['2020-06', '2020-07'], dateformat='%Y-%m') # Can read custom date formats
+    dateobjs = sc.readdate('20200321', 1611661666) # Can mix and match formats
+    ```
     """
 
     # Define default formats
@@ -171,6 +176,11 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
         'datetime-alpha': '%Y-%b-%d %H:%M:%S',    # 2020-Mar-21 14:35:21
         'default':        '%Y-%m-%d %H:%M:%S.%f', # 2020-03-21 14:35:21.23483
         'default2':       '%Y-%m-%dT%H:%M:%S.%f', # 2020-03-21T14:35:21.23483
+        'iso':            '%Y-%m-%dT%H:%M:%S',    # 2020-03-21T14:35:21
+        'iso-min':        '%Y-%m-%dT%H:%M',       # 2020-03-21T14:35
+        'iso-tz':         '%Y-%m-%dT%H:%M:%S%z',    # 2020-03-21T14:35:21Z or 2020-03-21T14:35:21+01:00
+        'iso-tz-frac':    '%Y-%m-%dT%H:%M:%S.%f%z', # 2020-03-21T14:35:21.23483Z
+        'datetime-tz':    '%Y-%m-%d %H:%M:%S%z',    # 2020-03-21 14:35:21+01:00
         'ctime':          '%a %b %d %H:%M:%S %Y', # Sat Mar 21 23:09:29 2020
         }
 
@@ -260,13 +270,13 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
     - With start_date provided: treat as a number of days from this date
 
     Note: in this and other date functions, arguments work either with or without
-    underscores (e.g. ``start_date`` or ``startdate``)
+    underscores (e.g. `start_date` or `startdate`)
 
     Args:
         obj (str/int/date/datetime/list/array): the object to convert; if None, return current date
         args (str/int/date/datetime): additional objects to convert
         start_date (str/date/datetime): the starting date, if an integer is supplied
-        readformat (str/list): the format to read the date in; passed to :func:`sc.readdate() <readdate>` (NB: can also use "format" instead of "readformat")
+        readformat (str/list): the format to read the date in; passed to `sc.readdate()` (NB: can also use "format" instead of "readformat")
         to (str): the output format: 'date' (default), 'datetime', 'str' (or 'string'), 'pandas', or 'numpy'
         as_date (bool): alternate method of choosing between  output format of 'date' (True) or 'str' (False); if None, use "to" instead
         outformat (str): the format to output the date in, if returning a string
@@ -275,17 +285,19 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
     Returns:
         dates (date or list): either a single date object, or a list of them (matching input data type where possible)
 
-    **Examples**::
+    **Examples**:
 
-        sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
-        sc.date([35,36,37], start_date='2020-01-01', to='str') # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
-        sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
+    ```python
+    sc.date('2020-04-05') # Returns datetime.date(2020, 4, 5)
+    sc.date([35,36,37], start_date='2020-01-01', to='str') # Returns ['2020-02-05', '2020-02-06', '2020-02-07']
+    sc.date(1923288822, readformat='posix') # Interpret as a POSIX timestamp
+    ```
 
-    | *New in version 1.0.0.*
-    | *New in version 1.2.2:* "readformat" argument; renamed "dateformat" to "outformat"
-    | *New in version 2.0.0:* support for :obj:`np.datetime64 <numpy.datetime64>` objects
-    | *New in version 3.0.0:* added "to" argument, and support for :obj:`pd.Timestamp <pandas.Timestamp>` and :obj:`np.datetime64 <numpy.datetime64>` output; allow None
-    | *New in version 3.1.0:* allow "datetime" output
+    - *New in version 1.0.0.*
+    - *New in version 1.2.2:* "readformat" argument; renamed "dateformat" to "outformat"
+    - *New in version 2.0.0:* support for `np.datetime64` objects
+    - *New in version 3.0.0:* added "to" argument, and support for `pd.Timestamp` and `np.datetime64` output; allow None
+    - *New in version 3.1.0:* allow "datetime" output
     """
 
     # Handle deprecation and nonstandard usage
@@ -393,7 +405,7 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
 def day(obj, *args, start_date=None, **kwargs):
     """
     Convert a string, date/datetime object, or int to a day (int), the number of
-    days since the start day. See also :func:`sc.date() <date>` and :func:`sc.daydiff() <daydiff>``. If a start day
+    days since the start day. See also `sc.date()` and `sc.daydiff()``. If a start day
     is not supplied, it returns the number of days into the current year.
 
     Args:
@@ -404,13 +416,15 @@ def day(obj, *args, start_date=None, **kwargs):
     Returns:
         days (int or list): the day(s) in simulation time (matching input data type where possible)
 
-    **Examples**::
+    **Examples**:
 
-        sc.day(sc.now()) # Returns how many days into the year we are
-        sc.day(['2021-01-21', '2024-04-04'], start_date='2022-02-22') # Days can be positive or negative
+    ```python
+    sc.day(sc.now()) # Returns how many days into the year we are
+    sc.day(['2021-01-21', '2024-04-04'], start_date='2022-02-22') # Days can be positive or negative
+    ```
 
-    | *New in version 1.0.0.*
-    | *New in version 1.2.2:* renamed "start_day" to "start_date"
+    - *New in version 1.0.0.*
+    - *New in version 1.2.2:* renamed "start_day" to "start_date"
     """
 
     # Handle deprecation
@@ -458,16 +472,18 @@ def daydiff(*args):
     Convenience function to find the difference between two or more days. With
     only one argument, calculate days since Jan. 1st.
 
-    **Examples**::
+    **Examples**:
 
-        diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
-        diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
+    ```python
+    diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
+    diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
 
-        doy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01
+    doy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01
+    ```
 
-    | *New in version 1.0.0.*
-    | *New in version 3.0.0:* Calculated relative days with one argument
-    | *New in version 3.2.2:* handle list as first argument
+    - *New in version 1.0.0.*
+    - *New in version 3.0.0:* Calculated relative days with one argument
+    - *New in version 3.2.2:* handle list as first argument
     """
     if sc.checktype(args[0], 'listlike'):
         if len(args) == 1:
@@ -494,31 +510,33 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
               readformat=None, outformat=None, **kwargs):
     """
     Return a list of dates from the start date to the end date. To convert a list
-    of days (as integers) to dates, use :func:`sc.date() <date>` instead.
+    of days (as integers) to dates, use `sc.date()` instead.
 
     Note: instead of an end date, can also pass one or more of days, months, weeks,
-    or years, which will be added on to the start date via :func:`sc.datedelta() <datedelta>`.
+    or years, which will be added on to the start date via `sc.datedelta()`.
 
     Args:
         start_date (int/str/date) : the starting date, in any format
         end_date   (int/str/date) : the end date, in any format (see also kwargs below)
-        interval   (int/str/dict) : if an int, the number of days; if 'week', 'month', or 'year', one of those; if a dict, passed to ``dt.relativedelta()``
+        interval   (int/str/dict) : if an int, the number of days; if 'week', 'month', or 'year', one of those; if a dict, passed to `dt.relativedelta()`
         inclusive  (bool)         : if True (default), return to end_date inclusive; otherwise, stop the day before
-        as_date    (bool)         : if True, return a list of ``datetime.date`` objects; else, as input type (e.g. strings; note: you can also use "asdate" instead of "as_date")
-        readformat (str)          : passed to :func:`sc.date() <date>`
-        outformat  (str)          : passed to :func:`sc.date() <date>`
-        kwargs     (dict)         : optionally, use any valid argument to :func:`sc.datedelta() <datedelta>` to create the end_date
+        as_date    (bool)         : if True, return a list of `datetime.date` objects; else, as input type (e.g. strings; note: you can also use "asdate" instead of "as_date")
+        readformat (str)          : passed to `sc.date()`
+        outformat  (str)          : passed to `sc.date()`
+        kwargs     (dict)         : optionally, use any valid argument to `sc.datedelta()` to create the end_date
 
-    **Examples**::
+    **Examples**:
 
-        dates1 = sc.daterange('2020-03-01', '2020-04-04')
-        dates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2), asdate=True)
-        dates3 = sc.daterange('2020-03-01', weeks=5)
+    ```python
+    dates1 = sc.daterange('2020-03-01', '2020-04-04')
+    dates2 = sc.daterange('2020-03-01', '2022-05-01', interval=dict(months=2), asdate=True)
+    dates3 = sc.daterange('2020-03-01', weeks=5)
+    ```
 
-    | *New in version 1.0.0.*
-    | *New in version 1.3.0:* "interval" argument
-    | *New in version 2.0.0:* :func:`sc.datedelta() <datedelta>` arguments
-    | *New in version 3.0.0:* preserve input type
+    - *New in version 1.0.0.*
+    - *New in version 1.3.0:* "interval" argument
+    - *New in version 2.0.0:* `sc.datedelta()` arguments
+    - *New in version 3.0.0:* preserve input type
     """
 
     # Handle inputs
@@ -558,9 +576,9 @@ def _get_year_length(year):
 def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=None, as_date=None, **kwargs):
     """
     Perform calculations on a date string (or date object), returning a string (or a date).
-    Wrapper to ``dateutil.relativedelta.relativedelta()``.
+    Wrapper to `dateutil.relativedelta.relativedelta()`.
 
-    If ``datestr`` is ``None``, then return the delta object rather than the new date.
+    If `datestr` is `None`, then return the delta object rather than the new date.
 
     Args:
         datestr (None/str/date/list): the starting date (typically a string); if None, return the relative delta
@@ -570,20 +588,22 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
         weeks (int): as above
         dt1, dt2 (dates): if both provided, compute the difference between them
         as_date (bool): if True, return a date object; otherwise, return as input type
-        kwargs (dict): passed to :func:`sc.date() <readdate>`
+        kwargs (dict): passed to `sc.date()`
 
-    **Examples**::
+    **Examples**:
 
-        sc.datedelta('2021-07-07', 3) # Add 3 days
-        sc.datedelta('2021-07-07', days=-4) # Subtract 4 days
-        sc.datedelta('2021-07-07', weeks=4, months=-1, as_date=True) # Add 4 weeks but subtract a month, and return a dateobj
-        sc.datedelta(days=3) # Alias to du.relativedelta.relativedelta(days=3)
-        sc.datedelta(['2021-07-07', '2022-07-07'], months=1) # Increment multiple dates
-        sc.datedelta('2020-06-01', years=0.25) # Use a fractional number of years (to the nearest day)
+    ```python
+    sc.datedelta('2021-07-07', 3) # Add 3 days
+    sc.datedelta('2021-07-07', days=-4) # Subtract 4 days
+    sc.datedelta('2021-07-07', weeks=4, months=-1, as_date=True) # Add 4 weeks but subtract a month, and return a dateobj
+    sc.datedelta(days=3) # Alias to du.relativedelta.relativedelta(days=3)
+    sc.datedelta(['2021-07-07', '2022-07-07'], months=1) # Increment multiple dates
+    sc.datedelta('2020-06-01', years=0.25) # Use a fractional number of years (to the nearest day)
+    ```
 
-    | *New in version 3.0.0:* operate on list of dates
-    | *New in version 3.1.0:* handle all date input formats
-    | *New in version 3.2.0:* handle fractional years
+    - *New in version 3.0.0:* operate on list of dates
+    - *New in version 3.1.0:* handle all date input formats
+    - *New in version 3.2.0:* handle fractional years
     """
     # Handle keywords
     as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
@@ -642,16 +662,18 @@ def yeartodate(year, as_date=True, **kwargs):
 
     Args:
         year (int, float):  The numerical year to convert to a DateTime
-        as_date (bool): If True (default), return an ``sc.date`` object, otherwise return a string
+        as_date (bool): If True (default), return an `sc.date` object, otherwise return a string
 
     Returns:
-        An ``sc.date`` object (default) or string, depending on the ``as_date`` argument
+        An `sc.date` object (default) or string, depending on the `as_date` argument
 
-    **Example**::
+    **Example**:
 
-        sc.yeartodate('2010-07-01') # Returns approximately 2010.5
+    ```python
+    sc.yeartodate('2010-07-01') # Returns approximately 2010.5
+    ```
 
-    | *New in version 3.2.1.*
+    - *New in version 3.2.1.*
     """
     as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
     full_years = int(year)
@@ -676,16 +698,17 @@ def datetoyear(dateobj, dateformat=None, **kwargs):
     Returns:
         Equivalent decimal year from date, or date from decial year
 
-    **Example**::
+    **Example**:
 
-        sc.datetoyear('2010-07-01') # Returns approximately 2010.5
-        sc.datetoyear(2010.5) # Returns datetime.date(2010, 7, 2)
-
+    ```python
+    sc.datetoyear('2010-07-01') # Returns approximately 2010.5
+    sc.datetoyear(2010.5) # Returns datetime.date(2010, 7, 2)
+    ```
     By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya.
 
-    | *New in version 1.0.0.*
-    | *New in version 3.2.0:* "reverse" argument
-    | *New in version 3.2.1:* "reverse" argument replaced by sc.yeartodate()
+    - *New in version 1.0.0.*
+    - *New in version 3.2.0:* "reverse" argument
+    - *New in version 3.2.1:* "reverse" argument replaced by sc.yeartodate()
     """
     # Handle deprecation
     if kwargs.pop('reverse', None): # pragma: no cover
@@ -710,19 +733,20 @@ __all__+= ['tic', 'toc', 'toctic', 'timer', 'Timer']
 
 def tic():
     """
-    With :func:`sc.toc() <toc>`, a little pair of functions to calculate a time difference:
+    With `sc.toc()`, a little pair of functions to calculate a time difference:
 
-    **Examples**::
+    **Examples**:
 
-        sc.tic()
-        slow_func()
-        sc.toc()
+    ```python
+    sc.tic()
+    slow_func()
+    sc.toc()
 
-        T = sc.tic()
-        slow_func2()
-        sc.toc(T, label='slow_func2')
-
-    See also :class:`sc.timer() <timer>`.
+    T = sc.tic()
+    slow_func2()
+    sc.toc(T, label='slow_func2')
+    ```
+    See also `sc.timer()`.
     """
     global _tictime  # The saved time is stored in this global
     _tictime = pytime.time()  # Store the present time in the global
@@ -773,10 +797,10 @@ def _convert_time_unit(unit, elapsed=None):
 def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit='s',
         output=False, verbose=None, elapsed=None, **kwargs):
     """
-    With :func:`sc.tic() <tic>`, a little pair of functions to calculate a time difference. See
-    also :class:`sc.timer() <timer>`.
+    With `sc.tic()`, a little pair of functions to calculate a time difference. See
+    also `sc.timer()`.
 
-    By default, output is displayed in seconds. You can change this with the ``unit``
+    By default, output is displayed in seconds. You can change this with the `unit`
     argument, which can be a string or a float:
 
         - 'hr' or 3600
@@ -788,30 +812,32 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
         - 'auto' to choose an appropriate unit
 
     Args:
-        start    (float): the starting time, as returned by e.g. :func:`sc.tic() <tic>`
+        start    (float): the starting time, as returned by e.g. `sc.tic()`
         label      (str): optional label to add
         baselabel  (str): optional base label; default is "Elapsed time: "
         sigfigs    (int): number of significant figures for time estimate
-        reset     (bool): reset the time; like calling :func:`sc.toctic() <toctic>` or :func:`sc.tic() <tic>` again
+        reset     (bool): reset the time; like calling `sc.toctic()` or `sc.tic()` again
         unit (str/float): the unit of time to display; see options above
         output    (bool): whether to return the output (otherwise print); if output='message', then return the message string; if output='both', then return both
         verbose   (bool): whether to print (true by default)
         elapsed  (float): use a pre-calculated elapsed time instead of recalculating (not recommneded)
         kwargs    (dict): not used; only for handling deprecations
 
-    **Examples**::
+    **Examples**:
 
-        sc.tic()
-        slow_func()
-        sc.toc()
+    ```python
+    sc.tic()
+    slow_func()
+    sc.toc()
 
-        T = sc.tic()
-        slow_func2()
-        sc.toc(T, label='slow_func2')
+    T = sc.tic()
+    slow_func2()
+    sc.toc(T, label='slow_func2')
+    ```
 
-    | *New in version 1.3.0:* new arguments
-    | *New in version 3.0.0:* "unit" argument
-    | *New in version 3.2.1:* renamed "doprint" to "verbose"
+    - *New in version 1.3.0:* new arguments
+    - *New in version 3.0.0:* "unit" argument
+    - *New in version 3.2.1:* renamed "doprint" to "verbose"
     """
     now = pytime.time() # Get the time as quickly as possible
     global _tictime  # The saved time is stored in this global
@@ -882,17 +908,18 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
 def toctic(returntic=False, returntoc=False, *args, **kwargs):
     """
     A convenience fuction for multiple timings. Can return the default output of
-    either :func:`sc.tic() <tic>` or :func:`sc.toc() <toc>` (default neither). Arguments are passed to :func:`sc.toc() <toc>`.
-    Equivalent to :func:`sc.toc(reset=True) <toc>`.
+    either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`.
+    Equivalent to `sc.toc(reset=True)`.
 
-    **Example**::
+    **Example**:
 
-        sc.tic()
-        slow_operation_1()
-        sc.toctic()
-        slow_operation_2()
-        sc.toc()
-
+    ```python
+    sc.tic()
+    slow_operation_1()
+    sc.toctic()
+    slow_operation_2()
+    sc.toc()
+    ```
     *New in version 1.0.0.*
     """
     tocout = toc(*args, **kwargs)
@@ -904,15 +931,15 @@ def toctic(returntic=False, returntoc=False, *args, **kwargs):
 
 class timer:
     """
-    Simple timer class. Note: :class:`sc.timer() <timer>` and :class:`sc.Timer() <Timer>` are aliases.
+    Simple timer class. Note: `sc.timer()` and `sc.Timer()` are aliases.
 
-    This wraps :func:`sc.tic() <tic>` and :func:`sc.toc() <toc>` with the formatting arguments and the start time
+    This wraps `sc.tic()` and `sc.toc()` with the formatting arguments and the start time
     (at construction).
 
-    Use this in a ``with`` block to automatically print elapsed time when
+    Use this in a `with` block to automatically print elapsed time when
     the block finishes.
 
-    By default, output is displayed in seconds. You can change this with the ``unit``
+    By default, output is displayed in seconds. You can change this with the `unit`
     argument, which can be a string or a float:
 
         - 'hr' or 3600
@@ -926,45 +953,48 @@ class timer:
     Args:
         label (str): label identifying this timer
         auto (bool): whether to automatically increment the label
-        start (bool): whether to start timing from object creation (else, call :meth:`timer.tic()` explicitly)
+        start (bool): whether to start timing from object creation (else, call `timer.tic()` explicitly)
         unit (str/float): the unit of time to display; see options above
         verbose (bool): whether to print output on each timing
-        kwargs (dict): passed to :func:`sc.toc() <toc>` when invoked
+        kwargs (dict): passed to `sc.toc()` when invoked
 
+    Example making repeated calls to the same timer, using `auto` to keep track:
 
-    Example making repeated calls to the same timer, using ``auto`` to keep track::
+    ```python
+    >>> T = sc.timer(auto=True)
+    >>> T.toc()
+    (0): 2.63 s
+    >>> T.toc()
+    (1): 5.00 s
+    ```
+    Example wrapping code using with-as:
 
-        >>> T = sc.timer(auto=True)
-        >>> T.toc()
-        (0): 2.63 s
-        >>> T.toc()
-        (1): 5.00 s
+    ```python
+    >>> with sc.timer('mylabel'):
+    >>>     sc.timedsleep(0.5)
+    ```
+    Example using a timer to collect data, using `timer.tt()` as an alias for `sc.toctic()`
+    to reset the time:
 
-    Example wrapping code using with-as::
-
-        >>> with sc.timer('mylabel'):
-        >>>     sc.timedsleep(0.5)
-
-    Example using a timer to collect data, using :meth:`timer.tt() <timer.tt>` as an alias for :func:`sc.toctic() <toctic>`
-    to reset the time::
-
-        T = sc.timer(verbose=False)
-        for key in 'abcde':
-            sc.timedsleep(np.random.rand())
-            T.tt(key)
-        print(T.timings)
-
+    ```python
+    T = sc.timer(verbose=False)
+    for key in 'abcde':
+        sc.timedsleep(np.random.rand())
+        T.tt(key)
+    print(T.timings)
+    ```
     Implementation based on https://preshing.com/20110924/timing-your-code-using-pythons-with-statement/
 
-    | *New in version 1.3.0:* :class:`sc.timer() <timer>` alias, and allowing the label as first argument
-    | *New in version 1.3.2:* ``toc()`` passes label correctly; ``tt()`` method; ``auto`` argument
-    | *New in version 2.0.0:* ``plot()`` method; ``total()`` method; ``indivtimings`` and ``cumtimings`` properties
-    | *New in version 2.1.0:* ``total`` as property instead of method; updated repr; added disp() method
-    | *New in version 3.0.0:* ``unit`` argument; ``verbose`` argument; ``sum, min, max, mean, std`` methods; ``rawtimings`` property
-    | *New in version 3.1.0:* Timers can be combined by addition, including ``sum()``
-    | *New in version 3.1.5:* ``T.timings`` is now an :class:`sc.objdict() <sc_odict.objdict>` instead of an :class:`sc.odict() <sc_odict.odict>`
-    | *New in version 3.2.2:* ``sc.timer()`` can be used as a function decorator
-    | *New in version 3.2.5:* ``.string`` attribute (e.g. '3.25 s')
+    - *New in version 1.3.0:* `sc.timer()` alias, and allowing the label as first argument
+    - *New in version 1.3.2:* `toc()` passes label correctly; `tt()` method; `auto` argument
+    - *New in version 2.0.0:* `plot()` method; `total()` method; `indivtimings` and `cumtimings` properties
+    - *New in version 2.1.0:* `total` as property instead of method; updated repr; added disp() method
+    - *New in version 3.0.0:* `unit` argument; `verbose` argument; `sum, min, max, mean, std` methods; `rawtimings` property
+    - *New in version 3.1.0:* Timers can be combined by addition, including `sum()`
+    - *New in version 3.1.5:* `T.timings` is now an `sc.objdict()` instead of an `sc.odict()`
+    - *New in version 3.2.2:* `sc.timer()` can be used as a function decorator
+    - *New in version 3.2.5:* `.string` attribute (e.g. '3.25 s')
+    - *New in version 3.3.0:* `toctotal()` method
     """
     def __init__(self, label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs):
         self.kwargs = kwargs # Store kwargs to pass to toc() at the end of the block
@@ -1060,7 +1090,7 @@ class timer:
 
 
     def toc(self, label=None, **kwargs):
-        """ Print elapsed time; see :func:`sc.toc() <toc>` for keyword arguments """
+        """ Print elapsed time; see `sc.toc()` for keyword arguments """
         # Get the time
         self.elapsed, self.string, self.message = toc(start=self._start, output='all', verbose=False) # Get time as quickly as possible
         self._tocs.append(pytime.time()) # Store when this toc was invoked
@@ -1121,27 +1151,48 @@ class timer:
     # Alias/shortcut methods
 
     def start(self):
-        """ Alias for :func:`sc.tic() <tic>` """
+        """ Alias for `sc.tic()` """
         return self.tic()
 
     def stop(self, *args, verbose=False, **kwargs):
-        """ Alias for :func:`sc.toc() <toc>` """
+        """ Alias for `sc.toc()` """
         return self.toc(*args, verbose=verbose, **kwargs)
 
     def tocout(self, label=None, output=True, **kwargs):
-        """ Alias for :func:`sc.toc() <toc>` with output=True """
+        """ Alias for `sc.toc()` with output=True """
         return self.toc(label=label, output=output, **kwargs)
 
     def toctic(self, *args, reset=True, **kwargs):
         """ Like toc, but reset time between timings """
         return self.toc(*args, reset=reset, **kwargs)
 
+    def toctotal(self, label='Total', **kwargs):
+        """
+        Like toc, but time from the first tic rather than the most recent one
+
+        **Example**:
+
+        ```python
+        T = sc.timer()
+        sc.timedsleep(0.1)
+        T.toctic()
+        sc.timedsleep(0.1)
+        T.toctic()
+        T.toctotal() # Time since the timer was created, not since the last tic
+        ```
+        *New in version 3.3.0.*
+        """
+        kwargs.setdefault('unit', self.unit)
+        kwargs.setdefault('verbose', self.verbose)
+        start = self._tics[0] if len(self._tics) else None # Use the very first tic
+        return toc(start=start, label=label, **kwargs)
+
     def tt(self, *args, **kwargs):
-        """ Alias for :func:`sc.toctic() <toctic>` """
+        """ Alias for `sc.toctic()` """
         return self.toctic(*args, **kwargs)
 
     def tto(self, *args, output=True, **kwargs):
-        """ Alias for :func:`sc.toctic() <toctic>` with output=True """
+        """ Alias for `sc.toctic()` with output=True """
         return self.toctic(*args, output=output, **kwargs)
 
     @property
@@ -1165,7 +1216,7 @@ class timer:
 
     def sum(self):
         """
-        Sum of timings; similar to :obj:`timer.total <timer.total>`
+        Sum of timings; similar to `timer.total`
 
         *New in version 3.0.0.*
         """
@@ -1211,9 +1262,9 @@ class timer:
         Arguments:
             cumulative (bool): how the timings will be presented, individual or cumulative
             fig (fig): an existing figure to draw the plot in
-            figkwargs (dict): passed to :func:`plt.figure() <matplotlib.pyplot.figure>`
+            figkwargs (dict): passed to `plt.figure()`
             grid (bool): whether to show a grid
-            kwargs (dict): passed to :func:`plt.bar() <matplotlib.pyplot.bar>`
+            kwargs (dict): passed to `plt.bar()`
 
         *New in version 2.0.0.*
         """
@@ -1278,10 +1329,12 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
 
     These can be configured as options.
 
-    **Examples**::
+    **Examples**:
 
-        yesterday = sc.datedelta(sc.now(), days=-1)
-        sc.elapsedtimestr(yesterday)
+    ```python
+    yesterday = sc.datedelta(sc.now(), days=-1)
+    sc.elapsedtimestr(yesterday)
+    ```
     """
 
     # Elapsed time function by Alex Chan: https://gist.github.com/alexwlchan/73933442112f5ae431cc
@@ -1384,9 +1437,9 @@ def timedsleep(delay=None, start=None, verbose=False):
     Pause for the specified amount of time, taking into account how long other
     operations take.
 
-    This function is usually used in a loop; it works like ``time.sleep()``, but
+    This function is usually used in a loop; it works like `time.sleep()`, but
     subtracts time taken by the other operations in the loop so that each loop
-    iteration takes exactly ``delay`` amount of time. Note: since ``time.sleep()``
+    iteration takes exactly `delay` amount of time. Note: since `time.sleep()`
     has a minimum overhead (about 2e-4 seconds), below this duration, no pause
     will occur.
 
@@ -1395,32 +1448,32 @@ def timedsleep(delay=None, start=None, verbose=False):
         start (float): if provided, the start time
         verbose (bool): whether to print details
 
-    **Examples**::
+    **Examples**:
 
-        # Example for a long(ish) computation
-        import numpy as np
-        for i in range(10):
-            sc.timedsleep('start') # Initialize
-            n = int(2*np.random.rand()*1e6) # Variable computation time
-            for j in range(n):
-                tmp = np.random.rand()
-            sc.timedsleep(1, verbose=True) # Wait for one second per iteration including computation time
+    ```python
+    # Example for a long(ish) computation
+    import numpy as np
+    for i in range(10):
+        sc.timedsleep('start') # Initialize
+        n = int(2*np.random.rand()*1e6) # Variable computation time
+        for j in range(n):
+            tmp = np.random.rand()
+        sc.timedsleep(1, verbose=True) # Wait for one second per iteration including computation time
 
+    # Example illustrating more accurate timing
+    import time
+    n = 1000
 
-        # Example illustrating more accurate timing
-        import time
-        n = 1000
+    with sc.timer():
+        for i in range(n):
+            sc.timedsleep(1/n)
+    # Elapsed time: 1.01 s
 
-        with sc.timer():
-            for i in range(n):
-                sc.timedsleep(1/n)
-        # Elapsed time: 1.01 s
-
-        with sc.timer():
-            for i in range(n):
-                time.sleep(1/n)
-        # Elapsed time: 1.21 s
-
+    with sc.timer():
+        for i in range(n):
+            time.sleep(1/n)
+    # Elapsed time: 1.21 s
+    ```
     *New in version 3.0.0:* "verbose" False by default; more accurate overhead calculation
     """
     global _delaytime
@@ -1454,12 +1507,14 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None, seed=None):
         high  (float):      optionally define upper bound of sleep
         seed  (int):        if provided, reset the random seed
 
-    **Examples**::
-        sc.randsleep(1) # Sleep for 0-2 s (average 1.0)
-        sc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)
-        sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
-        sc.randsleeep(low=0.5, high=1.5) # Ditto
+    **Examples**:
 
+    ```python
+    sc.randsleep(1) # Sleep for 0-2 s (average 1.0)
+    sc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)
+    sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
+    sc.randsleeep(low=0.5, high=1.5) # Ditto
+    ```
     *New in version 2.0.0.*
     *New in version 3.0.0:* "seed" argument
     """

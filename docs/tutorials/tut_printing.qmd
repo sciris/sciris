@@ -1,0 +1,130 @@
+---
+title: Printing
+jupyter: python3
+---
+
+Aside from plotting result, printing numbers is probably the main way you do science. (Or maybe your science consists entirely of listening to [birdsong](https://www.nature.com/articles/nrn2931).) This tutorial can't help make the numbers in your science better, but it can help you figure out more quickly if they're good numbers or not.
+
+## Headings and colors
+
+No one in their right mind would make a black and white plot these days, but it's still pretty common to output monochrome text. Fair: color should be used sparingly. But when you do want a pop of color, Sciris has you covered. For example, you can easily make section headings to delineate [large blocks of text](https://philpapers.org/archive/BLUANS.pdf):
+
+```{python}
+import sciris as sc
+import numpy as np
+
+sc.heading('A very long green story')
+string = '"Once upon a time, there was a story that began: '
+sc.printgreen(sc.indent(string*20 + ' ...'))
+
+sc.heading('Some very dull blue data')
+sc.printblue(np.random.rand(10,6))
+```
+
+(Note: if you're reading this on [docs.sciris.org](https://docs.sciris.org), there's a little button at the top right where you can change to dark mode if you prefer – the colors might make more sense then!)
+
+Incidentally, Sciris includes two functions for combining strings: `sc.strjoin()` and `sc.newlinejoin()`. These are just shortcuts to `', '.join()` and `'\n'.join()`, respectively (plus automatic conversion to strings), but can make life easier, especially inside f-strings:
+
+```{python}
+def get(key):
+    my_dict = dict(key1=1, key2=2, key3=3)
+    try:
+        my_dict[key]
+    except:
+        errormsg = f'Invalid key {key}; must be {sc.strjoin(my_dict.keys())}, which have values:\n{sc.newlinejoin(my_dict.items())}'
+        print(errormsg)
+
+get('key4')
+```
+
+## Printing objects
+
+Let's revisit our well-trodden sim:
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+class Sim:
+    def __init__(self, n=10, n_factors=5):
+        self.n = n
+        self.n_factors = n_factors
+        self.results = sc.objdict()
+        self.ready = False
+    
+    def run(self):
+        for i in range(self.n_factors):
+            label = f'i={i+1}'
+            result = np.random.randint(0, 10, self.n)**(i+1)
+            self.results[label] = result
+        self.ready = True
+    
+    def plot(self):
+        plt.plot(self.results[:])
+
+sim = Sim()
+sim.run()
+```
+
+We can quickly view the full object with the "pretty representation", or `sc.pr()`:
+
+```{python}
+sc.pr(sim)
+```
+
+Compare this to the standard but less informative `dir()`:
+
+```{python}
+dir(sim)
+```
+
+Trying to figure out what this means is a lot more work! For example, from `dir()`, you would't know if `run` is an attribute (is it a flag indicating that the sim _was_ run?) or a method.
+
+In fact, this representation of an object is so useful, you can use it when you create the class. Then if you do `print(sim)`, you'll get the full representation rather than just the default (class name and memory address):
+
+```{python}
+class PrettySim(sc.prettyobj): # This line is key, everything else is the same as before!
+    def __init__(self, n=10, n_factors=5):
+        self.n = n
+        self.n_factors = n_factors
+        self.results = sc.objdict()
+        self.ready = False
+    
+    def run(self):
+        for i in range(self.n_factors):
+            label = f'i={i+1}'
+            result = np.random.randint(0, 10, self.n)**(i+1)
+            self.results[label] = result
+        self.ready = True
+    
+    def plot(self):
+        plt.plot(self.results[:])
+
+sim = PrettySim()
+sim.run()
+print(sim)
+```
+
+(Some readers may question whether this representation is more _useful_ than it is _pretty_. Point taken.)
+
+## Monitoring progress
+
+What if you have a really slow task and you want to check progress? You can use `sc.progressbar` for that, which builds on the excellent package [tqdm](https://tqdm.github.io/):
+
+```{python}
+class SlowSim(PrettySim):
+    
+    def run_slow(self):
+        for i in sc.progressbar(range(self.n_factors)): # This is the only change!
+            sc.randsleep(0.2) # Make it slow
+            label = f'i={i+1}'
+            result = np.random.randint(0, 10, self.n)**(i+1)
+            self.results[label] = result
+        self.ready = True
+
+slowsim = SlowSim()
+slowsim.run_slow()
+```
+
+Note that the progress bar looks better in a regular terminal than in Jupyter, and needless to say, it doesn't look like anything in a static web page!
+

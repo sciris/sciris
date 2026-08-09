@@ -1,0 +1,153 @@
+---
+title: Dates and times
+jupyter: python3
+---
+
+We'll get to the thorny issue of dates in a moment, but first let's look at a little timer function to time your code.
+
+## Timing
+
+The most basic form of profiling (as covered in the previous tutorial) is just timing how long different parts of your code take. It's not _too_ hard to do this in Python:
+
+```{python}
+import time
+import numpy as np
+
+n = 5_000
+
+start = time.time()
+zeros = np.zeros((n,n))
+zeros_time = time.time()
+rand = np.random.rand(n,n)
+rand_time = time.time()
+
+print(f'Time to make zeros: {(zeros_time - start):n} s')
+print(f'Time to make random numbers: {(rand_time - zeros_time):n} s')
+```
+
+As you probably could've guessed, in Sciris there's an easier way, inspired by Matlab's [tic and toc](https://www.mathworks.com/help/matlab/ref/tic.html):
+
+```{python}
+import sciris as sc
+
+T = sc.timer()
+
+T.tic()
+zeros = np.zeros((n,n))
+T.toc('Time to make zeros')
+
+T.tic()
+rand = np.random.rand(n,n)
+T.toc('Time to make random numbers')
+```
+
+We can simplify this even further: we often call `toc()` followed by `tic()`, so instead we can just call `toctic()` or `tt()` for short; we can also omit the first `tic()`:
+
+```{python}
+T = sc.timer()
+
+zeros = np.zeros((n,n))
+T.tt('Time to make zeros')
+
+rand = np.random.rand(n,n)
+T.tt('Time to make random numbers')
+```
+
+You can also use `sc.timer()` in a `with` block, which is perhaps most intuitive of all:
+
+```{python}
+with sc.timer('Time to make zeros'):
+    zeros = np.zeros((n,n))
+
+with sc.timer('Time to make random numbers'):
+    rand = np.random.rand(n,n)
+```
+
+If we have multiple timings, we can also do statistics on them or plot the results:
+
+```{python}
+T = sc.timer()
+
+for i in range(5):
+    rnd = np.random.rand(int((i+1)*np.random.rand()*1e6))
+    T.tt(f'Generating {len(rnd):,} numbers')
+
+print('mean', T.mean())
+print('std',  T.std())
+print('min',  T.min())
+print('max',  T.max())
+T.plot();
+```
+
+## Sleeping
+
+For completeness, let's talk about Sciris' two sleep functions. Both are related to `time.sleep()`. 
+
+The first is `sc.timedsleep()`. If called directly it acts just like `time.sleep()`. But you can also use it in a for loop to take into account the rest of the time taken by the other operations in the loop so that each loop iteration takes exactly the desired amount of time:
+
+```{python}
+import numpy as np
+
+for i in range(5):
+    sc.timedsleep('start') # Initialize
+    n = int(np.random.rand()*1e6) # Variable computation time
+    for j in range(n):
+        tmp = np.random.rand()
+    sc.timedsleep(0.3, verbose=True) # Wait for 0.3 seconds per iteration including computation time
+```
+
+The other is `sc.randsleep()`, which as the name suggests, will sleep for a random amount of time:
+
+```{python}
+for i in range(4):
+    with sc.timer(f'Run {i}', unit='ms'):
+        sc.randsleep(0.2) # Sleep for an average of 0.2 s, but with range 0-0.4 s
+```
+
+## Dates
+
+There are lots of different common date formats in Python, which probably arose through a process [like this](https://xkcd.com/927/). Python's built-in one is [datetime.datetime](https://docs.python.org/3/library/datetime.html). This format has the basics, but is hard to work with for things like plotting. NumPy made their own, called [datetime64](https://numpy.org/doc/stable/reference/arrays.datetime.html), which addresses some of these issues, but isn't compatible with anything else. Then pandas introduced their own [Timestamp](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Timestamp.html), which is kind of like a combination of both.
+
+You will probably be relieved to know that Sciris does _not_ introduce a new datetime format, but instead tries to make it easier to work with the other formats, particularly by being able to easily interconvert them. Sciris provides shortcuts to the three common ways of getting the current datetime:
+
+```{python}
+sc.time() # Equivalent to time.time()
+```
+
+```{python}
+sc.now() # Equivalent to datetime.datetime.now()
+```
+
+```{python}
+sc.getdate() # Equivalent to datetime.datetime.now().strftime('%Y-%b-%d %H:%M:%S')
+```
+
+Sciris' main utility for converting between date formats is called `sc.date()`. It works like this:
+
+```{python}
+sc.date('2022-03-04')
+```
+
+It can interpret lots of different strings, although needs help with month-day-year or day-month-year formats:
+
+```{python}
+d1 = sc.date('04-03-2022', format='mdy')
+d2 = sc.date('04-03-2022', format='dmy')
+print(d1)
+print(d2)
+```
+
+You can create an array of dates, either as strings or datetime objects:
+
+```{python}
+dates = sc.daterange('2022-02-02', '2022-03-04')
+sc.pp(dates)
+```
+
+And you can also do math on dates, even if they're just strings:
+
+```{python}
+newdates = sc.datedelta(dates, months=10) # Add 10 months
+sc.pp(newdates)
+```
+

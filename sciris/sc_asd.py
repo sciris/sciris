@@ -1,5 +1,5 @@
 """
-Adaptive stochastic descent optimization algorithm, building on :mod:`scipy.optimize`.
+Adaptive stochastic descent optimization algorithm, building on `scipy.optimize`.
 
 This algorithm is published as:
 
@@ -53,11 +53,11 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     label=None, verbose=1, minval=0, die=True, **kwargs):
     """
     Optimization using adaptive stochastic descent (ASD). Can be used as a faster
-    and more powerful alternative to e.g. :func:`scipy.optimize.minimize()`.
+    and more powerful alternative to e.g. `scipy.optimize.minimize()`.
 
-    ASD starts at ``x`` and attempts to find a local minimizer of the function ``function()``.
-    ``function()`` accepts input ``x`` and returns a scalar function value evaluated at ``x``.
-    ``x`` can be a scalar, list, or Numpy array of any size.
+    ASD starts at `x` and attempts to find a local minimizer of the function `function()`.
+    `function()` accepts input `x` and returns a scalar function value evaluated at `x`.
+    `x` can be a scalar, list, or Numpy array of any size.
 
     Args:
         function     (func):  The function to minimize
@@ -88,44 +88,45 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     Returns:
         objdict (see below)
 
-    The returned object is an ``objdict``, which can be accessed by index, key,
+    The returned object is an `objdict`, which can be accessed by index, key,
     or attribute. Its keys/attributes are:
 
-        - ``x``          -- The parameter set that minimizes the objective function
-        - ``fval``       -- The value of the objective function at the final iteration
-        - ``exitreason`` -- Why the algorithm terminated;
-        - ``details``    -- See below
+        - `x`          -- The parameter set that minimizes the objective function
+        - `fval`       -- The value of the objective function at the final iteration
+        - `exitreason` -- Why the algorithm terminated;
+        - `details`    -- See below
 
-    The ``details`` key consists of:
+    The `details` key consists of:
 
-        - ``fvals``         -- The value of the objective function at each iteration
-        - ``xvals``         -- The parameter values at each iteration;
-        - ``probabilities`` -- The probability of each step; and
-        - ``stepsizes``     -- The size of each step for each parameter.
+        - `fvals`         -- The value of the objective function at each iteration
+        - `xvals`         -- The parameter values at each iteration;
+        - `probabilities` -- The probability of each step; and
+        - `stepsizes`     -- The size of each step for each parameter.
 
-    **Examples**::
+    **Examples**:
 
-        # Basic usage
-        import numpy as np
-        import sciris as sc
-        result = sc.asd(np.linalg.norm, [1, 2, 3])
-        print(result.x)
+    ```python
+    # Basic usage
+    import numpy as np
+    import sciris as sc
+    result = sc.asd(np.linalg.norm, [1, 2, 3])
+    print(result.x)
 
-        # With arguments: positional via args, or dict of keywords, or keyword arguments
-        def my_func(x, scale=1.0, weight=1.0):  # Example function with keywords
-            return abs((x[0] - 1)) + abs(x[1] + 2)*scale + abs(x[2] + 3)*weight
+    # With arguments: positional via args, or dict of keywords, or keyword arguments
+    def my_func(x, scale=1.0, weight=1.0):  # Example function with keywords
+        return abs((x[0] - 1)) + abs(x[1] + 2)*scale + abs(x[2] + 3)*weight
 
-        result = sc.asd(my_func, x=[0, 0, 1], args=[0.5, 0.1]) # Option 1 for passing arguments
-        result = sc.asd(my_func, x=[0, 0, 1], args=dict(scale=0.5, weight=0.1)) # Option 2 for passing arguments
-        result = sc.asd(my_func, x=[0, 0, 1], scale=0.5, weight=0.1) # Option 3 for passing arguments
-
+    result = sc.asd(my_func, x=[0, 0, 1], args=[0.5, 0.1]) # Option 1 for passing arguments
+    result = sc.asd(my_func, x=[0, 0, 1], args=dict(scale=0.5, weight=0.1)) # Option 2 for passing arguments
+    result = sc.asd(my_func, x=[0, 0, 1], scale=0.5, weight=0.1) # Option 3 for passing arguments
+    ```
     Please use the following citation for this method:
 
         CC Kerr, S Dura-Bernal, TG Smolinski, GL Chadderdon, DP Wilson (2018).
         Optimization by adaptive stochastic descent.
         PLOS ONE 13 (3), e0192944.
 
-    | *New in version 3.0.0:* Uses its own random number stream
+    - *New in version 3.0.0:* Uses its own random number stream
     """
     rng = np.random.default_rng(randseed)
     if verbose >= 2: print(f'ASD: Launching with random seed {randseed}')
