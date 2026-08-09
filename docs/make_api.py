@@ -25,6 +25,7 @@ To check that they are up to date (used by the test suite, hence CI)::
 import re
 import sys
 import inspect
+import textwrap
 import sciris as sc
 
 __all__ = ['make_index', 'load', 'write', 'check']
@@ -80,7 +81,9 @@ def _getdoc(obj):
     doc = getattr(obj, '__doc__', None)
     if not isinstance(doc, str) and inspect.isclass(obj): # Some classes document themselves in __init__
         doc = getattr(getattr(obj, '__init__', None), '__doc__', None)
-    return doc if isinstance(doc, str) else ''
+    if not isinstance(doc, str):
+        return ''
+    return inspect.cleandoc(doc) # Dedent, since Python ≥3.13 does this automatically but earlier versions do not
 
 
 def _getsummary(doc):
@@ -118,6 +121,7 @@ def _getexample(doc):
                 break
     if example is None:
         example = blocks[0][1]
+    example = textwrap.dedent(example) # Some docstrings are not uniformly indented (e.g. sc.path(), which appends pathlib's docstring)
     lines = [line for line in example.strip('\n').rstrip().splitlines()]
     if len(lines) > max_example:
         lines = lines[:max_example] + ['# [...]']
