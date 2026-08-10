@@ -33,7 +33,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./api/index.html" rel="next">
+<link href="./contributing.html" rel="next">
 <link href="./tutorials/tut_advanced.html" rel="prev">
 <link href=".//assets/favicon.ico" rel="icon">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
@@ -407,12 +407,6 @@ ul.task-list li input[type="checkbox"] {
  <span class="menu-text"><strong>What’s new</strong></span></a>
   </div>
 </li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./api/index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><strong>API reference</strong></span></a>
-  </div>
-</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
@@ -634,6 +628,8 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="./api/sc_printing.html#sciris.sc_printing.progressbar" title="0"><code>sc.progressbar()</code></a> now has an <code>output</code> argument for returning the progress bar as a string.</li>
 <li>Added <code>sc.cpucount()</code>, <code>sc.cpu_load()</code>, and <code>sc.mem_load()</code> as aliases of <a href="./api/sc_parallel.html#sciris.sc_parallel.cpu_count" title="0"><code>sc.cpu_count()</code></a>, <a href="./api/sc_parallel.html#sciris.sc_parallel.cpuload" title="0"><code>sc.cpuload()</code></a>, and <a href="./api/sc_parallel.html#sciris.sc_parallel.memload" title="0"><code>sc.memload()</code></a>.</li>
 <li>The documentation has been converted from Sphinx to <a href="https://quarto.org">Quarto</a>, and is now published at <a href="https://docs.sciris.org" class="uri">https://docs.sciris.org</a> via GitHub Pages. Docstrings (and the files in the repository root, e.g.&nbsp;this changelog) are now formatted with Markdown rather than RST, and the tutorials are now Quarto documents (<code>.qmd</code>) rather than Jupyter notebooks (<code>.ipynb</code>).</li>
+<li>The documentation now includes a machine-readable index of the entire public API, for use by IDEs, documentation search, and LLM-based tools: <a href="https://docs.sciris.org/llms.txt">llms.txt</a>, <a href="https://docs.sciris.org/llms-full.txt">llms-full.txt</a> (which also includes an example for each function), and <a href="https://docs.sciris.org/api.json">api.json</a>. All three are generated from the source via <code>cd docs &amp;&amp; python make_api.py</code>.</li>
+<li>All text files are now read and written as UTF-8, rather than using the platform-dependent default encoding (which meant that files containing non-ASCII characters could not be read on Windows). <a href="./api/sc_fileio.html#sciris.sc_fileio.loadtext" title="0"><code>sc.loadtext()</code></a>, <a href="./api/sc_fileio.html#sciris.sc_fileio.savetext" title="0"><code>sc.savetext()</code></a>, <a href="./api/sc_fileio.html#sciris.sc_fileio.loadjson" title="0"><code>sc.loadjson()</code></a>, <a href="./api/sc_fileio.html#sciris.sc_fileio.savejson" title="0"><code>sc.savejson()</code></a>, <a href="./api/sc_fileio.html#sciris.sc_fileio.loadyaml" title="0"><code>sc.loadyaml()</code></a>, and <a href="./api/sc_fileio.html#sciris.sc_fileio.saveyaml" title="0"><code>sc.saveyaml()</code></a> now also accept an <code>encoding</code> argument.</li>
 <li><a href="./api/sc_versioning.html#sciris.sc_versioning.require" title="0"><code>sc.require()</code></a> now allows prerelease versions, so e.g.&nbsp;<code>sc.require('starsim&gt;3.0.0')</code> is met by an editable install of version <code>3.2.3.dev0</code>.</li>
 </ol>
 </section>
@@ -1799,7 +1795,7 @@ ul.task-list li input[type="checkbox"] {
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp('/' + window.location.host + '/');
+        var filterRegex = new RegExp("https:\/\/docs\.sciris\.org");
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
@@ -2133,8 +2129,8 @@ ul.task-list li input[type="checkbox"] {
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./api/index.html" class="pagination-link" aria-label="**API reference**">
-        <span class="nav-page-text"><strong>API reference</strong></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="./contributing.html" class="pagination-link" aria-label="How to contribute">
+        <span class="nav-page-text">How to contribute</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
