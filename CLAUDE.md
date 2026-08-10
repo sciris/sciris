@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Run tests:** `cd tests && ./run_tests`
 - **Install dev:** `pip install -e .`
 - **Build docs:** `cd docs && ./render`
+- **Regenerate API index:** `cd docs && python make_api.py` (updates `docs/api.json`, `docs/llms.txt`, `docs/llms-full.txt`; run after adding, renaming, or changing the signature of any public function, or `tests/test_api.py` will fail)
 - **Standard import:** `import sciris as sc`
 
 ### Core Functions
@@ -58,7 +59,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Development Setup
 - **Install package:** `pip install -e .` (editable install from pyproject.toml)
 - **Test requirements:** `pip install -r tests/requirements.txt`
-- **Python version:** Requires Python >=3.9
+- **Python version:** Requires Python >=3.10
 
 ### Git Workflow
 - **Main branch:** `main` (use this as base for PRs)

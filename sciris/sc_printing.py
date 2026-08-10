@@ -1403,7 +1403,7 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
     if webhook.find('hooks.slack.com')>=0: # It seems to be a URL, let's proceed
         slackurl = webhook
     elif os.path.exists(os.path.expanduser(webhook)): # If not, look for it as a file
-        with open(os.path.expanduser(webhook)) as f: slackurl = f.read()
+        with open(os.path.expanduser(webhook), encoding='utf-8') as f: slackurl = f.read()
     elif os.getenv('SLACKURL'): # See if it's set in the user's environment variables
         slackurl = os.getenv('SLACKURL')
     else:
@@ -1444,7 +1444,7 @@ def printtologfile(message=None, filename=None):
 
     # Try writing to file
     try:
-        with open(filename, 'a') as f:
+        with open(filename, 'a', encoding='utf-8') as f:
             f.write('\n'+message+'\n') # Add a newline to the message.
     except Exception as E: # pragma: no cover # Fail gracefully
         print(f'Warning, could not write to logfile {filename}: {str(E)}')
