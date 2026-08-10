@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.37">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,10 +12,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -77,14 +80,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-dc16a9b152f85a9de5b03f2d2ad60ba1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -514,7 +517,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="timing" class="level2">
 <h2 class="anchored" data-anchor-id="timing">Timing</h2>
 <p>The most basic form of profiling (as covered in the previous tutorial) is just timing how long different parts of your code take. It’s not <em>too</em> hard to do this in Python:</p>
-<div id="8297aa6f" class="cell" data-execution_count="1">
+<div id="bd34c2a5" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -529,12 +532,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Time to make zeros: </span><span class="sc">{</span>(zeros_time <span class="op">-</span> start)<span class="sc">:n}</span><span class="ss"> s'</span>)</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Time to make random numbers: </span><span class="sc">{</span>(rand_time <span class="op">-</span> zeros_time)<span class="sc">:n}</span><span class="ss"> s'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time to make zeros: 0.00020504 s
-Time to make random numbers: 0.152409 s</code></pre>
+<pre><code>Time to make zeros: 7.20024e-05 s
+Time to make random numbers: 0.109757 s</code></pre>
 </div>
 </div>
 <p>As you probably could’ve guessed, in Sciris there’s an easier way, inspired by Matlab’s <a href="https://www.mathworks.com/help/matlab/ref/tic.html">tic and toc</a>:</p>
-<div id="4b4e6616" class="cell" data-execution_count="2">
+<div id="4b2cd19b" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> sc.timer()</span>
@@ -547,12 +550,12 @@ Time to make random numbers: 0.152409 s</code></pre>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>rand <span class="op">=</span> np.random.rand(n,n)</span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>T.toc(<span class="st">'Time to make random numbers'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time to make zeros: 90.1 μs
-Time to make random numbers: 0.161 s</code></pre>
+<pre><code>Time to make zeros: 89.4 μs
+Time to make random numbers: 0.110 s</code></pre>
 </div>
 </div>
 <p>We can simplify this even further: we often call <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>toc()</code></a> followed by <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>tic()</code></a>, so instead we can just call <a href="../api/sc_datetime.html#sciris.sc_datetime.toctic" title="0"><code>toctic()</code></a> or <code>tt()</code> for short; we can also omit the first <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>tic()</code></a>:</p>
-<div id="e5ceea5f" class="cell" data-execution_count="3">
+<div id="859941ce" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> sc.timer()</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>zeros <span class="op">=</span> np.zeros((n,n))</span>
@@ -561,24 +564,24 @@ Time to make random numbers: 0.161 s</code></pre>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>rand <span class="op">=</span> np.random.rand(n,n)</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>T.tt(<span class="st">'Time to make random numbers'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time to make zeros: 91.8 μs
-Time to make random numbers: 0.169 s</code></pre>
+<pre><code>Time to make zeros: 0.104 ms
+Time to make random numbers: 0.110 s</code></pre>
 </div>
 </div>
 <p>You can also use <a href="../api/sc_datetime.html#sciris.sc_datetime.timer" title="0"><code>sc.timer()</code></a> in a <code>with</code> block, which is perhaps most intuitive of all:</p>
-<div id="159425cf" class="cell" data-execution_count="4">
+<div id="ea6b9138" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> sc.timer(<span class="st">'Time to make zeros'</span>):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    zeros <span class="op">=</span> np.zeros((n,n))</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> sc.timer(<span class="st">'Time to make random numbers'</span>):</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    rand <span class="op">=</span> np.random.rand(n,n)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Time to make zeros: 0.109 ms
-Time to make random numbers: 0.164 s</code></pre>
+<pre><code>Time to make zeros: 52.2 μs
+Time to make random numbers: 0.111 s</code></pre>
 </div>
 </div>
 <p>If we have multiple timings, we can also do statistics on them or plot the results:</p>
-<div id="ff85b0ba" class="cell" data-execution_count="5">
+<div id="cd1ae5e1" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> sc.timer()</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
@@ -591,15 +594,15 @@ Time to make random numbers: 0.164 s</code></pre>
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'max'</span>,  T.<span class="bu">max</span>())</span>
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>T.plot()<span class="op">;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Generating 803,431 numbers: 4.93 ms
-Generating 595,036 numbers: 3.79 ms
-Generating 1,232,215 numbers: 7.42 ms
-Generating 1,656,853 numbers: 11.6 ms
-Generating 4,027,597 numbers: 25.1 ms
-mean 0.010554695129394531
-std 0.0077377583172139035
-min 0.003786325454711914
-max 0.02508378028869629</code></pre>
+<pre><code>Generating 21,494 numbers: 0.308 ms
+Generating 1,776,503 numbers: 8.34 ms
+Generating 1,883,004 numbers: 9.05 ms
+Generating 510,032 numbers: 3.43 ms
+Generating 1,919,918 numbers: 8.37 ms
+mean 0.0058997154235839845
+std 0.0034447334541167587
+min 0.0003075599670410156
+max 0.009048223495483398</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -614,7 +617,7 @@ max 0.02508378028869629</code></pre>
 <h2 class="anchored" data-anchor-id="sleeping">Sleeping</h2>
 <p>For completeness, let’s talk about Sciris’ two sleep functions. Both are related to <a href="https://docs.python.org/3/library/time.html#time.sleep" title="1"><code>time.sleep()</code></a>.</p>
 <p>The first is <a href="../api/sc_datetime.html#sciris.sc_datetime.timedsleep" title="0"><code>sc.timedsleep()</code></a>. If called directly it acts just like <a href="https://docs.python.org/3/library/time.html#time.sleep" title="1"><code>time.sleep()</code></a>. But you can also use it in a for loop to take into account the rest of the time taken by the other operations in the loop so that each loop iteration takes exactly the desired amount of time:</p>
-<div id="db6414eb" class="cell" data-execution_count="6">
+<div id="22fb653c" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
@@ -624,23 +627,23 @@ max 0.02508378028869629</code></pre>
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>        tmp <span class="op">=</span> np.random.rand()</span>
 <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    sc.timedsleep(<span class="fl">0.3</span>, verbose<span class="op">=</span><span class="va">True</span>) <span class="co"># Wait for 0.3 seconds per iteration including computation time</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Pausing for 0.262747 s
-Pausing for 0.20629 s
-Pausing for 0.266719 s
-Pausing for 0.244194 s
-Pausing for 0.186978 s</code></pre>
+<pre><code>Pausing for 0.245347 s
+Pausing for 1e-12 s
+Pausing for 0.0969824 s
+Pausing for 1e-12 s
+Pausing for 0.238824 s</code></pre>
 </div>
 </div>
 <p>The other is <a href="../api/sc_datetime.html#sciris.sc_datetime.randsleep" title="0"><code>sc.randsleep()</code></a>, which as the name suggests, will sleep for a random amount of time:</p>
-<div id="7bc115ac" class="cell" data-execution_count="7">
+<div id="2b5ad0fe" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>):</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> sc.timer(<span class="ss">f'Run </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">'</span>, unit<span class="op">=</span><span class="st">'ms'</span>):</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        sc.randsleep(<span class="fl">0.2</span>) <span class="co"># Sleep for an average of 0.2 s, but with range 0-0.4 s</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Run 0: 11.6 ms
-Run 1: 369 ms
-Run 2: 375 ms
-Run 3: 299 ms</code></pre>
+<pre><code>Run 0: 66.7 ms
+Run 1: 231 ms
+Run 2: 2.43 ms
+Run 3: 35.4 ms</code></pre>
 </div>
 </div>
 </section>
@@ -648,33 +651,33 @@ Run 3: 299 ms</code></pre>
 <h2 class="anchored" data-anchor-id="dates">Dates</h2>
 <p>There are lots of different common date formats in Python, which probably arose through a process <a href="https://xkcd.com/927/">like this</a>. Python’s built-in one is <a href="https://docs.python.org/3/library/datetime.html">datetime.datetime</a>. This format has the basics, but is hard to work with for things like plotting. NumPy made their own, called <a href="https://numpy.org/doc/stable/reference/arrays.datetime.html">datetime64</a>, which addresses some of these issues, but isn’t compatible with anything else. Then pandas introduced their own <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Timestamp.html">Timestamp</a>, which is kind of like a combination of both.</p>
 <p>You will probably be relieved to know that Sciris does <em>not</em> introduce a new datetime format, but instead tries to make it easier to work with the other formats, particularly by being able to easily interconvert them. Sciris provides shortcuts to the three common ways of getting the current datetime:</p>
-<div id="883b7048" class="cell" data-execution_count="8">
+<div id="f8c7ff48" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sc.time() <span class="co"># Equivalent to time.time()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
-<pre><code>1786221900.68985</code></pre>
+<pre><code>1786329404.4879036</code></pre>
 </div>
 </div>
-<div id="0344f8a3" class="cell" data-execution_count="9">
+<div id="f522fe22" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>sc.now() <span class="co"># Equivalent to datetime.datetime.now()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
-<pre><code>datetime.datetime(2026, 8, 8, 16, 45, 0, 694556)</code></pre>
+<pre><code>datetime.datetime(2026, 8, 10, 2, 36, 44, 493406)</code></pre>
 </div>
 </div>
-<div id="fcf89bdb" class="cell" data-execution_count="10">
+<div id="179bb026" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>sc.getdate() <span class="co"># Equivalent to datetime.datetime.now().strftime('%Y-%b-%d %H:%M:%S')</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="10">
-<pre><code>'2026-Aug-08 16:45:00'</code></pre>
+<pre><code>'2026-Aug-10 02:36:44'</code></pre>
 </div>
 </div>
 <p>Sciris’ main utility for converting between date formats is called <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date()</code></a>. It works like this:</p>
-<div id="136b9940" class="cell" data-execution_count="11">
+<div id="0fe4dfcc" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>sc.date(<span class="st">'2022-03-04'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
 <pre><code>datetime.date(2022, 3, 4)</code></pre>
 </div>
 </div>
 <p>It can interpret lots of different strings, although needs help with month-day-year or day-month-year formats:</p>
-<div id="fb04c136" class="cell" data-execution_count="12">
+<div id="26d2e32b" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> sc.date(<span class="st">'04-03-2022'</span>, <span class="bu">format</span><span class="op">=</span><span class="st">'mdy'</span>)</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>d2 <span class="op">=</span> sc.date(<span class="st">'04-03-2022'</span>, <span class="bu">format</span><span class="op">=</span><span class="st">'dmy'</span>)</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(d1)</span>
@@ -685,7 +688,7 @@ Run 3: 299 ms</code></pre>
 </div>
 </div>
 <p>You can create an array of dates, either as strings or datetime objects:</p>
-<div id="081fa202" class="cell" data-execution_count="13">
+<div id="9baa5225" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>dates <span class="op">=</span> sc.daterange(<span class="st">'2022-02-02'</span>, <span class="st">'2022-03-04'</span>)</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>sc.pp(dates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -723,7 +726,7 @@ Run 3: 299 ms</code></pre>
 </div>
 </div>
 <p>And you can also do math on dates, even if they’re just strings:</p>
-<div id="d0280d85" class="cell" data-execution_count="14">
+<div id="eb6004d8" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>newdates <span class="op">=</span> sc.datedelta(dates, months<span class="op">=</span><span class="dv">10</span>) <span class="co"># Add 10 months</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>sc.pp(newdates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">

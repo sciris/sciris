@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.37">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,10 +12,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -77,14 +80,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-dc16a9b152f85a9de5b03f2d2ad60ba1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -518,7 +521,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="array-indexing" class="level2">
 <h2 class="anchored" data-anchor-id="array-indexing">Array indexing</h2>
 <p>Let’s create some data.</p>
-<div id="ca27061c" class="cell" data-execution_count="2">
+<div id="9216f847" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> np.random.rand(<span class="dv">100</span>)</span>
@@ -548,7 +551,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>What if we want to do something super simple, like find the indices of the values above 0.9? In NumPy, it’s not super straightforward:</p>
-<div id="15758de1" class="cell" data-execution_count="3">
+<div id="b5feebc8" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>inds <span class="op">=</span> (data<span class="op">&gt;</span><span class="fl">0.9</span>).nonzero()[<span class="dv">0</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>inds <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -557,7 +560,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>In Sciris, there’s a function for doing exactly this:</p>
-<div id="57cd88ea" class="cell" data-execution_count="4">
+<div id="70fcc503" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>inds <span class="op">=</span> sc.findinds(data<span class="op">&gt;</span><span class="fl">0.9</span>)</span>
@@ -568,7 +571,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Likewise, what if we want to find the value closest to, say, 0.5? In NumPy, that would be</p>
-<div id="8e76183f" class="cell" data-execution_count="5">
+<div id="89df2b9a" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>target <span class="op">=</span> <span class="fl">0.5</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>nearest <span class="op">=</span> np.argmin(<span class="bu">abs</span>(data<span class="op">-</span>target))</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -578,7 +581,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Which is not <em>too</em> long, but it’s a little harder to remember than the Sciris equivalent:</p>
-<div id="90d4aa0d" class="cell" data-execution_count="6">
+<div id="50b95423" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>nearest <span class="op">=</span> sc.findnearest(data, target)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>nearest <span class="op">=</span> <span class="sc">}</span><span class="ss">, </span><span class="sc">{</span>data[nearest] <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -587,7 +590,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>The Sciris functions also work on anything “data like”: for example,</p>
-<div id="8dde4bc9" class="cell" data-execution_count="7">
+<div id="93a3b4ca" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>target <span class="op">=</span> <span class="dv">50</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> [<span class="dv">81</span>, <span class="dv">78</span>, <span class="dv">66</span>, <span class="dv">25</span>,  <span class="dv">6</span>,  <span class="dv">8</span>, <span class="dv">53</span>, <span class="dv">96</span>, <span class="dv">64</span>, <span class="dv">23</span>]</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -606,14 +609,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="interlude-on-creating-arrays" class="level3">
 <h3 class="anchored" data-anchor-id="interlude-on-creating-arrays">Interlude on creating arrays</h3>
 <p>Speaking of which, here’s a pretty fast way to create an array:</p>
-<div id="39ee0e1d" class="cell" data-execution_count="8">
+<div id="81a3502b" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc.cat(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
 <pre><code>array([1, 2, 3])</code></pre>
 </div>
 </div>
 <p><a href="../api/sc_math.html#sciris.sc_math.cat" title="0"><code>sc.cat()</code></a> will take anything array-like and turn it into an actual array. For example:</p>
-<div id="efc64f77" class="cell" data-execution_count="9">
+<div id="ade8f657" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a 2x2 matrix</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> np.random.rand(<span class="dv">2</span>,<span class="dv">2</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -638,7 +641,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="missing-values">Missing values</h2>
 <p>Now that we know some tools for indexing arrays, let’s look at ways to actually change them.</p>
 <p>We all know that missing data is one of humanity’s greatest scourges. Luckily, it can be swiftly eradicated with Sciris: either removed entirely or replaced:</p>
-<div id="c62e55b1" class="cell" data-execution_count="10">
+<div id="22dffe3d" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>d0 <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>, np.nan, <span class="dv">4</span>, np.nan, <span class="dv">6</span>, np.nan, np.nan, np.nan, <span class="dv">10</span>]</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> sc.rmnans(d0) <span class="co"># Remove nans</span></span>
@@ -660,7 +663,7 @@ d3 = array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.])</code></pre>
 <section id="data-smoothing" class="level2">
 <h2 class="anchored" data-anchor-id="data-smoothing">Data smoothing</h2>
 <p>What if we have some seriously lumpy data we want to smooth out? We have a few options for doing that:</p>
-<div id="75b37a10" class="cell" data-execution_count="11">
+<div id="44d7a77a" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Make data</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">50</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.arange(n)</span>
@@ -689,7 +692,7 @@ d3 = array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.])</code></pre>
 </div>
 </div>
 <p>We can also smooth 2D data:</p>
-<div id="7a96c825" class="cell" data-execution_count="12">
+<div id="021dacfa" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the data</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> np.random.rand(<span class="dv">20</span>,<span class="dv">20</span>)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -718,7 +721,7 @@ d3 = array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.])</code></pre>
 <section id="finding-a-line-of-best-fit" class="level2">
 <h2 class="anchored" data-anchor-id="finding-a-line-of-best-fit">Finding a line of best fit</h2>
 <p>It’s also easy to do a very simple linear regression in Sciris:</p>
-<div id="47f92361" class="cell" data-execution_count="13">
+<div id="b4eb2c8f" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate the data</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">100</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.arange(n)</span>

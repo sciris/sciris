@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.37">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,10 +12,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -77,14 +80,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-dc16a9b152f85a9de5b03f2d2ad60ba1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -525,7 +528,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="converting-types" class="level3">
 <h3 class="anchored" data-anchor-id="converting-types">Converting types</h3>
 <p>Python is <em>pretty</em> forgiving with types, but Sciris takes forgiveness to the next level. For example, in plain Python (since v3.9) you can merge two dicts with <code>dict1 | dict2</code>, which is pretty cool, but in Sciris you can also merge no input (i.e.&nbsp;<a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a>). Why is this useful? It lets you handle flexible user input, such as:</p>
-<div id="0398b559" class="cell" data-execution_count="1">
+<div id="55f5b06a" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -545,7 +548,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Likewise, you know that if you want to add an item to a list, you use <code>append</code>, and if you want to add a list to a list, you use <code>extend</code>, but wouldn’t it be nice if you could have Python figure this out?</p>
-<div id="9dacdfcc" class="cell" data-execution_count="2">
+<div id="e80a63dd" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>arg1 <span class="op">=</span> [<span class="st">'an'</span>, <span class="st">'actual'</span>, <span class="st">'list'</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>arg2 <span class="op">=</span> <span class="st">'a single item'</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>arg3 <span class="op">=</span> <span class="va">None</span></span>
@@ -558,7 +561,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>There are also functions <a href="../api/sc_utils.html#sciris.sc_utils.tolist" title="0"><code>sc.tolist()</code></a> and <a href="../api/sc_utils.html#sciris.sc_utils.toarray" title="0"><code>sc.toarray()</code></a> that convert anything “sensible” to a list and array, respectively. The former is especially useful for ensuring that a user input, for example, can always be safely iterated over:</p>
-<div id="d05236de" class="cell" data-execution_count="3">
+<div id="826e331c" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> duplicate(arg, n<span class="op">=</span><span class="dv">2</span>):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    arglist <span class="op">=</span> sc.tolist(arg)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    newlist <span class="op">=</span> []</span>
@@ -574,7 +577,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p><a href="../api/sc_utils.html#sciris.sc_utils.toarray" title="0"><code>sc.toarray()</code></a> is useful if you want to be sure you can, for example, do math on an object:</p>
-<div id="068c8999" class="cell" data-execution_count="4">
+<div id="f249f751" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> power(arg, n<span class="op">=</span><span class="dv">2</span>):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    arr <span class="op">=</span> sc.toarray(arg)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    new <span class="op">=</span> arr<span class="op">**</span>n</span>
@@ -594,7 +597,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>“But”, you protest, “what’s the point? Can’t you just use <a href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#np.array" title="1"><code>np.array()</code></a> to turn something into an array?” Let’s try it:</p>
-<div id="0ec248a7" class="cell" data-execution_count="5">
+<div id="d5d3bfb4" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> power(arg, n<span class="op">=</span><span class="dv">2</span>):</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        arr <span class="op">=</span> np.array(arg)</span>
@@ -610,10 +613,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Failed!! </span><span class="sc">{</span>sc<span class="sc">.</span>traceback()<span class="sc">}</span><span class="ss">'</span>) <span class="co"># Use sc.traceback() as a shortcut to get the exception</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Failed!! Traceback (most recent call last):
-  File "/tmp/ipykernel_1407671/943375089.py", line 10, in &lt;module&gt;
+  File "/tmp/ipykernel_2556/943375089.py", line 10, in &lt;module&gt;
     sc.pp(power(2))
           ~~~~~^^^
-  File "/tmp/ipykernel_1407671/943375089.py", line 6, in power
+  File "/tmp/ipykernel_2556/943375089.py", line 6, in power
     for i,v in enumerate(new):
                ~~~~~~~~~^^^^^
 TypeError: 'numpy.int64' object is not iterable
@@ -625,7 +628,7 @@ TypeError: 'numpy.int64' object is not iterable
 <section id="checking-types" class="level3">
 <h3 class="anchored" data-anchor-id="checking-types">Checking types</h3>
 <p>Sciris also includes some simple type checking functions. For example, in regular Python, just to check if something is a number or not, you need to import the whole <a href="https://docs.python.org/3/library/numbers.html#module-numbers" title="1"><code>numbers</code></a> module:</p>
-<div id="808331b8" class="cell" data-execution_count="6">
+<div id="9eb71d26" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>v1 <span class="op">=</span> <span class="dv">3</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>v2 <span class="op">=</span> <span class="ot">3.145j</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>v3 <span class="op">=</span> <span class="st">'3.145'</span></span>
@@ -644,7 +647,7 @@ False</code></pre>
 <section id="miscellaneous-tools" class="level2">
 <h2 class="anchored" data-anchor-id="miscellaneous-tools">Miscellaneous tools</h2>
 <p>Here are yet more tools that can be helpful, but don’t really belong anywhere else. Such as this one:</p>
-<div id="06aa9cdf" class="cell" data-execution_count="7">
+<div id="639f230d" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>user_input <span class="op">=</span> <span class="st">'Scirys'</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>options <span class="op">=</span> [<span class="st">'Python'</span>, <span class="st">'NumPy'</span>, <span class="st">'SciPy'</span>, <span class="st">'pandas'</span>, <span class="st">'Matplotlib'</span>, <span class="st">'Sciris'</span>]</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>sc.suggest(user_input, options, n<span class="op">=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -655,7 +658,7 @@ False</code></pre>
 <section id="downloading-files" class="level3">
 <h3 class="anchored" data-anchor-id="downloading-files">Downloading files</h3>
 <p>Much of the web runs on Python, and there are some super powerful web libraries (such as <a href="https://requests.readthedocs.io/en/latest/">requests</a>). But what if you don’t need something super powerful, and want something that just works? <a href="../api/sc_utils.html#sciris.sc_utils.download" title="0"><code>sc.download()</code></a> does just that, and can either load the downloaded data directly into memory, or save it to disk:</p>
-<div id="ef353837" class="cell" data-execution_count="8">
+<div id="a2480691" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the URLs to download -- from Project Gutenberg</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>urls <span class="op">=</span> [</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'https://www.gutenberg.org/cache/epub/1513/pg1513.txt'</span>, <span class="co"># Romeo and Juliet</span></span>
@@ -670,7 +673,7 @@ False</code></pre>
 <span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Alice is named </span><span class="sc">{</span>data[<span class="dv">1</span>]<span class="sc">.</span>lower()<span class="sc">.</span>count(<span class="st">'alice'</span>)<span class="sc">}</span><span class="ss"> times in Alice in Wonderland."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Downloading 2 URLs...
-Time to download 2 URLs: 1.53 s
+Time to download 2 URLs: 0.727 s
 Juliet is named 194 times in Romeo and Juliet.
 Alice is named 403 times in Alice in Wonderland.</code></pre>
 </div>
@@ -680,7 +683,7 @@ Alice is named 403 times in Alice in Wonderland.</code></pre>
 <section id="running-commands" class="level3">
 <h3 class="anchored" data-anchor-id="running-commands">Running commands</h3>
 <p>If you use Linux (or Mac), you probably do a lot of things in the terminal. There are several ways of doing this in Python, including <a href="https://docs.python.org/3/library/os.html#os.system" title="1"><code>os.system()</code></a>, <a href="https://docs.python.org/3/library/subprocess.html#subprocess.run" title="1"><code>subprocess.run()</code></a>, and <a href="https://docs.python.org/3/library/subprocess.html#subprocess.Popen" title="1"><code>subprocess.Popen()</code></a>. But if you want to just quickly run something, you can use <a href="../api/sc_utils.html#sciris.sc_utils.runcommand" title="0"><code>sc.runcommand()</code></a>:</p>
-<div id="f4486c6f" class="cell" data-execution_count="9">
+<div id="34fd711a" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> sc.runcommand(<span class="st">'ls *.qmd'</span>, printoutput<span class="op">=</span><span class="va">True</span>) <span class="co"># NB, won't work on Windows!</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'There are </span><span class="sc">{</span><span class="bu">len</span>(out.splitlines())<span class="sc">}</span><span class="ss"> Sciris tutorials.'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -703,7 +706,7 @@ There are 10 Sciris tutorials.</code></pre>
 <section id="import-by-path" class="level3">
 <h3 class="anchored" data-anchor-id="import-by-path">Import by path</h3>
 <p>You’re probably pretty familiar with the <code>sys.path.append()</code> syntax for adding a folder to the Python path for loading modules that haven’t been installed. But this is clunky: it’s global, and you can’t import two modules with the same name. <a href="../api/sc_utils.html#sciris.sc_utils.importbypath" title="0"><code>sc.importbypath</code></a> fixes this. For example, let’s say we have two different versions of the same code, <code>sim1/sim.py</code> and <code>sim2/sim.py</code> that we want to compare:</p>
-<div id="6d782c1d" class="cell" data-execution_count="10">
+<div id="801ca60d" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import both versions</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>old <span class="op">=</span> sc.importbypath(<span class="st">'sim1/sim.py'</span>)</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>new <span class="op">=</span> sc.importbypath(<span class="st">'sim2/sim.py'</span>)</span>
@@ -729,7 +732,7 @@ There are 10 Sciris tutorials.</code></pre>
 </div>
 </div>
 <p>Let’s load the source code for both and see where they differ:</p>
-<div id="e75da24c" class="cell" data-execution_count="11">
+<div id="a734dace" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>oldsrc <span class="op">=</span> sc.loadtext(old.<span class="va">__file__</span>).splitlines()</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>newsrc <span class="op">=</span> sc.loadtext(new.<span class="va">__file__</span>).splitlines()</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -749,7 +752,7 @@ There are 10 Sciris tutorials.</code></pre>
 <section id="getting-help" class="level3">
 <h3 class="anchored" data-anchor-id="getting-help">Getting help</h3>
 <p>Sciris provides a built-in help, <a href="../api/sc_settings.html#sciris.sc_settings.help" title="0"><code>sc.help()</code></a>, that can do a text search through its entire source code. For example, let’s say you remembered there was a function that did interpolation, but forgot what it was called:</p>
-<div id="34e867af" class="cell" data-execution_count="12">
+<div id="25c25410" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>sc.<span class="bu">help</span>(<span class="st">'interpol'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Found 8 matches for "interpol" among 287 available functions:
@@ -765,7 +768,7 @@ There are 10 Sciris tutorials.</code></pre>
 </div>
 </div>
 <p>If you want more detail, you can use <code>context=True</code>:</p>
-<div id="7050aae5" class="cell" data-execution_count="13">
+<div id="05323077" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>sc.<span class="bu">help</span>(<span class="st">'interpol'</span>, context<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <div class="ansi-escaped-output">

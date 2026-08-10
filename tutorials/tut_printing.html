@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.37">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,10 +12,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -77,14 +80,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-dc16a9b152f85a9de5b03f2d2ad60ba1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -514,7 +517,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="headings-and-colors" class="level2">
 <h2 class="anchored" data-anchor-id="headings-and-colors">Headings and colors</h2>
 <p>No one in their right mind would make a black and white plot these days, but it’s still pretty common to output monochrome text. Fair: color should be used sparingly. But when you do want a pop of color, Sciris has you covered. For example, you can easily make section headings to delineate <a href="https://philpapers.org/archive/BLUANS.pdf">large blocks of text</a>:</p>
-<div id="746d698f" class="cell" data-execution_count="1">
+<div id="72199890" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -582,32 +585,32 @@ Some very dull blue data
 
 </span>
 
-<span class="ansi-blue-fg">[[0.4916132  0.4214269  0.00646661 0.81717681 0.08415445 0.08146812]
+<span class="ansi-blue-fg">[[0.90354608 0.806996   0.20244152 0.7629231  0.59344346 0.0691499 ]
 
- [0.76955091 0.45736728 0.84810393 0.17795101 0.07480464 0.77056819]
+ [0.14877491 0.63896495 0.77049046 0.46738765 0.86456043 0.94670538]
 
- [0.92280718 0.3007883  0.75553343 0.01734803 0.46910564 0.35174365]
+ [0.72303018 0.91593319 0.99154966 0.77686861 0.84885832 0.95770827]
 
- [0.2188141  0.14947173 0.72606704 0.39673029 0.81928823 0.14168244]
+ [0.71075814 0.2640391  0.20581044 0.60983694 0.35326234 0.28093268]
 
- [0.14320886 0.04236109 0.22810883 0.31298644 0.14813963 0.48945551]
+ [0.28580944 0.28302214 0.45492301 0.61778079 0.6654353  0.92033257]
 
- [0.5062705  0.41880074 0.20206158 0.6277381  0.44096169 0.47204675]
+ [0.32076897 0.21205642 0.33212397 0.75946709 0.51064089 0.19915571]
 
- [0.66238016 0.9827278  0.60362898 0.2134278  0.33171548 0.57021702]
+ [0.71619076 0.74516437 0.05974211 0.69307662 0.33619354 0.25877552]
 
- [0.54149339 0.8697157  0.88054744 0.78755649 0.33801539 0.41225117]
+ [0.37086355 0.63764479 0.52436766 0.49721602 0.55444415 0.84355198]
 
- [0.66457094 0.95921269 0.74215294 0.43552167 0.50038079 0.90037536]
+ [0.15977833 0.61394745 0.27247833 0.09079281 0.00520617 0.18020727]
 
- [0.95841608 0.4205146  0.36837347 0.84295677 0.72103015 0.63422691]]</span>
+ [0.64410244 0.17059352 0.63699504 0.71355348 0.737924   0.17399979]]</span>
 </pre>
 </div>
 </div>
 </div>
 <p>(Note: if you’re reading this on <a href="https://docs.sciris.org">docs.sciris.org</a>, there’s a little button at the top right where you can change to dark mode if you prefer – the colors might make more sense then!)</p>
 <p>Incidentally, Sciris includes two functions for combining strings: <a href="../api/sc_utils.html#sciris.sc_utils.strjoin" title="0"><code>sc.strjoin()</code></a> and <a href="../api/sc_utils.html#sciris.sc_utils.newlinejoin" title="0"><code>sc.newlinejoin()</code></a>. These are just shortcuts to <code>', '.join()</code> and <code>'\n'.join()</code>, respectively (plus automatic conversion to strings), but can make life easier, especially inside f-strings:</p>
-<div id="1af30986" class="cell" data-execution_count="2">
+<div id="18eed39f" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get(key):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    my_dict <span class="op">=</span> <span class="bu">dict</span>(key1<span class="op">=</span><span class="dv">1</span>, key2<span class="op">=</span><span class="dv">2</span>, key3<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
@@ -628,7 +631,7 @@ Some very dull blue data
 <section id="printing-objects" class="level2">
 <h2 class="anchored" data-anchor-id="printing-objects">Printing objects</h2>
 <p>Let’s revisit our well-trodden sim:</p>
-<div id="66ac1397" class="cell" data-execution_count="3">
+<div id="ae0be160" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -653,10 +656,10 @@ Some very dull blue data
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>sim.run()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We can quickly view the full object with the “pretty representation”, or <a href="../api/sc_printing.html#sciris.sc_printing.pr" title="0"><code>sc.pr()</code></a>:</p>
-<div id="f6dee56d" class="cell" data-execution_count="4">
+<div id="48b040e0" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sc.pr(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>&lt;__main__.Sim at 0x76dbec74ea50&gt;
+<pre><code>&lt;__main__.Sim at 0x7f8d0c3da510&gt;
 [&lt;class '__main__.Sim'&gt;]
 ————————————————————————————————————————————————————————————————————————
 Methods:
@@ -665,14 +668,14 @@ Methods:
         n: 10
 n_factors: 5
     ready: True
-  results: #0. 'i=1': array([6, 4, 4, 1, 0, 7, 6, 3, 7, 0])
-           #1. 'i=2': array([ 4,  [...]
+  results: #0. 'i=1': array([4, 3, 6, 5, 8, 4, 1, 9, 3, 9])
+           #1. 'i=2': array([25,  [...]
 ————————————————————————————————————————————————————————————————————————
 </code></pre>
 </div>
 </div>
 <p>Compare this to the standard but less informative <a href="https://docs.python.org/3/library/functions.html#dir" title="1"><code>dir()</code></a>:</p>
-<div id="c8f1cbe3" class="cell" data-execution_count="5">
+<div id="12682ed3" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="bu">dir</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <pre><code>['__class__',
@@ -714,7 +717,7 @@ n_factors: 5
 </div>
 <p>Trying to figure out what this means is a lot more work! For example, from <a href="https://docs.python.org/3/library/functions.html#dir" title="1"><code>dir()</code></a>, you would’t know if <code>run</code> is an attribute (is it a flag indicating that the sim <em>was</em> run?) or a method.</p>
 <p>In fact, this representation of an object is so useful, you can use it when you create the class. Then if you do <code>print(sim)</code>, you’ll get the full representation rather than just the default (class name and memory address):</p>
-<div id="5890c6d3" class="cell" data-execution_count="6">
+<div id="108828a0" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> PrettySim(sc.prettyobj): <span class="co"># This line is key, everything else is the same as before!</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n<span class="op">=</span><span class="dv">10</span>, n_factors<span class="op">=</span><span class="dv">5</span>):</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.n <span class="op">=</span> n</span>
@@ -736,7 +739,7 @@ n_factors: 5
 <span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>sim.run()</span>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>&lt;__main__.PrettySim at 0x76db7f7078c0&gt;
+<pre><code>&lt;__main__.PrettySim at 0x7f8ccc8c97f0&gt;
 [&lt;class '__main__.PrettySim'&gt;, &lt;class 'sciris.sc_printing.prettyobj'&gt;]
 ————————————————————————————————————————————————————————————————————————
 Methods:
@@ -745,8 +748,8 @@ Methods:
         n: 10
 n_factors: 5
     ready: True
-  results: #0. 'i=1': array([9, 8, 2, 4, 8, 4, 2, 6, 8, 6])
-           #1. 'i=2': array([ 1,  [...]
+  results: #0. 'i=1': array([6, 4, 6, 8, 5, 6, 3, 6, 5, 7])
+           #1. 'i=2': array([49,  [...]
 ————————————————————————————————————————————————————————————————————————
 </code></pre>
 </div>
@@ -756,7 +759,7 @@ n_factors: 5
 <section id="monitoring-progress" class="level2">
 <h2 class="anchored" data-anchor-id="monitoring-progress">Monitoring progress</h2>
 <p>What if you have a really slow task and you want to check progress? You can use <a href="../api/sc_printing.html#sciris.sc_printing.progressbar" title="0"><code>sc.progressbar</code></a> for that, which builds on the excellent package <a href="https://tqdm.github.io/">tqdm</a>:</p>
-<div id="3391ddf1" class="cell" data-execution_count="7">
+<div id="70a18495" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SlowSim(PrettySim):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> run_slow(<span class="va">self</span>):</span>
@@ -772,10 +775,11 @@ n_factors: 5
 <div class="cell-output cell-output-stderr">
 <pre><code>
   0%|          | 0/5 [00:00&lt;?, ?it/s]
- 20%|██        | 1/5 [00:00&lt;00:01,  2.58it/s]
- 40%|████      | 2/5 [00:00&lt;00:00,  3.46it/s]
- 80%|████████  | 4/5 [00:00&lt;00:00,  6.09it/s]
-100%|██████████| 5/5 [00:00&lt;00:00,  5.68it/s]</code></pre>
+ 40%|████      | 2/5 [00:00&lt;00:00,  5.22it/s]
+ 60%|██████    | 3/5 [00:00&lt;00:00,  4.25it/s]
+ 80%|████████  | 4/5 [00:01&lt;00:00,  3.71it/s]
+100%|██████████| 5/5 [00:01&lt;00:00,  3.27it/s]
+100%|██████████| 5/5 [00:01&lt;00:00,  3.62it/s]</code></pre>
 </div>
 </div>
 <p>Note that the progress bar looks better in a regular terminal than in Jupyter, and needless to say, it doesn’t look like anything in a static web page!</p>

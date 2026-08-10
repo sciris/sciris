@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.37">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,10 +12,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -77,14 +80,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-dc16a9b152f85a9de5b03f2d2ad60ba1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -519,7 +522,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="nested-dictionaries" class="level2">
 <h2 class="anchored" data-anchor-id="nested-dictionaries">Nested dictionaries</h2>
 <p>Nested dictionaries are a useful way of storing complex data (and in fact are more or less the basis of JSON), but can be a pain to interact with if you don’t know the structure in advance. Sciris has several functions for working with nested dictionaries. For example:</p>
-<div id="7a595e61" class="cell" data-execution_count="1">
+<div id="4a29196f" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the structure</span></span>
@@ -564,7 +567,7 @@ values = [1, 2, 3, 4, 5]</code></pre>
 </div>
 </div>
 <p>Sciris also has a <a href="../api/sc_nested.html#sciris.sc_nested.search" title="0"><code>sc.search()</code></a> function, which can find either keys or values that match a certain pattern:</p>
-<div id="c696a3dc" class="cell" data-execution_count="2">
+<div id="8dcb23e8" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sc.search(nest, <span class="st">'key2.1.1'</span>))</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sc.search(nest, value<span class="op">=</span><span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -573,7 +576,7 @@ values = [1, 2, 3, 4, 5]</code></pre>
 </div>
 </div>
 <p>There’s even an <a href="../api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> function that can make arbitrary changes to an object:</p>
-<div id="bc88147b" class="cell" data-execution_count="3">
+<div id="25158d67" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> increment(obj):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> obj <span class="op">+</span> <span class="dv">1000</span> <span class="cf">if</span> <span class="bu">isinstance</span>(obj, <span class="bu">int</span>) <span class="kw">and</span> obj <span class="op">!=</span><span class="dv">3</span> <span class="cf">else</span> obj</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -602,7 +605,7 @@ values = [1, 2, 3, 4, 5]</code></pre>
 <h2 class="anchored" data-anchor-id="context-blocks">Context blocks</h2>
 <p>Sciris contains two context block (i.e.&nbsp;“<code>with ... as</code>”) classes for catching what happens inside them.</p>
 <p><a href="../api/sc_printing.html#sciris.sc_printing.capture" title="0"><code>sc.capture()</code></a> captures all text output to a variable:</p>
-<div id="8cd2e1f0" class="cell" data-execution_count="4">
+<div id="38944573" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -619,16 +622,15 @@ values = [1, 2, 3, 4, 5]</code></pre>
 <span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> target <span class="kw">in</span> line:</span>
 <span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'Found target </span><span class="sc">{</span>target<span class="sc">}</span><span class="ss"> on line </span><span class="sc">{</span>l<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>line<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Found target 777 on line 62: Here are 5 random numbers: [0.9163777  0.41395971 0.73593135 0.60630225 0.45040424]
-Found target 777 on line 89: Here are 5 random numbers: [0.61273221 0.47775935 0.99121095 0.30712533 0.32930352]
-Found target 777 on line 92: Here are 5 random numbers: [0.04601488 0.79821877 0.81994717 0.04989133 0.7777362 ]
-Found target 777 on line 139: Here are 5 random numbers: [0.92957588 0.35440313 0.02777101 0.41479728 0.66738007]
-Found target 777 on line 142: Here are 5 random numbers: [0.49919687 0.41777165 0.34711512 0.63472815 0.44118312]
-Found target 777 on line 194: Here are 5 random numbers: [0.15488658 0.78577772 0.28144847 0.41761529 0.18081938]</code></pre>
+<pre><code>Found target 777 on line 17: Here are 5 random numbers: [0.86434769 0.76208423 0.62616648 0.58109143 0.97077783]
+Found target 777 on line 37: Here are 5 random numbers: [0.75759783 0.1830925  0.47770493 0.7601851  0.14085978]
+Found target 777 on line 119: Here are 5 random numbers: [0.13971278 0.84046886 0.11777797 0.18922929 0.26975524]
+Found target 777 on line 121: Here are 5 random numbers: [0.03777884 0.99598323 0.50191615 0.33829857 0.45410567]
+Found target 777 on line 159: Here are 5 random numbers: [0.2195502  0.51647627 0.2311934  0.62816938 0.97772686]</code></pre>
 </div>
 </div>
 <p>The other function, <a href="../api/sc_utils.html#sciris.sc_utils.tryexcept" title="0"><code>sc.tryexcept()</code></a>, is a more compact way of writing <code>try ... except</code> blocks, and gives detailed control of error handling:</p>
-<div id="c8212e65" class="cell" data-execution_count="5">
+<div id="24e43e77" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fickle_func(n<span class="op">=</span><span class="dv">1</span>):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        rnd <span class="op">=</span> np.random.rand()</span>
@@ -661,7 +663,7 @@ Simple usage, exit gracefully at first exception
 
 </span>
 
-&lt;class 'ValueError'&gt; Value 0.000236007 too small
+&lt;class 'ValueError'&gt; Value 0.00307965 too small
 
 <span class="ansi-cyan-fg">
 
@@ -675,7 +677,7 @@ Store all history
 
 </span>
 
-&lt;sciris.sc_utils.tryexcept at 0x78be740d24d0&gt;
+&lt;sciris.sc_utils.tryexcept at 0x7f8f72e31f50&gt;
 
 [&lt;class 'sciris.sc_utils.tryexcept'&gt;, &lt;class 'contextlib.suppress'&gt;, &lt;class 'contextlib.AbstractContextManager'&gt;, &lt;class 'abc.ABC'&gt;]
 
@@ -695,9 +697,9 @@ Properties:
 
 catchtypes: ()
 
-      data: [[&lt;class 'RuntimeError'&gt;, RuntimeError('Value 0.994536 too
+      data: [[&lt;class 'ValueError'&gt;, ValueError('Value 0.00182519 too
 
-            big'), &lt;tra [...]
+            small'), &lt;tra [...]
 
 defaultdie: False
 
@@ -709,7 +711,7 @@ defaultdie: False
 
    verbose: 0
 
- _abc_impl: &lt;_abc._abc_data object at 0x78bee42a5240&gt;
+ _abc_impl: &lt;_abc._abc_data object at 0x7f8fb8a64300&gt;
 
 ————————————————————————————————————————————————————————————————————————
 
@@ -725,7 +727,7 @@ defaultdie: False
 <section id="interpolation" class="level3">
 <h3 class="anchored" data-anchor-id="interpolation">Interpolation</h3>
 <p>The function <a href="../api/sc_math.html#sciris.sc_math.smoothinterp" title="0"><code>sc.smoothinterp()</code></a> smoothly interpolates between points but does <em>not</em> use spline interpolation; this makes it somewhat of a balance between <a href="https://numpy.org/doc/stable/reference/generated/numpy.interp.html#numpy.interp" title="1"><code>numpy.interp()</code></a> (which only interpolates linearly) and <code>scipy.interpolate.interp1d(..., method='cubic')</code>, which takes considerable liberties between data points:</p>
-<div id="200d229f" class="cell" data-execution_count="6">
+<div id="49a39f45" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -761,7 +763,7 @@ defaultdie: False
 <section id="optimization" class="level3">
 <h3 class="anchored" data-anchor-id="optimization">Optimization</h3>
 <p>Sciris includes a gradient descent optimization method, <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0192944">adaptive stochastic descent</a> (ASD), that can outperform SciPy’s built-in <a href="https://docs.scipy.org/doc/scipy/reference/optimize.html">optimization methods</a> (such as simplex) for certain types of optimization problem. For example:</p>
-<div id="2c14826a" class="cell" data-execution_count="7">
+<div id="b63e3657" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Basic usage</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
@@ -780,10 +782,10 @@ defaultdie: False
 <span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Scipy result:  </span><span class="sc">{</span>func(opt_scipy.x)<span class="sc">}</span><span class="ss">'</span>)</span>
 <span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Sciris result: </span><span class="sc">{</span>func(opt_sciris.x)<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>scipy.optimize(): 46.4 ms
-sciris.asd(): 11.7 ms
-Scipy result:  4.826351964229613e-08
-Sciris result: 3.1016642305007894e-16</code></pre>
+<pre><code>scipy.optimize(): 8.85 ms
+sciris.asd(): 2.98 ms
+Scipy result:  4.829290232718364e-08
+Sciris result: 2.915793584925527e-16</code></pre>
 </div>
 </div>
 <p>Compared to SciPy’s simplex algorithm, Sciris’ ASD algorithm was ≈3 times faster and found a result ≈8 orders of magnitude smaller.</p>
@@ -792,20 +794,23 @@ Sciris result: 3.1016642305007894e-16</code></pre>
 <section id="animation" class="level2">
 <h2 class="anchored" data-anchor-id="animation">Animation</h2>
 <p>And finally, let’s end on something fun. Sciris has an <a href="../api/sc_plotting.html#sciris.sc_plotting.animation" title="0"><code>sc.animation()</code></a> class with lots of options, but you can also just make a quick movie from a series of plots. For example, let’s make some lines dance:</p>
-<div id="9a3fdf01" class="cell" data-execution_count="8">
+<div id="9aa586e2" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>plt.figure()</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>frames <span class="op">=</span> [plt.plot(np.cumsum(np.random.randn(<span class="dv">100</span>))) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">20</span>)] <span class="co"># Create frames</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>sc.savemovie(frames, <span class="st">'dancing_lines.gif'</span>)<span class="op">;</span> <span class="co"># Save movie as a gif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>MovieWriter imagemagick unavailable; using Pillow instead.</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Saving 20 frames at 10.0 fps and 150 dpi to "dancing_lines.gif" using imagemagick...
 Done; movie saved to "dancing_lines.gif"
-File size: 118 KB
-Elapsed time: 3.71 s</code></pre>
+File size: 272 KB
+Elapsed time: 1.85 s</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="tut_advanced_files/figure-html/cell-9-output-2.png" width="578" height="411" class="figure-img"></p>
+<p><img src="tut_advanced_files/figure-html/cell-9-output-3.png" width="578" height="411" class="figure-img"></p>
 </figure>
 </div>
 </div>

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.37">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -12,10 +12,13 @@
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
 */
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -77,14 +80,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-23bbe8b5e4efc1e257f6d59dce478b08.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-dc16a9b152f85a9de5b03f2d2ad60ba1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-56351030feb95ee45426760ad2a9efe0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -521,7 +524,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="basic-plotting" class="level3">
 <h3 class="anchored" data-anchor-id="basic-plotting">Basic plotting</h3>
 <p>First, let’s make a plot using standard Matplotlib, then import Sciris and make the same plot:</p>
-<div id="cda8907e" class="cell" data-execution_count="1">
+<div id="b217e59c" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -559,7 +562,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="plotting-styles" class="level3">
 <h3 class="anchored" data-anchor-id="plotting-styles">Plotting styles</h3>
 <p>By default, Sciris uses higher resolution both for display and saving. But it also has two other built-in styles, <code>simple</code> and <code>fancy</code>, that you can call just like any other Matplotlib style:</p>
-<div id="a687091c" class="cell" data-execution_count="2">
+<div id="979529e3" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> demo_plot(label, npts<span class="op">=</span><span class="dv">100</span>, nlines<span class="op">=</span><span class="dv">5</span>):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    fig <span class="op">=</span> plt.figure()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(nlines):</span>
@@ -599,7 +602,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="plot-configuration" class="level3">
 <h3 class="anchored" data-anchor-id="plot-configuration">Plot configuration</h3>
 <p>One of the fun-but-annoying things about plots is that they’re so customizable: no two plots are ever exactly the same. (One <a href="https://www.nytimes.com/interactive/2022/10/29/opinion/science-fraud-image-manipulation-photoshop.html">hopes</a>.) Sciris has a lot of options for configuring plots. Here are some of the most commonly used ones, which are hopefully more or less self-explanatory:</p>
-<div id="4c3eb7c2" class="cell" data-execution_count="3">
+<div id="076f33a4" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sc.options(font<span class="op">=</span><span class="st">'serif'</span>) <span class="co"># Change font to serif</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> sc.daterange(<span class="st">'2022-06-01'</span>, <span class="st">'2022-12-31'</span>, as_date<span class="op">=</span><span class="va">True</span>) <span class="co"># Create dates</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> sc.smooth(np.random.randn(<span class="bu">len</span>(x))<span class="op">**</span><span class="dv">2</span>)<span class="op">*</span><span class="dv">1000</span> <span class="co"># Create smoothed random numbers</span></span>
@@ -623,7 +626,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="advanced-plotting-options">Advanced plotting options</h3>
 <p>Do you ever have, say, 14 plots, and have to think about how to turn that into a grid of subplots? <a href="../api/sc_plotting.html#sciris.sc_plotting.getrowscols" title="0"><code>sc.getrowscols()</code></a> will solve that problem for you. Speaking of subplots, by default Matplotlib has a lot of wasted space; <a href="../api/sc_plotting.html#sciris.sc_plotting.figlayout" title="0"><code>sc.figlayout()</code></a> will convert the figure to “tight” layout, which (usually) fixes this. Finally, since 3D plots are cool, let’s do more of those.</p>
 <p>Putting it all together:</p>
-<div id="ec01971e" class="cell" data-execution_count="4">
+<div id="e205fc76" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Squiggles(sc.prettyobj):</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n<span class="op">=</span><span class="dv">9</span>, length<span class="op">=</span><span class="dv">100</span>):</span>
@@ -665,7 +668,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The main way of creating a continuous colormap in Sciris is <a href="../api/sc_colors.html#sciris.sc_colors.vectocolor" title="0"><code>sc.vectocolor()</code></a> (or its 2D equivalent <code>sc.arraytocolor()</code>). In most cases, this is pretty close to what Matplotlib would pick for the color mapping on its own. However, with <a href="../api/sc_colors.html#sciris.sc_colors.vectocolor" title="0"><code>sc.vectocolor()</code></a> we have more flexibility.</p>
 <p>For categorical variables, the main function is <a href="../api/sc_colors.html#sciris.sc_colors.gridcolors" title="0"><code>sc.gridcolors()</code></a>. For 9 or fewer colors, it uses the <a href="https://colorbrewer2.org/">ColorBrewer colors</a>, which are awesome. For 10-19 colors, it uses <a href="https://medium.com/@rjurney/kellys-22-colours-of-maximum-contrast-58edb70c90d1">Kelly’s colors of maximum contrast</a>, which are also awesome. For 20 or more colors, it will create colors uniformly spaced in RGB space.</p>
 <p>But a picture is worth 1000 words, right?</p>
-<div id="0ef1cea3" class="cell" data-execution_count="5">
+<div id="f1c56cb2" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> colorcube(n<span class="op">=</span><span class="dv">50</span>, title<span class="op">=</span><span class="va">None</span>, continuous<span class="op">=</span><span class="va">True</span>):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> continuous:</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        colors <span class="op">=</span> sc.vectocolor(n, cmap<span class="op">=</span>title.lower())</span>
