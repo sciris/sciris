@@ -22,10 +22,24 @@ def test_utils():
     o.approx = sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
     assert not o.approx[0]
 
-    print('Testing sc.savedivide()')
+    print('Testing sc.safedivide()')
     assert sc.safedivide(numerator=0, denominator=0, default=1, eps=0) == 1 # Returns 1
-    o.safedivide = sc.safedivide(3, np.array([1,3,0]),-1, warn=False)  # Returns array([ 3,  1, -1])
-    assert o.safedivide[-1] == -1
+    assert sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) == 2.5
+    assert sc.safedivide() == 1.0 # Defaults are 1/1
+    denominator = np.array([1,3,0])
+    o.safedivide = sc.safedivide(3, denominator, -1, warn=False)  # Returns array([ 3., 1., -1.])
+    assert list(o.safedivide) == [3, 1, -1]
+    assert list(denominator) == [1, 3, 0], 'The input array should not be modified'
+    assert list(sc.safedivide([1,2,3], (1,0,2), default=-1)) == [1, -1, 1.5] # Lists and tuples are converted
+    assert sc.safedivide(1, np.nan, default=-1) == -1, 'nan denominators should also be replaced'
+    assert list(sc.safedivide(1, np.array([2.0, np.nan]), default=-1)) == [0.5, -1]
+    assert list(sc.safedivide(np.array([1,2]), 0, default=-1)) == [-1, -1], 'Should broadcast to the numerator'
+    assert sc.safedivide(1, 1e-10, default=-1) == -1 # Within the default eps of zero
+    assert sc.safedivide(1, 1e-10, default=-1, eps=0) == 1e10 # ...but not with eps=0
+    with pytest.warns(RuntimeWarning):
+        sc.safedivide(3, np.array([1,3,0]), -1, warn=True)
+    with pytest.raises(TypeError):
+        sc.safedivide(1, 'not a number')
 
     print('Testing sc.isprime()')
     o.isprime = [[i**2+1,sc.isprime(i**2+1)] for i in range(10)]

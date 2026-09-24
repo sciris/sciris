@@ -51,38 +51,64 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     """
     Handle divide-by-zero and divide-by-nan elegantly.
 
+    Wherever the denominator is zero (to within `eps`) or nan, the output is set
+    to `default` instead. The numerator and denominator can each be a scalar or
+    an array (of any shape, so long as the two can be broadcast together); the
+    inputs are never modified.
+
+    Args:
+        numerator   (number or array): the numerator of the division (default 1.0)
+        denominator (number or array): the denominator of the division (default 1.0)
+        default     (number):          the value to use where the denominator is invalid (default 0.0)
+        eps         (float):           absolute tolerance for treating the denominator as zero (default `numpy.isclose()`'s, i.e. 1e-8)
+        warn        (bool):            whether to raise a warning if any invalid denominators were encountered
+
     **Examples**:
 
     ```python
     sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1
     sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5
-    sc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])
+    sc.safedivide(3, np.array([1,3,0]), -1) # Returns array([ 3.,  1., -1.])
+    sc.safedivide(1, np.nan, default=-1) # Returns -1
     ```
+
+    - *New in version 3.4.0:* fixes to denominators and warnings
     """
     # Set some defaults
     if numerator   is None: numerator   = 1.0
     if denominator is None: denominator = 1.0
     if default     is None: default     = 0.0
 
-    # Handle types
-    if isinstance(numerator,   list): numerator   = np.array(numerator)
-    if isinstance(denominator, list): denominator = np.array(denominator)
+    # Handle types: leave scalars as they are, and convert everything else to a numeric array
+    def checkarray(val, label):
+        """ Convert the input to a numeric array, with a helpful error message if not possible """
+        if sc.isnumber(val):
+            return val
+        try:
+            arr = np.asarray(val)
+            assert np.issubdtype(arr.dtype, np.number)
+        except Exception as E:
+            errormsg = f'sc.safedivide() {label} type {type(val)} not understood: must be a number or numeric array'
+            raise TypeError(errormsg) from E
+        return arr
 
-    # Handle the logic
-    invalid = approx(denominator, 0.0, eps=eps)
-    if sc.isnumber(denominator): # The denominator is a scalar
-        if invalid:
-            output = default
-        else: # pragma: no cover
-            output = numerator/denominator
-    elif sc.checktype(denominator, 'array'):
-        if not warn:
-            denominator[invalid] = 1.0 # Replace invalid values with 1
-        output = numerator/denominator
-        output[invalid] = default
-    else: # pragma: no cover # Unclear input, raise exception
-        errormsg = f'Input type {type(denominator)} not understood: must be number or array'
-        raise TypeError(errormsg)
+    num = checkarray(numerator,   'numerator')
+    den = checkarray(denominator, 'denominator')
+
+    # Find the invalid entries: zero (to within eps) or nan
+    invalid = approx(den, 0.0, eps=eps) | np.isnan(den)
+
+    if warn and np.any(invalid):
+        n_invalid = int(np.sum(invalid))
+        warnmsg = f'sc.safedivide(): replacing {n_invalid} zero or nan denominator value(s) with default={default}'
+        warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+
+    # Handle the logic: replace invalid denominators before dividing, to avoid Numpy warnings
+    if sc.isnumber(num) and sc.isnumber(den): # Both are scalars, so return a scalar
+        output = default if invalid else num/den
+    else:
+        safeden = np.where(invalid, 1.0, den) # Replace invalid values with 1
+        output = np.where(invalid, default, num/safeden)
 
     return output
 

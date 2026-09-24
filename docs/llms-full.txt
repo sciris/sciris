@@ -220,7 +220,8 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   ```python
   sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1
   sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5
-  sc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])
+  sc.safedivide(3, np.array([1,3,0]), -1) # Returns array([ 3.,  1., -1.])
+  sc.safedivide(1, np.nan, default=-1) # Returns -1
   ```
 
 - `sc.sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die=True, verbose=False, label=None)`: Sanitize input to remove NaNs. (NB: `sc.sanitize()` and `sc.rmnans()` are aliases.) [aliases: sc.rmnans()]

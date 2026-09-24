@@ -2122,7 +2122,7 @@
       "module": "sc_math",
       "signature": "(numerator=None, denominator=None, default=None, eps=None, warn=False)",
       "summary": "Handle divide-by-zero and divide-by-nan elegantly.",
-      "example": "sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1\nsc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5\nsc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])",
+      "example": "sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1\nsc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5\nsc.safedivide(3, np.array([1,3,0]), -1) # Returns array([ 3.,  1., -1.])\nsc.safedivide(1, np.nan, default=-1) # Returns -1",
       "aliases": [],
       "deprecated": false
     },
