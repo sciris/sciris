@@ -237,12 +237,12 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
     **Examples**:
 
     ```python
-    sc.benchmark() # Returns e.g. {'python': 14.88, 'numpy': 497.05}
+    sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
 
     numpy_mops = sc.benchmark(which='numpy')
-    if numpy_mops < 200:
+    if numpy_mops < 100:
         print('Your computer is slow')
-    elif numpy_mops > 800:
+    elif numpy_mops > 400:
         print('Your computer is fast')
     else:
         print('Your computer is normal')
@@ -253,7 +253,6 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
     - *New in version 3.0.0.*
     - *New in version 3.1.0:* "parallel" argument; increased default scale
     - *New in version 3.2.4:* replaced "python" and "numpy" arguments with "which"
-    - *New in version 3.4.0:* NumPy benchmark uses `np.random.default_rng()` rather than NumPy's (much slower) legacy global generator, so NumPy results are roughly double those of previous versions
     """
     # Handle which
     python = True if 'python' in which else False
@@ -269,7 +268,7 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
     py_inner = scale*1e3
     np_inner = scale*1e6
     py_ops = (py_outer * py_inner * 18)/1e6
-    np_ops = (np_outer * np_inner * 4)/1e6
+    np_ops = (np_outer * np_inner * 1.7)/1e6 # There are 4 operations, but the factor is scaled so that results match earlier versions, which used NumPy's slower legacy RNG
 
     # Define the benchmarking functions
     def bm_python(prefix=''): # Prefix used in parallel runs
