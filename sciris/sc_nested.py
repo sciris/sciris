@@ -15,17 +15,11 @@ import collections as co
 import numpy as np
 import pandas as pd
 import sciris as sc
+from .sc_utils import _not_given, _is_given # Allows searching for actual None values; imported directly since it's needed at definition time
 
 # Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
 atomic_classes = [np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index]
 atomic_with_tuple = atomic_classes + [tuple]
-
-# Define a custom "None" value to allow searching for actual None values
-_None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
-
-def not_none(obj):
-    """ Check if an object does not match "_None" (the special None value to allow None input) """
-    return not isinstance(obj, str) or obj != _None
 
 
 ##############################################################################
@@ -180,18 +174,20 @@ def check_in_obj(parent, key):
     return out
 
 
-def get_from_obj(ndict, key, safe=False, default=None, **kwargs):
+def get_from_obj(ndict, key, safe=False, default=_not_given, **kwargs):
     """
     Get an item from a dict, list, or object by key
 
     Args:
         ndict (dict/list/obj): the object to get from
         key (any): the key to get
-        safe (bool): whether to return None if the key is not found (default False)
-        default (any): the value to return if the key is not found and safe=True
+        safe (bool): whether to return the "default" value (None if not provided) if the key is not found
+        default (any): the value to return if the key is not found (sets safe=True if provided)
         kwargs (dict): passed to `check_iter_type()`
     """
-    if default is not None:
+    if default is _not_given:
+        default = None
+    else:
         safe = True
     itertype = check_iter_type(ndict, **kwargs)
     if itertype == 'dict':
@@ -249,7 +245,7 @@ def flatten_traces(tupledict, sep='_'):
     return strdict
 
 
-def getnested(nested, keylist, safe=False, default=None):
+def getnested(nested, keylist, safe=False, default=_not_given):
     """
     Get the value for the given list of keys
 
@@ -266,10 +262,8 @@ def getnested(nested, keylist, safe=False, default=None):
     ```
     See `sc.makenested()` for full documentation.
     """
-    if default is not None:
-        safe = True
     keylist = sc.tolist(keylist, coerce='tuple')
-    get = ft.partial(get_from_obj, safe=safe, default=default)
+    get = ft.partial(get_from_obj, safe=safe, default=default) # get_from_obj() handles whether default was supplied
     out = ft.reduce(get, keylist, nested)
     return out
 
@@ -510,10 +504,9 @@ class IterObj:
                         out = [] # Return nothing if doesn't have __dict__.items() or __slots__, e.g. a weird wrapped function
             else:
                 out = [] # Return nothing if not recognized
-        if trace is not _None:
-            out = list(out)
-            for i in range(len(out)):
-                out[i] = [parent, trace, *list(out[i])] # Prepend parent and trace to the arguments
+        out = list(out)
+        for i in range(len(out)):
+            out[i] = [parent, trace, *list(out[i])] # Prepend parent and trace to the arguments
         return out
 
     def getitem(self, key, parent):
@@ -870,7 +863,7 @@ def nestedloop(inputs, loop_order):
 __all__ += ['search', 'Equal', 'equal']
 
 
-def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact', **kwargs):
+def search(obj, query=_not_given, key=_not_given, value=_not_given, type=_not_given, method='exact', **kwargs):
     """
     Find a key/attribute or value within a list, dictionary or object.
 
@@ -923,7 +916,7 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
 
     def check_match(source, target):
         """ Check if there is a match between the "source" and "target" """
-        if not_none(source) and not_none(target): # See above for definition of _None; a source and target were supplied
+        if _is_given(source) and _is_given(target): # A source and target were supplied
             if callable(target):
                 match = target(source)
             elif method == 'exact':
@@ -944,16 +937,16 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
         return match
 
     # Handle query
-    if not_none(query):
-        if not_none(key) or not_none(value): # pragma: no cover
+    if _is_given(query):
+        if _is_given(key) or _is_given(value): # pragma: no cover
             errormsg = '"query" cannot be used with "key" or "value"; it is a shortcut to set both'
             raise ValueError(errormsg)
         key = query
         value = query
 
     # Handle type
-    if not_none(type):
-        if not_none(key) or not_none(value): # pragma: no cover
+    if _is_given(type):
+        if _is_given(key) or _is_given(value): # pragma: no cover
             errormsg = '"type" cannot be used with "key" or "value"; replaces "value"'
             raise ValueError(errormsg)
         typetuple = tuple(sc.tolist(type))
@@ -968,13 +961,13 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
     matches = []
 
     # Match keys
-    if not_none(key):
+    if _is_given(key):
         for k in tree.keys():
             if check_match(k[-1], key): # Only want the last key of the trace
                 matches.append(k)
 
     # Match values (including types)
-    if not_none(value):
+    if _is_given(value):
         for k,v in tree.items():
             if check_match(v, value):
                 matches.append(k)

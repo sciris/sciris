@@ -51,8 +51,18 @@ _stringtypes = (str, bytes, bytearray)
 _numtype     = (numbers.Number,)
 _booltypes   = (bool, np.bool_)
 
+class _NotGiven:
+    """ Sentinel for arguments that were not supplied, since None is a valid value """
+    def __repr__(self):
+        return '<not given>'
+_not_given = _NotGiven()
+
+def _is_given(obj):
+    """ Check whether an argument was supplied, i.e. isn't the `_not_given` sentinel """
+    return obj is not _not_given
+
 # Store these for access by other modules
-__all__ = ['_stringtypes', '_numtype', '_booltypes']
+__all__ = ['_stringtypes', '_numtype', '_booltypes', '_not_given', '_is_given']
 
 
 ##############################################################################

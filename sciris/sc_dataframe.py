@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import warnings
 import sciris as sc
+from .sc_utils import _not_given # Imported directly since it's needed at definition time
 
 # Pandas version detection for compatibility
 _pandas_version = tuple(int(x) for x in pd.__version__.split('.')[:2])
@@ -1020,7 +1021,7 @@ class dataframe(pd.DataFrame):
         return output
 
 
-    def findrow(self, value=None, col=None, default=None, closest=False, asdict=False, die=False):
+    def findrow(self, value=None, col=None, default=_not_given, closest=False, asdict=False, die=False):
         """
         Return a row by searching for a matching value.
 
@@ -1046,14 +1047,14 @@ class dataframe(pd.DataFrame):
         df.findrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
         ```
         """
-        index = self.findind(value=value, col=col, die=(die and default is None), closest=closest)
+        index = self.findind(value=value, col=col, die=(die and default is _not_given), closest=closest)
         if index is not None:
             if asdict:
                 thisrow = sc.odict(self.iloc[[index]].to_dict('records')[0]) # Preserve each column's dtype
             else:
                 thisrow = self.iloc[index,:].values
         else:
-            thisrow = default # If not found, return as default
+            thisrow = None if default is _not_given else default # If not found, return as default
         return thisrow
 
 

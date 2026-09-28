@@ -129,6 +129,7 @@ def test_nested_detailed():
         sc.getnested(o.d12, ['a','b'])
     assert sc.getnested(o.d12, ['a','b'], safe=True) == None
     assert sc.getnested(o.d12, ['a','b'], default='default') == 'default'
+    assert sc.getnested(o.d12, ['a','b'], default=None) == None # An explicit None default also implies safe
 
     # Test 13: copy
     d13 = sc.objdict(original='dict')

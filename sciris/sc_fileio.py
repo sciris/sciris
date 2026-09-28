@@ -2646,8 +2646,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
         unpicklers += ['robust']
 
     errors = {}
-    notset = object() # Sentinel, since None is a valid object
-    obj = notset
+    obj = sc._not_given # Sentinel, since None is a valid object
 
     if verbose:
         print(f'Loading data using these methods in sequence: {sc.strjoin(unpicklers)}')
@@ -2663,7 +2662,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
             errors[unpickler] = sc.traceback(E)
             if verbose: print(f'{unpickler} failed ({E})')
 
-    if obj is notset:
+    if obj is sc._not_given:
         errormsg = 'All available unpickling methods failed: ' + '\n'.join([f'{k}: {v}' for k,v in errors.items()])
         raise UnpicklingError(errormsg)
     elif len(unpickling_errors):

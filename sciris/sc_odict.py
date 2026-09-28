@@ -11,6 +11,7 @@ import json
 import numpy as np
 import collections as co
 import sciris as sc
+from .sc_utils import _not_given # Imported directly since it's needed at definition time
 
 # Restrict imports to user-facing modules
 __all__ = ['ddict', 'counter', 'odict', 'objdict', 'dictobj', 'asobj', 'argparse']
@@ -62,6 +63,16 @@ class counter(co.Counter):
             except Exception as e:
                 errormsg = f'"{attr}" is not a recognized method of Counter or array objects'
                 raise AttributeError(errormsg) from e
+
+    def _rewrap(self, out):
+        """ Convert the output of a Counter operation back to a counter """
+        return self.__class__(out) if isinstance(out, co.Counter) else out
+
+    # Arithmetic returns a plain Counter by default
+    def __add__(self, other): return self._rewrap(super().__add__(other))
+    def __sub__(self, other): return self._rewrap(super().__sub__(other))
+    def __or__( self, other): return self._rewrap(super().__or__(other))
+    def __and__(self, other): return self._rewrap(super().__and__(other))
 
 
 ##############################################################################
@@ -235,7 +246,7 @@ class odict(dict):
             self._setitem(key, value)
 
         elif isinstance(key, sc._numtype): # Convert automatically from float...dangerous?
-            thiskey = self._ikey(key)
+            thiskey = key if dict.__contains__(self, key) else self._ikey(key) # As with getitem, an existing key takes precedence
             self._setitem(thiskey, value)
 
         elif isinstance(key, slice):
@@ -279,6 +290,30 @@ class odict(dict):
         self._setattr('_stale', True) # Flag to refresh the cached keys
         super().update(*args, **kwargs)
         return
+
+
+    def setdefault(self, key, default=None):
+        """ Default setdefault, except set stale to true """
+        self._setattr('_stale', True)
+        return dict.setdefault(self, key, default)
+
+
+    def popitem(self):
+        """ Default popitem, except set stale to true """
+        self._setattr('_stale', True)
+        return dict.popitem(self)
+
+
+    def clear(self):
+        """ Default clear, except set stale to true """
+        self._setattr('_stale', True)
+        return dict.clear(self)
+
+
+    def __ior__(self, other):
+        """ Default in-place merge (`|=`), except set stale to true """
+        self._setattr('_stale', True)
+        return dict.__ior__(self, other)
 
 
     def __repr__(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10,
@@ -424,20 +459,21 @@ class odict(dict):
     def __radd__(self, dict2):
         """ Allows sum() to work correctly """
         if not dict2: return self # Skips if start=0, as default with sum()
-        else:         return self.__add__(dict2)
+        else:         return sc.mergedicts(self._new(), dict2, self) # The right operand takes precedence, as with __add__()
 
 
     def __delitem__(self, key):
         """ Default delitem, except set stale to true and allow numeric values; slices etc are not supported """
-        self._setattr('_stale', True) # Flag to refresh the cached keys
         try:
             return dict.__delitem__(self, key)
-        except Exception as E: # pragma: no cover
+        except Exception as E:
             if isinstance(key, sc._numtype): # If it's a number, use that
                 thiskey = self._ikey(key)
                 return dict.__delitem__(self, thiskey) # Note that defaultdict behavior isn't supported for non-string lookup
             else:
                 raise E
+        finally:
+            self._setattr('_stale', True) # Flag to refresh the cached keys, after the deletion since _ikey() refreshes them
 
 
     def disp(self, maxlen=None, showmultilines=True, divider=False, dividerthresh=10, numindents=0, sigfigs=5, numformat=None, maxitems=20, **kwargs):
@@ -452,7 +488,7 @@ class odict(dict):
         z.disp(numformat='%0.6f')
         ```
         """
-        kwargs = sc.mergedicts(dict(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=None, maxitems=maxitems), kwargs)
+        kwargs = sc.mergedicts(dict(maxlen=maxlen, showmultilines=showmultilines, divider=divider, dividerthresh=dividerthresh, numindents=numindents, recursionlevel=0, sigfigs=sigfigs, numformat=numformat, maxitems=maxitems), kwargs)
         print(self.__repr__(**kwargs))
         return
 
@@ -530,6 +566,12 @@ class odict(dict):
         return output
 
 
+    @staticmethod
+    def _transpose(iterator, n):
+        """ Transpose a list of tuples into a tuple of n lists, including if the list is empty """
+        return tuple(sc.transposelist(iterator)) if len(iterator) else tuple([] for _ in range(n))
+
+
     def export(self, doprint=True, classname='odict'):
         """ Export the odict in a form that is valid Python code """
         start = classname + '(['
@@ -554,37 +596,39 @@ class odict(dict):
 
     def pop(self, key, *args, **kwargs):
         """ Allows pop to support strings, integers, slices, lists, or arrays """
-        self._setattr('_stale', True) # Flag to refresh the cached keys
-        if isinstance(key, sc._stringtypes):
-            return dict.pop(self, key, *args, **kwargs)
-        elif isinstance(key, sc._numtype): # Convert automatically from float...dangerous?
-            thiskey = self._ikey(key)
-            return dict.pop(self, thiskey, *args, **kwargs)
-        elif isinstance(key, slice): # Handle a slice -- complicated
-            try:
-                slicekeys = self._slicetokeys(key)
-                slicevals = [dict.pop(self, k, *args, **kwargs) for k in slicekeys]
-                output = self._sanitize_items(slicevals)
-                return output
-            except Exception as E: # pragma: no cover
-                errormsg = 'Invalid odict slice'
-                raise ValueError(errormsg) from E
-        elif self._is_odict_iterable(key): # Iterate over items
-            keys = self.keys()
-            poplist = [keys[int(item)] if isinstance(item, sc._numtype) else item for item in key] # Convert to text keys, because indices change
-            listvals = [self.pop(item, *args, **kwargs) for item in poplist]
-            try:
-                return np.array(listvals)
-            except: # pragma: no cover
-                return listvals
-        else: # pragma: no cover # Handle string but also everything else
-            try:
+        try:
+            if isinstance(key, sc._stringtypes):
                 return dict.pop(self, key, *args, **kwargs)
-            except: # Duplicated from __getitem__
+            elif isinstance(key, sc._numtype): # Convert automatically from float...dangerous?
+                thiskey = key if dict.__contains__(self, key) else self._ikey(key) # As with getitem, an existing key takes precedence
+                return dict.pop(self, thiskey, *args, **kwargs)
+            elif isinstance(key, slice): # Handle a slice -- complicated
+                try:
+                    slicekeys = self._slicetokeys(key)
+                    slicevals = [dict.pop(self, k, *args, **kwargs) for k in slicekeys]
+                    output = self._sanitize_items(slicevals)
+                    return output
+                except Exception as E: # pragma: no cover
+                    errormsg = 'Invalid odict slice'
+                    raise ValueError(errormsg) from E
+            elif self._is_odict_iterable(key): # Iterate over items
                 keys = self.keys()
-                if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{sc.newlinejoin(keys)}'
-                else:         errormsg = f'Key {key} not found since odict is empty'
-                raise sc.KeyNotFoundError(errormsg)
+                poplist = [keys[int(item)] if isinstance(item, sc._numtype) else item for item in key] # Convert to text keys, because indices change
+                listvals = [self.pop(item, *args, **kwargs) for item in poplist]
+                try:
+                    return np.array(listvals)
+                except: # pragma: no cover
+                    return listvals
+            else: # pragma: no cover # Handle string but also everything else
+                try:
+                    return dict.pop(self, key, *args, **kwargs)
+                except: # Duplicated from __getitem__
+                    keys = self.keys()
+                    if len(keys): errormsg = f'odict key "{key}" not found; available keys are:\n{sc.newlinejoin(keys)}'
+                    else:         errormsg = f'Key {key} not found since odict is empty'
+                    raise sc.KeyNotFoundError(errormsg)
+        finally:
+            self._setattr('_stale', True) # Flag to refresh the cached keys, after popping since _ikey() refreshes them
 
 
     def remove(self, key, *args, **kwargs):
@@ -643,12 +687,11 @@ class odict(dict):
         """
         keys = []
         for key,val in self.items():
-            if val == value:  # Exact match, return a match
-                match = True
-            elif not strict and isinstance(value, list) and val in value: # "value" is a list and it's contained
-                match = True
-            else:
-                match = False
+            try:
+                match = bool(val == value) # Exact match
+                match = match or (not strict and isinstance(value, list) and val in value) # "value" is a list and it's contained
+            except ValueError: # Comparisons involving arrays give arrays
+                match = np.array_equal(val, value)
             if match:
                 if first: return key
                 else:     keys.append(key)
@@ -693,21 +736,17 @@ class odict(dict):
         return self.filter(keys=keys)
 
 
-    def append(self, key=None, value=None):
+    def append(self, key=_not_given, value=_not_given):
         """ Support an append method, like a list """
-        needkey = False
-        if value is None: # Assume called with a single argument
-            value = key
-            needkey = True
-        if key is None or needkey:
-            keyname = 'key'+sc.flexstr(len(self))  # Define the key just to be the current index
-        else: # pragma: no cover
-            keyname = key
-        self.__setitem__(keyname, value)
+        if value is _not_given: # Assume called with a single argument
+            key, value = None, (None if key is _not_given else key)
+        if key is None or key is _not_given:
+            key = 'key'+sc.flexstr(len(self))  # Define the key just to be the current index
+        self.__setitem__(key, value)
         return
 
 
-    def insert(self, pos=None, key=None, value=None):
+    def insert(self, pos=None, key=_not_given, value=_not_given):
         """
         Function to do insert a key -- note, computationally inefficient.
 
@@ -724,16 +763,18 @@ class odict(dict):
 
         # Handle inputs
         realpos, realkey, realvalue = pos, key, value
-        if key is None and value is None: # Assume it's called like odict.insert(666)
-            realvalue = pos
+        if value is _not_given:
+            if key is _not_given: # Assume it's called like odict.insert(66)
+                realpos, realvalue = 0, pos
+            else: # Assume it's called like odict.insert('route', 66)
+                realpos, realkey, realvalue = 0, pos, key
+        if realkey is _not_given:
             realkey = 'key'+sc.flexstr(len(self))
+        if realpos is None:
             realpos = 0
-        elif value is None: # Assume it's called like odict.insert('devil', 666)
-            realvalue = key
-            realkey = pos
-            realpos = 0
-        if pos is None:
-            realpos = 0
+        if realkey in self: # Remove an existing key first, so it's moved and overwritten
+            dict.pop(self, realkey)
+            self._setattr('_stale', True)
         if realpos>len(self): # pragma: no cover
             errormsg = f'Cannot insert {key} at position {pos} since length of odict is {len(self)}'
             raise ValueError(errormsg)
@@ -780,6 +821,9 @@ class odict(dict):
         """
         if not deep:
             new = self._new(super().copy())
+            defaultdict = self.__dict__.get('_defaultdict')
+            if defaultdict is not None:
+                new._setattr('_defaultdict', defaultdict)
         else:
             new = sc.dcp(self)
         return new
@@ -797,8 +841,8 @@ class odict(dict):
     def rename(self, oldkey, newkey):
         """ Change a key name (note: not optimized for speed) """
         nkeys = len(self)
-        if isinstance(oldkey, sc._numtype): # pragma: no cover
-            index = oldkey
+        if isinstance(oldkey, sc._numtype):
+            index = oldkey if oldkey >= 0 else oldkey + nkeys
             keystr = self.keys()[index]
         else: # Forge ahead for strings and anything else!
             index = self.keys().index(oldkey)
@@ -844,9 +888,9 @@ class odict(dict):
             if not sc.isiterable(sortby): # pragma: no cover
                 raise Exception('Please provide a list to determine the sort order.')
 
-            if all([isinstance(x, sc._stringtypes) for x in sortby]): # Going to sort by keys
-                allkeys = sortby # Assume the user knows what s/he is doing
-            elif all([isinstance(x,bool) for x in sortby]): # Using Boolean values to filter
+            if all([isinstance(x, sc._stringtypes + (tuple,)) for x in sortby]): # Going to sort by keys
+                allkeys = list(sortby) # Assume the user knows what s/he is doing
+            elif all([isinstance(x, sc._booltypes) for x in sortby]): # Using Boolean values to filter
                 allkeys = [origkeys[i] for i,tf in enumerate(sortby) if tf]
             elif all([isinstance(x, sc._numtype) for x in sortby]): # Going to sort by numbers
                 allkeys = [origkeys[ind] for ind in sortby]
@@ -854,16 +898,17 @@ class odict(dict):
                 errormsg = f'Cannot figure out how to sort by "{sortby}"'
                 raise TypeError(errormsg)
 
-        tmpdict = self._new()
         if reverse:
             allkeys.reverse() # If requested, reverse order
+        items = [(key, self[key]) for key in allkeys]
         if copy:
-            for key in allkeys: tmpdict[key] = self[key]
-            return tmpdict
+            out = self._new()
         else:
-            for key in allkeys: tmpdict.__setitem__(key, self.pop(key))
-            for key in allkeys: self.__setitem__(key, tmpdict.pop(key))
-            return
+            out = self
+            dict.clear(out) # Remove all keys, including any not in allkeys
+        dict.update(out, items) # Use the dict method, since integer keys would be treated as indices
+        out._setattr('_stale', True)
+        return out if copy else None
 
 
     def sorted(self, sortby=None, reverse=False):
@@ -873,9 +918,8 @@ class odict(dict):
 
     def reverse(self, copy=False):
         """ Reverse the order of an odict """
-        reversedkeys = self.keys()
-        reversedkeys.reverse()
-        output = self.sort(sortby=reversedkeys, copy=copy)
+        reversedinds = list(range(len(self)))[::-1] # Use indices rather than keys, which may be of any type
+        output = self.sort(sortby=reversedinds, copy=copy)
         return output
 
 
@@ -898,9 +942,9 @@ class odict(dict):
         **Examples**:
 
         ```python
-        a = sc.odict().make(5) # Make an odict of length 5, populated with Nones and default key names
+        a = sc.odict().make(5) # Make an odict of length 5, populated with empty lists and default key names
         b = sc.odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
-        c = sc.odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
+        c = sc.odict().make(['a','b']) # Make an odict with keys 'a' and 'b', initialized to empty lists
         d = sc.odict().make(['a','b'], 0) # Make an odict with keys 'a' and 'b', initialized to 0
         e = sc.odict().make(keys=['a','b'], vals=[1,2]) # Make an odict with 'a':1 and 'b':2
         f = sc.odict().make(keys=['a','b'], vals=np.array([1,2])) # As above, since arrays are coerced into lists
@@ -1037,21 +1081,32 @@ class odict(dict):
 
     def fromeach(self, ind=None, asdict=True):
         """
-        Take a "slice" across all the keys of an odict, applying the same
-        operation to entry. The simplest usage is just to pick an index.
-        However, you can also use it to apply a function to each key.
+        Take a "slice" across all the keys of an odict, picking the same index
+        (or indices) from each entry. To apply a function to each entry instead,
+        use `map()`.
 
-        **Example**:
+        Args:
+            ind (int/list/slice): the index or indices to pick from each entry
+            asdict (bool): whether to return an odict (default) or just the picked values
+
+        **Examples**:
 
         ```python
-        z = sc.odict({'a':array([1,2,3,4]), 'b':array([5,6,7,8])})
-        z.fromeach(2) # Returns array([3,7])
-        z.fromeach(ind=[1,3], asdict=True) # Returns odict({'a':array([2,4]), 'b':array([6,8])})
+        z = sc.odict({'a':np.array([1,2,3,4]), 'b':np.array([5,6,7,8])})
+        z.fromeach(2) # Returns odict({'a':3, 'b':7})
+        z.fromeach(2, asdict=False) # Returns array([3,7])
+        z.fromeach([1,3]) # Returns odict({'a':array([2,4]), 'b':array([6,8])})
+
+        z = sc.odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
+        z.fromeach([1,3]) # Returns odict({'a':[2,4], 'b':[6,8]})
         ```
         """
         output = self._new()
-        for key in self.keys():
-            output[key] = self.__getitem__(key)[ind]
+        for key,val in self.items():
+            if isinstance(ind, list) and not isinstance(val, np.ndarray): # Lists etc. can't be indexed by a list, so pick each index
+                output[key] = [val[i] for i in ind]
+            else:
+                output[key] = val[ind]
         if asdict: return output # Output as a slimmed-down odict
         else:      return output[:] # Output as just the entries
 
@@ -1087,7 +1142,7 @@ class odict(dict):
         If transpose=True, return a tuple of lists rather than a list of tuples.
         """
         iterator = list(enumerate(self.keys()))
-        if transpose: iterator = tuple(sc.transposelist(iterator))
+        if transpose: iterator = self._transpose(iterator, 2)
         return iterator
 
 
@@ -1098,7 +1153,7 @@ class odict(dict):
         If transpose=True, return a tuple of lists rather than a list of tuples.
         """
         iterator = list(enumerate(self.values()))
-        if transpose: iterator = tuple(sc.transposelist(iterator))
+        if transpose: iterator = self._transpose(iterator, 2)
         return iterator
 
 
@@ -1117,7 +1172,7 @@ class odict(dict):
         for ind,item in enumerate(self.items()):
             thistuple = (ind,)+item # Combine into one tuple
             iterator.append(thistuple)
-        if transpose: iterator = tuple(sc.transposelist(iterator))
+        if transpose: iterator = self._transpose(iterator, 3)
         return iterator
 
 
@@ -1156,7 +1211,7 @@ class odict(dict):
     def items(self, transpose=False):
         """ Return a list of items (as in Python 2). """
         iterator = list(dict.items(self))
-        if transpose: iterator = tuple(sc.transposelist(iterator))
+        if transpose: iterator = self._transpose(iterator, 2)
         return iterator
 
     def dict_keys(self):
@@ -1399,6 +1454,22 @@ class dictobj(dict):
     def setdefault(  self, *args, **kwargs): return self.__dict__.setdefault(  *args, **kwargs)
     def update(      self, *args, **kwargs): return self.__dict__.update(      *args, **kwargs)
     def values(      self, *args, **kwargs): return self.__dict__.values(      *args, **kwargs)
+    def __reversed__(self, *args, **kwargs): return self.__dict__.__reversed__(*args, **kwargs)
+
+    # The dict storage itself is empty, so comparisons and merges must also use __dict__
+    def __eq__(self, other): return self.__dict__ == (other.__dict__ if isinstance(other, dictobj) else other)
+    def __ne__(self, other): return not self.__eq__(other)
+    def __or__(self, other):
+        new = self.copy()
+        new.update(other)
+        return new
+    def __ror__(self, other):
+        new = self.__class__(other)
+        new.update(self)
+        return new
+    def __ior__(self, other):
+        self.update(other)
+        return self
 
 
 def asobj(obj, strict=True):
@@ -1504,15 +1575,15 @@ class argparse(objdict):
     """
     def __init__(self, parse=True, **kwargs):
         self.update(kwargs)
+        self.setattribute('_parsed', False)
         if parse and len(kwargs): # If supplied, parse immediately
             self.parse()
-        self.setattribute('_parsed', False)
         return
 
     def add(self, **kwargs):
         """ Add an argument """
         if self._parsed:
-            errormsg = 'Cannot and an argument to an already parsed object'
+            errormsg = 'Cannot add an argument to an already parsed object'
             raise ValueError(errormsg)
         self.update(kwargs)
         return
@@ -1536,12 +1607,23 @@ class argparse(objdict):
                 else:
                     args.append(item)
 
+        def convert(default, arg):
+            if isinstance(default, bool): # bool('False') is True, so handle explicitly
+                if   arg.lower() in ['1', 'true', 't', 'yes', 'y']:  return True
+                elif arg.lower() in ['0', 'false', 'f', 'no', 'n']: return False
+                else: raise ValueError(f'"{arg}" is not a recognized boolean value')
+            elif isinstance(default, (list, tuple)): # Split on commas, e.g. "a,b" -> ['a','b']
+                eldefault = default[0] if len(default) else ''
+                return default.__class__(convert(eldefault, a.strip()) for a in arg.split(','))
+            else:
+                return default.__class__(arg)
+
         def keep_type(key, arg):
             out = arg
             if self[key] is not None:
                 default_type = self[key].__class__
                 try:
-                    out = default_type(arg)
+                    out = convert(self[key], arg)
                 except Exception as e:
                     errormsg = f'Could not convert "{arg}" to {default_type}, leaving as string.\n{e}'
                     print(errormsg) # TODO: convert to warning

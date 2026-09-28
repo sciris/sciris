@@ -148,6 +148,7 @@ def test_other():
     dfy = sc.dataframe(year=[2018, 2016, 2017], val=[0.3, 0.5, 0.3])
     assert list(dfy.findinds([2016, 2018])) == [0, 1] # Multiple values
     assert dfy.findrow(2016, asdict=True) == dict(year=2016, val=0.5)
+    assert dfy.findrow(2000, default=None, die=True) is None # An explicit None default overrides die
     assert list(dfy.sortrows(returninds=True)) == [1, 2, 0] # Like np.argsort()
 
     print('df.set()')

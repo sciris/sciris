@@ -317,14 +317,14 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.Equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, union=True, verbose=None, compare=True, die=False, **kwargs)`: Compare equality between two arbitrary objects -- see `sc.equal()` for full documentation.
 - `sc.equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, union=True, verbose=None, die=False, **kwargs)`: Compare equality between two arbitrary objects
 - `sc.flattendict(nesteddict, sep=None, _prefix=None)`: Flatten nested dictionary
-- `sc.getnested(nested, keylist, safe=False, default=None)`: Get the value for the given list of keys
+- `sc.getnested(nested, keylist, safe=False, default=<not given>)`: Get the value for the given list of keys
 - `sc.iternested(nesteddict, _previous=None)`: Return a list of all the twigs in the current dictionary
 - `sc.IterObj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, **kwargs)`: Object iteration manager
 - `sc.iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, **kwargs)`: Iterate over an object and apply a function to each node (item with or without children).
 - `sc.makenested(obj=None, keylist=None, value=None, overwrite=True, generator=None, copy=False)`: Make or set a nested object (such as a dictionary).
 - `sc.mergenested(dict1, dict2, die=False, verbose=False, _path=None)`: Merge different nested dictionaries
 - `sc.nestedloop(inputs, loop_order)`: Zip list of lists in order
-- `sc.search(obj, query='<sc_nested_custom_None>', key='<sc_nested_custom_None>', value='<sc_nested_custom_None>', type='<sc_nested_custom_None>', method='exact', **kwargs)`: Find a key/attribute or value within a list, dictionary or object.
+- `sc.search(obj, query=<not given>, key=<not given>, value=<not given>, type=<not given>, method='exact', **kwargs)`: Find a key/attribute or value within a list, dictionary or object.
 - `sc.setnested(obj=None, keylist=None, value=None, **kwargs)`: Set the value for the given list of keys; alias for `sc.makenested()`.
 
 ## Settings and help (sc_settings)

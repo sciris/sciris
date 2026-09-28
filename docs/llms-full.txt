@@ -1977,7 +1977,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   {'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}
   ```
 
-- `sc.getnested(nested, keylist, safe=False, default=None)`: Get the value for the given list of keys
+- `sc.getnested(nested, keylist, safe=False, default=<not given>)`: Get the value for the given list of keys
 
   ```python
   sc.getnested(foo, ['a','b']) # Gets foo['a']['b']
@@ -2040,7 +2040,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
 - `sc.mergenested(dict1, dict2, die=False, verbose=False, _path=None)`: Merge different nested dictionaries
 - `sc.nestedloop(inputs, loop_order)`: Zip list of lists in order
-- `sc.search(obj, query='<sc_nested_custom_None>', key='<sc_nested_custom_None>', value='<sc_nested_custom_None>', type='<sc_nested_custom_None>', method='exact', **kwargs)`: Find a key/attribute or value within a list, dictionary or object.
+- `sc.search(obj, query=<not given>, key=<not given>, value=<not given>, type=<not given>, method='exact', **kwargs)`: Find a key/attribute or value within a list, dictionary or object.
 
   ```python
   # Create a nested dictionary
