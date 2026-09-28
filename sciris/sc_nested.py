@@ -376,7 +376,7 @@ class IterObj:
     """
     def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
                  atomic='default', skip=None, rootkey='root', verbose=False, iterate=True,
-                 custom_type=None, custom_iter=None, custom_get=None, custom_set=None, **kwargs):
+                 custom_type=None, custom_iter=None, custom_get=None, custom_set=None, aliases=False, **kwargs):
 
         # Default arguments
         self.obj          = obj
@@ -385,6 +385,7 @@ class IterObj:
         self.copy         = copy
         self.leaf         = leaf
         self.recursion    = recursion
+        self.aliases      = aliases
         self.depthfirst   = depthfirst
         self.atomic       = atomic
         self.skip         = skip
@@ -544,10 +545,12 @@ class IterObj:
     def check_proceed(self, key, subobj, newid):
         """ Check if we should process the object, and if so, whether to descend into it """
 
-        # If we've already parsed this object, process it, but don't descend into it again
+        # If we've already parsed this (iterable) object, skip it, or if aliases=True, process it but don't descend into it again
         in_memo = (newid in self._memo) and (self._memo[newid] > self.recursion)
-        descend = not (in_memo and self.check_iter_type(subobj))
-        if not descend:
+        repeat = in_memo and self.check_iter_type(subobj)
+        memo_skip = repeat and not self.aliases
+        descend = not repeat
+        if repeat and self.aliases:
             self.indent(f'Not descending into "{key}" since it has already been parsed')
 
         # Skip this object if we've been asked to
@@ -557,11 +560,11 @@ class IterObj:
         instance_skip = isinstance(subobj, self._skip_instances)
 
         # Finalize
-        skips = [key_skip, id_skip, subclass_skip, instance_skip]
+        skips = [memo_skip, key_skip, id_skip, subclass_skip, instance_skip]
         proceed = not any(skips)
 
         if not proceed and self.verbose: # Just for debugging
-            labels = ['key', 'id', 'subclass', 'instance']
+            labels = ['memo', 'key', 'id', 'subclass', 'instance']
             pairs = [f'{label}_skip=True' for label,skip in zip(labels, skips) if skip]
             self.indent(f'Skipping "{key}" because {sc.strjoin(pairs)}')
 
@@ -648,7 +651,7 @@ class IterObj:
 
 
 def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default',
-            skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, **kwargs):
+            skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, aliases=False, **kwargs):
     """
     Iterate over an object and apply a function to each node (item with or without children).
 
@@ -678,6 +681,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         verbose (bool): whether to print progress
         flatten (bool): whether to use flattened traces (single strings) rather than tuples
         to_df (bool): whether to return a dataframe of the output instead of a dictionary (not valid with inplace=True)
+        aliases (bool): whether to include further references to an object that has already been parsed (without descending into them again); by default, they are skipped
         **kwargs (dict): passed to func()
 
     **Examples**:
@@ -711,9 +715,10 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     - *New in version 3.1.3:* "rootkey" argument
     - *New in version 3.1.5:* "recursion" argument; better handling of atomic classes
     - *New in version 3.1.6:* "skip", "depthfirst", "to_df", and "flatten" arguments
+    - *New in version 3.4.0:* "aliases" argument
     """
     # Create the object
-    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, depthfirst=depthfirst,
+    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, aliases=aliases, depthfirst=depthfirst,
                  atomic=atomic, skip=skip, rootkey=rootkey, verbose=verbose, iterate=False, **kwargs)
     out = io.iterate() # Iterate
 

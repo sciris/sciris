@@ -292,7 +292,8 @@ def test_iterobj():
     # Other options
     assert sc.iterobj(dict(a=1, b=[2]), lambda x: x*10, leaf=True) == {('a',): 10, ('b', 0): 20} # Only applied to leaves
     shared = [1,2]
-    assert ('b',) in sc.iterobj(dict(a=shared, b=shared)) # Repeated objects are included, just not descended into
+    assert ('b',) not in sc.iterobj(dict(a=shared, b=shared)) # Repeated objects are skipped by default
+    assert ('b',) in sc.iterobj(dict(a=shared, b=shared), aliases=True) # With aliases=True, they're included, just not descended into
     d = dict(t=(1,(2,3)))
     sc.iterobj(d, lambda x: list(x) if isinstance(x, tuple) else x, atomic='default-tuple', inplace=True)
     assert d == dict(t=[1,[2,3]]) # Nested tuples are converted too, since it descends into the new object

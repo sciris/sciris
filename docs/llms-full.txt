@@ -1989,7 +1989,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   twigs = sc.iternested(foo)
   ```
 
-- `sc.IterObj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, **kwargs)`: Object iteration manager
+- `sc.IterObj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, aliases=False, **kwargs)`: Object iteration manager
 
   ```python
   import sciris as sc
@@ -2007,7 +2007,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   # [...]
   ```
 
-- `sc.iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, **kwargs)`: Iterate over an object and apply a function to each node (item with or without children).
+- `sc.iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, aliases=False, **kwargs)`: Iterate over an object and apply a function to each node (item with or without children).
 
   ```python
   data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
