@@ -9,6 +9,7 @@ rows/columns and concatenating data.
 
 import io # For reading CSV strings
 import numbers # For numeric type
+import textwrap # For dedenting CSV strings
 import numpy as np
 import pandas as pd
 import warnings
@@ -49,7 +50,7 @@ class dataframe(pd.DataFrame):
     df[0,:] = [123,6]; print(df) # Set values for a whole row
     df['y'] = [8,5,0]; print(df) # Set values for a whole column
     df['z'] = [14,14,14]; print(df) # Add new column
-    df.rmcol('z'); print(df) # Remove a column
+    df.popcols('z'); print(df) # Remove a column
     df.addcol('z', [14,14,14]); print(df) # Alternate way to add new column
     df.poprow(1); print(df) # Remove a row
     df.append([555,2,14]); print(df) # Append a new row
@@ -57,8 +58,8 @@ class dataframe(pd.DataFrame):
     df.sort(); print(df) # Sort by the first column
     df.sort('y'); print(df) # Sort by the second column
     df.findrow(123) # Return the row starting with value 123
-    df.rmrow(); print(df) # Remove last row
-    df.rmrow(555); print(df) # Remove the row starting with element '555'
+    df.poprow(); print(df) # Remove last row
+    df.poprows(value=555); print(df) # Remove the row starting with element '555'
 
     # Direct setting of data
     df = sc.dataframe(a=[1,2,3], b=[4,5,6])
@@ -96,7 +97,7 @@ class dataframe(pd.DataFrame):
             if data is None:
                 data = kwargs
             elif isinstance(data, dict):
-                data.update(kwargs)
+                data = {**data, **kwargs} # Don't modify the original dict
             else:
                 errormsg = f'When providing data columns via keywords ("{sc.strjoin(kwargs.keys())}"), these can only be combined with a dict, not an object of {type(data)}. Pass the data as a dict instead.'
                 raise TypeError(errormsg)
@@ -204,8 +205,8 @@ class dataframe(pd.DataFrame):
         example below for more information.
 
         Args:
-            col (int/list): the column(s) to get the index of (return 0 if None)
-            args (list): additional column(s) to get the index of
+            col (int/list): the column(s) to get the name of (return the first column if None)
+            args (list): additional column(s) to get the name of
             die (bool): whether to raise an exception if the column could not be found (else, return None)
 
         **Examples**:
@@ -223,7 +224,7 @@ class dataframe(pd.DataFrame):
         cols = self.cols
         for col in arglist:
             if col is None:
-                col = 0 # If not supplied, assume first column is intended
+                output = cols[0] # If not supplied, assume first column is intended
             elif col in cols:
                 output = col # It's already a column
             elif sc.isnumber(col):
@@ -245,17 +246,12 @@ class dataframe(pd.DataFrame):
         return outputlist
 
 
-    def get(self, key):
-        """ Alias to pandas __getitem__ method; rarely used """
-        return super().__getitem__(key)
-
-
     def set(self, key, value=None):
         """ Alias to pandas __setitem__ method; rarely used """
         return super().__setitem__(key, value)
 
 
-    def __getitem__(self, key=None, die=True, cast=True):
+    def __getitem__(self, key=None, die=True):
         """ Simple method for returning; see self.flexget() for a version based on col and row """
         try: # Default to the pandas version
             output = super().__getitem__(key)
@@ -321,7 +317,7 @@ class dataframe(pd.DataFrame):
         return
 
 
-    def flexget(self, cols=None, rows=None, asarray=False, cast=True, default=None):
+    def flexget(self, cols=None, rows=None, asarray=False):
         """
         More complicated way of getting data from a dataframe. While getting directly
         by key usually returns the array data directly, this usually returns another
@@ -331,8 +327,6 @@ class dataframe(pd.DataFrame):
             cols (str/list): the column(s) to get
             rows (int/list): the row(s) to get
             asarray (bool): whether to return an array (otherwise, return a dataframe)
-            cast (bool): attempt to cast to an all-numeric array
-            default (any): the value to return if the column(s)/row(s) can't be found
 
         **Example**:
 
@@ -349,6 +343,8 @@ class dataframe(pd.DataFrame):
                 colindices.append(self.col_index(col))
         if rows is None: # pragma: no cover
             rowindices = Ellipsis
+        elif sc.isnumber(rows):
+            rowindices = [rows] # Keep it 2D so it stays a dataframe
         else:
             rowindices = rows
 
@@ -401,10 +397,6 @@ class dataframe(pd.DataFrame):
         others = args[1:]
         eqs = []
 
-        # Handle NaNs
-        if equal_nan:
-            base = base.fillna(sc.sc_math._nan_fill)
-
         for other in others:
 
             # Check type
@@ -420,9 +412,10 @@ class dataframe(pd.DataFrame):
                 eq = False
 
             # Finally, check values
+            elif equal_nan: # NaNs must be in the same places, and the other values must match
+                bnan, onan = base.isna().values, other.isna().values
+                eq = np.all(bnan == onan) and np.all(base.values[~bnan] == other.values[~onan])
             else:
-                if equal_nan:
-                    other = other.fillna(sc.sc_math._nan_fill)
                 eq = np.all(base.values == other.values)
 
             eqs.append(eq)
@@ -612,9 +605,6 @@ class dataframe(pd.DataFrame):
                 if not sc.isiterable(value):
                     errormsg = f'Must supply an iterable for the row, not {value}'
                     raise TypeError(errormsg)
-                elif len(value) != self.ncols:
-                    errormsg = f'Length mismatch: expecting {self.ncols}, but got {len(value)}'
-                    raise ValueError(errormsg)
                 elif isinstance(value, dict):
                     v_set = set(value.keys())
                     c_set = set(self.columns)
@@ -625,11 +615,16 @@ class dataframe(pd.DataFrame):
                         missingstr = f'\nMissing: {missing}' if missing else ''
                         errormsg = f'Expecting columns:\n{self.columns}\nbut got:\n{value.keys()}' + extrastr + missingstr
                         raise ValueError(errormsg)
+                else:
+                    nvals = np.array(value, dtype=object).shape[-1] # Number of values per row, for one or more rows
+                    if nvals != self.ncols:
+                        errormsg = f'Length mismatch: expecting {self.ncols}, but got {nvals}'
+                        raise ValueError(errormsg)
 
         # Perform insertion
         before = self.iloc[:index,:]
         after  = self.iloc[index:,:]
-        newdf = self.cat(before, value, after, **kwargs)
+        newdf = self.cat(before, value, after, reset_index=False, **kwargs) # Index is reset (or not) below
         return self.replacedata(newdf=newdf, reset_index=reset_index, inplace=inplace)
 
 
@@ -640,10 +635,14 @@ class dataframe(pd.DataFrame):
         else:
             if isinstance(arg, dict):
                 columns = list(arg.keys())
-                arg = list(arg.values())
-            argarray = arg if isinstance(arg, np.ndarray) else np.array(arg) # Solely for checking the shape
-            if argarray.shape == (self.ncols,): # If it's a single row with the right number of columns, make 2D
-                arg = [arg]
+                if any(sc.isstring(v) or not np.iterable(v) for v in arg.values()): # A single row, e.g. dict(a=1, b=2), rather than columns, e.g. dict(a=[1,2], b=[3,4])
+                    arg = [arg]
+            else:
+                argarray = arg if isinstance(arg, np.ndarray) else np.array(arg, dtype=object) # Solely for checking the shape
+                if argarray.ndim == 0: # A single value, e.g. for a single-column dataframe
+                    arg = [[arg]]
+                elif argarray.shape == (self.ncols,) and not isinstance(argarray[0], dict): # If it's a single row with the right number of columns, make 2D
+                    arg = [arg]
             df = self._constructor(data=arg, columns=columns, **kwargs)
         return df
 
@@ -775,7 +774,7 @@ class dataframe(pd.DataFrame):
         """
         # Parse into a data dict
         if isinstance(key, dict):
-            data = key
+            data = dict(key) # Don't modify the original dict
             if value is not None:
                 errormsg = 'If appending columns via dict, value cannot be specified'
                 raise ValueError(errormsg)
@@ -892,15 +891,11 @@ class dataframe(pd.DataFrame):
 
         *New in version 3.0.0:* "key" argument renamed "row"
         """
-        if isinstance(row, int):
-            rowindex = row
-            indexkey = self.index[row]
-        else: # It's a string (most likely): find the corresponding index
-            rowindex = self.index.get_indexer(row)
-            indexkey = row
+        if not sc.isnumber(row): # It's a string (most likely): find the corresponding index
+            row = self.index.get_loc(row)
         if returnval:
-            thisrow = self.iloc[rowindex,:]
-        self.drop(indexkey, inplace=True)
+            thisrow = self.iloc[row,:]
+        self.poprows(inds=row, reset_index=False) # Drop by position, not label, in case labels are duplicated
         if returnval:
             return thisrow
         else:
@@ -996,7 +991,10 @@ class dataframe(pd.DataFrame):
         """ Replace all of one value in a column with a new value """
         col = self.col_index(col)
         coldata = self.iloc[:,col] # Get data for this column
-        inds = sc.findinds(arr=coldata, val=old)
+        if old is None or (sc.isnumber(old) and np.isnan(old)): # Replace missing values
+            inds = np.flatnonzero(pd.isna(coldata))
+        else:
+            inds = sc.findinds(arr=coldata, val=old)
         self.iloc[inds,col] = new
         return self
 
@@ -1010,8 +1008,9 @@ class dataframe(pd.DataFrame):
         """
         if row is None:
             row = slice(None)
-        data = self.iloc[row,:].values
-        datadict = {col:data[:,c] for c,col in enumerate(self.cols)}
+        elif sc.isnumber(row):
+            row = [row]
+        datadict = {col:self.iloc[:,c].values[row] for c,col in enumerate(self.cols)} # Column by column, to preserve dtypes
         output = sc.odict(datadict)
         return output
 
@@ -1036,17 +1035,18 @@ class dataframe(pd.DataFrame):
 
         ```python
         df = sc.dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5], [2018, 0.3]])
-        df.findrow(2016) # returns array([2016, 0.3], dtype=object)
+        df.findrow(2016) # returns array([2.016e+03, 3.000e-01])
         df.findrow(2013) # returns None, or exception if die is True
-        df.findrow(2013, closest=True) # returns array([2016, 0.3], dtype=object)
+        df.findrow(2013, closest=True) # returns array([2.016e+03, 3.000e-01])
         df.findrow(2016, asdict=True) # returns {'year':2016, 'val':0.3}
         ```
         """
         index = self.findind(value=value, col=col, die=(die and default is None), closest=closest)
         if index is not None:
-            thisrow = self.iloc[index,:].values
             if asdict:
-                thisrow = self.to_odict(thisrow)
+                thisrow = sc.odict(self.iloc[[index]].to_dict('records')[0]) # Preserve each column's dtype
+            else:
+                thisrow = self.iloc[index,:].values
         else:
             thisrow = default # If not found, return as default
         return thisrow
@@ -1057,7 +1057,7 @@ class dataframe(pd.DataFrame):
         Return the indices of all rows matching the given key in a given column.
 
         Args:
-            value (any): the value to look for
+            value (any/list): the value (or list of values) to look for
             col (str): the column to look in
             kwargs (dict): passed to `sc.findinds()`
 
@@ -1066,11 +1066,15 @@ class dataframe(pd.DataFrame):
         ```python
         df = sc.dataframe(cols=['year','val'],data=[[2016,0.3],[2017,0.5], [2018, 0.3]])
         df.findinds(0.3, 'val') # Returns array([0,2])
+        df.findinds([2016, 2018]) # Returns array([0,2])
         ```
         """
         col = self.col_index(col)
         coldata = self.iloc[:,col].values # Get data for this column
-        inds = sc.findinds(arr=coldata, val=value, **kwargs)
+        if sc.checktype(value, 'arraylike'): # Multiple values: find exact matches
+            inds = np.flatnonzero(np.isin(coldata, value))
+        else:
+            inds = sc.findinds(arr=coldata, val=value, **kwargs)
         return inds
 
 
@@ -1121,7 +1125,7 @@ class dataframe(pd.DataFrame):
         cols = sc.mergelists(cols, list(args), keepnone=True)
         order = []
         notfound = []
-        for col in cols:
+        for col in list(cols): # Copy since we may remove columns
             try:
                 order.append(self.cols.index(col))
             except ValueError: # pragma: no cover
@@ -1163,7 +1167,7 @@ class dataframe(pd.DataFrame):
         if isinstance(by, int):
             by = self.columns[by]
         if returninds:
-            sortorder = np.argsort(self[by].values, kind='mergesort') # To preserve order
+            sortorder = self.reset_index(drop=True).sort_values(by=by, ascending=ascending, **kwargs).index.values # Same sort as below, but get the positions
         df = self.sort_values(by=by, ascending=ascending, inplace=inplace, **kwargs)
         out = self if inplace else df
         if reset_index:
@@ -1180,7 +1184,7 @@ class dataframe(pd.DataFrame):
 
         *New in version 3.0.0.*
         """
-        return self.sortrows(by=by, reverse=reverse, returninds=returninds, inplace=True, **kwargs)
+        return self.sortrows(by=by, reverse=reverse, returninds=returninds, inplace=inplace, **kwargs)
 
 
     def sortcols(self, sortorder=None, reverse=False, inplace=True):
@@ -1196,11 +1200,11 @@ class dataframe(pd.DataFrame):
         """
         if sortorder is None:
             sortorder = np.argsort(self.cols, kind='mergesort')
-            if reverse:
-                sortorder = sortorder[::-1]
+        if reverse:
+            sortorder = sortorder[::-1]
         newcols = list(np.array(self.cols)[sortorder])
-        newdf = dataframe({k:self[k] for k in newcols})
-        return self.replacedata(newdf=newdf, inplace=inplace)
+        newdf = self._constructor({k:self[k] for k in newcols})
+        return self.replacedata(newdf=newdf, reset_index=False, inplace=inplace)
 
 
     def to_pandas(self, **kwargs):
@@ -1221,7 +1225,7 @@ class dataframe(pd.DataFrame):
 
         Args:
             string (str): the string to parse as CSV data
-            strip (bool): whether to strip leading/trailing whitespace from the string first
+            strip (bool): whether to strip leading/trailing whitespace and indentation from the string first
             kwargs (dict): passed to `pd.read_csv`
 
         **Example**:
@@ -1236,7 +1240,7 @@ class dataframe(pd.DataFrame):
         *New in version 3.3.0.*
         """
         if strip:
-            string = string.strip()
+            string = textwrap.dedent(string).strip()
         return cls.read_csv(io.StringIO(string), **kwargs)
 
     @classmethod

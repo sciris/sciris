@@ -422,7 +422,7 @@
       "module": "sc_dataframe",
       "signature": "(data=None, index=None, columns=None, dtype=None, copy=None, dtypes=None, nrows=None, **kwargs)",
       "summary": "An extension of the pandas `DataFrame` with additional convenience methods for accessing rows and columns and performing other operations, such as adding rows.",
-      "example": "df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame\ndf['x'] # Print out a column\ndf[0] # Print out a row\ndf['x',0] # Print out an element\ndf[0,:] = [123,6]; print(df) # Set values for a whole row\ndf['y'] = [8,5,0]; print(df) # Set values for a whole column\ndf['z'] = [14,14,14]; print(df) # Add new column\ndf.rmcol('z'); print(df) # Remove a column\ndf.addcol('z', [14,14,14]); print(df) # Alternate way to add new column\ndf.poprow(1); print(df) # Remove a row\ndf.append([555,2,14]); print(df) # Append a new row\ndf.insertrow(1,[556,2,14]); print(df) # Insert a new row\n# [...]",
+      "example": "df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame\ndf['x'] # Print out a column\ndf[0] # Print out a row\ndf['x',0] # Print out an element\ndf[0,:] = [123,6]; print(df) # Set values for a whole row\ndf['y'] = [8,5,0]; print(df) # Set values for a whole column\ndf['z'] = [14,14,14]; print(df) # Add new column\ndf.popcols('z'); print(df) # Remove a column\ndf.addcol('z', [14,14,14]); print(df) # Alternate way to add new column\ndf.poprow(1); print(df) # Remove a row\ndf.append([555,2,14]); print(df) # Append a new row\ndf.insertrow(1,[556,2,14]); print(df) # Insert a new row\n# [...]",
       "aliases": [],
       "deprecated": false
     },

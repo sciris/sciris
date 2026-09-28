@@ -382,7 +382,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   df[0,:] = [123,6]; print(df) # Set values for a whole row
   df['y'] = [8,5,0]; print(df) # Set values for a whole column
   df['z'] = [14,14,14]; print(df) # Add new column
-  df.rmcol('z'); print(df) # Remove a column
+  df.popcols('z'); print(df) # Remove a column
   df.addcol('z', [14,14,14]); print(df) # Alternate way to add new column
   df.poprow(1); print(df) # Remove a row
   df.append([555,2,14]); print(df) # Append a new row

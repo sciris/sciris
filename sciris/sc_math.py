@@ -126,7 +126,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
         arr    (array): the array to find values in
         val    (float): if provided, the value to match
         args   (list):  if provided, additional boolean arrays
-        eps    (float): the precision for matching (default 1e-6, equivalent to `numpy.isclose`'s atol)
+        eps    (float): the precision for matching (default 1e-6, equivalent to `numpy.isclose`'s atol; rtol is 0 unless supplied)
         first  (bool):  whether to return the first matching value (equivalent to ind=0)
         last   (bool):  whether to return the last matching value (equivalent to ind=-1)
         ind    (int):   index of match to retrieve
@@ -156,6 +156,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
 
     # Handle kwargs
     atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
+    kwargs.setdefault('rtol', 0) # Otherwise numpy uses a relative tolerance, so e.g. 100000 matches 100001
     if 'val1' in kwargs or 'val2' in kwargs: # pragma: no cover
         arr = kwargs.pop('val1', arr)
         val = kwargs.pop('val2', val)
