@@ -4,6 +4,12 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 3.4.0 (2026-09-28)
+
+1.  Fixed several bugs in `sc.safedivide()`: nan denominators are now also replaced by `default`, input arrays are no longer modified, lists and tuples are accepted, array numerators with scalar denominators are handled, and `warn=True` now raises a warning.
+2.  Fixed several bugs in `sc.asd()`: the objective function is now called with `x` in its original shape; `pinitial`, `sinitial`, `xmin`, and `xmax` can be scalars or have one value per parameter; objective functions can return 0-d or 2-d size-1 arrays, an an error is raised if the starting point is outside `xmin`/`xmax`.
+4.  Removed the legacy module (`sciris._extras.legacy`), which contained `loadobj2or3()`, `parallelcmd()`, and `parallel_progress()`.
+
 ## Version 3.3.0 (2026-08-08)
 
 1.  Fixed a bug in `sc.parallelize()` in which `progress=True` scaled quadratically with the number of jobs (and could stall or error for large numbers of jobs); progress is now tracked with a shared counter rather than by summing the shared dictionary.

@@ -7,7 +7,6 @@ source = sciris
 omit =
     ../sciris/_extras/__init__.py
     ../sciris/_extras/ansicolors.py
-    ../sciris/_extras/legacy.py
 
 # Regexes for lines to exclude from consideration
 exclude_lines =
