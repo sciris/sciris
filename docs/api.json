@@ -67,10 +67,10 @@
       "kind": "function",
       "module": "sc_math",
       "signature": "(val1=None, val2=None, eps=None, **kwargs)",
-      "summary": "Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()` and may be removed in future versions.",
+      "summary": "Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()`; deprecated, use `np.isclose()` instead.",
       "example": "sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True\nsc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)",
       "aliases": [],
-      "deprecated": false
+      "deprecated": true
     },
     {
       "name": "argparse",

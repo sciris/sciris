@@ -144,6 +144,12 @@ def test_other():
     assert dfx.col_name('b')  == 'b'
     assert dfx.col_name(0, 2) == ['a', 'c']
 
+    print('df.findinds(), df.findrow(), df.sortrows()')
+    dfy = sc.dataframe(year=[2018, 2016, 2017], val=[0.3, 0.5, 0.3])
+    assert list(dfy.findinds([2016, 2018])) == [0, 1] # Multiple values
+    assert dfy.findrow(2016, asdict=True) == dict(year=2016, val=0.5)
+    assert list(dfy.sortrows(returninds=True)) == [1, 2, 0] # Like np.argsort()
+
     print('df.set()')
     dfnew.set('x', ['d','e','f'])
     assert dfnew.x[2] == 'f'

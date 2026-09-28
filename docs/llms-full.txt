@@ -17,7 +17,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
 ## Math and arrays (sc_math)
 
-- `sc.approx(val1=None, val2=None, eps=None, **kwargs)`: Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()` and may be removed in future versions.
+- `sc.approx(val1=None, val2=None, eps=None, **kwargs)`: Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()`; deprecated, use `np.isclose()` instead. [DEPRECATED]
 
   ```python
   sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True

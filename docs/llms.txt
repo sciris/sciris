@@ -18,7 +18,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
 ## Math and arrays (sc_math)
 
-- `sc.approx(val1=None, val2=None, eps=None, **kwargs)`: Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()` and may be removed in future versions.
+- `sc.approx(val1=None, val2=None, eps=None, **kwargs)`: Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()`; deprecated, use `np.isclose()` instead. [DEPRECATED]
 - `sc.cat(*args, copy=False, **kwargs)`: Like `numpy.concatenate`, but takes anything and returns an array. Useful for e.g. appending a single number onto the beginning or end of an array.
 - `sc.convolve(a, v)`: Like `numpy.convolve`, but always returns an array the size of the first array (equivalent to mode='same'), and solves the boundary problem present in `numpy.convolve` by adjusting the edges by the weight of the convolution kernel.
 - `sc.count(arr=None, val=None, eps=1e-06, **kwargs)`: Count the number of matching elements.

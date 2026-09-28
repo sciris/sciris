@@ -228,6 +228,13 @@ def test_fileio():
     assert sc.ispath(path1)
     o.thisfile = sc.thisfile(aspath=True)
 
+    sc.heading('Testing rmpath')
+    folder = filedir / 'rmpath_test'
+    os.makedirs(folder)
+    sc.savetext(folder / 'file.txt', 'test')
+    sc.rmpath(folder, folder / 'file.txt') # The file was already removed along with the folder
+    assert not folder.exists()
+
     return o
 
 
@@ -264,6 +271,12 @@ def test_json():
     custom = {np.ndarray: lambda x: f'It was an array: {x}'}
     j2 = sc.jsonify(data, custom=custom, tostring=True)
     assert 'It was an array' in j2
+
+    # Complex numbers and objects with to_dict() methods
+    class HasToDict:
+        def to_dict(self): return dict(x=np.arange(3))
+    assert sc.jsonify(HasToDict()) == dict(x=[0, 1, 2])
+    assert sc.jsonify(1+2j) == '(1+2j)'
 
     # Test JSON load/save
     print('Testing JSON load/save...')

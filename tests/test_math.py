@@ -18,8 +18,8 @@ def test_utils():
     o = sc.objdict()
 
     print('Testing sc.approx()')
-    assert sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True
-    o.approx = sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
+    with pytest.warns(FutureWarning): # Deprecated
+        o.approx = sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
     assert not o.approx[0]
 
     print('Testing sc.safedivide()')
@@ -70,6 +70,8 @@ def test_utils():
     sc.inclusiverange(3)
     sc.inclusiverange(3,5)
     assert o.inclusiverange[-1] == 5
+    assert sc.inclusiverange(0, 1.2, 0.2)[-1] == 1.2 # Endpoint is kept despite floating-point error
+    assert sc.inclusiverange(0, 10, 3)[-1] == 9 # Non-integer number of steps
 
     print('Testing sc.randround()')
     base = np.random.randn(20)
@@ -114,6 +116,7 @@ def test_find():
     print('Testing sc.count()')
     found.count = sc.count([1,2,2,3], 2.0)
     assert found.count == 2
+    assert sc.count(np.ones((2,3)), 1) == 6 # Multidimensional
 
     print('Testing sc.findfirst(), sc.findlast()')
     found.first = sc.findfirst(np.random.rand(10))
@@ -168,6 +171,7 @@ def test_nan():
     allnans = np.full(5, np.nan)
     assert len(sc.sanitize(allnans)) == 0
     assert sc.sanitize(allnans, defaultval=7) == 7
+    assert np.isnan(sc.sanitize(allnans, replacenans='linear')).all() # Nothing to interpolate from, so keep the NaNs
 
     print('Testing fillnan and rmnan')
     data2d = np.random.rand(3,3)
@@ -213,6 +217,10 @@ def test_smooth(doplot=doplot):
     print('Testing sc.smooth()')
     data = np.random.randn(200,100)
     o.smoothdata = sc.smooth(data,10)
+
+    print('Testing sc.convolve()')
+    assert np.allclose(sc.convolve(np.ones(5), [0.3, 0.5, 0.2]), 1) # Edges are corrected
+    assert np.allclose(sc.convolve(np.ones(3), np.ones(5)/5), 1) # Kernel longer than the data
 
     print('Testing sc.smoothinterp()')
     n = 50
