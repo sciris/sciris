@@ -1,5 +1,5 @@
 {
-  "version": "3.3.0",
+  "version": "3.4.0",
   "description": "Fast, flexible tools to simplify scientific Python",
   "notes": [
     "Sciris is a library of utilities for scientific computing: containers, file I/O, dates, arrays, plotting, parallelization, and profiling.",
@@ -2713,7 +2713,7 @@
       "kind": "function",
       "module": "sc_colors",
       "signature": "(apply=False)",
-      "summary": "NOTE: as of Matplotlib 3.4.0, this colormap is included by default, and will soon be removed from Sciris.",
+      "summary": "Alias to Matplotlib's turbo colormap, a map similar to Jet, but better. Set apply=True to use immediately.",
       "example": "cmap = sc.turbocolormap()\nsc.colormapdemo(cmap=cmap)",
       "aliases": [],
       "deprecated": false

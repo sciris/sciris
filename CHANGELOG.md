@@ -6,13 +6,16 @@ By import convention, components of the Sciris library are listed beginning with
 
 ## Version 3.4.0 (2026-09-28)
 
-1.  Fixed several bugs in `sc.safedivide()`: nan denominators are now also replaced by `default`, input arrays are no longer modified, lists and tuples are accepted, array numerators with scalar denominators are handled, and `warn=True` now raises a warning.
-2.  Fixed several bugs in `sc.asd()`: the objective function is now called with `x` in its original shape; `pinitial`, `sinitial`, `xmin`, and `xmax` can be scalars or have one value per parameter; objective functions can return 0-d or 2-d size-1 arrays, an an error is raised if the starting point is outside `xmin`/`xmax`.
-4.  Removed the legacy module (`sciris._extras.legacy`), which contained `loadobj2or3()`, `parallelcmd()`, and `parallel_progress()`.
+Various bugfixes, including:
+
+1. **Math**: `sc.safedivide()`: nan denominators are now also replaced by `default`, input arrays are no longer modified, lists and tuples are accepted, array numerators with scalar denominators are handled, and `warn=True` now raises a warning.
+1. **ASD** (`sc.asd()`): the objective function is now called with `x` in its original shape; `pinitial`, `sinitial`, `xmin`, and `xmax` can be scalars or have one value per parameter; objective functions can return 0-d or 2-d size-1 arrays, an an error is raised if the starting point is outside `xmin`/`xmax`.
+1. **Colors and plotting**: `sc.rgb2hsv()`, `sc.hsv2rgb()`, `sc.shifthue()`, and `sc.rgb2hex()` now handle integer colors; `sc.vectocolor()` now handles constant and empty input; `sc.sanitizecolor()` accepts integer greys, and `alpha` now overrides an existing alpha; `sc.gridcolors()` now respects `ashex` when `asarray=True`; and `apply=True` in the colormap functions now applies the customized colormap rather than the default one; `sc.manualcolorbar()`: data containing NaNs or constant values, and `ticklabels` given as an array, are now handled; `fig` is now used; and the current axes are no longer changed. `sc.fig3d(returnax=True)` now returns the figure containing the axes, rather than creating an extra blank figure. `sc.turbocolormap()` now returns Matplotlib's (identical) built-in turbo colormap.
+1. **Legacy**: Removed the legacy module (`sciris._extras.legacy`), which contained `loadobj2or3()`, `parallelcmd()`, and `parallel_progress()`.
 
 ## Version 3.3.0 (2026-08-08)
 
-1.  Fixed a bug in `sc.parallelize()` in which `progress=True` scaled quadratically with the number of jobs (and could stall or error for large numbers of jobs); progress is now tracked with a shared counter rather than by summing the shared dictionary.
+1. Fixed a bug in `sc.parallelize()` in which `progress=True` scaled quadratically with the number of jobs (and could stall or error for large numbers of jobs); progress is now tracked with a shared counter rather than by summing the shared dictionary.
 2.  Added `sc.printbold()` and `sc.strip_ansi()` (which removes ANSI codes, e.g. colors, from a string).
 3.  Added a `tight` argument to `sc.heading()`, which uses one space before the heading and none after.
 4.  Added `sc.timer.toctotal()`, which prints the time since the timer started rather than since the last tic.
