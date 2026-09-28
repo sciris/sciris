@@ -374,7 +374,7 @@ class dataframe(pd.DataFrame):
     def equal(cls, *args, equal_nan=True):
         """
         Class method returning boolean true/false equals that allows for more robust equality checks:
-        same type, size, columns, and values. See `df.equals()` for
+        same type, size, columns, index, and values. See `df.equals()` for
         equivalent instance method.
 
         **Examples**:
@@ -388,7 +388,8 @@ class dataframe(pd.DataFrame):
         sc.dataframe.equal(df1, df2) # Returns False
         sc.dataframe.equal(df1, df1, df2) # Also returns False
         ```
-        *New in version 3.1.0.*
+        - *New in version 3.1.0.*
+        - *New in version 3.4.0:* also compare the index
         """
         if len(args) < 2: # pragma: no cover
             errormsg = f'There must be ≥2 input arguments, not {len(args)}'
@@ -409,6 +410,10 @@ class dataframe(pd.DataFrame):
 
             # Check columns
             elif not np.all(base.columns == other.columns):
+                eq = False
+
+            # Check index
+            elif not base.index.equals(other.index):
                 eq = False
 
             # Finally, check values
