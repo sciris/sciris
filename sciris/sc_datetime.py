@@ -113,12 +113,11 @@ def getdate(obj=None, astype='str', dateformat=None):
             errormsg = f'Getting date failed; date must be a string or a date object: {repr(E)}'
             raise TypeError(errormsg)
 
-        timestamp = obj.timestamp()
         if   astype == 'str':     output = dateobj.strftime(dateformat)
-        elif astype == 'int':     output = int(timestamp)
+        elif astype == 'int':     output = int(date(dateobj, to='datetime').timestamp())
         elif astype == 'dateobj': output = dateobj
-        elif astype in  ['float', 'number', 'timestamp']: # pragma: no cover
-            output = timestamp
+        elif astype in  ['float', 'number', 'timestamp']:
+            output = date(dateobj, to='datetime').timestamp()
         else: # pragma: no cover
             errormsg = f'"astype={astype}" not understood; must be "str" or "int"'
             raise ValueError(errormsg)
@@ -246,9 +245,9 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
                 errormsg = f'Was unable to convert "{datestr}" to a date using the formats:\n{formatstr}'
                 if dateformat not in ['dmy', 'mdy']:
                     errormsg += '\n\nNote: to read day-month-year or month-day-year dates, use dateformat="dmy" or "mdy" respectively.'
-                    if verbose: # pragma: no cover
-                        for key,val in exceptions.items():
-                            errormsg += f'\n {key}: {val}'
+                if verbose: # pragma: no cover
+                    for key,val in exceptions.items():
+                        errormsg += f'\n {key}: {val}'
                 raise ValueError(errormsg)
         dateobjs.append(dateobj)
 
@@ -383,6 +382,8 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
             # Handle output
             if to == 'date': # Convert from datetime to a date
                 out = dateify(d)
+            elif to == 'datetime':
+                out = pd.Timestamp(d).to_pydatetime() # Ensure it's a plain datetime
             elif to in [str, 'str', 'string']:
                 out = d.strftime(outformat)
             elif to == 'pandas':
@@ -390,7 +391,7 @@ def date(obj=None, *args, start_date=None, readformat=None, to='date', as_date=N
             elif to == 'numpy':
                 out = np.datetime64(d)
             else:
-                errormsg = f'Could not understand to="{to}": must be "date", "str", "pandas", or "numpy"'
+                errormsg = f'Could not understand to="{to}": must be "date", "datetime", "str", "pandas", or "numpy"'
                 raise ValueError(errormsg)
             dates.append(out)
         except Exception as E:
@@ -439,6 +440,8 @@ def day(obj, *args, start_date=None, **kwargs):
     if obj is None:
         return
     obj, is_list, is_array = scu._sanitize_iterables(obj, *args)
+    if start_date is not None:
+        start_date = date(start_date)
 
     days = []
     for d in obj:
@@ -452,11 +455,8 @@ def day(obj, *args, start_date=None, **kwargs):
                     d = readdate(d).date()
                 elif isinstance(d, dt.datetime):
                     d = d.date()
-                if start_date:
-                    start_date = date(start_date)
-                else:
-                    start_date = date(f'{d.year}-01-01')
-                d_day = (d - start_date).days # Heavy lifting -- actually compute the day
+                this_start = start_date if start_date is not None else date(f'{d.year}-01-01') # Recompute for each date
+                d_day = (d - this_start).days # Heavy lifting -- actually compute the day
                 days.append(d_day)
             except Exception as E: # pragma: no cover
                 errormsg = f'Could not interpret "{d}" as a date: {str(E)}'
@@ -478,7 +478,7 @@ def daydiff(*args):
     diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
     diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
 
-    doy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01
+    doy = sc.daydiff('2022-03-20') # Returns 78, the number of days since 2022-01-01
     ```
 
     - *New in version 1.0.0.*
@@ -545,12 +545,13 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
     as_date    = kwargs.pop('asdate', as_date) # Handle with or without underscore
     if as_date is None: # Typical case, return the same format as the input
         as_date = False if isinstance(start_date, str) else True
+    start_date = date(start_date, readformat=readformat)
     if len(kwargs):
         end_date = datedelta(start_date, **kwargs)
-    start_date = date(start_date, readformat=readformat)
     end_date = date(end_date, readformat=readformat)
 
-    if   interval in [None, 'day']: interval = dict(days=1)
+    if sc.isnumber(interval):       interval = dict(days=interval)
+    elif interval in [None, 'day']: interval = dict(days=1)
     elif interval == 'week':        interval = dict(weeks=1)
     elif interval == 'month':       interval = dict(months=1)
     elif interval == 'year':        interval = dict(years=1)
@@ -563,7 +564,7 @@ def daterange(start_date=None, end_date=None, interval=None, inclusive=True, as_
     delta = datedelta(**interval)
     while curr_date < end_date:
         dates.append(curr_date)
-        curr_date += delta
+        curr_date = start_date + delta*len(dates) # Step from the start date, since month/year steps don't add up (e.g. 2021-01-31 plus 1 month twice is 2021-03-28)
 
     # Convert to final format
     dates = date(dates, start_date=start_date, as_date=as_date, outformat=outformat)
@@ -620,10 +621,9 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
             days_per_year = 365
         else:
             days_per_year = _get_year_length(start_year + int_years).days
-        days = int(round(frac_year*days_per_year))
 
         # Modify keywords in place; the function arguments remain the ground truth
-        kw['days'], kw['years'] = days, int_years
+        kw['days'], kw['years'] = days + int(round(frac_year*days_per_year)), int_years
         return
 
     # If we're not using a fractional year, we can precompute this
@@ -639,17 +639,17 @@ def datedelta(datestr=None, days=0, months=0, years=0, weeks=0, dt1=None, dt2=No
 
     # Otherwise, process each argument
     else:
-        datelist = sc.tolist(datestr)
+        outformat = kwargs.pop('outformat', None)
         newdates = []
-        for datestr in datelist:
+        for d in sc.tolist(datestr):
             if as_date is None: # Typical case, return the same format as the input
-                as_date = False if isinstance(datestr, str) else True
-            dateobj = date(datestr, **kwargs)
+                as_date = False if isinstance(d, str) else True
+            dateobj = date(d, **kwargs)
             if fractional_year:
                 years_to_days(days, years, start_year=dateobj.year) # We do know the start year, so can calculate exactly
                 delta = du.relativedelta.relativedelta(**kw)
             newdate = dateobj + delta
-            newdate = date(newdate, as_date=as_date)
+            newdate = date(newdate, as_date=as_date, outformat=outformat)
             newdates.append(newdate)
         if not isinstance(datestr, list) and len(newdates) == 1: # Convert back to string/date
             newdates = newdates[0]
@@ -670,7 +670,7 @@ def yeartodate(year, as_date=True, **kwargs):
     **Example**:
 
     ```python
-    sc.yeartodate('2010-07-01') # Returns approximately 2010.5
+    sc.yeartodate(2010.5) # Returns datetime.date(2010, 7, 2)
     ```
 
     - *New in version 3.2.1.*
@@ -692,7 +692,7 @@ def datetoyear(dateobj, dateformat=None, **kwargs):
     Convert a date to decimal year.
 
     Args:
-        dateobj (date, str, pd.TimeStamp):  The datetime instance to convert
+        dateobj (date, datetime, str, pd.TimeStamp, np.datetime64):  The date to convert
         dateformat (str): If dateobj is a string, the optional date conversion format to use
 
     Returns:
@@ -702,7 +702,6 @@ def datetoyear(dateobj, dateformat=None, **kwargs):
 
     ```python
     sc.datetoyear('2010-07-01') # Returns approximately 2010.5
-    sc.datetoyear(2010.5) # Returns datetime.date(2010, 7, 2)
     ```
     By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya.
 
@@ -716,10 +715,13 @@ def datetoyear(dateobj, dateformat=None, **kwargs):
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
         return yeartodate(dateobj, **kwargs)
 
-    # Handle strings and numbers
-    if sc.isstring(dateobj) or isinstance(dateobj, pd.Timestamp):
-        dateobj = date(dateobj, dateformat=dateformat)
-    year_part = dateobj - dt.date(year=dateobj.year, month=1, day=1)
+    # Handle datetimes (keeping the time of day), and convert everything else to a date
+    if isinstance(dateobj, dt.datetime): # Includes pd.Timestamp
+        year_start = dt.datetime(year=dateobj.year, month=1, day=1, tzinfo=dateobj.tzinfo)
+    else:
+        dateobj = date(dateobj, readformat=dateformat)
+        year_start = dt.date(year=dateobj.year, month=1, day=1)
+    year_part = dateobj - year_start
     year_length = _get_year_length(dateobj.year)
     return dateobj.year + year_part / year_length
 
@@ -766,7 +768,7 @@ def _convert_time_unit(unit, elapsed=None):
         # Define the mapping -- in order of expected usage frequency for speed
         mapping = {
             's'  : dict(factor=   1, aliases=[None, 'default', 's', 'sec', 'secs', 'second', 'seconds']),
-            'ms' : dict(factor=1e-3, aliases=['ms', 'milisecond', 'miliseconds']),
+            'ms' : dict(factor=1e-3, aliases=['ms', 'msec', 'msecs', 'millisecond', 'milliseconds']),
             'μs' : dict(factor=1e-6, aliases=['us', 'μs', 'microsecond', 'microseconds']),
             'ns' : dict(factor=1e-9, aliases=['ns', 'nanosecond', 'nanoseconds']),
             'min': dict(factor=  60, aliases=['m', 'min', 'mins', 'minute', 'minutes']),
@@ -905,7 +907,7 @@ def toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit=
         return
 
 
-def toctic(returntic=False, returntoc=False, *args, **kwargs):
+def toctic(*args, returntic=False, returntoc=False, **kwargs):
     """
     A convenience fuction for multiple timings. Can return the default output of
     either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`.
@@ -1092,7 +1094,8 @@ class timer:
     def toc(self, label=None, **kwargs):
         """ Print elapsed time; see `sc.toc()` for keyword arguments """
         # Get the time
-        self.elapsed, self.string, self.message = toc(start=self._start, output='all', verbose=False) # Get time as quickly as possible
+        unit = kwargs.pop('unit', self.unit)
+        self.elapsed, self.string, self.message = toc(start=self._start, elapsed=kwargs.pop('elapsed', None), unit=unit, output='all', verbose=False) # Get time as quickly as possible
         self._tocs.append(pytime.time()) # Store when this toc was invoked
 
         # Update the kwargs, including the label
@@ -1119,10 +1122,11 @@ class timer:
 
         # Call again to get the correct output
         verbose = kwargs.pop('verbose', self.verbose)
-        output = toc(elapsed=self.elapsed, unit=self.unit, verbose=verbose, **kwargs)
+        reset = kwargs.pop('reset', False) # Handle here, since passing it to toc() would reset the global sc.tic() time
+        output = toc(elapsed=self.elapsed, unit=unit, verbose=verbose, **kwargs)
 
         # If reset was used, apply it
-        if kwargs.get('reset'):
+        if reset:
             self.tic()
 
         return output
@@ -1184,6 +1188,9 @@ class timer:
         """
         kwargs.setdefault('unit', self.unit)
         kwargs.setdefault('verbose', self.verbose)
+        for k,v in self.kwargs.items():
+            if k != 'label':
+                kwargs.setdefault(k, v)
         start = self._tics[0] if len(self._tics) else None # Use the very first tic
         return toc(start=start, label=label, **kwargs)
 
@@ -1203,7 +1210,8 @@ class timer:
     @property
     def indivtimings(self):
         """ Compute the individual time between each timing """
-        vals = np.diff(sc.cat(self._tics[0], self._tocs))
+        tics, tocs = np.array(self._tics), np.array(self._tocs)
+        vals = np.array([t - max(tics[tics <= t].max(), tocs[tocs < t].max(initial=-np.inf)) for t in tocs]) # Time since the latest tic or toc, whichever is later
         output = sc.odict(zip(self.timings.keys(), vals))
         return output
 
@@ -1260,7 +1268,6 @@ class timer:
         Create a plot of Timer.timings
 
         Arguments:
-            cumulative (bool): how the timings will be presented, individual or cumulative
             fig (fig): an existing figure to draw the plot in
             figkwargs (dict): passed to `plt.figure()`
             grid (bool): whether to show a grid
@@ -1363,20 +1370,20 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
 
         return date_str
 
-    now_time = dt.datetime.now()
-
     # If the user passes in a string, try to turn it into a datetime object before continuing
-    if isinstance(pasttime, str): # pragma: no cover
+    if isinstance(pasttime, str):
         try:
             pasttime = readdate(pasttime)
         except ValueError as E: # pragma: no cover
             errormsg = f"User supplied string {pasttime} is not in a readable format."
             raise ValueError(errormsg) from E
-    elif isinstance(pasttime, dt.datetime):
-        pass
+    elif isinstance(pasttime, dt.date): # Includes datetimes
+        pasttime = date(pasttime, to='datetime')
     else: # pragma: no cover
-        errormsg = f"User-supplied value {pasttime} is neither a datetime object nor an ISO 8601 string."
+        errormsg = f"User-supplied value {pasttime} is neither a date/datetime object nor an ISO 8601 string."
         raise TypeError(errormsg)
+
+    now_time = dt.datetime.now(pasttime.tzinfo) # Match the timezone, if any
 
     # It doesn't make sense to measure time elapsed between now and a future date, so we'll just print the date
     if pasttime > now_time:
@@ -1384,7 +1391,7 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
         time_str = print_date(pasttime, includeyear=includeyear, shortmonths=shortmonths)
 
     # Otherwise, start by getting the elapsed time as a datetime object
-    else: # pragma: no cover
+    else:
         elapsed_time = now_time - pasttime
 
         # Check if the time is within the last minute
@@ -1405,7 +1412,7 @@ def elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True):
                 time_str = f"{minutes} mins ago"
 
         # Check if the time is within the last day
-        elif elapsed_time < dt.timedelta(seconds=60 * 60 * 24 - 1):
+        elif elapsed_time < dt.timedelta(days=1):
 
             # We know that it's at least an hour, so we can safely round down
             hours = int(elapsed_time.seconds / (60 * 60))
@@ -1485,12 +1492,12 @@ def timedsleep(delay=None, start=None, verbose=False):
             try:    start = _delaytime
             except: start = pytime.time()
         elapsed = pytime.time() - start
-        remaining = max(1e-12, delay - elapsed - _sleep_overhead)
+        remaining = delay - elapsed - _sleep_overhead
         if remaining > 0 and verbose:
             print(f'Pausing for {remaining:n} s')
-        elif verbose: # pragma: no cover
+        elif verbose:
             print(f'Warning, delay less than elapsed time ({delay:n} vs. {elapsed:n})')
-        pytime.sleep(remaining)
+        pytime.sleep(max(0, remaining))
         try:    del _delaytime # After it's been used, we can't use it again
         except: pass
     return
@@ -1513,17 +1520,20 @@ def randsleep(delay=1.0, var=1.0, low=None, high=None, seed=None):
     sc.randsleep(1) # Sleep for 0-2 s (average 1.0)
     sc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)
     sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
-    sc.randsleeep(low=0.5, high=1.5) # Ditto
+    sc.randsleep(low=0.5, high=1.5) # Ditto
     ```
     *New in version 2.0.0.*
     *New in version 3.0.0:* "seed" argument
     """
-    if low is None or high is None:
-        if sc.isnumber(delay):
-            low  = delay*(1-var)
-            high = delay*(1+var)
-        else:
-            low, high = delay[0], delay[1]
+    if sc.isnumber(delay):
+        dlow, dhigh = delay*(1-var), delay*(1+var)
+    else:
+        dlow, dhigh = delay[0], delay[1]
+    low  = dlow  if low  is None else low
+    high = dhigh if high is None else high
+    if low < 0:
+        errormsg = f'Lower bound of sleep must not be negative, not {low}; check that var ≤ 1'
+        raise ValueError(errormsg)
 
     rng = np.random.default_rng(seed)
     dur = rng.uniform(low, high)

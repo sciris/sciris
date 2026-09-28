@@ -1814,7 +1814,6 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
   ```python
   sc.datetoyear('2010-07-01') # Returns approximately 2010.5
-  sc.datetoyear(2010.5) # Returns datetime.date(2010, 7, 2)
   ```
 
 - `sc.day(obj, *args, start_date=None, **kwargs)`: Convert a string, date/datetime object, or int to a day (int), the number of days since the start day. See also `sc.date()` and `sc.daydiff()``. If a start day is not supplied, it returns the number of days into the current year.
@@ -1830,7 +1829,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
   diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
 
-  doy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01
+  doy = sc.daydiff('2022-03-20') # Returns 78, the number of days since 2022-01-01
   ```
 
 - `sc.elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True)`: Accepts a datetime object or a string in ISO 8601 format and returns a human-readable string explaining when this time was.
@@ -1864,7 +1863,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   sc.randsleep(1) # Sleep for 0-2 s (average 1.0)
   sc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)
   sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
-  sc.randsleeep(low=0.5, high=1.5) # Ditto
+  sc.randsleep(low=0.5, high=1.5) # Ditto
   ```
 
 - `sc.readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbose=False)`: Convenience function for loading a date from a string. If dateformat is None, this function tries a list of standard date types. Note: in most cases `sc.date()` should be used instead.
@@ -1931,7 +1930,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   sc.toc(T, label='slow_func2')
   ```
 
-- `sc.toctic(returntic=False, returntoc=False, *args, **kwargs)`: A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.
+- `sc.toctic(*args, returntic=False, returntoc=False, **kwargs)`: A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.
 
   ```python
   sc.tic()
@@ -1944,7 +1943,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.yeartodate(year, as_date=True, **kwargs)`: Convert a decimal year to a date
 
   ```python
-  sc.yeartodate('2010-07-01') # Returns approximately 2010.5
+  sc.yeartodate(2010.5) # Returns datetime.date(2010, 7, 2)
   ```
 
 

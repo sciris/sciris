@@ -492,7 +492,7 @@
       "module": "sc_datetime",
       "signature": "(dateobj, dateformat=None, **kwargs)",
       "summary": "Convert a date to decimal year.",
-      "example": "sc.datetoyear('2010-07-01') # Returns approximately 2010.5\nsc.datetoyear(2010.5) # Returns datetime.date(2010, 7, 2)",
+      "example": "sc.datetoyear('2010-07-01') # Returns approximately 2010.5",
       "aliases": [],
       "deprecated": false
     },
@@ -512,7 +512,7 @@
       "module": "sc_datetime",
       "signature": "(*args)",
       "summary": "Convenience function to find the difference between two or more days. With only one argument, calculate days since Jan. 1st.",
-      "example": "diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16\ndiffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]\n\ndoy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01",
+      "example": "diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16\ndiffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]\n\ndoy = sc.daydiff('2022-03-20') # Returns 78, the number of days since 2022-01-01",
       "aliases": [],
       "deprecated": false
     },
@@ -2002,7 +2002,7 @@
       "module": "sc_datetime",
       "signature": "(delay=1.0, var=1.0, low=None, high=None, seed=None)",
       "summary": "Sleep for a nondeterminate period of time (useful for desynchronizing tasks)",
-      "example": "sc.randsleep(1) # Sleep for 0-2 s (average 1.0)\nsc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)\nsc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s\nsc.randsleeep(low=0.5, high=1.5) # Ditto",
+      "example": "sc.randsleep(1) # Sleep for 0-2 s (average 1.0)\nsc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)\nsc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s\nsc.randsleep(low=0.5, high=1.5) # Ditto",
       "aliases": [],
       "deprecated": false
     },
@@ -2650,7 +2650,7 @@
       "name": "toctic",
       "kind": "function",
       "module": "sc_datetime",
-      "signature": "(returntic=False, returntoc=False, *args, **kwargs)",
+      "signature": "(*args, returntic=False, returntoc=False, **kwargs)",
       "summary": "A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.",
       "example": "sc.tic()\nslow_operation_1()\nsc.toctic()\nslow_operation_2()\nsc.toc()",
       "aliases": [],
@@ -2796,7 +2796,7 @@
       "module": "sc_datetime",
       "signature": "(year, as_date=True, **kwargs)",
       "summary": "Convert a decimal year to a date",
-      "example": "sc.yeartodate('2010-07-01') # Returns approximately 2010.5",
+      "example": "sc.yeartodate(2010.5) # Returns datetime.date(2010, 7, 2)",
       "aliases": [],
       "deprecated": false
     },

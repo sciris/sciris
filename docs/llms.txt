@@ -309,7 +309,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.timedsleep(delay=None, start=None, verbose=False)`: Pause for the specified amount of time, taking into account how long other operations take.
 - `sc.timer(label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs)`: Simple timer class. Note: `sc.timer()` and `sc.Timer()` are aliases. [aliases: sc.Timer()]
 - `sc.toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit='s', output=False, verbose=None, elapsed=None, **kwargs)`: With `sc.tic()`, a little pair of functions to calculate a time difference. See also `sc.timer()`.
-- `sc.toctic(returntic=False, returntoc=False, *args, **kwargs)`: A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.
+- `sc.toctic(*args, returntic=False, returntoc=False, **kwargs)`: A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.
 - `sc.yeartodate(year, as_date=True, **kwargs)`: Convert a decimal year to a date
 
 ## Nested objects (sc_nested)
