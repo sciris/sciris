@@ -469,10 +469,10 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
   ```
 
-- `sc.loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs)`: Load a spreadsheet as a dataframe or a list of lists.
+- `sc.loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=True, asdataframe=None, method='pandas', **kwargs)`: Load a spreadsheet as a dataframe or a list of lists.
 
   ```python
-  df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel(header=1)
+  df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel()
   wb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook
   data = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd
   ```
@@ -642,10 +642,10 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
   ```python
   thisdir = sc.thisdir() # Get folder of calling file
-  thisdir = sc.thisdir('.') # Ditto (usually)
+  thisdir = sc.thisdir('.') # Current working folder, which is usually the same
   thisdir = sc.thisdir(__file__) # Ditto (usually)
   file_in_same_dir = sc.thisdir(path='new_file.txt')
-  file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
+  file_in_sub_dir = sc.thisdir(path=['..', 'tests', 'mytests.py']) # Merge parent folder with subfolders and a file
   np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
   ```
 
@@ -660,10 +660,10 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
   ```python
   thisdir = sc.thisdir() # Get folder of calling file
-  thisdir = sc.thisdir('.') # Ditto (usually)
+  thisdir = sc.thisdir('.') # Current working folder, which is usually the same
   thisdir = sc.thisdir(__file__) # Ditto (usually)
   file_in_same_dir = sc.thisdir(path='new_file.txt')
-  file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
+  file_in_sub_dir = sc.thisdir(path=['..', 'tests', 'mytests.py']) # Merge parent folder with subfolders and a file
   np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
   ```
 

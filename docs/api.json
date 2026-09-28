@@ -1328,9 +1328,9 @@
       "name": "loadspreadsheet",
       "kind": "function",
       "module": "sc_fileio",
-      "signature": "(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs)",
+      "signature": "(filename=None, folder=None, fileobj=None, sheet=0, header=True, asdataframe=None, method='pandas', **kwargs)",
       "summary": "Load a spreadsheet as a dataframe or a list of lists.",
-      "example": "df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel(header=1)\nwb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook\ndata = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd",
+      "example": "df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel()\nwb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook\ndata = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd",
       "aliases": [],
       "deprecated": false
     },
@@ -2558,7 +2558,7 @@
       "module": "sc_fileio",
       "signature": "(file=None, path=None, *args, frame=1, aspath=None, **kwargs)",
       "summary": "Tiny helper function to get the folder for a file, usually the current file. If not supplied, then use the current file.",
-      "example": "thisdir = sc.thisdir() # Get folder of calling file\nthisdir = sc.thisdir('.') # Ditto (usually)\nthisdir = sc.thisdir(__file__) # Ditto (usually)\nfile_in_same_dir = sc.thisdir(path='new_file.txt')\nfile_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file\nnp_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming \"import numpy as np\")",
+      "example": "thisdir = sc.thisdir() # Get folder of calling file\nthisdir = sc.thisdir('.') # Current working folder, which is usually the same\nthisdir = sc.thisdir(__file__) # Ditto (usually)\nfile_in_same_dir = sc.thisdir(path='new_file.txt')\nfile_in_sub_dir = sc.thisdir(path=['..', 'tests', 'mytests.py']) # Merge parent folder with subfolders and a file\nnp_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming \"import numpy as np\")",
       "aliases": [],
       "deprecated": false
     },
@@ -2578,7 +2578,7 @@
       "module": "sc_fileio",
       "signature": "(*args, frame=1, aspath=True, **kwargs)",
       "summary": "Alias for `sc.thisdir()` that returns a path by default instead of a string.",
-      "example": "thisdir = sc.thisdir() # Get folder of calling file\nthisdir = sc.thisdir('.') # Ditto (usually)\nthisdir = sc.thisdir(__file__) # Ditto (usually)\nfile_in_same_dir = sc.thisdir(path='new_file.txt')\nfile_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file\nnp_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming \"import numpy as np\")",
+      "example": "thisdir = sc.thisdir() # Get folder of calling file\nthisdir = sc.thisdir('.') # Current working folder, which is usually the same\nthisdir = sc.thisdir(__file__) # Ditto (usually)\nfile_in_same_dir = sc.thisdir(path='new_file.txt')\nfile_in_sub_dir = sc.thisdir(path=['..', 'tests', 'mytests.py']) # Merge parent folder with subfolders and a file\nnp_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming \"import numpy as np\")",
       "aliases": [],
       "deprecated": false
     },
