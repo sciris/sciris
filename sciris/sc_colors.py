@@ -848,7 +848,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
         plt.figure(figsize=(5*nexamples, 4))
         for m in range(nexamples):
             plt.subplot(1, nexamples, m+1)
-            plt.imshow(np.random.rand(20,20), cmap=maps[m], interpolation='none')
+            plt.imshow(np.random.default_rng().random((20,20)), cmap=maps[m], interpolation='none')
             plt.colorbar()
         plt.show()
 

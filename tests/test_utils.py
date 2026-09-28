@@ -103,6 +103,10 @@ def test_uuid():
 
     print('\nTesting fast_uuid')
     u.uuids = sc.fast_uuid(n=100) # Generate 100 UUIDs
+    import random
+    random.seed(1); r1 = random.random()
+    random.seed(1); sc.fast_uuid(); r2 = random.random()
+    assert r1 == r2 # Python's global random stream isn't affected
 
     print('\nTesting uuid')
     u.uuid = sc.uuid()

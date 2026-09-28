@@ -237,12 +237,12 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
     **Examples**:
 
     ```python
-    sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
+    sc.benchmark() # Returns e.g. {'python': 14.88, 'numpy': 497.05}
 
     numpy_mops = sc.benchmark(which='numpy')
-    if numpy_mops < 100:
+    if numpy_mops < 200:
         print('Your computer is slow')
-    elif numpy_mops > 400:
+    elif numpy_mops > 800:
         print('Your computer is fast')
     else:
         print('Your computer is normal')
@@ -253,6 +253,7 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
     - *New in version 3.0.0.*
     - *New in version 3.1.0:* "parallel" argument; increased default scale
     - *New in version 3.2.4:* replaced "python" and "numpy" arguments with "which"
+    - *New in version 3.4.0:* NumPy benchmark uses `np.random.default_rng()` rather than NumPy's (much slower) legacy global generator, so NumPy results are roughly double those of previous versions
     """
     # Handle which
     python = True if 'python' in which else False
@@ -290,11 +291,12 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
 
     def bm_numpy(prefix=''):
         N = sc.timer(verbose=verbose)
+        rng = np.random.default_rng() # Use a separate generator, so the global one isn't affected
         for r in range(repeats):
             N.tic()
             for i in range(np_outer):
-                a = np.random.random(int(np_inner)) # Operation 1: random floats
-                b = np.random.randint(10, size=int(np_inner)) # Operation 2: random integers
+                a = rng.random(int(np_inner)) # Operation 1: random floats
+                b = rng.integers(10, size=int(np_inner)) # Operation 2: random integers
                 a + b # Operation 3: addition
                 a*b # Operation 4: multiplication
             N.toc(f'{prefix}Numpy, {np_ops}m operations')

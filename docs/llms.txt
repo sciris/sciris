@@ -41,7 +41,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.normsum(arr, total=None)`: Multiply a list or array by some normalizing factor so that its sum is equal to the total. Formerly called "`scaleratio`".
 - `sc.numdigits(n, *args, count_minus=False, count_decimal=False)`: Count the number of digits in a number (or list of numbers).
 - `sc.perturb(*args, n=1, span=0.5, randseed=None, normal=False)`: Define an array of numbers uniformly perturbed with a mean of 1.
-- `sc.randround(x)`: Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.
+- `sc.randround(x, rng=None)`: Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.
 - `sc.rolling(data, window=7, operation='mean', replacenans=None, **kwargs)`: Alias to `pandas.Series.rolling()` (window) method to smooth a series.
 - `sc.safedivide(numerator=None, denominator=None, default=None, eps=None, warn=False)`: Handle divide-by-zero and divide-by-nan elegantly.
 - `sc.sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die=True, verbose=False, label=None)`: Sanitize input to remove NaNs. (NB: `sc.sanitize()` and `sc.rmnans()` are aliases.) [aliases: sc.rmnans()]
@@ -224,8 +224,8 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.cpuload(interval=0.1)`: Takes a snapshot of current CPU usage via `psutil` [aliases: sc.cpu_load()]
 - `sc.loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1, maxtime=36000, label=None, verbose=None, **kwargs)`: Delay execution while CPU load is too high -- a very simple load balancer.
 - `sc.memload()`: Takes a snapshot of current fraction of memory usage via `psutil` [aliases: sc.mem_load()]
-- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Parallelization manager
-- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Execute a function in parallel.
+- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)`: Parallelization manager
+- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)`: Execute a function in parallel.
 
 ## Profiling and resource monitoring (sc_profiling)
 

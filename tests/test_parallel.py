@@ -40,6 +40,15 @@ def test_embarrassing():
 
     results = sc.parallelize(rnd, 10)
     print(results)
+    assert len(set(results)) == 10 # Each job is reseeded, so gives a different result
+
+    # Results are reproducible if the parent is seeded, including with a different start method
+    np.random.seed(1)
+    res1 = sc.parallelize(rnd, 4, ncpus=2)
+    np.random.seed(1)
+    res2 = sc.parallelize(rnd, 4, start_method='spawn')
+    assert res1 == res2
+    assert sc.parallelize(rnd, 4) != sc.parallelize(rnd, 4) # Repeated calls give different results
     return
 
 
@@ -199,6 +208,10 @@ def test_class():
     print('Validation: invalid async')
     with pytest.raises(ValueError):
         sc.Parallel(f, 10, parallelizer='serial-async')
+
+    print('Validation: invalid start method')
+    with pytest.raises(ValueError):
+        sc.Parallel(f, 10, start_method='invalid-start-method')
 
     print('Validation: capture with threads')
     with pytest.raises(ValueError):

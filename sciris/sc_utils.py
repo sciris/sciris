@@ -20,6 +20,7 @@ Highlights:
 ##############################################################################
 #%% Imports
 ##############################################################################
+import os
 import re
 import sys
 import types
@@ -73,6 +74,11 @@ __all__ = ['_stringtypes', '_numtype', '_booltypes', '_not_given', '_is_given']
 __all__ += ['fast_uuid', 'uuid', 'cp', 'dcp', 'robust_dcp', 'pp', 'sha', 'traceback', 'getuser',
            'getplatform', 'iswindows', 'islinux', 'ismac', 'isjupyter', 'asciify']
 
+
+# A separate RNG for fast_uuid(), so Python's global random stream isn't affected; reseeded in forked child processes (as the global one is) so they don't give the same UUIDs
+_uuid_rng = rnd.Random()
+if hasattr(os, 'register_at_fork'): # Not available on Windows, which doesn't fork
+    os.register_at_fork(after_in_child=_uuid_rng.seed)
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
     """
@@ -136,7 +142,7 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
     if secure: # pragma: no cover
         choices_func = rnd.SystemRandom().choices
     else:
-        choices_func = rnd.choices
+        choices_func = _uuid_rng.choices
 
     # Generate the UUID(s) string as one big block
     uid_str = ''.join(choices_func(charlist, k=length*n))

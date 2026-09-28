@@ -176,7 +176,7 @@ print('System memory load', ml)
 print('Python RAM usage', ram)
 ```
 
-We can see that NumPy performance is much higher than Python – hundreds of MOPS† instead of single-digits. This makes sense, this is why we use it for array operations!
+We can see that NumPy performance is much higher than Python – hundreds of MOPS† instead of tens. This makes sense, this is why we use it for array operations!
 
 *† The determination of a single "operation" is a little loose, so these "MOPS" can be used for relative purposes, but aren't directly relatable to, say, published processor speeds.*
 

@@ -78,6 +78,7 @@ def test_utils():
     o.randround = sc.randround(base)
     sc.randround(base.tolist())
     sc.randround(base[0])
+    assert sc.randround(base.tolist(), rng=1) == sc.randround(base.tolist(), rng=np.random.default_rng(1)) # Seed and generator are equivalent
 
     print('Testing sc.cat()')
     o.cat = sc.cat(np.array([1,2,3]), [4,5], 6, copy=True)

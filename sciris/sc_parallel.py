@@ -138,7 +138,7 @@ class Parallel:
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
                  progress=False, callback=None, globaldict=None, label=None, capture=False, die=True,
-                 lbkwargs=None, **func_kwargs):
+                 lbkwargs=None, start_method=None, **func_kwargs):
 
         # Store input arguments
         self.func         = func # The function to call
@@ -158,6 +158,7 @@ class Parallel:
         self.label        = label # The label for this Parallel instance
         self.capture      = capture # Whether to capture output from the function as text
         self.die          = die # Whether to raise exceptions
+        self.start_method = start_method # How to start worker processes, e.g. "fork" (if None, use the default)
 
         # Additional initialization
         self.init()
@@ -356,6 +357,11 @@ class Parallel:
                 raise ValueError(errormsg)
         self.is_async = is_async
 
+        # Check the start method
+        if self.start_method is not None and self.start_method not in mpi.get_all_start_methods():
+            errormsg = f'Start method "{self.start_method}" not available: must be one of {sc.strjoin(mpi.get_all_start_methods())}'
+            raise ValueError(errormsg)
+
         # Output can't be captured separately for each thread, since sys.stdout is shared between them
         if self.capture and self.method == 'thread':
             errormsg = 'capture=True is not supported with thread-based parallelization, since threads share stdout; please use a process-based or serial parallelizer instead'
@@ -379,21 +385,24 @@ class Parallel:
                 map_func = pool.map
             return map_func
 
+        # Get the context for the start method (only used by process-based parallelizers)
+        context = mp.get_context(self.start_method) if method == 'multiprocess' else mpi.get_context(self.start_method) # Can't mix multiprocess and multiprocessing
+
         # Choose parallelizer and map function
         if method == 'serial':
             pool = None
             map_func = lambda task,argslist: list(map(task, argslist))
 
         elif method == 'multiprocess': # Main use case
-            pool = mp.Pool(processes=ncpus)
+            pool = context.Pool(processes=ncpus)
             map_func = make_async_func(pool)
 
         elif method == 'multiprocessing':
-            pool = mpi.Pool(processes=ncpus)
+            pool = context.Pool(processes=ncpus)
             map_func = make_async_func(pool)
 
         elif method == 'concurrent.futures':
-            pool = cf.ProcessPoolExecutor(max_workers=ncpus)
+            pool = cf.ProcessPoolExecutor(max_workers=ncpus, mp_context=context)
             map_func = pool.map
 
         elif method == 'thread':
@@ -413,10 +422,7 @@ class Parallel:
             manager = None
             globaldict = dict() # For serial and thread, don't need anything fancy to share global variables
         else:
-            if method == 'multiprocess': # Special case: can't share multiprocessing managers with multiprocess
-                manager = mp.Manager()
-            else:
-                manager = mpi.Manager() # Note "mpi" instead of "mp"
+            manager = context.Manager() # This is from multiprocess or multiprocessing, to match the pool
             globaldict = manager.dict() # Create a dict for sharing progress of each job
 
         # Handle any supplied input
@@ -455,6 +461,13 @@ class Parallel:
         # Check for additional global arguments
         useglobal = True if self.inputdict is not None else False
 
+        # Worker processes start with identical (or unrelated) copies of NumPy's global RNG, so give each job its own seed, derived from the parent's RNG
+        if self.method in ['multiprocess', 'multiprocessing', 'concurrent.futures']:
+            entropy = np.random.randint(2**63, dtype=np.int64) # Take a single draw, so that repeated calls give different results, as they would in serial
+            seeds = [int(ss.generate_state(1)[0]) for ss in np.random.SeedSequence(entropy).spawn(self.njobs)]
+        else: # For serial and thread, jobs already share the parent's RNG; for custom, we don't know
+            seeds = [None]*self.njobs
+
         # Construct the argument list for each job
         for index in range(self.njobs):
             if iterarg is None:
@@ -479,7 +492,7 @@ class Parallel:
                 func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict, args=self.args,
                 kwargs=self.kwargs, lbkwargs=self.lbkwargs, embarrassing=self.embarrassing, callback=self.callback,
                 progress=self.progress, globaldict=self.globaldict, useglobal=useglobal, started=self.times.started,
-                capture=self.capture, die=self.die, counter=self.counter
+                capture=self.capture, die=self.die, counter=self.counter, seed=seeds[index],
             )
 
             argslist.append(taskargs)
@@ -665,7 +678,7 @@ class Parallel:
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
                 progress=False, callback=None, globaldict=None, capture=False, die=True,
-                lbkwargs=None, **func_kwargs):
+                lbkwargs=None, start_method=None, **func_kwargs):
     """
     Execute a function in parallel.
 
@@ -704,6 +717,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         capture      (bool)      : if True, capture the output of the task rather than printing it
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
         lbkwargs     (dict)      : if provided, passed to `sc.loadbalancer()`
+        start_method (str)       : how to start worker processes for process-based parallelizers, e.g. "fork", "spawn", or "forkserver" (default: the system default; see Note 4)
         func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
@@ -818,19 +832,20 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     ```
     **Note 4**: In Python 3.14, the default process start method on Linux was changed from "fork" to "forkserver".
     This does not use copy-on-write to share memory with worker processes but rather behaves more like "spawn" on
-    Mac/Windows. It can also result in an `EOFError` when using WSL on Windows. To restore the previous behaviour,
-    after importing `sciris`, set the start method to "fork" as follows:
+    Mac/Windows. It can also result in an `EOFError` when using WSL on Windows. To restore the previous behavior,
+    use `start_method='fork'` (not available on Windows), e.g.:
 
     ```python
-    import multiprocessing
-    multiprocessing.set_start_method("fork", force=True)
+    results = sc.parallelize(f, iterarg=[1,2,3], start_method='fork')
     ```
 
-    **Note 5**: with process-based parallelizers (including the default) on Linux, each worker
-    process starts with an identical copy of NumPy's global random number generator, so functions
-    that use `np.random` without reseeding will give identical "random" numbers in every job (unlike
-    with `serial=True`). To avoid this, reseed inside the function (e.g. `np.random.seed(seed)`,
-    with a different seed for each job), or use a separate generator (e.g. `np.random.default_rng(seed)`).
+    **Note 5**: with process-based parallelizers (including the default), NumPy's global random number
+    generator is reseeded at the start of each job, with a different seed for each job, derived from the
+    parent process's generator (using a single draw from it). This means that functions that use `np.random`
+    give different results in each job, and in each call to `sc.parallelize()`, and that results are
+    reproducible if the parent is seeded (e.g. with `np.random.seed(1)`), regardless of the platform, start
+    method, or number of CPUs. The results differ from `serial=True`, where jobs draw from the parent's
+    generator in turn. Functions that set their own seed are unaffected.
 
     - *New in version 1.1.1:* "serial" argument
     - *New in version 2.0.0:* changed default parallelizer from `multiprocess.Pool` to `concurrent.futures.ProcessPoolExecutor`; replaced `maxload` with `maxcpu`/`maxmem`; added `returnpool` argument
@@ -838,14 +853,14 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     - *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
     - *New in version 3.1.0:* new "globaldict" argument
     - *New in version 3.2.5:* "capture" and "lbkwargs" arguments
-    - *New in version 3.4.0:* "iterarg" and "iterkwargs" can be used together; with `die=False`, the exception is returned as the result
+    - *New in version 3.4.0:* "iterarg" and "iterkwargs" can be used together; with `die=False`, the exception is returned as the result; "start_method" argument; NumPy's global random number generator is reseeded for each job
     """
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs,
                  ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval,
                  parallelizer=parallelizer, serial=serial, progress=progress,
                  callback=callback, globaldict=globaldict, capture=capture, die=die,
-                 lbkwargs=lbkwargs, **func_kwargs)
+                 lbkwargs=lbkwargs, start_method=start_method, **func_kwargs)
 
     # Run it
     P.run()
@@ -865,7 +880,7 @@ class TaskArgs(sc.prettyobj):
         """
         def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, lbkwargs,
                      embarrassing, callback, progress, globaldict, useglobal, started,
-                     capture=False, die=True, counter=None):
+                     capture=False, die=True, counter=None, seed=None):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -883,6 +898,7 @@ class TaskArgs(sc.prettyobj):
             self.capture      = capture      # Whether to capture output as text
             self.die          = die          # Whether to raise an exception if the child task encounters one
             self.counter      = counter      # A shared counter of how many jobs have finished, used for the progress bar
+            self.seed         = seed         # If supplied, the seed for NumPy's global RNG for this job
             return
 
 
@@ -919,6 +935,10 @@ def _task(taskargs):
     stdout     = ''
     if taskargs.useglobal:
         kwargs['globaldict'] = globaldict
+
+    # Reseed NumPy's global RNG, if requested
+    if taskargs.seed is not None:
+        np.random.seed(taskargs.seed)
 
     # Call the function!
     try:

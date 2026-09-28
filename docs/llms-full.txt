@@ -202,10 +202,11 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   sc.perturb([1,2,3], 0.1, normal=True) # Returns e.g. array([1.03574377, 2.00286363, 3.53437126])
   ```
 
-- `sc.randround(x)`: Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.
+- `sc.randround(x, rng=None)`: Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.
 
   ```python
   sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
+  sc.randround([0.5, 1.5, 2.5], rng=1) # Use a separate generator, so the global one isn't affected
   ```
 
 - `sc.rolling(data, window=7, operation='mean', replacenans=None, **kwargs)`: Alias to `pandas.Series.rolling()` (window) method to smooth a series.
@@ -1263,7 +1264,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   ```
 
 - `sc.memload()`: Takes a snapshot of current fraction of memory usage via `psutil` [aliases: sc.mem_load()]
-- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Parallelization manager
+- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)`: Parallelization manager
 
   ```python
   import sciris as sc
@@ -1280,7 +1281,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   print(P.times)
   ```
 
-- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Execute a function in parallel.
+- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)`: Execute a function in parallel.
 
   ```python
   def f(x):
@@ -1295,12 +1296,12 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False)`: Benchmark Python performance
 
   ```python
-  sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
+  sc.benchmark() # Returns e.g. {'python': 14.88, 'numpy': 497.05}
 
   numpy_mops = sc.benchmark(which='numpy')
-  if numpy_mops < 100:
+  if numpy_mops < 200:
       print('Your computer is slow')
-  elif numpy_mops > 400:
+  elif numpy_mops > 800:
       print('Your computer is fast')
   else:
       print('Your computer is normal')

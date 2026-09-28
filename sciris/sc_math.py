@@ -825,7 +825,7 @@ def inclusiverange(*args, stretch=False, **kwargs):
     return x
 
 
-def randround(x):
+def randround(x, rng=None):
     """
     Round a float, list, or array probabilistically to the nearest integer. Works
     for both positive and negative values.
@@ -835,6 +835,7 @@ def randround(x):
 
     Args:
         x (int, list, arr): the floating point numbers to probabilistically convert to the nearest integer
+        rng (int/Generator): if provided, the random number generator (or seed for a new one) to use; by default, use NumPy's global generator
 
     Returns:
         Array of integers
@@ -843,17 +844,24 @@ def randround(x):
 
     ```python
     sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
+    sc.randround([0.5, 1.5, 2.5], rng=1) # Use a separate generator, so the global one isn't affected
     ```
 
     - *New in version 1.0.0.*
     - *New in version 3.0.0:* allow arrays of arbitrary shape
+    - *New in version 3.4.0:* "rng" argument
     """
+    if rng is None:
+        rng = np.random
+    elif not hasattr(rng, 'random'): # It's a seed rather than a generator (or RandomState)
+        rng = np.random.default_rng(rng)
+
     if isinstance(x, np.ndarray):
-        output = np.array(np.floor(x+np.random.random(x.shape)), dtype=int)
+        output = np.array(np.floor(x+rng.random(x.shape)), dtype=int)
     elif isinstance(x, list):
-        output = [randround(i) for i in x]
+        output = [randround(i, rng=rng) for i in x]
     else:
-        output = int(np.floor(x+np.random.random()))
+        output = int(np.floor(x+rng.random()))
     return output
 
 
