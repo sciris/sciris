@@ -41,11 +41,6 @@ if __name__ == '__main__':
     sc.parallelize(my_func)
 '''
 
-def _jobkey(index):
-    """ Convert a job index to a key """
-    return f'_job{index}'
-
-
 class _Counter:
     """
     A counter of the number of completed jobs, shared between processes; not for the user.
@@ -106,6 +101,7 @@ class Parallel:
         run_async(): the method that actually executes the parallelization (NB, used with every method, not only async ones)
         monitor(): monitor the progress of an asynchronous run
         finalize(): get the results from each job and process it
+        close(): close the pool and shut down the manager (called automatically by finalize())
         run(): shortcut to calling run_async() followed by finalize()
 
     Useful attributes and properties:
@@ -137,6 +133,7 @@ class Parallel:
 
     - *New in version 3.0.0.*
     - *New in version 3.1.0:* "globaldict" argument
+    - *New in version 3.4.0:* `close()` method
     """
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
@@ -149,7 +146,9 @@ class Parallel:
         self.iterkwargs   = iterkwargs # Dict-of-lists or list-of-dicts iteratively supplied to the function
         self.args         = args # Arguments passed non-iteratively to the function
         self.kwargs       = sc.mergedicts(kwargs, func_kwargs) # Kwargs passed non-iteratively to the function
-        self.lbkwargs     = sc.objdict(sc.mergedicts(lbkwargs, maxcpu=maxcpu, maxmem=maxmem, interval=interval)) # Load balancer kwargs
+        lbkw              = dict(maxcpu=maxcpu, maxmem=maxmem, interval=interval)
+        self.lbkwargs     = sc.objdict(sc.mergedicts(lbkw, lbkwargs, {k:v for k,v in lbkw.items() if v is not None})) # Load balancer kwargs; explicit arguments override lbkwargs, unless they're None
+
         self._ncpus       = ncpus # With a prefix since dynamically calculated later
         self.parallelizer = parallelizer # Which method to use for parallelization
         self.serial       = serial # Whether to run in parallel
@@ -169,6 +168,11 @@ class Parallel:
         """
         Perform all remaining initialization steps; this can safely be called after object creation
         """
+        self.ncpus        = None # These are configuration rather than run state, so are set here rather than in reset()
+        self.njobs        = None
+        self.embarrassing = None
+        self.method       = None
+        self.is_async     = None
         self.reset()
         self.set_defaults()
         self.validate_args()
@@ -179,18 +183,14 @@ class Parallel:
 
     def reset(self):
         """ Reset to the pre-run state """
-        self.ncpus        = None
-        self.njobs        = None
-        self.embarrassing = None
         self.argslist     = None
-        self.method       = None
         self.pool         = None
         self.manager      = None
         self.globaldict   = None
         self.counter      = None
         self.map_func     = None
-        self.is_async     = None
         self.jobs         = None
+        self.rawresults   = None
         self.results      = None
         self.success      = None
         self.exceptions   = None
@@ -245,11 +245,6 @@ class Parallel:
         iterkwargs = self.iterkwargs
         njobs = 0
 
-        # Check that only one was provided
-        if iterarg is not None and iterkwargs is not None: # pragma: no cover
-            errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
-            raise ValueError(errormsg)
-
         # Validate iterarg
         if iterarg is not None:
             if not(sc.isiterable(iterarg)):
@@ -272,11 +267,14 @@ class Parallel:
                     if not njobs:
                         njobs = len(val)
                     else:
-                        if len(val) != njobs: # pragma: no cover
-                            errormsg = f'All iterkwargs iterables must be the same length, not {njobs} vs. {len(val)}'
+                        if len(val) != njobs:
+                            errormsg = f'All iterarg and iterkwargs iterables must be the same length, not {njobs} vs. {len(val)}'
                             raise ValueError(errormsg)
 
             elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
+                if njobs and len(iterkwargs) != njobs:
+                    errormsg = f'iterarg and iterkwargs must be the same length, not {njobs} vs. {len(iterkwargs)}'
+                    raise ValueError(errormsg)
                 njobs = len(iterkwargs)
                 for item in iterkwargs:
                     if not isinstance(item, dict): # pragma: no cover
@@ -302,8 +300,8 @@ class Parallel:
 
         # Handle maxload deprecation
         maxload = self.kwargs.pop('maxload', None)
-        if maxload is not None: # pragma: no cover
-            self.maxcpu = maxload
+        if maxload is not None:
+            self.lbkwargs.maxcpu = maxload
             warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
             warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
@@ -314,6 +312,8 @@ class Parallel:
             ncpus = sys_cpus
         elif 0 < ncpus < 1: # Less than one, treat as a fraction of total
             ncpus = int(np.ceil(sys_cpus*ncpus))
+        else:
+            ncpus = int(ncpus) # In case it's a float, e.g. sc.cpu_count()/2
         ncpus = min(ncpus, self.njobs) # Don't use more CPUs than there are things to process
 
         # Check and set CPUs
@@ -348,13 +348,18 @@ class Parallel:
         # Handle async
         is_async = False
         supports_async = ['multiprocess', 'multiprocessing']
-        if sc.isstring(self.parallelizer) and 'async' in self.parallelizer:
+        if sc.isstring(self.parallelizer) and 'async' in self.parallelizer and not self.serial: # If serial=True, just run in serial
             if self.method in supports_async:
                 is_async = True
             else:
                 errormsg = f'You have specified to use async with "{self.method}", but async is only supported for: {sc.strjoin(supports_async)}.'
                 raise ValueError(errormsg)
         self.is_async = is_async
+
+        # Output can't be captured separately for each thread, since sys.stdout is shared between them
+        if self.capture and self.method == 'thread':
+            errormsg = 'capture=True is not supported with thread-based parallelization, since threads share stdout; please use a process-based or serial parallelizer instead'
+            raise ValueError(errormsg)
 
         return
 
@@ -415,7 +420,7 @@ class Parallel:
             globaldict = manager.dict() # Create a dict for sharing progress of each job
 
         # Handle any supplied input
-        if self.inputdict:
+        if self.inputdict is not None:
             if method == 'custom': # For something custom, use the inputdict directly, in case it's something special
                 globaldict = self.inputdict
             else:
@@ -456,6 +461,8 @@ class Parallel:
                 iterval = None
             else:
                 iterval = iterarg[index]
+                if not isinstance(iterval, tuple): # Ensure it's a tuple, which also means an iterarg of None is still passed to the function
+                    iterval = (iterval,)
             if iterkwargs is None:
                 iterdict = None
             else:
@@ -498,6 +505,8 @@ class Parallel:
         # Handle optional deepcopy
         if sc.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
             argslist = [sc.dcp(arg, die=self.die) for arg in self.argslist]
+            for arg in argslist:
+                arg.globaldict = self.globaldict # Don't copy the globaldict, since it's shared between jobs
         else:
             argslist = self.argslist
 
@@ -572,16 +581,34 @@ class Parallel:
 
     def finalize(self, get_results=True, close_pool=True, process_results=True):
         """ Get results from the jobs and close the pool """
-        if get_results and self.jobs:
-            self.rawresults = list(self.jobs.get())
-        if close_pool and self.pool:
+        try:
+            if get_results and self.jobs:
+                self.rawresults = list(self.jobs.get())
+        finally: # Close the pool even if a job raised an exception
+            if close_pool:
+                self.close()
+        if process_results:
+            self.process_results()
+        return
+
+
+    def close(self):
+        """ Close the pool and shut down the manager (if any); called automatically by finalize() """
+        if self.pool:
             try:
                 self.pool.__exit__(None, None, None) # Handle as if in a with block
             except Exception as E: # pragma: no cover
                 warnmsg = f'Could not close pool {self.pool}, please close manually: {str(E)}'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
-        if process_results:
-            self.process_results()
+        if self.manager:
+            try:
+                self.globaldict = dict(self.globaldict) # Copy out anything served by the manager before shutting it down
+                self.counter.jobs = list(self.counter.jobs)
+                self.manager.shutdown()
+                self.manager = None
+            except Exception as E: # pragma: no cover
+                warnmsg = f'Could not shut down manager {self.manager}, please shut down manually: {str(E)}'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
         return
 
 
@@ -620,12 +647,14 @@ class Parallel:
             self.run_async()
             self.finalize()
 
-        # Handle if run outside of __main__ on Windows
-        except RuntimeError as E: # pragma: no cover
-            if 'freeze_support' in E.args[0]: # For this error, add additional information
+        except BaseException as E:
+            self.close() # Don't leave worker processes running if a job failed
+
+            # Handle if run outside of __main__ on Windows
+            if isinstance(E, RuntimeError) and 'freeze_support' in str(E): # pragma: no cover
                 raise RuntimeError(freeze_support_error) from E
-            else: # For all other runtime errors, raise the original exception
-                raise E
+            else: # For all other errors, raise the original exception
+                raise
 
         # Tidy up
         return self
@@ -797,12 +826,19 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     multiprocessing.set_start_method("fork", force=True)
     ```
 
+    **Note 5**: with process-based parallelizers (including the default) on Linux, each worker
+    process starts with an identical copy of NumPy's global random number generator, so functions
+    that use `np.random` without reseeding will give identical "random" numbers in every job (unlike
+    with `serial=True`). To avoid this, reseed inside the function (e.g. `np.random.seed(seed)`,
+    with a different seed for each job), or use a separate generator (e.g. `np.random.default_rng(seed)`).
+
     - *New in version 1.1.1:* "serial" argument
     - *New in version 2.0.0:* changed default parallelizer from `multiprocess.Pool` to `concurrent.futures.ProcessPoolExecutor`; replaced `maxload` with `maxcpu`/`maxmem`; added `returnpool` argument
     - *New in version 2.0.4:* added "die" argument; changed exception handling
     - *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
     - *New in version 3.1.0:* new "globaldict" argument
     - *New in version 3.2.5:* "capture" and "lbkwargs" arguments
+    - *New in version 3.4.0:* "iterarg" and "iterkwargs" can be used together; with `die=False`, the exception is returned as the result
     """
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs,
@@ -864,11 +900,9 @@ def _task(taskargs):
     kwargs = taskargs.kwargs
     if args   is None: args   = ()
     if kwargs is None: kwargs = {}
-    if taskargs.iterval is not None:
-        if not isinstance(taskargs.iterval, tuple): # Ensure it's a tuple
-            taskargs.iterval = (taskargs.iterval,)
-        if not taskargs.embarrassing:
-            args = taskargs.iterval + args # If variable name is not supplied, prepend it to args
+    args = tuple(args) if isinstance(args, (list, tuple)) else (args,) # Ensure it's a tuple
+    if taskargs.iterval is not None and not taskargs.embarrassing: # iterval is already a tuple, created by make_argslist()
+        args = taskargs.iterval + args # If variable name is not supplied, prepend it to args
     kwargs = sc.mergedicts(kwargs, taskargs.iterdict) # Merge this iterdict, overwriting kwargs if there are conflicts
 
     # Handle load balancing
@@ -883,27 +917,21 @@ def _task(taskargs):
     success    = False
     exception  = None
     stdout     = ''
-    try: # Try to update the globaldict, but don't worry if we can't
-        globaldict[_jobkey(index)] = 0
-        if taskargs.useglobal:
-            kwargs['globaldict'] = taskargs.globaldict
-    except:
-        pass
+    if taskargs.useglobal:
+        kwargs['globaldict'] = globaldict
 
     # Call the function!
     try:
         if taskargs.capture:
-            with sc.capture() as stdout:
-                result = func(*args, **kwargs) # Call the function and capture the output
-            stdout = str(stdout) # Convert just to the plain text
+            try:
+                with sc.capture() as stdout:
+                    result = func(*args, **kwargs) # Call the function and capture the output
+            finally:
+                stdout = str(stdout) # Convert just to the plain text, even if the function failed
         else:
             result = func(*args, **kwargs) # Call the function!
         success = True
-        try: # Likewise, try to update the task progress
-            globaldict[_jobkey(index)] = 1
-        except:
-            pass
-    except Exception as E: # pragma: no cover
+    except Exception as E:
         if taskargs.die: # Usual case, raise an exception and stop
             try:
                 E.add_note(f'\nTask {index} failed: set die=False to keep going instead.\n\n{sc.traceback()}')
@@ -914,6 +942,7 @@ def _task(taskargs):
             warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{sc.traceback()}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
             exception = E
+            result = E # As documented, store the exception as the result
     end = sc.time()
     elapsed = end - start
 
@@ -1049,7 +1078,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
         label += ': '
 
     if index is None:
-        pause = interval*2*np.random.rand()
+        pause = interval*2*np.random.default_rng().random() # Use a separate RNG so the global one isn't affected, and so it differs between processes
         index = ''
     else: # pragma: no cover
         pause = index*interval
@@ -1064,9 +1093,9 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
     # Loop until load is OK
     toohigh = True # Assume too high
     count = 0
-    maxcount = maxtime/float(interval)
+    start = time.time()
     string = ''
-    while toohigh and count < maxcount:
+    while toohigh and (time.time() - start) < maxtime: # Stop waiting after maxtime seconds
         count += 1
         cpu_current = cpuload(interval=cpu_interval) # If interval is too small, can give very inaccurate readings
         mem_current = memload()

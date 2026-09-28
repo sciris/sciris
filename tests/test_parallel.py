@@ -54,6 +54,11 @@ def test_multiargs():
     results3 = sc.parallelize(func=f, iterkwargs=[{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}])
     assert results1 == results2 == results3
     print(results1)
+
+    # Other ways of supplying arguments
+    assert sc.parallelize(f, iterarg=[1,2,3], iterkwargs={'y':[2,3,4]}) == [2,6,12] # Both iterarg and iterkwargs
+    assert sc.parallelize(f, iterarg=[1,2,3], args=[2]) == [2,4,6] # args as a list
+    assert sc.parallelize(lambda x=5: x, iterarg=[None, 2]) == [None, 2] # None is still passed to the function
     return
 
 
@@ -98,6 +103,21 @@ def test_exceptions():
     res2 = sc.parallelize(good_func, iterkwargs=iterkwargs, serial=True)
     assert res1 == res2
     print(res1)
+
+    # With die=False, the exception is returned as the result, even if capturing output
+    def sometimes_bad(x):
+        print(x)
+        if x == 1: raise ValueError('Intentional failure')
+        return x
+    P = sc.Parallel(sometimes_bad, iterarg=[0,1], die=False, capture=True).run()
+    assert P.results[0] == 0 and isinstance(P.results[1], ValueError)
+    assert P.stdout == ['0\n', '1\n']
+
+    # Exceptions without arguments are preserved
+    def not_implemented(x):
+        raise NotImplementedError
+    with pytest.raises(NotImplementedError):
+        sc.parallelize(not_implemented, iterarg=[1,2])
 
     return
 
@@ -151,6 +171,18 @@ def test_class():
 
     print('Checking CPUs')
     sc.Parallel(f, 10, ncpus=0.7)
+    assert sc.Parallel(f, 10, ncpus=2.0).ncpus == 2
+
+    print('Checking load balancer arguments')
+    assert sc.Parallel(f, 10, lbkwargs=dict(maxcpu=0.7)).lbkwargs.maxcpu == 0.7
+
+    print('Checking reset and globaldict')
+    def write(x, globaldict=None):
+        globaldict[x] = x
+    P2 = sc.Parallel(write, iterarg=[1,2], globaldict={}, parallelizer='serial-copy').run()
+    assert dict(P2.globaldict) == {1:1, 2:2}
+    P2.reset()
+    P2.run()
 
     print('Validation: no jobs to run')
     with pytest.raises(ValueError):
@@ -167,6 +199,10 @@ def test_class():
     print('Validation: invalid async')
     with pytest.raises(ValueError):
         sc.Parallel(f, 10, parallelizer='serial-async')
+
+    print('Validation: capture with threads')
+    with pytest.raises(ValueError):
+        sc.Parallel(f, 10, parallelizer='thread', capture=True)
 
     print('Validation: checking call signatures')
     ut.check_signatures(sc.parallelize, sc.Parallel.__init__, extras=['self', 'label'], die=True)
