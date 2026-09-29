@@ -186,7 +186,7 @@
       "name": "benchmark",
       "kind": "function",
       "module": "sc_profiling",
-      "signature": "(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False)",
+      "signature": "(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, legacy=True, return_timers=False)",
       "summary": "Benchmark Python performance",
       "example": "sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}\n\nnumpy_mops = sc.benchmark(which='numpy')\nif numpy_mops < 100:\n    print('Your computer is slow')\nelif numpy_mops > 400:\n    print('Your computer is fast')\nelse:\n    print('Your computer is normal')\n\nsc.benchmark(parallel=True) # Use all CPUs",
       "aliases": [],

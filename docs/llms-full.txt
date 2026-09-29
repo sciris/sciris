@@ -1293,7 +1293,7 @@ This file lists all 275 public Sciris functions and classes. It is generated fro
 
 ## Profiling and resource monitoring (sc_profiling)
 
-- `sc.benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False)`: Benchmark Python performance
+- `sc.benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, legacy=True, return_timers=False)`: Benchmark Python performance
 
   ```python
   sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}

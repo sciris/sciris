@@ -240,7 +240,7 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     return output
 
 
-def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False):
+def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, legacy=True, return_timers=False):
     """
     Benchmark Python performance
 
@@ -259,6 +259,7 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
         verbose (bool): print out the results after each repeat
         which (str): whether to run Python tests, Numpy tests, or both (default)
         parallel (bool/int): whether to run the tests across all cores
+        legacy (bool): if True, use NumPy's legacy random number generator, so results are comparable with earlier versions (NB: dominated by generating random integers); if False, use the new generator, which weights the four NumPy operations more evenly (NB: NumPy results are considerably higher, typically 2-4x depending on the machine)
         return_timers (bool): if True, return the timer objects instead of the "MOPS" results
 
     Returns:
@@ -283,6 +284,7 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
     - *New in version 3.0.0.*
     - *New in version 3.1.0:* "parallel" argument; increased default scale
     - *New in version 3.2.4:* replaced "python" and "numpy" arguments with "which"
+    - *New in version 3.4.0:* "legacy" argument
     """
     # Handle which
     python = True if 'python' in which else False
@@ -298,7 +300,7 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
     py_inner = scale*1e3
     np_inner = scale*1e6
     py_ops = (py_outer * py_inner * 18)/1e6
-    np_ops = (np_outer * np_inner * 1.7)/1e6 # There are 4 operations, but the factor is scaled so that results match earlier versions, which used NumPy's slower legacy RNG
+    np_ops = (np_outer * np_inner * 4)/1e6
 
     # Define the benchmarking functions
     def bm_python(prefix=''): # Prefix used in parallel runs
@@ -320,12 +322,17 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
 
     def bm_numpy(prefix=''):
         N = sc.timer(verbose=verbose)
-        rng = np.random.default_rng() # Use a separate generator, so the global one isn't affected
+        if legacy: # Use a separate generator in both cases, so the global one isn't affected
+            rng = np.random.RandomState()
+            randint = rng.randint
+        else:
+            rng = np.random.default_rng()
+            randint = rng.integers
         for r in range(repeats):
             N.tic()
             for i in range(np_outer):
                 a = rng.random(int(np_inner)) # Operation 1: random floats
-                b = rng.integers(10, size=int(np_inner)) # Operation 2: random integers
+                b = randint(10, size=int(np_inner)) # Operation 2: random integers
                 a + b # Operation 3: addition
                 a*b # Operation 4: multiplication
             N.toc(f'{prefix}Numpy, {np_ops}m operations')

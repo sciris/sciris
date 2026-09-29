@@ -169,6 +169,7 @@ The rest of the changes are a colossal number of tiny LLM-assisted bugfixes:
 1. `sc.checkmem()` checks arrays and dataframes as single objects (rather than raising an error for large arrays), handles non-string dict keys, passes `subtotals` and `verbose` to nested levels, and no longer includes totals in the pie chart.
 1. `sc.checkmem()` is also faster, since sizes are now computed in memory rather than by saving to disk, subtotals count objects shared between items once, and empty objects are now checked (rather than giving an empty result).
 1. `sc.resourcemonitor()` interrupts a busy main thread promptly, no longer raises an error with `kill_parent=True` or on Ctrl-C, prints the breach with `die=False`, and respects `sc.resourcemonitor.start(label=...)`.
+1. `sc.benchmark()` has a new `legacy` argument: by default it uses NumPy's legacy random number generator so results match earlier versions, while `legacy=False` uses the new generator, which weights the four NumPy operations more evenly (and gives considerably higher NumPy results, typically 2-4x depending on the machine).
 
 ### Timing
 
