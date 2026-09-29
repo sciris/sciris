@@ -117,18 +117,24 @@ sc.suggest(user_input, options, n=2)
 Much of the web runs on Python, and there are some super powerful web libraries (such as [requests](https://requests.readthedocs.io/en/latest/)). But what if you don't need something super powerful, and want something that just works? `sc.download()` does just that, and can either load the downloaded data directly into memory, or save it to disk:
 
 ```{python}
-# Define the URLs to download -- from Project Gutenberg
+import codecs
+
+# Define the URLs to download -- from GitHub
 urls = [
-    'https://www.gutenberg.org/cache/epub/1513/pg1513.txt', # Romeo and Juliet
-    'https://www.gutenberg.org/cache/epub/11/pg11.txt', # Alice in Wonderland
+    'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt', # A million characters of Shakespeare
+    'https://raw.githubusercontent.com/python/cpython/main/Lib/this.py', # The source code behind "import this"
 ]
 
 # Download the data
 data = sc.download(urls, save=False)
 
 # Count occurrences
-print(f"Juliet is named {data[0].lower().count('juliet')} times in Romeo and Juliet.")
-print(f"Alice is named {data[1].lower().count('alice')} times in Alice in Wonderland.")
+shakespeare = data[0].lower()
+print(f"Shakespeare mentions love {shakespeare.count('love')} times and death {shakespeare.count('death')} times.")
+
+# The Zen of Python is stored in ROT13, so decode it
+zen = codecs.decode(data[1], 'rot13').split('"""')[1]
+print('\n'.join(zen.strip().splitlines()[2:6])) # Skip the title
 ```
 
 (Don't get the idea that `sc.download()` _isn't_ super powerful. It downloads multiple URLs in parallel, handles exceptions elegantly, can either save to disk or load into memory, etc.)

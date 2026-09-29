@@ -819,7 +819,7 @@ See help(sc.help) for more information.
             try:
                 f = getattr(sc, funcname)
                 if source: string = inspect.getsource(f)
-                else:      string = f.__doc__
+                else:      string = inspect.getdoc(f) # Dedented, so e.g. '^json' matches on all Python versions
                 docstrings[funcname] = string
             except OSError as E: # Happens for built-ins, e.g. defaultdict
                 if debug:

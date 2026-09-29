@@ -182,6 +182,7 @@ m,b = sc.linregress(x, y)
 
 # Plot
 plt.style.use('sciris.simple')
+plt.figure()
 plt.scatter(x, y, c='k', alpha=0.2, label='Data')
 plt.plot(x, m*x+b, c='forestgreen', label=f'Line of best fit: {m:0.2f}*x + {b:0.2f}')
 plt.legend();
