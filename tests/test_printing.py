@@ -3,6 +3,7 @@ Test Sciris printing functions.
 '''
 
 import numpy as np
+import pytest
 import sciris as sc
 
 
@@ -30,6 +31,13 @@ def test_colorize():
 
     print('Testing ANSI stripping')
     assert sc.strip_ansi(bluearray) == str(range(5))
+    assert sc.strip_ansi('\x1b[31mred\x1b[0m then \x1b[2K more text') == 'red then  more text' # Non-color codes don't remove text
+
+    print('Testing colorize options')
+    assert sc.colorize(output=True) == '\x1b[0m' # No arguments resets the color
+    assert 'message' in sc.colorize('notacolor', 'message', output=True) # Invalid color still shows the string
+    assert sc.colorize('red', 'hi', output=True, enable=False) == 'hi'
+    assert sc.heading('Hi', fg='red', output=True).startswith('\x1b[31m') # Alternate usage via kwargs
 
     print('Testing tight headings')
     normal = sc.heading('Normal heading', output=True)
@@ -67,6 +75,11 @@ def test_printing(test_slack=False):
     sc.printarr(np.random.rand(3))
     sc.printarr(np.random.rand(3,4))
     sc.printarr(np.random.rand(3,4,5))
+    assert sc.printarr(np.array([1.5, 2.25], dtype=np.float32), doprint=False) == '1.50  2.25  \n' # Not just float64
+    assert sc.printarr(np.array([[-100.5, 1.0], [3.25, 4.0]]), doprint=False) == '-100.50     1.00  \n\n   3.25     4.00  \n\n' # Columns aligned
+    assert sc.printarr(np.array([1, 20, 300]), doprint=False) == '  1   20  300  \n' # Integers
+    sc.printarr(np.array([['cat', 'nudibranch'], [23, 2423482]], dtype=object)) # Objects
+    sc.printarr(np.array([])) # Empty
 
     print('\nTesting printvars')
     a = range(5)
@@ -86,15 +99,25 @@ def test_printing(test_slack=False):
     sc.sigfig(np.random.rand(), sigfigs=None) # Testing no sigfigs
     assert sc.sigfig([4.958, 23432.23], sigfigs=3, keepints=True) == ['4.96', '23432'] # Testing keepints
     assert sc.sigfig((0.23456, 28847.9), sep=',') == ('0.2346', '28,850') # Testing tuple and separator
+    assert sc.sigfig(-23432.23, sigfigs=3, keepints=True) == '-23432' # Negative ints
+    assert sc.sigfig(1234567.0, sep='.') == '1.235.000' # Custom separator
+    assert sc.sigfig(3432.3842, SI=True, formats='kmb') == '3.432k' # Formats as string
+    assert sc.sigfig([9.9999, 999999], SI=True) == ['10.00', '1.000M'] # Rounding up to the next power of ten
+
+    print('\nTesting sigfiground')
+    assert sc.sigfiground([1234, 5678], 2) == [1200, 5700]
+    assert sc.sigfiground(1e19) == 1e19 and sc.sigfiground(np.inf) == np.inf # Too large to convert to int
+    assert sc.arraymean([5, 5, 5], tostring=False) == (5, 0) # Zero standard deviation
 
 
     print('\nTesting printmean and printmedian')
     data = [1210, 1072, 1722, 1229, 1902, 1753, 1223, 1024, 1884, 1525, 1449]
-    sc.printmean(data) # Returns 1430 ± 320
+    sc.printmean(data)
     o.printmean = sc.printmean(data, doprint=False)
     assert o.printmean == '1450 ± 620'
     assert sc.printmean(data, mean_sf=2, doprint=False) == '1500 ± 600'
     assert sc.printmean(data, err_sf=1, doprint=False) == '1500 ± 600'
+    assert sc.printmean([[10, 20], [12, 21]], axis=0, doprint=False) == '11.0 ± 2.0, 20.5 ± 1.0' # Multiple values
 
     sc.printmedian(data)
     assert sc.printmedian(data, doprint=False, ci='iqr')      == '1450 (IQR: 1220, 1740)'      # Test IQR
@@ -103,6 +126,10 @@ def test_printing(test_slack=False):
     assert sc.printmedian(data, doprint=False, ci=0.8)        == '1450 (80% CI: 1070, 1880)'   # Test float
     assert sc.printmedian(data, doprint=False, ci=[0, 10])    == '1450 (0%, 10%: 1020, 1070)'  # Test pair of ints
     assert sc.printmedian(data, doprint=False, ci=[0.0, 0.1]) == '1450 (0%, 10%: 1020, 1070)'  # Test pair of floats
+    ci = [0, 10]
+    assert sc.printmedian(data, doprint=False, ci=tuple(ci)) == sc.printmedian(data, doprint=False, ci=ci) # Test tuple
+    assert ci == [0, 10] # Input is not modified
+    assert sc.printmedian([-1.234, 0, 1.234], doprint=False) == '0 (95% CI: -1.17, 1.17)' # Median of zero
 
 
     print('\nTesting capture')
@@ -118,6 +145,24 @@ def test_printing(test_slack=False):
     # print() appends a newline character which we have to remove for the comparison
     assert txt1.rstrip() == str1
     assert txt2.rstrip() == str2
+    assert '%s' % txt1 == str1 + '\n'
+
+    txt2.start() # Reuse the same object
+    print(str1)
+    txt2.stop()
+    assert txt2 == str2 + '\n' + str1 + '\n'
+
+    print('\nTesting slacknotification without sending')
+    from unittest import mock
+    import requests
+    response = requests.models.Response()
+    response.status_code = 404
+    with mock.patch('requests.post', return_value=response) as post:
+        with sc.capture():
+            sc.slacknotification(message='hi', webhook='https://hooks.slack.com/test\n', verbose=0)
+        assert post.call_args.kwargs['url'] == 'https://hooks.slack.com/test' # Newline removed
+        with pytest.raises(RuntimeError): # Failure status is caught
+            sc.slacknotification(message='hi', webhook='https://hooks.slack.com/test', verbose=0, die=True)
 
     return o
 
@@ -148,11 +193,22 @@ def test_prepr():
     x = Foo()
     print(sc.prepr(x))
     print(sc.prepr(x, maxtime=0))
+    assert '20 entries not shown' in sc.prepr(sc.prettyobj({f'k{i}':i for i in range(20)}), maxtime=0)
 
     class Bar:
         def skip(self): pass
 
     print(sc.prepr(Bar()))
+
+    print('Testing that properties are not evaluated')
+    class Prop(sc.prettyobj):
+        @property
+        def prop(self):
+            raise RuntimeError('Property should not be evaluated')
+        def meth(self): pass
+    assert 'prop' in sc.prepr(Prop(), die=True)
+    assert sc.objmeth(Prop(), return_keys=True) == ['meth']
+    assert sc.createcollist(list('abcd'), strlen=1, ncol=3) == '\n  a  c  \n  b  d  \n' # Columns are read downwards
 
     for tf in [True, False]:
         sc.objrepr(x, showid=tf, showmeth=tf, showprop=tf, showatt=tf)
@@ -205,8 +261,13 @@ def test_progress_bar():
         sc.progressbar(i+1, n)
         sc.timedsleep(totalsleep/n)
 
-    for i in range(n):
-        sc.percentcomplete(i, n, stepsize=10) # will print on every 50th iteration
+    with sc.capture() as txt:
+        for i in range(n):
+            sc.percentcomplete(i, n, stepsize=10) # will print on every 5th iteration
+    assert txt.split() == [f'{p}%' for p in range(0, 100, 10)]
+
+    assert sc.progressbar(5, 10, every=0.5, length=4, output=True) == '\r ••—— 50%'
+    assert sc.progressbar(4, 10, every=0.5, output=True) == '' # Not printed on this iteration
 
     return i
 
