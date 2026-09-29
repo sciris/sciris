@@ -1377,7 +1377,7 @@ def readjson(string, **kwargs):
     return json.loads(string, **kwargs)
 
 
-def loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', **kwargs):
+def loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', default=None, die=None, **kwargs):
     """
     Convenience function for reading a JSON file (or string).
 
@@ -1387,6 +1387,8 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='u
         string (str): if not loading from a file, a string representation of the JSON
         fromfile (bool): whether or not to load from file
         encoding (str): the file encoding (default UTF-8, as required by the JSON standard)
+        default (any): if supplied, return this if the file doesn't exist or isn't valid JSON, rather than raising an exception
+        die (bool): whether to raise an exception if the JSON can't be loaded (default True, unless `default` is supplied)
         kwargs (dict): passed to `json.load()`
 
     Returns:
@@ -1397,24 +1399,33 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='u
     ```python
     json = sc.loadjson('my-file.json')
     json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
+    cache = sc.loadjson('cache.json', default={}) # Use an empty dict if the file doesn't exist
     ```
     See also `sc.readjson()` for loading a JSON from
     a string.
 
-    *New in version 3.3.0:* default to UTF-8 encoding
+    - *New in version 3.3.0:* default to UTF-8 encoding
+    - *New in version 3.4.0:* "default" and "die" arguments
     """
-    if string is not None or not fromfile:
-        if string is None and filename is not None: # pragma: no cover
-            string = filename # Swap arguments
-        output = json.loads(string, **kwargs)
-    else:
-        filepath = makefilepath(filename=filename, folder=folder)
-        try:
-            with open(filepath, encoding=encoding) as f:
-                output = json.load(f, **kwargs)
-        except FileNotFoundError as E: # pragma: no cover
-            errormsg = f'No such file "{filename}". Use "string" argument or "fromfile=False" if loading a JSON string rather than a file.'
-            raise FileNotFoundError(errormsg) from E
+    if die is None:
+        die = default is None
+    try:
+        if string is not None or not fromfile:
+            if string is None and filename is not None: # pragma: no cover
+                string = filename # Swap arguments
+            output = json.loads(string, **kwargs)
+        else:
+            filepath = makefilepath(filename=filename, folder=folder)
+            try:
+                with open(filepath, encoding=encoding) as f:
+                    output = json.load(f, **kwargs)
+            except FileNotFoundError as E:
+                errormsg = f'No such file "{filename}". Use "string" argument or "fromfile=False" if loading a JSON string rather than a file.'
+                raise FileNotFoundError(errormsg) from E
+    except (OSError, ValueError): # ValueError includes json.JSONDecodeError
+        if die:
+            raise
+        output = default
     return output
 
 

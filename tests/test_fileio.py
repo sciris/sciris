@@ -285,6 +285,10 @@ def test_json():
     sc.savejson(jsonfile, testdata)
     testdata2 = sc.loadjson(jsonfile)
     assert testdata == testdata2
+    assert sc.loadjson('does-not-exist.json', default={}) == {} # Return a default rather than raising
+    assert sc.loadjson(string='{not json', die=False) is None
+    with pytest.raises(ValueError):
+        sc.loadjson(string='{not json')
 
     # Test YAML load/save
     print('Testing YAML load/save...')

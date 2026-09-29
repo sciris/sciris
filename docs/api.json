@@ -1308,9 +1308,9 @@
       "name": "loadjson",
       "kind": "function",
       "module": "sc_fileio",
-      "signature": "(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', **kwargs)",
+      "signature": "(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', default=None, die=None, **kwargs)",
       "summary": "Convenience function for reading a JSON file (or string).",
-      "example": "json = sc.loadjson('my-file.json')\njson = sc.loadjson(string='{\"a\":null, \"b\":[1,2,3]}')",
+      "example": "json = sc.loadjson('my-file.json')\njson = sc.loadjson(string='{\"a\":null, \"b\":[1,2,3]}')\ncache = sc.loadjson('cache.json', default={}) # Use an empty dict if the file doesn't exist",
       "aliases": [],
       "deprecated": false
     },

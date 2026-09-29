@@ -193,6 +193,20 @@ def test_class():
     P2.reset()
     P2.run()
 
+    print('Checking stopping early')
+    def stop_at_failure(data):
+        data['stop'] = not data['outdict']['success']
+    def fail_at_2(x):
+        sc.timedsleep(0.01) # So there are still jobs left to skip
+        if x == 2: raise ValueError('Intentional failure')
+        return x
+    for parallelizer in ['serial', 'thread', 'multiprocess']:
+        P3 = sc.Parallel(fail_at_2, iterarg=range(50), callback=stop_at_failure, die=False, parallelizer=parallelizer, ncpus=2).run()
+        assert 0 < sum(P3.skipped) < 50 and P3.results[P3.skipped.index(True)] is None
+    P4 = sc.Parallel(f, iterarg=range(10), parallelizer='serial', callback=lambda data: P4.stop()) # Stop from the parent
+    P4.run()
+    assert sum(P4.skipped) == 9
+
     print('Validation: no jobs to run')
     with pytest.raises(ValueError):
         sc.Parallel(f, iterarg=[])

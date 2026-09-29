@@ -1566,12 +1566,18 @@ class argparse(objdict):
     python argparse_example.py 100 'data.csv'
     python argparse_example.py 100 output_file='data.csv'
     python argparse_example.py iterations=100 --output_file='data.csv'
+    python argparse_example.py --iterations 100 --output-file data.csv
 
     # Result
-    args.iterations == 10
+    args.iterations == 100
     args.output_file == 'data.csv'
+
+    # Boolean flags
+    args = sc.argparse(full=False, verbose=False)
+    python argparse_example.py --verbose # Sets verbose=True
     ```
-    *New in version 3.2.6.*
+    - *New in version 3.2.6.*
+    - *New in version 3.4.0:* bare flags (e.g. `--verbose`) set boolean arguments to True, and `--key value` is supported
     """
     def __init__(self, parse=True, **kwargs):
         self.update(kwargs)
@@ -1592,20 +1598,40 @@ class argparse(objdict):
         """ Parse the arguments into the dictionary """
         args = []
         kw = {}
-        kw_supplied = False
-        for item in sys.argv[1:]:
-            if "=" in item:
-                key, val = item.split("=", 1)
-                key = key.lstrip('-').lstrip().rstrip()
-                val = val.lstrip().rstrip()
-                kw[key] = val
-                kw_supplied = True
+
+        def getkey(key):
+            key = key.lstrip('-').strip()
+            if key not in self and key.replace('-', '_') in self: # Allow e.g. --output-file for output_file
+                key = key.replace('-', '_')
+            return key
+
+        items = sys.argv[1:]
+        i = 0
+        while i < len(items):
+            item = items[i]
+            if '=' in item: # E.g. key=value or --key=value
+                key, val = item.split('=', 1)
+                kw[getkey(key)] = val.strip()
+            elif item.startswith('--'): # E.g. --flag or --key value
+                key = getkey(item)
+                if key not in self:
+                    errormsg = f'Unrecognized argument {item}; valid arguments are:\n{sc.strjoin(self.keys())}'
+                    raise sc.KeyNotFoundError(errormsg)
+                if isinstance(self[key], bool): # A bare flag sets a boolean argument to True
+                    kw[key] = 'True'
+                elif i+1 < len(items): # Otherwise, use the next item as the value
+                    i += 1
+                    kw[key] = items[i]
+                else:
+                    errormsg = f'No value supplied for argument {item}'
+                    raise ValueError(errormsg)
             else:
-                if kw_supplied:
+                if kw:
                     errormsg = 'Cannot supply a positional argument after a keyword argument'
                     raise ValueError(errormsg)
                 else:
                     args.append(item)
+            i += 1
 
         def convert(default, arg):
             if isinstance(default, bool): # bool('False') is True, so handle explicitly
@@ -1631,6 +1657,9 @@ class argparse(objdict):
             return out
 
         keys = self.keys()
+        if len(args) > len(keys):
+            errormsg = f'{len(args)} positional arguments were supplied, but only {len(keys)} are valid:\n{sc.strjoin(keys)}'
+            raise ValueError(errormsg)
         for i,arg in enumerate(args):
             key = keys[i]
             self[key] = keep_type(key, arg)

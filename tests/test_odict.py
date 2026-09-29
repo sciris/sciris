@@ -352,6 +352,32 @@ def test_aliases():
     return
 
 
+def test_argparse():
+    sc.heading('Testing argparse')
+    import sys
+
+    def parse(cmd, **kwargs):
+        orig = sys.argv
+        sys.argv = ['script.py'] + cmd.split()
+        try:
+            return sc.argparse(**kwargs)
+        finally:
+            sys.argv = orig
+
+    defaults = dict(full=False, provenance=False, verbose=False)
+    assert parse('--verbose', **defaults) == dict(full=False, provenance=False, verbose=True) # Flags are matched by name, not position
+    assert parse('--full --verbose', **defaults) == dict(full=True, provenance=False, verbose=True)
+    assert parse('true verbose=yes', **defaults) == dict(full=True, provenance=False, verbose=True)
+    assert parse('--iterations 100 --output-file data.csv', iterations=10, output_file='') == dict(iterations=100, output_file='data.csv')
+    with pytest.raises(sc.KeyNotFoundError):
+        parse('--bogus', **defaults)
+    with pytest.raises(ValueError):
+        parse('--iterations', iterations=10) # Missing value
+    with pytest.raises(ValueError):
+        parse('1 2', iterations=10) # Too many positional arguments
+    return
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
@@ -368,6 +394,7 @@ if __name__ == '__main__':
     test_other()
     test_asobj()
     test_aliases()
+    test_argparse()
 
     sc.toc()
     print('Done.')

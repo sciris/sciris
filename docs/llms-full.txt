@@ -463,11 +463,12 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
       data[datafile] = sc.loadany(datafile)
   ```
 
-- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', **kwargs)`: Convenience function for reading a JSON file (or string).
+- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', default=None, die=None, **kwargs)`: Convenience function for reading a JSON file (or string).
 
   ```python
   json = sc.loadjson('my-file.json')
   json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
+  cache = sc.loadjson('cache.json', default={}) # Use an empty dict if the file doesn't exist
   ```
 
 - `sc.loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=True, asdataframe=None, method='pandas', **kwargs)`: Load a spreadsheet as a dataframe or a list of lists.

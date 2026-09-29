@@ -50,10 +50,12 @@ class _Counter:
 
     The count is stored as the length of a list rather than as an integer since appending
     to a list is atomic, while incrementing an integer is not (it is a separate read and
-    write, so no lock is needed here).
+    write, so no lock is needed here). Likewise, the flag for stopping the run early is
+    a list, which (unlike e.g. `threading.Event`) can also be pickled for custom parallelizers.
     """
     def __init__(self, manager=None):
         self.jobs = manager.list() if manager else [] # A manager list is shared between processes; for serial/thread, an ordinary list is fine
+        self.stops = manager.list() if manager else [] # Non-empty if the run has been stopped
         return
 
     def __deepcopy__(self, memo):
@@ -77,6 +79,19 @@ class _Counter:
             return len(self.jobs)
         except Exception: # pragma: no cover
             return 0
+
+    def stop(self):
+        """ Stop any further jobs from starting """
+        self.stops.append(1)
+        return
+
+    @property
+    def stopped(self):
+        """ Whether the run has been stopped """
+        try:
+            return len(self.stops) > 0
+        except Exception: # pragma: no cover # E.g. if the manager has already been shut down
+            return False
 
 
 def _progressbar(counter, njobs, started, **kwargs):
@@ -102,6 +117,7 @@ class Parallel:
         monitor(): monitor the progress of an asynchronous run
         finalize(): get the results from each job and process it
         close(): close the pool and shut down the manager (called automatically by finalize())
+        stop(): don't start any more jobs; jobs already running will finish
         run(): shortcut to calling run_async() followed by finalize()
 
     Useful attributes and properties:
@@ -111,6 +127,7 @@ class Parallel:
         jobs (list): a list of jobs to run or being run (empty prior to run)
         results (list): list of all results (the output from the jobs; empty prior to run)
         success (list): whether each job completed successfully (true/false)
+        skipped (list): whether each job was skipped because the run was stopped (true/false)
         exceptions (list): if not, store the exceptions that were raised
         times (dict): timing information on when the jobs were started, when they finished, and how long each job took
 
@@ -133,7 +150,7 @@ class Parallel:
 
     - *New in version 3.0.0.*
     - *New in version 3.1.0:* "globaldict" argument
-    - *New in version 3.4.0:* `close()` method
+    - *New in version 3.4.0:* `close()` and `stop()` methods
     """
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
@@ -194,6 +211,7 @@ class Parallel:
         self.rawresults   = None
         self.results      = None
         self.success      = None
+        self.skipped      = None
         self.exceptions   = None
         self.stdout       = None
         self.times        = sc.objdict(started=None, finished=None, elapsed=None, jobs=None)
@@ -605,6 +623,13 @@ class Parallel:
         return
 
 
+    def stop(self):
+        """ Stop the run early: jobs that have already started will finish, but no new jobs will start """
+        if self.counter is not None:
+            self.counter.stop()
+        return
+
+
     def close(self):
         """ Close the pool and shut down the manager (if any); called automatically by finalize() """
         if self.pool:
@@ -617,6 +642,7 @@ class Parallel:
             try:
                 self.globaldict = dict(self.globaldict) # Copy out anything served by the manager before shutting it down
                 self.counter.jobs = list(self.counter.jobs)
+                self.counter.stops = list(self.counter.stops)
                 self.manager.shutdown()
                 self.manager = None
             except Exception as E: # pragma: no cover
@@ -637,6 +663,7 @@ class Parallel:
         else:
             self.results    = list()
             self.success    = list()
+            self.skipped    = list()
             self.exceptions = list()
             self.stdout     = list()
             self.times.jobs = list()
@@ -644,12 +671,14 @@ class Parallel:
             for raw in self.rawresults:
                 self.results.append(raw['result'])
                 self.success.append(raw['success'])
+                self.skipped.append(raw['skipped'])
                 self.exceptions.append(raw['exception'])
                 self.stdout.append(raw['stdout'])
                 self.times.jobs.append(raw['elapsed'])
 
-            if not all(self.success): # pragma: no cover
-                warnmsg = f'Only {sum(self.success)} of {len(self.success)} jobs succeeded; see exceptions attribute for details'
+            nrun = len(self.skipped) - sum(self.skipped)
+            if sum(self.success) < nrun: # pragma: no cover
+                warnmsg = f'Only {sum(self.success)} of {nrun} jobs succeeded; see exceptions attribute for details'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
         return
 
@@ -712,7 +741,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         parallelizer (str/func)  : parallelization function; default 'multiprocess' (see below for details)
         serial       (bool)      : whether to skip parallelization and run in serial (useful for debugging; equivalent to `parallelizer='serial'`)
         progress     (bool)      : whether to show a progress bar
-        callback     (func)      : an optional function to call from each worker
+        callback     (func)      : an optional function to call from each worker after each job; it receives a dict of data on the job; if it sets `data['stop'] = True`, no further jobs are started (see Example 7)
         globaldict   (dict)      : an optional global dictionary to pass to each worker via the kwarg "globaldict" (note: may not update properly with low task latency)
         capture      (bool)      : if True, capture the output of the task rather than printing it
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
@@ -793,6 +822,24 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 
     results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=dask_map)
     ```
+    **Example 7 -- stopping at the first failure**:
+
+    ```python
+    def f(x):
+        if x == 50:
+            raise ValueError('Intentional failure')
+        return x**2
+
+    def callback(data):
+        if not data['outdict']['success']:
+            data['stop'] = True # Don't start any more jobs
+
+    results = sc.parallelize(f, iterarg=range(100), callback=callback, die=False) # Jobs that were not run have a result of None
+    ```
+    Jobs that have already started will finish. Note that jobs do not necessarily run in order, and that stopping
+    is not supported for custom parallelizers that run jobs in separate processes. See `sc.Parallel()` for how
+    to stop a run from the parent process instead.
+
     **Note 1**: the default parallelizer `"multiprocess"` uses `dill` for pickling, so
     is the most versatile (e.g., it can pickle non-top-level functions). However,
     it is also the slowest for passing large amounts of data. You can switch between
@@ -853,7 +900,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     - *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
     - *New in version 3.1.0:* new "globaldict" argument
     - *New in version 3.2.5:* "capture" and "lbkwargs" arguments
-    - *New in version 3.4.0:* "iterarg" and "iterkwargs" can be used together; with `die=False`, the exception is returned as the result; "start_method" argument; NumPy's global random number generator is reseeded for each job
+    - *New in version 3.4.0:* "iterarg" and "iterkwargs" can be used together; with `die=False`, the exception is returned as the result; "start_method" argument; NumPy's global random number generator is reseeded for each job; the callback can stop the run early
     """
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs,
@@ -908,6 +955,11 @@ def _task(taskargs):
 
     *New in version 3.0.0:* renamed from "_parallel_task" to "_task"; return output dict with metadata
     """
+
+    # If the run has been stopped, skip this job
+    counter = taskargs.counter
+    if counter is not None and counter.stopped:
+        return dict(result=None, success=False, skipped=True, exception=None, stdout='', elapsed=0)
 
     # Handle inputs
     func   = taskargs.func
@@ -967,7 +1019,6 @@ def _task(taskargs):
     elapsed = end - start
 
     # Update the count of finished jobs, and show progress if requested
-    counter = taskargs.counter
     if counter is not None:
         counter.increment()
     if taskargs.progress:
@@ -977,15 +1028,18 @@ def _task(taskargs):
     outdict = dict(
         result    = result,
         success   = success,
+        skipped   = False,
         exception = exception,
         stdout    = stdout,
         elapsed   = elapsed,
     )
 
     # Handle callback, if present
-    if taskargs.callback: # pragma: no cover
-        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, globaldict=globaldict, outdict=outdict)
+    if taskargs.callback:
+        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, globaldict=globaldict, outdict=outdict, stop=False)
         taskargs.callback(data)
+        if data['stop'] and counter is not None: # The callback can set this to stop the run
+            counter.stop()
 
     # Handle output
     return outdict
