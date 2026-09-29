@@ -182,6 +182,15 @@ for l, (oldline, newline) in enumerate(zip(oldsrc, newsrc)):
 
 There we have it!
 
+### Lazy imports
+
+If a module is slow to import but isn't always needed, `sc.lazyimport()` only imports it when it's first used:
+
+```{python}
+stats = sc.lazyimport('scipy.stats') # Not imported yet
+print(stats.norm.cdf(1.96)) # Imported now
+```
+
 ### Getting help
 
 Sciris provides a built-in help, `sc.help()`, that can do a text search through its entire source code. For example, let's say you remembered there was a function that did interpolation, but forgot what it was called:

@@ -23,6 +23,7 @@ sc.zsave('fast.obj', sim)            # Zstandard compression (slightly faster)
 ```python
 sc.savejson('data.json', obj)        # Saves JSONifiable parts of any object
 data = sc.loadjson('data.json')      # Returns dict (not original object)
+data = sc.loadjson('cache.json', default={}) # Use a default if the file is missing or invalid
 data = sc.readjson(json_string)      # Parse JSON from string
 ```
 

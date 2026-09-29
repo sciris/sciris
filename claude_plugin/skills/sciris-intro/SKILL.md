@@ -19,7 +19,7 @@ import sciris as sc
 
 data = np.random.rand(50)
 inds = sc.findinds(data > 0.9)          # Find indices matching condition
-mean_str = sc.arraymean(data)            # Mean ± std as string
+mean_str = sc.arraymean(data)            # Mean ± 2 std as string
 joined = sc.strjoin(inds)               # Join values into comma-separated string
 ```
 

@@ -96,7 +96,6 @@ import matplotlib.pyplot as plt
 
 # Define the function
 def rand2d(i, x, y):
-    np.random.seed()
     xy = [x+i*np.random.randn(100), y+i*np.random.randn(100)]
     return (i,xy)
 
@@ -117,6 +116,8 @@ for i,(x,y) in reversed(xy): # Reverse order to plot the most widely spaced dots
     plt.scatter(x, y, c=[colors[i]], alpha=0.7, label=f'Scale={i}')
 plt.legend();
 ```
+
+(Each job gets its own random seed, so the jobs don't all draw the same "random" numbers, but the results are reproducible if you set the seed with `np.random.seed()` before calling `sc.parallelize()`.)
 
 So far, we've used `sc.parallelize()` as a function. But you can also use it as a class, which gives you more flexibility and control over which jobs are run, and will give you more information if any of them failed:
 

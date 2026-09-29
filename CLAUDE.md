@@ -133,7 +133,7 @@ assert data[:].sum() == 21   # Slicing and array operations
 Type-agnostic array operations that handle mixed types:
 ```python 
 sc.findinds([2,3,6,3], 3.0)  # Returns array([1,3])
-sc.findnearest([1,2,3,4,5], 3.7)  # Returns 3 (index) and 4 (value)
+sc.findnearest([1,2,3,4,5], 3.7)  # Returns 3 (the index of the value 4)
 sc.toarray([1,2,3], dtype=float)  # Flexible array conversion
 ```
 
@@ -185,7 +185,8 @@ for condition in raw_data.keys():
     # Statistical analysis with parallel processing
     results = sc.parallelize(
         func=statistical_analysis,
-        iterkwargs={'data': [clean_data], 'method': ['bootstrap', 'permutation']}
+        iterkwargs={'method': ['bootstrap', 'permutation']},
+        data=clean_data, # Passed to every job
     )
     processed[condition] = results
 
@@ -203,7 +204,7 @@ timeseries = sc.odict()
 for dataset in ['temperature', 'humidity', 'pressure']:
     # Load and smooth noisy sensor data
     raw = sc.load(f'{dataset}_raw.pkl')
-    smoothed = sc.smooth(raw, window=7)  # 7-day moving average
+    smoothed = sc.rolling(raw, window=7)  # 7-day moving average
     timeseries[dataset] = smoothed
 
 # Create comprehensive plot
@@ -217,7 +218,7 @@ for i, (key, data) in enumerate(timeseries.items()):
     sc.dateformatter()
     sc.boxoff()
 
-sc.savefig('timeseries_analysis.png', metadata=True)  # Include Git info
+sc.savefig('timeseries_analysis.png')  # Includes Git info in the metadata
 ```
 
 ### Type-agnostic Input Handling
@@ -243,7 +244,7 @@ Sciris functions accept multiple input types (lists, arrays, scalars) and handle
 
 **Unified Namespace:**
 - All functions accessible via `import sciris as sc`
-- Flat namespace design (e.g., `sc.odict()`, `sc.save()`, `sc.parallel()`)
+- Flat namespace design (e.g., `sc.odict()`, `sc.save()`, `sc.parallelize()`)
 - Common import pattern: `import sciris as sc` used internally
 
 **Core Data Structure:**
@@ -259,7 +260,7 @@ Sciris functions accept multiple input types (lists, arrays, scalars) and handle
 **Environment Awareness:**
 - Platform detection utilities (`iswindows()`, `islinux()`, `ismac()`)
 - Thread control via `SCIRIS_NUM_THREADS` environment variable
-- Optional lazy loading with `SCIRIS_LAZY`
+- Optional lazy loading with `SCIRIS_LAZY`; `sc.lazyimport()` defers slow imports until first use (Sciris itself only imports pyplot when needed)
 
 ## Environment Variables
 
@@ -363,28 +364,26 @@ When outgrowing Sciris:
 # Strict mode - raises exceptions immediately
 result = sc.load('file.pkl', die=True)  
 
-# Forgiving mode - prints warning, returns None
-result = sc.load('missing.pkl', die=False)
-if result is None:
-    print("File not found, using defaults")
+# Forgiving mode - returns a default instead of raising
+cache = sc.loadjson('missing.json', default={})
 ```
 
 ### Verbose Output
 ```python
 # Enable detailed output for debugging
 sc.save('data.pkl', mydata, verbose=True)
-# Output: Saving data.pkl... (6.2 MB, 0.12 s)
-
-# System-wide verbosity
-sc.options(verbose=True)  # All operations become verbose
+# Output: Object saved to "/path/to/data.pkl"
 ```
 
 ### Performance Debugging
 ```python
-# Profile specific functions
-with sc.profile('data_processing'):
+# Time a block of code
+with sc.timer('data_processing'):
     processed = process_large_dataset(data)
 # Output: data_processing: 2.34 s
+
+# Line-by-line profile of a function
+sc.profile(run=process_large_dataset, follow=process_large_dataset)
 
 # Timer for code blocks
 sc.tic()
@@ -399,6 +398,6 @@ sc.toc('Complex calculation')
 print(f"Using {sc.cpu_count()} CPUs")
 print(f"Thread limit: {os.environ.get('SCIRIS_NUM_THREADS', 'auto')}")
 
-# Monitor memory usage during operations
-sc.checkmem()  # Shows current memory usage
+# Check the memory used by an object
+sc.checkmem(mydata)  # Shows the size of each attribute/item
 ```
