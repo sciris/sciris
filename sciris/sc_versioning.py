@@ -61,7 +61,7 @@ def freeze(lower=False):
     """
     raw = {dist.metadata['Name']:dist.version for dist in imd.distributions()}
     keys = sorted(raw.keys())
-    if lower: # pragma: no cover
+    if lower:
         labels = {k:k.lower() for k in keys}
     else:
         labels = {k:k for k in keys}
@@ -214,18 +214,20 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
 
     try:
         # First, get the .git directory
-        curpath = os.path.dirname(os.path.abspath(path))
+        curpath = os.path.abspath(path)
+        if not os.path.isdir(curpath): # Start from the folder containing the file
+            curpath = os.path.dirname(curpath)
         while curpath:
             if os.path.exists(os.path.join(curpath, ".git")):
                 gitdir = os.path.join(curpath, ".git")
                 break
-            else: # pragma: no cover
+            else:
                 parent, _ = os.path.split(curpath)
                 if parent == curpath:
                     curpath = None
                 else:
                     curpath = parent
-        else: # pragma: no cover
+        else:
             raise RuntimeError("Could not find .git directory")
 
         # Then, get the branch and commit
@@ -252,7 +254,7 @@ def gitinfo(path=None, hashlen=7, die=False, verbose=True):
                     t = time.gmtime(int(epoch))
                     gitdate = time.strftime("%Y-%m-%d %H:%M:%S UTC", t)
 
-    except Exception as E: # pragma: no cover
+    except Exception as E:
         try: # Second, try importing gitpython
             import git
             rootdir = os.path.abspath(path) # e.g. /user/username/my/folder
@@ -288,8 +290,8 @@ def compareversions(version1, version2):
     format 1.2.3, but numeric works too. Returns 0 for equality, -1 for v1<v2, and
     1 for v1>v2.
 
-    If `version2` starts with >, >=, <, <=, or ==, the function returns True or
-    False depending on the result of the comparison.
+    If `version2` starts with >, >=, <, <=, ==, !=, or ~= (compatible release),
+    the function returns True or False depending on the result of the comparison.
 
     **Examples**:
 
@@ -318,14 +320,14 @@ def compareversions(version1, version2):
     if   v2.startswith('<='): valid = [0,-1]
     elif v2.startswith('>='): valid = [0,1]
     elif v2.startswith('=='): valid = [0]
-    elif v2.startswith('~='): valid = [-1,1]
+    elif v2.startswith('~='): return pkgs.SpecifierSet(v2, prereleases=True).contains(v1) # Compatible release, e.g. ~=1.2.3 means >=1.2.3, ==1.2.*
     elif v2.startswith('!='): valid = [-1,1]
     elif v2.startswith('<'):  valid = [-1]
     elif v2.startswith('>'):  valid = [1]
     elif v2.startswith('='):  valid = [0]
     elif v2.startswith('!'):  valid = [-1,1]
-    elif v2.startswith('~'): # pragma: no cover
-        errormsg = 'Loose version pinning is not supported; for not, use "~="'
+    elif v2.startswith('~'):
+        errormsg = 'Loose version pinning is not supported; for now, use e.g. ">=" or "~="'
         raise ValueError(errormsg)
 
     v2 = v2.lstrip('<>=!~')
@@ -386,11 +388,11 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
         lineno = result[frame][2]
         if tostring:
             output = f'{fname}'
-            if includelineno: # pragma: no cover
+            if includelineno:
                 output += f', line {lineno}'
         else:
             output = {'filename':fname, 'lineno':lineno}
-            if includeline: # pragma: no cover
+            if includeline:
                 try:
                     with open(fname, encoding='utf-8') as f:
                         lines = f.read().splitlines()
@@ -536,7 +538,7 @@ def loadmetadata(filename, load_all=False, die=True):
                 md = im.info
             else:
                 jsonstr = im.info[_metadataflag]
-                md = sc.loadjson(string=jsonstr)
+                md = _md_to_objdict(sc.loadjson(string=jsonstr))
 
         # JPG -- from https://www.thepythoncode.com/article/extracting-image-metadata-in-python
         elif is_jpg: # pragma: no cover
@@ -620,9 +622,10 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
         filename (str/path): the file to save to (must end in .zip)
         obj (any): the object to save
         files (str/list): any additional files or folders to save
+        folder (str): optional additional folder to save to
         comments (str/dict): other comments/information to store in the metadata (must be JSON-compatible)
         require (str/dict): if provided, an additional manual set of requirements
-        caller (bool): store information on the current user in the metadata (see `sc.metadata()`)
+        user (bool): store information on the current user in the metadata (see `sc.metadata()`)
         caller (bool): store information on the calling file in the metadata (see `sc.metadata()`)
         git (bool): store the git version in the metadata (see `sc.metadata()`)
         pipfreeze (bool): store the output of "pip freeze" in the metadata (see `sc.metadata()`)
@@ -645,14 +648,14 @@ def savearchive(filename, obj, files=None, folder=None, comments=None, require=N
     filename = sc.makepath(filename=filename, folder=folder, makedirs=True)
 
     # Check filename
-    if not allow_nonzip: # pragma: no cover
+    if not allow_nonzip:
         if filename.suffix != '.zip':
             errormsg = f'Your filename ends with "{filename.suffix}" rather than ".zip". If you are sure you want to do this, set allow_nonzip=True.'
             raise ValueError(errormsg)
 
     # Create the metadata, including storing the custom "method" attribute
-    md = metadata(caller=caller, git=git, pipfreeze=pipfreeze, comments=comments,
-                  require=require, frame=3, method=method)
+    md = metadata(user=user, caller=caller, git=git, pipfreeze=pipfreeze, comments=comments,
+                  require=require, relframe=1, method=method)
 
     # Convert both to strings
     dumpargs    = sc.mergedicts({'method':method}, dumpargs)
@@ -754,21 +757,21 @@ def loadarchive(filename, folder=None, loadobj=True, loadmetadata=False,
                 method = md.get('method', None)
                 reqs   = md.get('require', None)
                 obj    = sc.loadstr(datastr, method=method, remapping=remapping, **kwargs) # Load with original remappings
-                if reqs:
-                    require(reqs=reqs, die=False, warn=True) # Don't die, but print warnings
-            except: # pragma: no cover
+            except Exception as E1:
                 try:
-                    remapping = sc.mergedicts(remapping, sc.known_fixes)
-                    obj = sc.loadstr(datastr, remapping=remapping, verbose=True, **kwargs) # Load with all remappings
-                except Exception as E:
-                    exc = type(E)
+                    obj = sc.loadstr(datastr, remapping=remapping, verbose=True, **kwargs) # Try all methods (known remappings are applied automatically)
+                except Exception:
+                    exc = type(E1)
                     errormsg = 'Could not unpickle the object: to debug using metadata, set die=False'
                     if die:
-                        raise exc(errormsg) from E
+                        raise exc(errormsg) from E1
                     else:
                         warnmsg = 'Exception encountered unpickling the object, returning metadata only'
                         warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
                         return md
+
+            if reqs:
+                require(reqs=reqs, die=False, warn=True) # Don't die, but print warnings
 
     # Handle output
     if loadobj and not loadmetadata:

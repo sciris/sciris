@@ -20,6 +20,7 @@ By import convention, components of the Sciris library are listed beginning with
     - **Files**: `sc.loadspreadsheet()` now reads the first row as the header; `sc.makefilepath()` now prepends `folder` rather than replacing the filename's folder; and `sc.load()` raises an error for empty files.
     - **Parallelization**: with `die=False`, `sc.parallelize()` returns the exception (rather than `None`) for failed jobs; and each job is now reseeded, so jobs no longer give identical "random" numbers.
     - **Utilities**: `sc.sha()` now handles large arrays and dataframes; and `sc.tryexcept()` no longer catches `KeyboardInterrupt` or `SystemExit`.
+    - **Versioning**: `~=` in `sc.compareversions()` now means a compatible release (rather than "not equal"); and `sc.gitinfo()` with a folder now uses that folder's repository (rather than its parent's).
     - **Nested objects**: `sc.equal()` now treats failed comparisons as not equal; and `sc.getnested()` raises an error for missing attributes.
     - **Random numbers**: Sciris functions (except `sc.randround()`) no longer draw from the global random number stream.
 
@@ -208,6 +209,14 @@ The rest of the changes are a colossal number of tiny LLM-assisted bugfixes:
 1. `sc.urlopen()` returns error statuses with `response='status'`, appends `params` to existing query strings, uses the declared charset, and unquotes saved filenames.
 1. `sc.download(save=False)` no longer merges URLs with the same filename.
 1. The new `sc.lazyimport()` function imports a module only when it's first used, e.g. `plt = sc.lazyimport('matplotlib.pyplot')` (which now assigns modules to the caller's namespace by default).
+
+### Versioning
+
+1. `sc.gitinfo()` with a folder (including the default, the current folder) now uses the repository in that folder rather than its parent's.
+1. `sc.compareversions()` treats `~=` as a compatible release (e.g. `~=1.2.3` means `>=1.2.3, ==1.2.*`) rather than as "not equal".
+1. `sc.savearchive(user=False)` no longer stores the username, and archives no longer contain a spurious `frame` field.
+1. `sc.loadarchive()` retries loading as intended (rather than raising an `AttributeError`), and re-raises the original error type if that fails.
+1. `sc.loadmetadata()` returns an `sc.objdict` for PNG files (as for JSON and ZIP files).
 
 ### Nested objects
 
