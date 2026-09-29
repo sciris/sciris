@@ -15,17 +15,11 @@ import collections as co
 import numpy as np
 import pandas as pd
 import sciris as sc
+from .sc_utils import _not_given, _is_given # Allows searching for actual None values; imported directly since it's needed at definition time
 
 # Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
 atomic_classes = [np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index]
 atomic_with_tuple = atomic_classes + [tuple]
-
-# Define a custom "None" value to allow searching for actual None values
-_None = '<sc_nested_custom_None>' # This should not be equal to any other value the user could supply
-
-def not_none(obj):
-    """ Check if an object does not match "_None" (the special None value to allow None input) """
-    return not isinstance(obj, str) or obj != _None
 
 
 ##############################################################################
@@ -112,7 +106,7 @@ def makenested(obj=None, keylist=None, value=None, overwrite=True, generator=Non
     keylist = sc.tolist(keylist, coerce='tuple')
     if not len(keylist):
         errormsg = f'At least one key must be supplied, not {keylist}'
-        raise ValueError(keylist)
+        raise ValueError(errormsg)
     parentkeys = keylist[:-1]
     for i,key in enumerate(parentkeys):
         if not check_in_obj(currentlevel, key):
@@ -126,9 +120,9 @@ def makenested(obj=None, keylist=None, value=None, overwrite=True, generator=Non
 
     # Set the value
     lastkey = keylist[-1]
-    if overwrite or lastkey not in currentlevel:
+    if overwrite or not check_in_obj(currentlevel, lastkey):
         set_in_obj(currentlevel, lastkey, value)
-    elif not overwrite and value is not None: # pragma: no cover
+    elif not overwrite and value is not None:
         errormsg = f'Not overwriting entry {keylist} since overwrite=False'
         raise ValueError(errormsg)
     return obj
@@ -168,28 +162,32 @@ def check_in_obj(parent, key):
     itertype = check_iter_type(parent)
     if itertype == 'dict':
         out = key in parent.keys()
+        if not out and isinstance(parent, sc.odict) and isinstance(key, int): # odicts can also be indexed by position
+            out = 0 <= key < len(parent)
     elif itertype in ['list', 'tuple']:
         out = isinstance(key, int) and 0 <= key < len(parent)
     elif itertype == 'object':
-        out = key in parent.__dict__.keys()
+        out = hasattr(parent, key)
     else:
         errormsg = f'Cannot check for type "{type(parent)}", itertype "{itertype}"'
         raise Exception(errormsg)
     return out
 
 
-def get_from_obj(ndict, key, safe=False, default=None, **kwargs):
+def get_from_obj(ndict, key, safe=False, default=_not_given, **kwargs):
     """
     Get an item from a dict, list, or object by key
 
     Args:
         ndict (dict/list/obj): the object to get from
         key (any): the key to get
-        safe (bool): whether to return None if the key is not found (default False)
-        default (any): the value to return if the key is not found and safe=True
+        safe (bool): whether to return the "default" value (None if not provided) if the key is not found
+        default (any): the value to return if the key is not found (sets safe=True if provided)
         kwargs (dict): passed to `check_iter_type()`
     """
-    if default is not None:
+    if default is _not_given:
+        default = None
+    else:
         safe = True
     itertype = check_iter_type(ndict, **kwargs)
     if itertype == 'dict':
@@ -200,16 +198,16 @@ def get_from_obj(ndict, key, safe=False, default=None, **kwargs):
     elif itertype in ['list', 'tuple']:
         try:
             out = ndict[key]
-        except IndexError as e:
+        except (IndexError, TypeError) as e:
             if safe:
                 out = default
             else:
                 raise e
     elif itertype == 'object':
         if safe:
-            out = getattr(ndict, key)
-        else:
             out = getattr(ndict, key, default)
+        else:
+            out = getattr(ndict, key)
     else:
         if safe:
             out = default
@@ -225,24 +223,29 @@ def set_in_obj(parent, key, value):
     if itertype in ['dict', 'list']:
         parent[key] = value
     elif itertype == 'object':
-        parent.__dict__[key] = value
+        setattr(parent, key, value)
     else:
         errormsg = f'Cannot set value for type "{type(parent)}", itertype "{itertype}"'
         raise Exception(errormsg)
     return
 
 
+def flatten_trace(trace, sep='_'):
+    """ Convert a trace tuple to a string for easier reading """
+    if isinstance(trace, tuple):
+        trace = sep.join([str(k) for k in trace])
+    return trace
+
+
 def flatten_traces(tupledict, sep='_'):
     """ Convert trace tuples to strings for easier reading """
     strdict = type(tupledict)() # Create new dictionary of the same type
     for key,val in tupledict.items():
-        if isinstance(key, tuple):
-            key = sep.join([str(k) for k in key])
-        strdict[key] = val
+        strdict[flatten_trace(key, sep)] = val
     return strdict
 
 
-def getnested(nested, keylist, safe=False, default=None):
+def getnested(nested, keylist, safe=False, default=_not_given):
     """
     Get the value for the given list of keys
 
@@ -259,10 +262,8 @@ def getnested(nested, keylist, safe=False, default=None):
     ```
     See `sc.makenested()` for full documentation.
     """
-    if default is not None:
-        safe = True
     keylist = sc.tolist(keylist, coerce='tuple')
-    get = ft.partial(get_from_obj, safe=safe, default=default)
+    get = ft.partial(get_from_obj, safe=safe, default=default) # get_from_obj() handles whether default was supplied
     out = ft.reduce(get, keylist, nested)
     return out
 
@@ -375,7 +376,7 @@ class IterObj:
     """
     def __init__(self, obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True,
                  atomic='default', skip=None, rootkey='root', verbose=False, iterate=True,
-                 custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs):
+                 custom_type=None, custom_iter=None, custom_get=None, custom_set=None, aliases=False, **kwargs):
 
         # Default arguments
         self.obj          = obj
@@ -384,12 +385,12 @@ class IterObj:
         self.copy         = copy
         self.leaf         = leaf
         self.recursion    = recursion
+        self.aliases      = aliases
         self.depthfirst   = depthfirst
         self.atomic       = atomic
         self.skip         = skip
         self.rootkey      = rootkey
         self.verbose      = verbose
-        self.func_args    = args
         self.func_kw      = kwargs
 
         # Custom arguments
@@ -504,10 +505,9 @@ class IterObj:
                         out = [] # Return nothing if doesn't have __dict__.items() or __slots__, e.g. a weird wrapped function
             else:
                 out = [] # Return nothing if not recognized
-        if trace is not _None:
-            out = list(out)
-            for i in range(len(out)):
-                out[i] = [parent, trace, *list(out[i])] # Prepend parent and trace to the arguments
+        out = list(out)
+        for i in range(len(out)):
+            out[i] = [parent, trace, *list(out[i])] # Prepend parent and trace to the arguments
         return out
 
     def getitem(self, key, parent):
@@ -530,7 +530,7 @@ class IterObj:
         if itertype in ['dict', 'list']:
             parent[key] = value
         elif itertype == 'object':
-            parent.__dict__[key] = value
+            setattr(parent, key, value)
         elif self.custom_set:
             self.custom_set(parent, key, value)
         elif itertype == 'tuple':
@@ -543,14 +543,15 @@ class IterObj:
         return check_iter_type(obj, known=self.atomic, custom=self.custom_type)
 
     def check_proceed(self, key, subobj, newid):
-        """ Check if we should continue or not """
+        """ Check if we should process the object, and if so, whether to descend into it """
 
-        # If we've already parsed this object, don't parse it again if it's iterable
-        memo_skip = False
+        # If we've already parsed this (iterable) object, skip it, or if aliases=True, process it but don't descend into it again
         in_memo = (newid in self._memo) and (self._memo[newid] > self.recursion)
-        if in_memo: # We only skip processing if we've both seen an object before and it's iterable
-            if check_iter_type(subobj, known=self.atomic, custom=self.custom_type):
-                memo_skip = True
+        repeat = in_memo and self.check_iter_type(subobj)
+        memo_skip = repeat and not self.aliases
+        descend = not repeat
+        if repeat and self.aliases:
+            self.indent(f'Not descending into "{key}" since it has already been parsed')
 
         # Skip this object if we've been asked to
         key_skip = key in self._skip_keys
@@ -567,28 +568,33 @@ class IterObj:
             pairs = [f'{label}_skip=True' for label,skip in zip(labels, skips) if skip]
             self.indent(f'Skipping "{key}" because {sc.strjoin(pairs)}')
 
-        return proceed
+        return proceed, descend
 
     def process_obj(self, parent, trace, key, subobj, newid):
-        """ Process a single object """
+        """ Process a single object, returning its trace and its new value """
         self._memo[newid] += 1
         trace = trace + [key]
         subitertype = self.check_iter_type(subobj)
         self.indent(f'{len(self)} Trace {trace} | Type "{str(subitertype)}" | {type(subobj)}')
+        newobj = subobj
         if not (self.leaf and subitertype):
-            newobj = self.func(subobj, *self.func_args, **self.func_kw)
+            newobj = self.func(subobj, **self.func_kw)
             if self.inplace:
-                self.setitem(key, newobj, parent=parent)
+                if newobj is not subobj: # Nothing to set otherwise (and tuples can't be set)
+                    self.setitem(key, newobj, parent=parent)
             else:
                 self.output[tuple(trace)] = newobj
-        return trace
+        return trace, newobj
 
     def iterate(self):
         """ Actually perform the iteration over the object """
 
+        # With leaf=True, only process the root if it has no children
+        do_root = not (self.leaf and self.check_iter_type(self.obj))
+
         # Initialize the output for the root node
-        if not self.inplace:
-            self.output[self.rootkey] = self.func(self.obj, *self.func_args, **self.func_kw)
+        if do_root and not self.inplace:
+            self.output[self.rootkey] = self.func(self.obj, **self.func_kw)
 
         # Initialize the memo with the current object
         self._memo[id(self.obj)] = 1
@@ -598,22 +604,22 @@ class IterObj:
         while queue:
             parent,trace,key,subobj = queue.popleft()
             newid = id(subobj)
-            proceed = self.check_proceed(key, subobj, newid)
-            if proceed: # Actually descend into the object
-                newtrace = self.process_obj(parent, trace, key, subobj, newid) # Process the object
-                newitems = self.iteritems(subobj, newtrace)
-                if self.depthfirst:
-                    queue.extendleft(reversed(newitems)) # extendleft() swaps order, so swap back
-                else:
-                    queue.extend(newitems)
+            proceed, descend = self.check_proceed(key, subobj, newid)
+            if proceed:
+                newtrace, newobj = self.process_obj(parent, trace, key, subobj, newid) # Process the object
+                if descend: # If modifying in place, descend into the new object, since that's what's in the parent now
+                    newitems = self.iteritems(newobj if self.inplace else subobj, newtrace)
+                    if self.depthfirst:
+                        queue.extendleft(reversed(newitems)) # extendleft() swaps order, so swap back
+                    else:
+                        queue.extend(newitems)
 
         # Finish up
         if self.inplace:
-            newobj = self.func(self.obj, *self.func_args, **self.func_kw) # Set at the root level
-            return newobj
+            if do_root:
+                return self.func(self.obj, **self.func_kw) # Set at the root level
+            return self.obj
         else:
-            if (not self._trace) and (len(self.output)>1) and self.leaf: # We're at the top level, we have multiple entries, and only leaves are requested
-                self.output.pop('root') # Remove "root" with leaf=True if it's not the only node
             return self.output
 
     def flatten_traces(self, sep='_', inplace=True):
@@ -636,7 +642,7 @@ class IterObj:
         trace = self.output.keys()
         depth = [(0 if tr==self.rootkey else len(tr)) for tr in trace] # The depth is the length of the tuple, except the special case of the root key
         value = self.output.values()
-        if skip_root:
+        if skip_root and trace[0] == self.rootkey:
             trace = trace[1:]
             depth = depth[1:]
             value = value[1:]
@@ -645,7 +651,7 @@ class IterObj:
 
 
 def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default',
-            skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, *args, **kwargs):
+            skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, aliases=False, **kwargs):
     """
     Iterate over an object and apply a function to each node (item with or without children).
 
@@ -675,7 +681,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         verbose (bool): whether to print progress
         flatten (bool): whether to use flattened traces (single strings) rather than tuples
         to_df (bool): whether to return a dataframe of the output instead of a dictionary (not valid with inplace=True)
-        *args (list): passed to func()
+        aliases (bool): whether to include further references to an object that has already been parsed (without descending into them again); by default, they are skipped
         **kwargs (dict): passed to func()
 
     **Examples**:
@@ -709,16 +715,19 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     - *New in version 3.1.3:* "rootkey" argument
     - *New in version 3.1.5:* "recursion" argument; better handling of atomic classes
     - *New in version 3.1.6:* "skip", "depthfirst", "to_df", and "flatten" arguments
+    - *New in version 3.4.0:* "aliases" argument
     """
     # Create the object
-    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, depthfirst=depthfirst,
-                 atomic=atomic, skip=skip, rootkey=rootkey, verbose=verbose, iterate=False, *args, **kwargs)
+    io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, aliases=aliases, depthfirst=depthfirst,
+                 atomic=atomic, skip=skip, rootkey=rootkey, verbose=verbose, iterate=False, **kwargs)
     out = io.iterate() # Iterate
 
-    if flatten:
-        out = io.flatten_traces()
     if to_df:
-        out = io.to_df()
+        out = io.to_df() # Do this before flattening, since the depth is calculated from the trace tuples
+        if flatten:
+            out['trace'] = [flatten_trace(tr) for tr in out['trace']]
+    elif flatten:
+        out = io.flatten_traces()
     return out
 
 
@@ -744,11 +753,11 @@ def mergenested(dict1, dict2, die=False, verbose=False, _path=None):
         if key in a:
             if isinstance(a[key], dict) and isinstance(b[key], dict):
                 mergenested(dict1=a[key], dict2=b[key], _path=_path+[str(key)], die=die, verbose=verbose)
-            elif a[key] == b[key]:
-                pass # same leaf value # pragma: no cover
+            elif equal(a[key], b[key]): # Use sc.equal() since == doesn't work for e.g. arrays
+                pass # same leaf value
             else:
                 errormsg = f'Warning! Conflict at {keypath}: {a[key]} vs. {b[key]}'
-                if die: # pragma: no cover
+                if die:
                     raise ValueError(errormsg)
                 else:
                     a[key] = b[key]
@@ -859,7 +868,7 @@ def nestedloop(inputs, loop_order):
 __all__ += ['search', 'Equal', 'equal']
 
 
-def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact', **kwargs):
+def search(obj, query=_not_given, key=_not_given, value=_not_given, type=_not_given, method='exact', **kwargs):
     """
     Find a key/attribute or value within a list, dictionary or object.
 
@@ -912,11 +921,14 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
 
     def check_match(source, target):
         """ Check if there is a match between the "source" and "target" """
-        if not_none(source) and not_none(target): # See above for definition of _None; a source and target were supplied
+        if _is_given(source) and _is_given(target): # A source and target were supplied
             if callable(target):
                 match = target(source)
             elif method == 'exact':
-                match = target == source
+                try:
+                    match = bool(target == source)
+                except Exception: # e.g. arrays, where == doesn't give a single value
+                    match = False
             elif method in [str, 'string', 'partial']:
                 match = str(target).lower() in str(source).lower()
             elif method == 'regex':
@@ -930,16 +942,16 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
         return match
 
     # Handle query
-    if not_none(query):
-        if not_none(key) or not_none(value): # pragma: no cover
+    if _is_given(query):
+        if _is_given(key) or _is_given(value): # pragma: no cover
             errormsg = '"query" cannot be used with "key" or "value"; it is a shortcut to set both'
             raise ValueError(errormsg)
         key = query
         value = query
 
     # Handle type
-    if not_none(type):
-        if not_none(key) or not_none(value): # pragma: no cover
+    if _is_given(type):
+        if _is_given(key) or _is_given(value): # pragma: no cover
             errormsg = '"type" cannot be used with "key" or "value"; replaces "value"'
             raise ValueError(errormsg)
         typetuple = tuple(sc.tolist(type))
@@ -954,13 +966,13 @@ def search(obj, query=_None, key=_None, value=_None, type=_None, method='exact',
     matches = []
 
     # Match keys
-    if not_none(key):
+    if _is_given(key):
         for k in tree.keys():
             if check_match(k[-1], key): # Only want the last key of the trace
                 matches.append(k)
 
     # Match values (including types)
-    if not_none(value):
+    if _is_given(value):
         for k,v in tree.items():
             if check_match(v, value):
                 matches.append(k)
@@ -1152,6 +1164,10 @@ class Equal(sc.prettyobj):
             errormsg = f'Not able to handle object of {type(obj)}'
             raise TypeError(errormsg)
 
+        # sc.nanequal() only compares values, so also compare the index and name of series
+        if isinstance(obj, pd.Series):
+            eq = eq and obj.index.equals(obj2.index) and obj.name == obj2.name
+
         return eq
 
 
@@ -1185,6 +1201,7 @@ class Equal(sc.prettyobj):
         if not self.walked: # pragma: no cover
             self.walk()
 
+        rootkey = self.kwargs.get('rootkey', 'root')
         bkeys = set(self.bdict.keys()) # Get the base keys (object structure)
         for i,key in enumerate(self.treekeys):
             baseobj = self.bdict.get(key, self.missingstr)
@@ -1195,8 +1212,8 @@ class Equal(sc.prettyobj):
 
                 # Check if the keys don't match, in which case objects differ
                 eq = True
-                if key == 'root':
-                    appendval(vals, otree['root'])
+                if key == rootkey and key in otree:
+                    appendval(vals, otree[rootkey])
                     okeys = set(otree.keys())
                     eq = bkeys == okeys
                     if eq is False and self.verbose: # pragma: no cover
@@ -1212,31 +1229,29 @@ class Equal(sc.prettyobj):
                     methods = sc.dcp(self.method) # Copy the methods to try one by one
                     compared = False # Check if comparison succeeded
                     otherobj = otree[key] # Get the other object
-                    if key != 'root': appendval(vals, otherobj)
+                    if key != rootkey: appendval(vals, otherobj)
 
                     # Convert the objects
                     while len(methods) and not compared:
                         method = methods.pop(0)
-                        bconv = self.convert(baseobj, method)
-                        oconv = self.convert(otherobj, method)
+                        try:
+                            bconv = self.convert(baseobj, method)
+                            oconv = self.convert(otherobj, method)
 
-                        # Actually check equality -- can be True, False, or None
-                        if type(bconv) != type(oconv):
-                            eq = False # Unlike types are always not equal
-                            compared = True
-                        elif isinstance(bconv, self.special_cases):
-                            eq = self.compare_special(bconv, oconv) # Compare known exceptions
-                            compared = True
-                        else:
-                            try:
+                            # Actually check equality -- can be True, False, or None
+                            if type(bconv) != type(oconv):
+                                eq = False # Unlike types are always not equal
+                            elif isinstance(bconv, self.special_cases):
+                                eq = self.compare_special(bconv, oconv) # Compare known exceptions
+                            else:
                                 eq = (bconv == oconv) # Main use case: do the comparison!
                                 eq = bool(eq) # Ensure it's true or false
-                                compared = True # Comparison succeeded, break the loop
-                            except Exception as E: # Store exceptions if encountered
-                                eq = None
-                                self.exceptions[key] = E
-                                if self.verbose:
-                                    print(f'Exception encountered on "{self.keytostr(key, j+1)}" ({type(bconv)}) with method "{method}": {E}')
+                            compared = True # Comparison succeeded, break the loop
+                        except Exception as E: # Store exceptions if encountered, and try the next method
+                            eq = None
+                            self.exceptions[key] = E
+                            if self.verbose:
+                                print(f'Exception encountered on "{self.keytostr(key, j+1)}" ({type(baseobj)}) with method "{method}": {E}')
 
                     # All methods failed, check that the equality isn't defined
                     if not compared:
@@ -1250,13 +1265,25 @@ class Equal(sc.prettyobj):
             # Store the results, and break if any equalities are found unless we're doing detailed
             has_none = None in eqs
             has_false = False in eqs
-            result = None if has_none else all(eqs)
+            result = False if has_false else None if has_none else True
             self.fullresults[key] = eqs + vals
             self.results[key] = result
             if not self.detailed and has_false: # Don't keep going unless needed
                 if self.verbose: # pragma: no cover
                     print('Objects are not equal and detailed=False, breaking')
                 break
+
+        # A comparison that failed doesn't count as equal, unless the object's children were compared instead
+        for key in self.results.keys():
+            if self.results[key] is None:
+                if key == rootkey:
+                    has_children = len(self.results) > 1
+                else:
+                    has_children = any(self.is_subkey(key, k) for k in self.results.keys())
+                if not has_children:
+                    if self.die:
+                        raise self.exceptions[key]
+                    self.results[key] = False
 
         # Tidy up
         self.eq = all([v for v in self.results.values() if v is not None])
@@ -1286,8 +1313,11 @@ class Equal(sc.prettyobj):
         # Make dataframe
         columns = [f'obj0==obj{i+1}' for i in range(self.n-1)]
         if self.detailed>1: columns = columns + [f'val{i}' for i in range(self.n)]
-        df = sc.dataframe.from_dict(sc.dcp(self.fullresults), orient='index', columns=columns)
-        equal = df.iloc[:, :(self.n-1)].all(axis=1)
+        if len(self.fullresults):
+            df = sc.dataframe.from_dict(sc.dcp(self.fullresults), orient='index', columns=columns)
+        else: # e.g. empty objects with leaf=True
+            df = sc.dataframe(columns=columns)
+        equal = [v is not False for v in self.results.values()] # None means the children were compared instead
         df.insert(0, 'equal', equal)
 
         self.df = df
@@ -1362,7 +1392,7 @@ def equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=Fa
     - *New in version 3.1.0.*
     - *New in version 3.1.3:* "union" argument; more detailed output
     """
-    e = Equal(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, leaf=leaf, verbose=verbose, die=die, **kwargs)
+    e = Equal(obj, obj2, *args, method=method, detailed=detailed, equal_nan=equal_nan, leaf=leaf, union=union, verbose=verbose, die=die, **kwargs)
     if detailed:
         return e.df
     else:

@@ -13,11 +13,13 @@ Highlights:
 import io
 import os
 import sys
+import json
 import types
 import time
 import tqdm
 import pprint
 import inspect
+import tempfile
 import warnings
 import numpy as np
 import collections as co
@@ -52,17 +54,12 @@ def createcollist(items, title=None, strlen=_strlen, ncol=_ncol):
     """ Creates a string for a nice columnated list (e.g. to use in __repr__ method) """
     if len(items):
         nrow = int(np.ceil(float(len(items))/ncol))
-        newkeys = []
-        for x in range(nrow):
-            newkeys += items[x::nrow]
-
         string = title + ':' if title else ''
-        c = 0
-        for x in newkeys:
-            if c%ncol == 0: string += '\n  '
-            if len(x) > strlen: x = x[:strlen-3] + '...'
-            string += '%-*s  ' % (strlen,x)
-            c += 1
+        for r in range(nrow): # Build each row, reading down the columns
+            string += '\n  '
+            for x in items[r::nrow]:
+                if len(x) > strlen: x = x[:strlen-3] + '...'
+                string += '%-*s  ' % (strlen,x)
         string += '\n'
     else:
         string = ''
@@ -118,6 +115,9 @@ def _is_meth(obj, attr, die=False):
     - *New in version 3.2.0:* use method and function types instead of callable()
     """
     try:
+        clsattr = getattr(type(obj), attr, None) # Check the class first, to avoid evaluating properties
+        if hasattr(clsattr, '__get__') and not isinstance(clsattr, (types.MethodType, types.FunctionType)):
+            return False # It's a property or other descriptor, not a method
         obj = getattr(obj, attr, None)
         return isinstance(obj, (types.MethodType, types.FunctionType)) # Equivalent to sc.isfunc()
     except Exception as E:
@@ -341,9 +341,10 @@ def prepr(obj, vals=True, maxlen=None, maxitems=None, skip=None, dividerchar='�
                                     raise E
                             values.append(value)
                         else:
+                            nlabels = len(labels)
                             labels = labels[:a]
                             labels.append('etc. (time exceeded)')
-                            values.append(f'{len(labels)-a} entries not shown')
+                            values.append(f'{nlabels-a} entries not shown')
                             time_exceeded = True
                             break
 
@@ -636,6 +637,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None):
     - *New in version 3.2.6:* "formats" argument; use 'g' format when sigfigs=None
     """
     output = []
+    sepchar = sep if isinstance(sep, str) else ',' # Thousands separator, if used
 
     islist = sc.isiterable(x)
     istuple = isinstance(x, tuple)
@@ -647,7 +649,7 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None):
         if formats is None:
             format_map = [(1e18,'e18'), (1e15,'e15'), (1e12,'T'), (1e9,'B'), (1e6,'M'), (1e3,'K')]
         else:
-            formats_list = sc.tolist(formats)
+            formats_list = list(formats) if isinstance(formats, str) else sc.tolist(formats) # Split a string into characters
 
             # Map formats to magnitudes (thousand, million, billion, trillion, etc.)
             magnitudes = [1e3, 1e6, 1e9, 1e12, 1e15, 1e18]
@@ -658,8 +660,9 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None):
             format_map.reverse()  # Process from largest to smallest
 
         if SI:
+            xr = sigfiground(x, sigfigs) if sigfigs else x # Use the rounded value, so e.g. 999999 becomes 1.000M rather than 1000.0K
             for val,suff in format_map:
-                if abs(x) >= val:
+                if abs(xr) >= val:
                     x = x/val
                     suffix = suff
                     break # Find at most one match
@@ -669,23 +672,22 @@ def sigfig(x, sigfigs=4, SI=False, sep=False, keepints=False, formats=None):
                 output.append('0')
             elif sigfigs is None:
                 output.append(f'{x:g}'+suffix)
-            elif x > (10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
+            elif abs(x) > (10**sigfigs) and not SI and keepints: # e.g. x = 23432.23, sigfigs=3, output is 23432
                 roundnumber = int(round(x))
-                if sep: string = format(roundnumber, ',')
+                if sep: string = format(roundnumber, ',').replace(',', sepchar)
                 else:   string = f'{x:0.0f}'
                 output.append(string)
             else:
                 magnitude = np.floor(np.log10(abs(x)))
                 factor = 10**(sigfigs-magnitude-1)
                 x = round(x*factor)/float(factor)
+                if x: magnitude = np.floor(np.log10(abs(x))) # Recalculate in case rounding crossed a power of ten, e.g. 9.9999 -> 10.00
                 digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
                 decimals = int(max(0,-magnitude+sigfigs-1))
                 strformat = '%' + f'{digits}.{decimals}' + 'f'
                 string = strformat % x
-                if sep: # To insert separators in the right place, have to convert back to a number
-                    if decimals>0:  roundnumber = float(string)
-                    else:           roundnumber = int(string)
-                    string = format(roundnumber, ',') # Allow comma separator
+                if sep: # Insert thousands separators
+                    string = format(x, f',.{decimals}f').replace(',', sepchar)
                 string += suffix
                 output.append(string)
         except: # pragma: no cover
@@ -723,14 +725,15 @@ def sigfiground(x, sigfigs=4):
     def round_arr(arr, sigfigs):
         """ Function for rounding a single number """
         out = arr.copy() # Preallocate output
-        inds = np.nonzero(arr) # Skip zero indices
+        inds = np.nonzero(np.isfinite(arr) & (arr != 0)) # Skip zero and non-finite indices
         nzarr = arr[inds] # Pull out those values
         magnitude = np.floor(np.log10(np.abs(nzarr))) # Determine the order of magnitude of the number
         exponent = sigfigs - magnitude - 1 # Convert to an exponent
-        factor = 10**exponent # Calculate the factor to scale the number
-        rndarr = np.round(nzarr*factor)/factor # Round the scaled number and scale it back
-        out[inds] = rndarr # Put the rounded numbers back in the array
-        if np.all(exponent <= 0): # They're all integers
+        with np.errstate(invalid='ignore'): # Infinite sigfigs give NaN; handled below
+            factor = 10**exponent # Calculate the factor to scale the number
+            rndarr = np.round(nzarr*factor)/factor # Round the scaled number and scale it back
+        out[inds] = np.where(np.isfinite(exponent), rndarr, nzarr) # Put the rounded numbers back in the array, leaving them unchanged if sigfigs is infinite
+        if np.all(exponent <= 0) and np.all(np.abs(out) < 2**63): # They're all integers, and small enough to convert
             out = out.astype(np.int64)
         return out
 
@@ -740,7 +743,7 @@ def sigfiground(x, sigfigs=4):
     if sc.isnumber(x): out = out[0]
     elif isinstance(x, list):
         out = out.tolist()
-        out = [int(x) if x.is_integer() else x for x in out] # Allow mix of ints and floats
+        out = [int(v) if float(v).is_integer() else v for v in out] # Allow mix of ints and floats
     return out
 
 
@@ -765,7 +768,7 @@ def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True,
 
     ``python
     data = [1210, 1072, 1722, 1229, 1902]
-    sc.arraymean(data) # Returns 1430 ± 320
+    sc.arraymean(data) # Returns 1430 ± 650
     ``
 
     - *New in version 3.0.0.*
@@ -777,16 +780,17 @@ def arraymean(data, stds=2, axis=None, mean_sf=None, err_sf=None, tostring=True,
     val = data.mean(axis=axis)
     err = data.std(axis=axis)*stds
 
-    relsize = np.floor(np.log10(abs(val))) - np.floor(np.log10(abs(err)))
+    with np.errstate(divide='ignore'): # Zero values give infinite sigfigs; handled by sigfiground() and sigfig()
+        relsize = np.floor(np.log10(abs(val))) - np.floor(np.log10(abs(err)))
     if vsf is None:
         vsf = esf + relsize
     elif vsf is not None and err_sf is None:
-        esf = min(vsf, vsf - relsize)
+        esf = np.minimum(vsf, vsf - relsize)
 
     if tostring:
-        valstr = sigfig(val, vsf, **kwargs)
-        errstr = sigfig(err, esf, **kwargs)
-        string = f'{valstr} ± {errstr}'
+        vals, errs, vsfs, esfs = [np.broadcast_to(v, np.shape(val)).ravel() for v in [val, err, vsf, esf]] # Handle multiple values if axis is supplied
+        strings = [f'{sigfig(v, vs, **kwargs)} ± {sigfig(e, es, **kwargs)}' for v,e,vs,es in zip(vals, errs, vsfs, esfs)]
+        string = ', '.join(strings)
 
         if doprint:
             print(string)
@@ -833,9 +837,9 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
         ci = 100
 
     if sc.isnumber(ci):
-        if isinstance(ci, int):
+        if isinstance(ci, (int, np.integer)):
             x = ci/100/2
-        elif isinstance(ci, float):
+        else:
             x = ci/2
         quantiles = [0.5-x, 0.5+x]
         if x == 0.25:
@@ -848,10 +852,7 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
         if len(ci) != 2: # pragma: no cover
             errormsg = f'If providing a list of quantiles, must provide 2, not {len(ci)}'
             raise ValueError(errormsg)
-        quantiles = ci
-        for i,q in enumerate(quantiles):
-            if isinstance(q, int):
-                quantiles[i] = q/100
+        quantiles = [q/100 if isinstance(q, (int, np.integer)) else q for q in ci] # Convert percentiles to quantiles
         cistr = f'{quantiles[0]*100:n}%, {quantiles[1]*100:n}%'
     else: # pragma: no cover
         errormsg = f'Could not understand confidence interval "{ci}"'
@@ -861,7 +862,9 @@ def arraymedian(data, ci=95, sf=3, doprint=False, **kwargs):
     data    = sc.toarray(data)
     median  = np.quantile(data, 0.5)
     bounds  = np.quantile(data, quantiles)
-    relsize = np.floor(np.log10(abs(median))) - np.floor(np.log10(np.abs(bounds)))
+    with np.errstate(divide='ignore'): # Zero values are handled below
+        relsize = np.floor(np.log10(abs(median))) - np.floor(np.log10(np.abs(bounds)))
+    relsize = np.where(np.isfinite(relsize), relsize, 0) # Handle a median or bound of 0
 
     # Assemble string
     valstr  = sigfig(median, sf, **kwargs)
@@ -941,20 +944,19 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
     *New in version 2.0.3:* "fmt", "colsep", "vsep", "decimals", and "dtype" arguments
     *New in version 3.0.0:* "doprint" argument
     """
-    from . import sc_math as scm # To avoid circular import
 
     string = ''
     arr = sc.toarray(arr, dtype=dtype)
     if fmt is None:
         # Check for object or string dtypes (pandas 3.0.0 infers strings as 'str' instead of 'object')
-        if arr.dtype == object or arr.dtype.kind in ['U', 'S', 'O']: # pragma: no cover
+        if arr.dtype == object or arr.dtype.kind in ['U', 'S', 'O']:
             maxdigits = max([len(str(v)) for v in arr.flatten()])
             fmt = f'%{maxdigits}s'
         else:
-            maxdigits = sc.numdigits(arr.max())
-            if arr.dtype == float:
+            maxdigits = max(sc.numdigits([arr.min(), arr.max()], count_minus=True)) if arr.size else 1 # Allow for negative numbers and empty arrays
+            if arr.dtype.kind == 'f': # Any float, not just float64
                 fmt = f'%{maxdigits+decimals+1}.{decimals}f'
-            else: # pragma: no cover
+            else:
                 fmt = f'%{maxdigits}.0f'
     if np.ndim(arr)==1:
         for i in range(len(arr)):
@@ -1106,7 +1108,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
 
     ``python
     sc.colorize('green', 'hi') # Simple example
-    sc.colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); colorize() # Colorize all output in between
+    sc.colorize(['yellow', 'bgblack']); print('Hello world'); print('Goodbye world'); sc.colorize() # Colorize all output in between
     bluearray = sc.colorize(color='blue', string=str(range(5)), output=True); print("c'est bleu: " + bluearray)
     sc.colorize('magenta') # Now type in magenta for a while
     sc.colorize() # Stop typing in magenta
@@ -1118,7 +1120,7 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
     """
 
     # Handle short-circuit case
-    if not enable: # pragma: no cover
+    if not enable:
         if output:
             return string
         else:
@@ -1167,11 +1169,13 @@ def colorize(color=None, string=None, doprint=None, output=False, enable=True, s
             ansicolors[key] = '\033[' + val + 'm'
 
         # Determine what color to use
+        if color is None and string is None:
+            color = 'reset' # Calling with no arguments resets the color
         colorlist = sc.tolist(color)  # Make sure it's a list
         for color in colorlist:
-            if color not in ansicolors.keys(): # pragma: no cover
+            if color not in ansicolors.keys():
                 print(f'Color "{color}" is not available, use colorize(showhelp=True) to show options.')
-                return  # Don't proceed if the color isn't found
+        colorlist = [color for color in colorlist if color in ansicolors.keys()] # Skip unavailable colors, but still show the string
         ansicolor = ''
         for color in colorlist:
             ansicolor += ansicolors[color]
@@ -1306,6 +1310,8 @@ def heading(string='', *args, color='cyan', divider='—', spaces=2, spacesafter
     fullstring = space + string + spaceafter
 
     # Create output
+    if any(kwargs.get(k) is not None for k in ['fg', 'bg', 'style']):
+        color = None # Use the alternate colorize() usage instead
     return colorize(color=color, string=fullstring, doprint=doprint, output=output, **kwargs)
 
 
@@ -1385,7 +1391,6 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
     """
     try:
         from requests import post # Simple way of posting data to a URL
-        from json import dumps # For sanitizing the message
     except Exception as E:
         errormsg = f'Cannot use Slack notification since imports failed: {str(E)}'
         if die: raise ImportError(errormsg)
@@ -1411,13 +1416,16 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
         errormsg = f'"{webhook}" does not seem to be a valid webhook string or file'
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
+    slackurl = slackurl.strip() # Remove e.g. a trailing newline from the file
 
     # Package and post payload
     try:
-        payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
+        payload = '{"text": %s, "channel": %s, "username": %s}' % (json.dumps(message), json.dumps(to), json.dumps(fromuser))
         printv(f'Full payload: {payload}', 4, verbose)
         response = post(url=slackurl, data=payload)
         printv(response, 3, verbose) # Optionally print response
+        if not response.ok: # Slack reports failures via the status code rather than an exception
+            raise RuntimeError(f'status {response.status_code}: {response.text}')
         printv('Message sent.', 2, verbose) # We're done
     except Exception as E:
         errormsg = f'Sending of Slack message failed: {repr(E)}'
@@ -1438,7 +1446,6 @@ def printtologfile(message=None, filename=None):
     if message is None: # pragma: no cover
         return # Return immediately if nothing to append
     if filename is None:
-        import tempfile
         tempdir = tempfile.gettempdir()
         filename = os.path.join(tempdir, 'logfile') # Some generic filename that should work on *nix systems
 
@@ -1479,7 +1486,7 @@ def percentcomplete(step=None, maxsteps=None, stepsize=1, prefix=None):
         prefix = ' '
     elif sc.isnumber(prefix): # pragma: no cover
         prefix = ' '*prefix
-    onepercent = max(stepsize,round(maxsteps/100*stepsize)) # Calculate how big a single step is -- not smaller than 1
+    onepercent = max(1,round(maxsteps/100*stepsize)) # Calculate how big a single step is -- not smaller than 1
     if not step%onepercent: # Does this value lie on a percent
         thispercent = round(step/maxsteps*100) # Calculate what percent it is
         print(prefix + '%i%%'% thispercent) # Display the output
@@ -1541,7 +1548,7 @@ def progressbar(i=None, maxiters=None, label='', every=1, length=30, empty='—'
         maxiters = len(maxiters)
     ending = '\n' if newline else '\r'
     prefix = ''   if newline else '\r'
-    if every < 1: # pragma: no cover
+    if every < 1:
         every = max(1, int(every*maxiters)) # Don't let it go below 1
 
     # Calculate percent and handle zero case
@@ -1684,7 +1691,7 @@ class progressbars(prettyobj):
         return
 
 
-class capture(co.UserString, str, redirect_stdout):
+class capture(co.UserString, redirect_stdout):
     """
     Captures stdout (e.g., from `print()`) as a variable.
 
@@ -1727,6 +1734,7 @@ class capture(co.UserString, str, redirect_stdout):
 
     def __exit__(self, *args, **kwargs):
         self.data += self._io.getvalue()
+        self._io.seek(0); self._io.truncate(0) # Clear the buffer in case the object is reused
         redirect_stdout.__exit__(self, *args, **kwargs)
         return
 

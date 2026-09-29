@@ -18,14 +18,28 @@ def test_utils():
     o = sc.objdict()
 
     print('Testing sc.approx()')
-    assert sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True
-    o.approx = sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
+    with pytest.warns(FutureWarning): # Deprecated
+        o.approx = sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
     assert not o.approx[0]
 
-    print('Testing sc.savedivide()')
+    print('Testing sc.safedivide()')
     assert sc.safedivide(numerator=0, denominator=0, default=1, eps=0) == 1 # Returns 1
-    o.safedivide = sc.safedivide(3, np.array([1,3,0]),-1, warn=False)  # Returns array([ 3,  1, -1])
-    assert o.safedivide[-1] == -1
+    assert sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) == 2.5
+    assert sc.safedivide() == 1.0 # Defaults are 1/1
+    denominator = np.array([1,3,0])
+    o.safedivide = sc.safedivide(3, denominator, -1, warn=False)  # Returns array([ 3., 1., -1.])
+    assert list(o.safedivide) == [3, 1, -1]
+    assert list(denominator) == [1, 3, 0], 'The input array should not be modified'
+    assert list(sc.safedivide([1,2,3], (1,0,2), default=-1)) == [1, -1, 1.5] # Lists and tuples are converted
+    assert sc.safedivide(1, np.nan, default=-1) == -1, 'nan denominators should also be replaced'
+    assert list(sc.safedivide(1, np.array([2.0, np.nan]), default=-1)) == [0.5, -1]
+    assert list(sc.safedivide(np.array([1,2]), 0, default=-1)) == [-1, -1], 'Should broadcast to the numerator'
+    assert sc.safedivide(1, 1e-10, default=-1) == -1 # Within the default eps of zero
+    assert sc.safedivide(1, 1e-10, default=-1, eps=0) == 1e10 # ...but not with eps=0
+    with pytest.warns(RuntimeWarning):
+        sc.safedivide(3, np.array([1,3,0]), -1, warn=True)
+    with pytest.raises(TypeError):
+        sc.safedivide(1, 'not a number')
 
     print('Testing sc.isprime()')
     o.isprime = [[i**2+1,sc.isprime(i**2+1)] for i in range(10)]
@@ -56,12 +70,15 @@ def test_utils():
     sc.inclusiverange(3)
     sc.inclusiverange(3,5)
     assert o.inclusiverange[-1] == 5
+    assert sc.inclusiverange(0, 1.2, 0.2)[-1] == 1.2 # Endpoint is kept despite floating-point error
+    assert sc.inclusiverange(0, 10, 3)[-1] == 9 # Non-integer number of steps
 
     print('Testing sc.randround()')
     base = np.random.randn(20)
     o.randround = sc.randround(base)
     sc.randround(base.tolist())
     sc.randround(base[0])
+    assert sc.randround(base.tolist(), rng=1) == sc.randround(base.tolist(), rng=np.random.default_rng(1)) # Seed and generator are equivalent
 
     print('Testing sc.cat()')
     o.cat = sc.cat(np.array([1,2,3]), [4,5], 6, copy=True)
@@ -100,6 +117,7 @@ def test_find():
     print('Testing sc.count()')
     found.count = sc.count([1,2,2,3], 2.0)
     assert found.count == 2
+    assert sc.count(np.ones((2,3)), 1) == 6 # Multidimensional
 
     print('Testing sc.findfirst(), sc.findlast()')
     found.first = sc.findfirst(np.random.rand(10))
@@ -154,6 +172,7 @@ def test_nan():
     allnans = np.full(5, np.nan)
     assert len(sc.sanitize(allnans)) == 0
     assert sc.sanitize(allnans, defaultval=7) == 7
+    assert np.isnan(sc.sanitize(allnans, replacenans='linear')).all() # Nothing to interpolate from, so keep the NaNs
 
     print('Testing fillnan and rmnan')
     data2d = np.random.rand(3,3)
@@ -199,6 +218,10 @@ def test_smooth(doplot=doplot):
     print('Testing sc.smooth()')
     data = np.random.randn(200,100)
     o.smoothdata = sc.smooth(data,10)
+
+    print('Testing sc.convolve()')
+    assert np.allclose(sc.convolve(np.ones(5), [0.3, 0.5, 0.2]), 1) # Edges are corrected
+    assert np.allclose(sc.convolve(np.ones(3), np.ones(5)/5), 1) # Kernel longer than the data
 
     print('Testing sc.smoothinterp()')
     n = 50

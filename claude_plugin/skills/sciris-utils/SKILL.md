@@ -51,7 +51,7 @@ sc.isnumber('3')          # False
 ## Fuzzy Matching
 
 ```python
-sc.suggest('Scirys', ['Python', 'NumPy', 'Sciris'], n=2)  # ['Sciris']
+sc.suggest('Scirys', ['Python', 'NumPy', 'Sciris'])  # 'Sciris'
 ```
 
 ## Downloading
@@ -72,6 +72,7 @@ out = sc.runcommand('ls *.py', printoutput=True) # Use instead of Popen()
 ```python
 old = sc.importbypath('sim_v1/sim.py')   # Import without sys.path
 new = sc.importbypath('sim_v2/sim.py')   # Two modules with same name
+plt = sc.lazyimport('matplotlib.pyplot') # Only imported when first used
 ```
 
 ## Help and Debugging

@@ -15,8 +15,8 @@ Highlights:
 import struct
 import numpy as np
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import sciris as sc
+plt = sc.lazyimport('matplotlib.pyplot') # Only import pyplot when it's first used, since it's slow to import
 
 
 ##############################################################################
@@ -33,7 +33,7 @@ def _listify_colors(colors, origndim=None):
         origndim = np.ndim(colors) # Original dimensionality
         if origndim==1:
             colors = [colors] # Wrap it in another list if needed
-        colors = np.array(colors) # Just convert it to an array
+        colors = np.array(colors, dtype=float) # Convert to a float array, so results aren't truncated to integers
         return colors, origndim
     else: # Reverse the transformation
         if origndim==1:
@@ -48,7 +48,7 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
     Arg:
         color (str/list/etc): the input color to sanitize into an RGB tuple (or array)
         asarray (bool): whether to return an array instead of a tuple
-        alpha (float): if not None, include the alpha channel with this value
+        alpha (float): if not None, include the alpha channel with this value (replacing any existing alpha)
         normalize (bool): whether to divide by 255 if any values are greater than 1
 
     **Examples**:
@@ -67,17 +67,17 @@ def sanitizecolor(color, asarray=False, alpha=None, normalize=True):
         except ValueError as E:
             errormsg = f'Could not understand "{color}" as a valid color: must be a standard Matplotlib color string'
             raise ValueError(errormsg) from E
-    elif isinstance(color, float):
-        color = [color]*3 # Consider it grey
+    elif sc.isnumber(color):
+        color = [float(color)]*3 # Consider it grey
 
     color = sc.toarray(color).astype(float) # Get it into consistent format for further operations
-    if len(color) not in [3,4]: # pragma: no cover
+    if len(color) not in [3,4]:
         errormsg = f'Cannot parse {color} as a color: expecting length 3 (RGB) or 4 (RGBA)'
         raise ValueError(errormsg)
     if normalize and color.max()>1:
         color /= 255
-    if alpha is not None and len(color) == 3:
-        color = sc.cat(color, float(alpha))
+    if alpha is not None:
+        color = sc.cat(color[:3], float(alpha))
     if not asarray:
         color = tuple(color) # Convert back to tuple if desired
     return color
@@ -92,13 +92,14 @@ def _processcolors(colors=None, asarray=False, ashex=False, reverse=False):
     if asarray:
         output = colors
         if reverse: output = output[::-1] # Reverse the array
+        if ashex: output = np.array([rgb2hex(color) for color in output])
     else:
         output = []
         for c in colors: # Gather output
             output.append(tuple(c))
-        if reverse: # Reverse the list # pragma: no cover
+        if reverse: # Reverse the list
             output.reverse()
-        if ashex: # pragma: no cover
+        if ashex:
             for c,color in enumerate(output):
                 output[c] = rgb2hex(color)
     return output
@@ -116,7 +117,6 @@ def shifthue(colors=None, hueshift=0.0):
     """
     colors, origndim = _listify_colors(colors)
     for c,color in enumerate(colors):
-        color = sc.toarray(color, dtype=float) # Required for NumPy 2.0
         hsvcolor = mpl.colors.rgb_to_hsv(color)
         hsvcolor[0] = (hsvcolor[0]+hueshift) % 1.0 # Calculate new hue and return the modulus
         rgbcolor = mpl.colors.hsv_to_rgb(hsvcolor)
@@ -135,7 +135,7 @@ def rgb2hex(arr):
     hx = sc.rgb2hex([0.53, 0.74, 0.15]) # Returns '#87bc26'
     ```
     """
-    arr = np.array(arr)
+    arr = np.array(arr, dtype=float)
     if len(arr) != 3: # pragma: no cover
         errormsg = f'Cannot convert "{arr}" to hex: wrong length'
         raise ValueError(errormsg)
@@ -247,8 +247,6 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     - *New in version 3.0.0:* correct "midpoint" argument
     """
 
-    from numpy import array, zeros
-
     if cmap is None:
         cmap = plt.get_cmap() # Get current colormap
     elif isinstance(cmap, str):
@@ -272,25 +270,31 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
             maxval = np.nanmax(vector)
 
         diff = maxval - minval
-        vector = (vector - minval)/diff # Normalize vector
+        if diff == 0: # All values are the same, so use the middle of the colormap
+            vector = np.where(np.isnan(vector), np.nan, 0.5)
+            diff = 1.0 # For the midpoint calculation below
+        else:
+            vector = (vector - minval)/diff # Normalize vector
         if midpoint is not None:
             vcenter = (midpoint - minval)/diff
             assert 0 <= vcenter <= 1, f'Values not in order: must be minval={minval:n} <= midpoint={midpoint:n} <= maxval={maxval:n}'
             norm = midpointnorm(vcenter=vcenter, vmin=0, vmax=1)
             vector = np.array(norm(vector))
         nelements = len(vector) # Count number of elements
-        colors = zeros((nelements,4))
+        colors = np.zeros((nelements,4))
         for i in range(nelements):
             point = vector[i]
             if np.isnan(point) and nancolor is not None:
-                color = sanitizecolor(nancolor, alpha=True) # If it's NaN
+                color = sanitizecolor(nancolor, asarray=True) # If it's NaN
+                if len(color) == 3:
+                    color = sc.cat(color, 1.0) # Add alpha if not supplied
             else:
-                color = array(cmap(point)) # Main use case
+                color = np.array(cmap(point)) # Main use case
             colors[i,:] = color
 
-    # It doesn't; just return black
+    # It doesn't; return an empty array
     else:
-        colors = (0,0,0,1)
+        colors = np.zeros((0,4))
 
     # Process output
     output = _processcolors(colors=colors, asarray=asarray, reverse=reverse)
@@ -459,7 +463,8 @@ def gridcolors(ncolors=10, limits=None, nsteps=20, asarray=False, ashex=False, r
 
     ## For plotting -- optional
     if demo:
-        ax = sc.scatter3d(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False, lw=0, fig=True, figkwargs={'facecolor':'w'})
+        pos = colors[::-1] if reverse else colors # Match the order of the output colors
+        ax = sc.scatter3d(pos[:,0], pos[:,1], pos[:,2], c=output, s=200, depthshade=False, lw=0, fig=True, figkwargs={'facecolor':'w'})
         ax.set_xlabel('Red', fontweight='bold')
         ax.set_ylabel('Green', fontweight='bold')
         ax.set_zlabel('Blue', fontweight='bold')
@@ -522,6 +527,7 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         labelkwargs (dict): passed to the colorbar label
         ticks (list): the tick locations to use for the colorbar
         ticklabels (list): the tick labels to use
+        fig (Figure): the figure to add the colorbar to (default: the figure of `ax` or `cax`, else the current figure)
         ax (Axes): the "parent" axes to associate the colorbar with
         cax (Axes): the axes to draw the colorbar into
         axkwargs (dict): if creating a new colorbar axes, the arguments for creating it
@@ -584,10 +590,20 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
     else:
         axarg = None
         axkwargs = sc.mergedicts(axkwargs)
+    if fig is None:
+        if   cax is not None: fig = cax.figure
+        elif ax  is not None: fig = ax.figure
+        else:                 fig = plt.gcf()
     if cax is None and (axarg or axkwargs):
-        cax = plt.axes(arg=axarg, **axkwargs)
+        oldax = fig.gca() if fig.axes else None
+        if axarg is not None:
+            cax = fig.add_axes(axarg, **axkwargs)
+        else:
+            cax = fig.add_subplot(**axkwargs)
+        if oldax is not None:
+            fig.sca(oldax) # Restore the current axes, so later plotting commands don't go into the colorbar
     if ax is None and cax is None:
-        ax = plt.gca() # We need an axis or colorbar axis
+        ax = fig.gca() # We need an axis or colorbar axis
 
     # Handle explicit colors
     if colors is not None:
@@ -604,9 +620,12 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
 
         # If data is provided, use that to get the minimum and maximum
         if data is not None:
-            data = np.array(data)
-            vmin = data.min()
-            vmax = data.max()
+            data = np.array(data, dtype=float)
+            vmin = np.nanmin(data)
+            vmax = np.nanmax(data)
+            if vmin == vmax: # Widen a degenerate range
+                vmin -= 0.5
+                vmax += 0.5
 
         # Handle the center
         if vcenter is None:
@@ -620,10 +639,10 @@ def manualcolorbar(data=None, vmin=0, vmax=1, vcenter=None, colors=None, values=
         sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
 
     # Create the colorbar
-    cb = plt.colorbar(sm, ax=ax, cax=cax, ticks=ticks, **kwargs)
+    cb = fig.colorbar(sm, ax=ax, cax=cax, ticks=ticks, **kwargs)
     if label:
         cb.set_label(label, **labelkwargs)
-    if ticklabels:
+    if ticklabels is not None:
         if cb.orientation == 'vertical':
             cb.ax.set_yticklabels(ticklabels)
         else:
@@ -656,9 +675,8 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     if cmap is None: cmap = 'parula' # For no particular reason
     maxheight = 1
     horizontalsize = 4
-    np.random.seed(randseed)
     kernel = np.array([0.25,0.5,0.25])
-    data = np.random.randn(n,n)
+    data = np.random.RandomState(randseed).randn(n,n) # Use a local RNG so the global one isn't reseeded
     for s in range(smoothing): # Quick-and-dirty-and-slow smoothing
         for i in range(n): data[:,i] = np.convolve(data[:,i],kernel,mode='same')
         for i in range(n): data[i,:] = np.convolve(data[i,:],kernel,mode='same')
@@ -674,7 +692,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     cb2.set_label('Height (km)',horizontalalignment='right', labelpad=50)
     plt.xlabel('Position (km)')
     plt.ylabel('Position (km)')
-    if doshow: # pragma: no cover
+    if doshow:
         plt.show()
 
     # Plot in 3D
@@ -687,7 +705,7 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
     cb.set_label('Height (km)', horizontalalignment='right', labelpad=50)
     plt.xlabel('Position (km)')
     plt.ylabel('Position (km)')
-    if doshow: # pragma: no cover
+    if doshow:
         plt.show()
 
     return {'2d':fig1, '3d':fig2}
@@ -697,6 +715,13 @@ def colormapdemo(cmap=None, n=None, smoothing=None, randseed=None, doshow=True):
 ##############################################################################
 #%% Colormaps
 ##############################################################################
+
+def _set_cmap(cmap):
+    """ Set the colormap as the default; register it first, since plt.set_cmap() only stores the name """
+    mpl.colormaps.register(cmap, force=True) # Overwrite (with a warning) any colormap of the same name, e.g. the default version of this one
+    plt.set_cmap(cmap)
+    return
+
 
 __all__ += ['alpinecolormap', 'bicolormap', 'parulacolormap', 'turbocolormap', 'bandedcolormap', 'orangebluecolormap']
 
@@ -754,7 +779,7 @@ def alpinecolormap(apply=False):
     # Make map
     cmap = mpl.colors.LinearSegmentedColormap('alpine', cdict, 256)
     if apply: # pragma: no cover
-        plt.set_cmap(cmap)
+        _set_cmap(cmap)
     return cmap
 
 
@@ -771,7 +796,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
       redbluemix (float): how much red to mix with the blue and vice versa at the extremes of the scale
       epsilon    (float): what fraction of the colormap to make gray in the middle
       demo       (bool):  whether to plot a demo bicolormap or not
-      apply      (bool):  whether to apply this colormap to the current figure
+      apply      (bool):  whether to set this colormap as the global default
 
     **Examples**:
 
@@ -807,7 +832,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
 
     cmap = mpl.colors.LinearSegmentedColormap('bi', cdict, 256)
     if apply: # pragma: no cover
-        plt.set_cmap(cmap)
+        _set_cmap(cmap)
 
     def demoplot(): # pragma: no cover
 
@@ -821,7 +846,7 @@ def bicolormap(gap=0.1, mingreen=0.2, redbluemix=0.5, epsilon=0.01, demo=False, 
         plt.figure(figsize=(5*nexamples, 4))
         for m in range(nexamples):
             plt.subplot(1, nexamples, m+1)
-            plt.imshow(np.random.rand(20,20), cmap=maps[m], interpolation='none')
+            plt.imshow(np.random.default_rng().random((20,20)), cmap=maps[m], interpolation='none')
             plt.colorbar()
         plt.show()
 
@@ -879,25 +904,17 @@ def parulacolormap(apply=False):
 
     cmap = mpl.colors.LinearSegmentedColormap.from_list('parula', data)
     if apply: # pragma: no cover
-        plt.set_cmap(cmap)
+        _set_cmap(cmap)
     return cmap
 
 
 def turbocolormap(apply=False):
     """
-    NOTE: as of Matplotlib 3.4.0, this colormap is included by default, and will
-    soon be removed from Sciris.
+    Alias to Matplotlib's turbo colormap, a map similar to Jet, but better. Set
+    apply=True to use immediately.
 
-    Copyright 2019 Google LLC.
-
-    SPDX-License-Identifier: Apache-2.0
-
-    Author: Anton Mikhailov
-
-    Borrowed directly from https://gist.github.com/mikhailov-work/ee72ba4191942acecc03fe6da94fc73f, with thanks!
-
-    Create a map similar to Jet, but better. Set apply=True to use
-    immediately.
+    NOTE: as of Matplotlib 3.4.0, this colormap is included by default; this
+    function is kept for backwards compatibility.
 
     **Demo and example**:
 
@@ -905,42 +922,10 @@ def turbocolormap(apply=False):
     cmap = sc.turbocolormap()
     sc.colormapdemo(cmap=cmap)
     ```
-    Version: 2020mar20
-    """
-    data = [[0.18995,0.07176,0.23217],[0.19483,0.08339,0.26149],[0.19956,0.09498,0.29024],[0.20415,0.10652,0.31844],[0.20860,0.11802,0.34607],[0.21291,0.12947,0.37314],[0.21708,0.14087,0.39964],[0.22111,0.15223,0.42558],
-            [0.22500,0.16354,0.45096],[0.22875,0.17481,0.47578],[0.23236,0.18603,0.50004],[0.23582,0.19720,0.52373],[0.23915,0.20833,0.54686],[0.24234,0.21941,0.56942],[0.24539,0.23044,0.59142],[0.24830,0.24143,0.61286],
-            [0.25107,0.25237,0.63374],[0.25369,0.26327,0.65406],[0.25618,0.27412,0.67381],[0.25853,0.28492,0.69300],[0.26074,0.29568,0.71162],[0.26280,0.30639,0.72968],[0.26473,0.31706,0.74718],[0.26652,0.32768,0.76412],
-            [0.26816,0.33825,0.78050],[0.26967,0.34878,0.79631],[0.27103,0.35926,0.81156],[0.27226,0.36970,0.82624],[0.27334,0.38008,0.84037],[0.27429,0.39043,0.85393],[0.27509,0.40072,0.86692],[0.27576,0.41097,0.87936],
-            [0.27628,0.42118,0.89123],[0.27667,0.43134,0.90254],[0.27691,0.44145,0.91328],[0.27701,0.45152,0.92347],[0.27698,0.46153,0.93309],[0.27680,0.47151,0.94214],[0.27648,0.48144,0.95064],[0.27603,0.49132,0.95857],
-            [0.27543,0.50115,0.96594],[0.27469,0.51094,0.97275],[0.27381,0.52069,0.97899],[0.27273,0.53040,0.98461],[0.27106,0.54015,0.98930],[0.26878,0.54995,0.99303],[0.26592,0.55979,0.99583],[0.26252,0.56967,0.99773],
-            [0.25862,0.57958,0.99876],[0.25425,0.58950,0.99896],[0.24946,0.59943,0.99835],[0.24427,0.60937,0.99697],[0.23874,0.61931,0.99485],[0.23288,0.62923,0.99202],[0.22676,0.63913,0.98851],[0.22039,0.64901,0.98436],
-            [0.21382,0.65886,0.97959],[0.20708,0.66866,0.97423],[0.20021,0.67842,0.96833],[0.19326,0.68812,0.96190],[0.18625,0.69775,0.95498],[0.17923,0.70732,0.94761],[0.17223,0.71680,0.93981],[0.16529,0.72620,0.93161],
-            [0.15844,0.73551,0.92305],[0.15173,0.74472,0.91416],[0.14519,0.75381,0.90496],[0.13886,0.76279,0.89550],[0.13278,0.77165,0.88580],[0.12698,0.78037,0.87590],[0.12151,0.78896,0.86581],[0.11639,0.79740,0.85559],
-            [0.11167,0.80569,0.84525],[0.10738,0.81381,0.83484],[0.10357,0.82177,0.82437],[0.10026,0.82955,0.81389],[0.09750,0.83714,0.80342],[0.09532,0.84455,0.79299],[0.09377,0.85175,0.78264],[0.09287,0.85875,0.77240],
-            [0.09267,0.86554,0.76230],[0.09320,0.87211,0.75237],[0.09451,0.87844,0.74265],[0.09662,0.88454,0.73316],[0.09958,0.89040,0.72393],[0.10342,0.89600,0.71500],[0.10815,0.90142,0.70599],[0.11374,0.90673,0.69651],
-            [0.12014,0.91193,0.68660],[0.12733,0.91701,0.67627],[0.13526,0.92197,0.66556],[0.14391,0.92680,0.65448],[0.15323,0.93151,0.64308],[0.16319,0.93609,0.63137],[0.17377,0.94053,0.61938],[0.18491,0.94484,0.60713],
-            [0.19659,0.94901,0.59466],[0.20877,0.95304,0.58199],[0.22142,0.95692,0.56914],[0.23449,0.96065,0.55614],[0.24797,0.96423,0.54303],[0.26180,0.96765,0.52981],[0.27597,0.97092,0.51653],[0.29042,0.97403,0.50321],
-            [0.30513,0.97697,0.48987],[0.32006,0.97974,0.47654],[0.33517,0.98234,0.46325],[0.35043,0.98477,0.45002],[0.36581,0.98702,0.43688],[0.38127,0.98909,0.42386],[0.39678,0.99098,0.41098],[0.41229,0.99268,0.39826],
-            [0.42778,0.99419,0.38575],[0.44321,0.99551,0.37345],[0.45854,0.99663,0.36140],[0.47375,0.99755,0.34963],[0.48879,0.99828,0.33816],[0.50362,0.99879,0.32701],[0.51822,0.99910,0.31622],[0.53255,0.99919,0.30581],
-            [0.54658,0.99907,0.29581],[0.56026,0.99873,0.28623],[0.57357,0.99817,0.27712],[0.58646,0.99739,0.26849],[0.59891,0.99638,0.26038],[0.61088,0.99514,0.25280],[0.62233,0.99366,0.24579],[0.63323,0.99195,0.23937],
-            [0.64362,0.98999,0.23356],[0.65394,0.98775,0.22835],[0.66428,0.98524,0.22370],[0.67462,0.98246,0.21960],[0.68494,0.97941,0.21602],[0.69525,0.97610,0.21294],[0.70553,0.97255,0.21032],[0.71577,0.96875,0.20815],
-            [0.72596,0.96470,0.20640],[0.73610,0.96043,0.20504],[0.74617,0.95593,0.20406],[0.75617,0.95121,0.20343],[0.76608,0.94627,0.20311],[0.77591,0.94113,0.20310],[0.78563,0.93579,0.20336],[0.79524,0.93025,0.20386],
-            [0.80473,0.92452,0.20459],[0.81410,0.91861,0.20552],[0.82333,0.91253,0.20663],[0.83241,0.90627,0.20788],[0.84133,0.89986,0.20926],[0.85010,0.89328,0.21074],[0.85868,0.88655,0.21230],[0.86709,0.87968,0.21391],
-            [0.87530,0.87267,0.21555],[0.88331,0.86553,0.21719],[0.89112,0.85826,0.21880],[0.89870,0.85087,0.22038],[0.90605,0.84337,0.22188],[0.91317,0.83576,0.22328],[0.92004,0.82806,0.22456],[0.92666,0.82025,0.22570],
-            [0.93301,0.81236,0.22667],[0.93909,0.80439,0.22744],[0.94489,0.79634,0.22800],[0.95039,0.78823,0.22831],[0.95560,0.78005,0.22836],[0.96049,0.77181,0.22811],[0.96507,0.76352,0.22754],[0.96931,0.75519,0.22663],
-            [0.97323,0.74682,0.22536],[0.97679,0.73842,0.22369],[0.98000,0.73000,0.22161],[0.98289,0.72140,0.21918],[0.98549,0.71250,0.21650],[0.98781,0.70330,0.21358],[0.98986,0.69382,0.21043],[0.99163,0.68408,0.20706],
-            [0.99314,0.67408,0.20348],[0.99438,0.66386,0.19971],[0.99535,0.65341,0.19577],[0.99607,0.64277,0.19165],[0.99654,0.63193,0.18738],[0.99675,0.62093,0.18297],[0.99672,0.60977,0.17842],[0.99644,0.59846,0.17376],
-            [0.99593,0.58703,0.16899],[0.99517,0.57549,0.16412],[0.99419,0.56386,0.15918],[0.99297,0.55214,0.15417],[0.99153,0.54036,0.14910],[0.98987,0.52854,0.14398],[0.98799,0.51667,0.13883],[0.98590,0.50479,0.13367],
-            [0.98360,0.49291,0.12849],[0.98108,0.48104,0.12332],[0.97837,0.46920,0.11817],[0.97545,0.45740,0.11305],[0.97234,0.44565,0.10797],[0.96904,0.43399,0.10294],[0.96555,0.42241,0.09798],[0.96187,0.41093,0.09310],
-            [0.95801,0.39958,0.08831],[0.95398,0.38836,0.08362],[0.94977,0.37729,0.07905],[0.94538,0.36638,0.07461],[0.94084,0.35566,0.07031],[0.93612,0.34513,0.06616],[0.93125,0.33482,0.06218],[0.92623,0.32473,0.05837],
-            [0.92105,0.31489,0.05475],[0.91572,0.30530,0.05134],[0.91024,0.29599,0.04814],[0.90463,0.28696,0.04516],[0.89888,0.27824,0.04243],[0.89298,0.26981,0.03993],[0.88691,0.26152,0.03753],[0.88066,0.25334,0.03521],
-            [0.87422,0.24526,0.03297],[0.86760,0.23730,0.03082],[0.86079,0.22945,0.02875],[0.85380,0.22170,0.02677],[0.84662,0.21407,0.02487],[0.83926,0.20654,0.02305],[0.83172,0.19912,0.02131],[0.82399,0.19182,0.01966],
-            [0.81608,0.18462,0.01809],[0.80799,0.17753,0.01660],[0.79971,0.17055,0.01520],[0.79125,0.16368,0.01387],[0.78260,0.15693,0.01264],[0.77377,0.15028,0.01148],[0.76476,0.14374,0.01041],[0.75556,0.13731,0.00942],
-            [0.74617,0.13098,0.00851],[0.73661,0.12477,0.00769],[0.72686,0.11867,0.00695],[0.71692,0.11268,0.00629],[0.70680,0.10680,0.00571],[0.69650,0.10102,0.00522],[0.68602,0.09536,0.00481],[0.67535,0.08980,0.00449],
-            [0.66449,0.08436,0.00424],[0.65345,0.07902,0.00408],[0.64223,0.07380,0.00401],[0.63082,0.06868,0.00401],[0.61923,0.06367,0.00410],[0.60746,0.05878,0.00427],[0.59550,0.05399,0.00453],[0.58336,0.04931,0.00486],
-            [0.57103,0.04474,0.00529],[0.55852,0.04028,0.00579],[0.54583,0.03593,0.00638],[0.53295,0.03169,0.00705],[0.51989,0.02756,0.00780],[0.50664,0.02354,0.00863],[0.49321,0.01963,0.00955],[0.47960,0.01583,0.01055]]
 
-    cmap = mpl.colors.LinearSegmentedColormap.from_list('turbo', data)
+    - *New in version 3.4.0:* use Matplotlib's colormap instead of a copy
+    """
+    cmap = mpl.colormaps['turbo']
     if apply: # pragma: no cover
         plt.set_cmap(cmap)
     return cmap
@@ -980,7 +965,7 @@ def bandedcolormap(minvalue=None, minsaturation=None, hueshift=None, saturations
     # Create and use
     cmap = mpl.colors.LinearSegmentedColormap.from_list('banded', data)
     if apply: # pragma: no cover
-        plt.set_cmap(cmap)
+        _set_cmap(cmap)
     return cmap
 
 
@@ -998,15 +983,15 @@ def orangebluecolormap(apply=False):
 
     - *New in version 1.0.0.*
     """
-    bottom = plt.get_cmap('Oranges', 128)
-    top    = plt.get_cmap('Blues_r', 128)
+    bottom = mpl.colormaps['Oranges'].resampled(128)
+    top    = mpl.colormaps['Blues_r'].resampled(128)
     x      = np.linspace(0, 1, 128)
     data   = np.vstack((top(x), bottom(x)))
 
     # Create and use
     cmap = mpl.colors.LinearSegmentedColormap.from_list('orangeblue', data)
     if apply: # pragma: no cover
-        plt.set_cmap(cmap)
+        _set_cmap(cmap)
     return cmap
 
 
@@ -1015,7 +1000,7 @@ try: # Regression support for Matplotlib
     register_func = mpl.colormaps.register # Matplotlib >=3.5
 except AttributeError:
     register_func = mpl.cm.register_cmap # Matplotlib <=3.4
-existing = plt.colormaps()
+existing = list(mpl.colormaps)
 colormap_map = dict(
     alpine     = alpinecolormap(),
     parula     = parulacolormap(),

@@ -2,8 +2,11 @@
 Test Sciris miscellaneous utility/helper functions.
 '''
 
+import os
+import tempfile
 import sciris as sc
 import numpy as np
+import matplotlib.pyplot as plt
 import pytest
 
 filedir = sc.thispath() / 'files'
@@ -19,6 +22,7 @@ def test_functions():
     v1 = o.freeze['numpy']
     v2 = np.__version__
     assert v1 == v2, f'Versions do not match ({v1} != {v2})'
+    assert 'numpy' in sc.freeze(lower=True)
 
     print('Testing require')
     sc.require('numpy')
@@ -35,6 +39,12 @@ def test_functions():
     print('Testing gitinfo')
     o.gitinfo = sc.gitinfo() # Try getting gitinfo; will likely fail though
     assert 'branch' in o.gitinfo
+    with tempfile.TemporaryDirectory() as tmp: # Check that a repo nested inside another repo is found
+        inner = os.path.join(tmp, 'inner')
+        for folder,branch in [(tmp,'outer'), (inner,'inner')]:
+            sc.runcommand(f'git init -q "{folder}" && git -C "{folder}" checkout -q -b {branch} && git -C "{folder}" -c user.name=a -c user.email=b commit -q --allow-empty -m x')
+        assert sc.gitinfo(inner)['branch'] == 'inner'
+        assert sc.gitinfo(os.path.join(inner, 'file.py'))['branch'] == 'inner'
 
     print('Testing compareversions')
     assert sc.compareversions(np, '>1.0')
@@ -48,7 +58,9 @@ def test_functions():
     assert sc.compareversions(v1, '<1.2.4')
     assert sc.compareversions(v1, '<=1.2.4')
     assert sc.compareversions(v1, '!1.2.9')
-    assert sc.compareversions(v1, '~=1.2.9')
+    assert sc.compareversions(v1, '~=1.2.0')
+    assert not sc.compareversions(v1, '~=1.2.9')
+    assert not sc.compareversions('2.0', '~=1.2')
     assert sc.compareversions(v1, '!=1.2.9')
     with pytest.raises(ValueError):
         assert sc.compareversions(v1, '~1.2.9')
@@ -56,6 +68,8 @@ def test_functions():
     print('Testing getcaller')
     o.caller = sc.getcaller(frame=1) # Frame = 1 is the current file
     assert 'test_versioning.py' in o.caller
+    assert 'line' in sc.getcaller(frame=1, includelineno=True)
+    assert 'getcaller' in sc.getcaller(frame=1, tostring=False, includeline=True)['line']
 
     return o
 
@@ -67,11 +81,14 @@ def test_metadata():
     f = sc.objdict()
     f.md = 'md.json'
     f.obj = 'md_obj.zip'
+    f.png = 'md_fig.png'
     f.wmd = filedir / 'archive.zip'
 
     print('Testing savewithmethadata')
     obj = sc.prettyobj(label='foo', a=np.random.rand(5), b='label')
-    sc.savearchive(f.obj, obj)
+    sc.savearchive(f.obj, obj, user=False)
+    with pytest.raises(sc.UnpicklingError): # An invalid keyword triggers the second loading attempt
+        sc.loadarchive(f.obj, invalid_kwarg=1)
 
     print('Testing loadmetadata')
     o.md = sc.metadata(outfile=f.md)
@@ -80,8 +97,15 @@ def test_metadata():
     md2 = sc.loadmetadata(f.md)
     md3 = sc.loadmetadata(f.obj)
     assert o.md.system.platform == md2.system.platform == md3.system.platform
+    assert md3.user is None and 'frame' not in md3
 
-    for file in [f.md, f.obj]:
+    plt.figure()
+    sc.savefig(f.png)
+    md4 = sc.loadmetadata(f.png)
+    assert md4.versions.sciris == o.md.versions.sciris
+    plt.close()
+
+    for file in [f.md, f.obj, f.png]:
         sc.rmpath(file)
 
     return o

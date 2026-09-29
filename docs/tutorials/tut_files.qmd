@@ -79,7 +79,7 @@ print(f"{sim_json['x'] = }")
 print(f"{sim_json['y'][0] = }")
 ```
 
-(Note that when exported to JSON and loaded back again, everything is in default Python types – so the data is now a list of lists rather than a 2D NumPy array.)
+(Note that when exported to JSON and loaded back again, everything is in default Python types – so the data is now a list of lists rather than a 2D NumPy array.) If the file might not exist, you can supply a default instead of getting an error, e.g. `sc.loadjson('cache.json', default={})`.
 
 ### Saving and loading YAML
 

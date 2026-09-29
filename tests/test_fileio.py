@@ -4,7 +4,6 @@ Test Sciris file I/O functions.
 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 import openpyxl
 import sciris as sc
 import pytest
@@ -228,6 +227,13 @@ def test_fileio():
     assert sc.ispath(path1)
     o.thisfile = sc.thisfile(aspath=True)
 
+    sc.heading('Testing rmpath')
+    folder = filedir / 'rmpath_test'
+    os.makedirs(folder)
+    sc.savetext(folder / 'file.txt', 'test')
+    sc.rmpath(folder, folder / 'file.txt') # The file was already removed along with the folder
+    assert not folder.exists()
+
     return o
 
 
@@ -265,6 +271,12 @@ def test_json():
     j2 = sc.jsonify(data, custom=custom, tostring=True)
     assert 'It was an array' in j2
 
+    # Complex numbers and objects with to_dict() methods
+    class HasToDict:
+        def to_dict(self): return dict(x=np.arange(3))
+    assert sc.jsonify(HasToDict()) == dict(x=[0, 1, 2])
+    assert sc.jsonify(1+2j) == '(1+2j)'
+
     # Test JSON load/save
     print('Testing JSON load/save...')
     jsonfile = 'test.json'
@@ -272,6 +284,10 @@ def test_json():
     sc.savejson(jsonfile, testdata)
     testdata2 = sc.loadjson(jsonfile)
     assert testdata == testdata2
+    assert sc.loadjson('does-not-exist.json', default={}) == {} # Return a default rather than raising
+    assert sc.loadjson(string='{not json', die=False) is None
+    with pytest.raises(ValueError):
+        sc.loadjson(string='{not json')
 
     # Test YAML load/save
     print('Testing YAML load/save...')

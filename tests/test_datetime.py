@@ -124,10 +124,12 @@ def test_dates():
 
     print('\nTesting datetoyear')
     o.year = sc.datetoyear('2010-07-01')
+    assert sc.datetoyear(dt.datetime(2010, 7, 1, 12)) > o.year # Keeps the time of day
 
     print('\nTesting datedelta')
     o.dd = sc.datedelta('2021-07-07', 3) # Add 3 days
     assert o.dd == '2021-07-10'
+    assert sc.datedelta('2021-01-01', years=0.2, days=1) == '2021-03-16' # 0.2 years is 73 days
 
     return o
 

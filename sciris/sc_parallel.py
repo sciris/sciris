@@ -41,11 +41,6 @@ if __name__ == '__main__':
     sc.parallelize(my_func)
 '''
 
-def _jobkey(index):
-    """ Convert a job index to a key """
-    return f'_job{index}'
-
-
 class _Counter:
     """
     A counter of the number of completed jobs, shared between processes; not for the user.
@@ -55,10 +50,12 @@ class _Counter:
 
     The count is stored as the length of a list rather than as an integer since appending
     to a list is atomic, while incrementing an integer is not (it is a separate read and
-    write, so no lock is needed here).
+    write, so no lock is needed here). Likewise, the flag for stopping the run early is
+    a list, which (unlike e.g. `threading.Event`) can also be pickled for custom parallelizers.
     """
     def __init__(self, manager=None):
         self.jobs = manager.list() if manager else [] # A manager list is shared between processes; for serial/thread, an ordinary list is fine
+        self.stops = manager.list() if manager else [] # Non-empty if the run has been stopped
         return
 
     def __deepcopy__(self, memo):
@@ -83,6 +80,19 @@ class _Counter:
         except Exception: # pragma: no cover
             return 0
 
+    def stop(self):
+        """ Stop any further jobs from starting """
+        self.stops.append(1)
+        return
+
+    @property
+    def stopped(self):
+        """ Whether the run has been stopped """
+        try:
+            return len(self.stops) > 0
+        except Exception: # pragma: no cover # E.g. if the manager has already been shut down
+            return False
+
 
 def _progressbar(counter, njobs, started, **kwargs):
     """ Define a progress bar based on the number of jobs completed """
@@ -106,6 +116,8 @@ class Parallel:
         run_async(): the method that actually executes the parallelization (NB, used with every method, not only async ones)
         monitor(): monitor the progress of an asynchronous run
         finalize(): get the results from each job and process it
+        close(): close the pool and shut down the manager (called automatically by finalize())
+        stop(): don't start any more jobs; jobs already running will finish
         run(): shortcut to calling run_async() followed by finalize()
 
     Useful attributes and properties:
@@ -115,6 +127,7 @@ class Parallel:
         jobs (list): a list of jobs to run or being run (empty prior to run)
         results (list): list of all results (the output from the jobs; empty prior to run)
         success (list): whether each job completed successfully (true/false)
+        skipped (list): whether each job was skipped because the run was stopped (true/false)
         exceptions (list): if not, store the exceptions that were raised
         times (dict): timing information on when the jobs were started, when they finished, and how long each job took
 
@@ -137,11 +150,12 @@ class Parallel:
 
     - *New in version 3.0.0.*
     - *New in version 3.1.0:* "globaldict" argument
+    - *New in version 3.4.0:* `close()` and `stop()` methods
     """
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
                  progress=False, callback=None, globaldict=None, label=None, capture=False, die=True,
-                 lbkwargs=None, **func_kwargs):
+                 lbkwargs=None, start_method=None, **func_kwargs):
 
         # Store input arguments
         self.func         = func # The function to call
@@ -149,7 +163,9 @@ class Parallel:
         self.iterkwargs   = iterkwargs # Dict-of-lists or list-of-dicts iteratively supplied to the function
         self.args         = args # Arguments passed non-iteratively to the function
         self.kwargs       = sc.mergedicts(kwargs, func_kwargs) # Kwargs passed non-iteratively to the function
-        self.lbkwargs     = sc.objdict(sc.mergedicts(lbkwargs, maxcpu=maxcpu, maxmem=maxmem, interval=interval)) # Load balancer kwargs
+        lbkw              = dict(maxcpu=maxcpu, maxmem=maxmem, interval=interval)
+        self.lbkwargs     = sc.objdict(sc.mergedicts(lbkw, lbkwargs, {k:v for k,v in lbkw.items() if v is not None})) # Load balancer kwargs; explicit arguments override lbkwargs, unless they're None
+
         self._ncpus       = ncpus # With a prefix since dynamically calculated later
         self.parallelizer = parallelizer # Which method to use for parallelization
         self.serial       = serial # Whether to run in parallel
@@ -159,6 +175,7 @@ class Parallel:
         self.label        = label # The label for this Parallel instance
         self.capture      = capture # Whether to capture output from the function as text
         self.die          = die # Whether to raise exceptions
+        self.start_method = start_method # How to start worker processes, e.g. "fork" (if None, use the default)
 
         # Additional initialization
         self.init()
@@ -169,6 +186,11 @@ class Parallel:
         """
         Perform all remaining initialization steps; this can safely be called after object creation
         """
+        self.ncpus        = None # These are configuration rather than run state, so are set here rather than in reset()
+        self.njobs        = None
+        self.embarrassing = None
+        self.method       = None
+        self.is_async     = None
         self.reset()
         self.set_defaults()
         self.validate_args()
@@ -179,20 +201,17 @@ class Parallel:
 
     def reset(self):
         """ Reset to the pre-run state """
-        self.ncpus        = None
-        self.njobs        = None
-        self.embarrassing = None
         self.argslist     = None
-        self.method       = None
         self.pool         = None
         self.manager      = None
         self.globaldict   = None
         self.counter      = None
         self.map_func     = None
-        self.is_async     = None
         self.jobs         = None
+        self.rawresults   = None
         self.results      = None
         self.success      = None
+        self.skipped      = None
         self.exceptions   = None
         self.stdout       = None
         self.times        = sc.objdict(started=None, finished=None, elapsed=None, jobs=None)
@@ -245,11 +264,6 @@ class Parallel:
         iterkwargs = self.iterkwargs
         njobs = 0
 
-        # Check that only one was provided
-        if iterarg is not None and iterkwargs is not None: # pragma: no cover
-            errormsg = 'You can only use one of iterarg or iterkwargs as your iterable, not both'
-            raise ValueError(errormsg)
-
         # Validate iterarg
         if iterarg is not None:
             if not(sc.isiterable(iterarg)):
@@ -272,11 +286,14 @@ class Parallel:
                     if not njobs:
                         njobs = len(val)
                     else:
-                        if len(val) != njobs: # pragma: no cover
-                            errormsg = f'All iterkwargs iterables must be the same length, not {njobs} vs. {len(val)}'
+                        if len(val) != njobs:
+                            errormsg = f'All iterarg and iterkwargs iterables must be the same length, not {njobs} vs. {len(val)}'
                             raise ValueError(errormsg)
 
             elif isinstance(iterkwargs, list): # It's a list of dicts, e.g. [{'x':1, 'y':2}, {'x':2, 'y':3}, {'x':3, 'y':4}]
+                if njobs and len(iterkwargs) != njobs:
+                    errormsg = f'iterarg and iterkwargs must be the same length, not {njobs} vs. {len(iterkwargs)}'
+                    raise ValueError(errormsg)
                 njobs = len(iterkwargs)
                 for item in iterkwargs:
                     if not isinstance(item, dict): # pragma: no cover
@@ -302,8 +319,8 @@ class Parallel:
 
         # Handle maxload deprecation
         maxload = self.kwargs.pop('maxload', None)
-        if maxload is not None: # pragma: no cover
-            self.maxcpu = maxload
+        if maxload is not None:
+            self.lbkwargs.maxcpu = maxload
             warnmsg = 'sc.loadbalancer() argument "maxload" has been renamed "maxcpu" as of v2.0.0'
             warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
@@ -314,6 +331,8 @@ class Parallel:
             ncpus = sys_cpus
         elif 0 < ncpus < 1: # Less than one, treat as a fraction of total
             ncpus = int(np.ceil(sys_cpus*ncpus))
+        else:
+            ncpus = int(ncpus) # In case it's a float, e.g. sc.cpu_count()/2
         ncpus = min(ncpus, self.njobs) # Don't use more CPUs than there are things to process
 
         # Check and set CPUs
@@ -348,13 +367,23 @@ class Parallel:
         # Handle async
         is_async = False
         supports_async = ['multiprocess', 'multiprocessing']
-        if sc.isstring(self.parallelizer) and 'async' in self.parallelizer:
+        if sc.isstring(self.parallelizer) and 'async' in self.parallelizer and not self.serial: # If serial=True, just run in serial
             if self.method in supports_async:
                 is_async = True
             else:
                 errormsg = f'You have specified to use async with "{self.method}", but async is only supported for: {sc.strjoin(supports_async)}.'
                 raise ValueError(errormsg)
         self.is_async = is_async
+
+        # Check the start method
+        if self.start_method is not None and self.start_method not in mpi.get_all_start_methods():
+            errormsg = f'Start method "{self.start_method}" not available: must be one of {sc.strjoin(mpi.get_all_start_methods())}'
+            raise ValueError(errormsg)
+
+        # Output can't be captured separately for each thread, since sys.stdout is shared between them
+        if self.capture and self.method == 'thread':
+            errormsg = 'capture=True is not supported with thread-based parallelization, since threads share stdout; please use a process-based or serial parallelizer instead'
+            raise ValueError(errormsg)
 
         return
 
@@ -374,21 +403,24 @@ class Parallel:
                 map_func = pool.map
             return map_func
 
+        # Get the context for the start method (only used by process-based parallelizers)
+        context = mp.get_context(self.start_method) if method == 'multiprocess' else mpi.get_context(self.start_method) # Can't mix multiprocess and multiprocessing
+
         # Choose parallelizer and map function
         if method == 'serial':
             pool = None
             map_func = lambda task,argslist: list(map(task, argslist))
 
         elif method == 'multiprocess': # Main use case
-            pool = mp.Pool(processes=ncpus)
+            pool = context.Pool(processes=ncpus)
             map_func = make_async_func(pool)
 
         elif method == 'multiprocessing':
-            pool = mpi.Pool(processes=ncpus)
+            pool = context.Pool(processes=ncpus)
             map_func = make_async_func(pool)
 
         elif method == 'concurrent.futures':
-            pool = cf.ProcessPoolExecutor(max_workers=ncpus)
+            pool = cf.ProcessPoolExecutor(max_workers=ncpus, mp_context=context)
             map_func = pool.map
 
         elif method == 'thread':
@@ -408,14 +440,11 @@ class Parallel:
             manager = None
             globaldict = dict() # For serial and thread, don't need anything fancy to share global variables
         else:
-            if method == 'multiprocess': # Special case: can't share multiprocessing managers with multiprocess
-                manager = mp.Manager()
-            else:
-                manager = mpi.Manager() # Note "mpi" instead of "mp"
+            manager = context.Manager() # This is from multiprocess or multiprocessing, to match the pool
             globaldict = manager.dict() # Create a dict for sharing progress of each job
 
         # Handle any supplied input
-        if self.inputdict:
+        if self.inputdict is not None:
             if method == 'custom': # For something custom, use the inputdict directly, in case it's something special
                 globaldict = self.inputdict
             else:
@@ -450,12 +479,21 @@ class Parallel:
         # Check for additional global arguments
         useglobal = True if self.inputdict is not None else False
 
+        # Worker processes start with identical (or unrelated) copies of NumPy's global RNG, so give each job its own seed, derived from the parent's RNG
+        if self.method in ['multiprocess', 'multiprocessing', 'concurrent.futures']:
+            entropy = np.random.randint(2**63, dtype=np.int64) # Take a single draw, so that repeated calls give different results, as they would in serial
+            seeds = [int(ss.generate_state(1)[0]) for ss in np.random.SeedSequence(entropy).spawn(self.njobs)]
+        else: # For serial and thread, jobs already share the parent's RNG; for custom, we don't know
+            seeds = [None]*self.njobs
+
         # Construct the argument list for each job
         for index in range(self.njobs):
             if iterarg is None:
                 iterval = None
             else:
                 iterval = iterarg[index]
+                if not isinstance(iterval, tuple): # Ensure it's a tuple, which also means an iterarg of None is still passed to the function
+                    iterval = (iterval,)
             if iterkwargs is None:
                 iterdict = None
             else:
@@ -472,7 +510,7 @@ class Parallel:
                 func=self.func, index=index, njobs=self.njobs, iterval=iterval, iterdict=iterdict, args=self.args,
                 kwargs=self.kwargs, lbkwargs=self.lbkwargs, embarrassing=self.embarrassing, callback=self.callback,
                 progress=self.progress, globaldict=self.globaldict, useglobal=useglobal, started=self.times.started,
-                capture=self.capture, die=self.die, counter=self.counter
+                capture=self.capture, die=self.die, counter=self.counter, seed=seeds[index],
             )
 
             argslist.append(taskargs)
@@ -498,6 +536,8 @@ class Parallel:
         # Handle optional deepcopy
         if sc.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
             argslist = [sc.dcp(arg, die=self.die) for arg in self.argslist]
+            for arg in argslist:
+                arg.globaldict = self.globaldict # Don't copy the globaldict, since it's shared between jobs
         else:
             argslist = self.argslist
 
@@ -572,16 +612,42 @@ class Parallel:
 
     def finalize(self, get_results=True, close_pool=True, process_results=True):
         """ Get results from the jobs and close the pool """
-        if get_results and self.jobs:
-            self.rawresults = list(self.jobs.get())
-        if close_pool and self.pool:
+        try:
+            if get_results and self.jobs:
+                self.rawresults = list(self.jobs.get())
+        finally: # Close the pool even if a job raised an exception
+            if close_pool:
+                self.close()
+        if process_results:
+            self.process_results()
+        return
+
+
+    def stop(self):
+        """ Stop the run early: jobs that have already started will finish, but no new jobs will start """
+        if self.counter is not None:
+            self.counter.stop()
+        return
+
+
+    def close(self):
+        """ Close the pool and shut down the manager (if any); called automatically by finalize() """
+        if self.pool:
             try:
                 self.pool.__exit__(None, None, None) # Handle as if in a with block
             except Exception as E: # pragma: no cover
                 warnmsg = f'Could not close pool {self.pool}, please close manually: {str(E)}'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
-        if process_results:
-            self.process_results()
+        if self.manager:
+            try:
+                self.globaldict = dict(self.globaldict) # Copy out anything served by the manager before shutting it down
+                self.counter.jobs = list(self.counter.jobs)
+                self.counter.stops = list(self.counter.stops)
+                self.manager.shutdown()
+                self.manager = None
+            except Exception as E: # pragma: no cover
+                warnmsg = f'Could not shut down manager {self.manager}, please shut down manually: {str(E)}'
+                warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
         return
 
 
@@ -597,6 +663,7 @@ class Parallel:
         else:
             self.results    = list()
             self.success    = list()
+            self.skipped    = list()
             self.exceptions = list()
             self.stdout     = list()
             self.times.jobs = list()
@@ -604,12 +671,14 @@ class Parallel:
             for raw in self.rawresults:
                 self.results.append(raw['result'])
                 self.success.append(raw['success'])
+                self.skipped.append(raw['skipped'])
                 self.exceptions.append(raw['exception'])
                 self.stdout.append(raw['stdout'])
                 self.times.jobs.append(raw['elapsed'])
 
-            if not all(self.success): # pragma: no cover
-                warnmsg = f'Only {sum(self.success)} of {len(self.success)} jobs succeeded; see exceptions attribute for details'
+            nrun = len(self.skipped) - sum(self.skipped)
+            if sum(self.success) < nrun: # pragma: no cover
+                warnmsg = f'Only {sum(self.success)} of {nrun} jobs succeeded; see exceptions attribute for details'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
         return
 
@@ -620,12 +689,14 @@ class Parallel:
             self.run_async()
             self.finalize()
 
-        # Handle if run outside of __main__ on Windows
-        except RuntimeError as E: # pragma: no cover
-            if 'freeze_support' in E.args[0]: # For this error, add additional information
+        except BaseException as E:
+            self.close() # Don't leave worker processes running if a job failed
+
+            # Handle if run outside of __main__ on Windows
+            if isinstance(E, RuntimeError) and 'freeze_support' in str(E): # pragma: no cover
                 raise RuntimeError(freeze_support_error) from E
-            else: # For all other runtime errors, raise the original exception
-                raise E
+            else: # For all other errors, raise the original exception
+                raise
 
         # Tidy up
         return self
@@ -636,7 +707,7 @@ class Parallel:
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
                 progress=False, callback=None, globaldict=None, capture=False, die=True,
-                lbkwargs=None, **func_kwargs):
+                lbkwargs=None, start_method=None, **func_kwargs):
     """
     Execute a function in parallel.
 
@@ -670,11 +741,12 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         parallelizer (str/func)  : parallelization function; default 'multiprocess' (see below for details)
         serial       (bool)      : whether to skip parallelization and run in serial (useful for debugging; equivalent to `parallelizer='serial'`)
         progress     (bool)      : whether to show a progress bar
-        callback     (func)      : an optional function to call from each worker
+        callback     (func)      : an optional function to call from each worker after each job; it receives a dict of data on the job; if it sets `data['stop'] = True`, no further jobs are started (see Example 7)
         globaldict   (dict)      : an optional global dictionary to pass to each worker via the kwarg "globaldict" (note: may not update properly with low task latency)
         capture      (bool)      : if True, capture the output of the task rather than printing it
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
         lbkwargs     (dict)      : if provided, passed to `sc.loadbalancer()`
+        start_method (str)       : how to start worker processes for process-based parallelizers, e.g. "fork", "spawn", or "forkserver" (default: the system default; see Note 4)
         func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
@@ -750,6 +822,24 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
 
     results = sc.parallelize(f, iterkwargs=dict(x=[1,2,3], y=[4,5,6]), parallelizer=dask_map)
     ```
+    **Example 7 -- stopping at the first failure**:
+
+    ```python
+    def f(x):
+        if x == 50:
+            raise ValueError('Intentional failure')
+        return x**2
+
+    def callback(data):
+        if not data['outdict']['success']:
+            data['stop'] = True # Don't start any more jobs
+
+    results = sc.parallelize(f, iterarg=range(100), callback=callback, die=False) # Jobs that were not run have a result of None
+    ```
+    Jobs that have already started will finish. Note that jobs do not necessarily run in order, and that stopping
+    is not supported for custom parallelizers that run jobs in separate processes. See `sc.Parallel()` for how
+    to stop a run from the parent process instead.
+
     **Note 1**: the default parallelizer `"multiprocess"` uses `dill` for pickling, so
     is the most versatile (e.g., it can pickle non-top-level functions). However,
     it is also the slowest for passing large amounts of data. You can switch between
@@ -789,13 +879,20 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     ```
     **Note 4**: In Python 3.14, the default process start method on Linux was changed from "fork" to "forkserver".
     This does not use copy-on-write to share memory with worker processes but rather behaves more like "spawn" on
-    Mac/Windows. It can also result in an `EOFError` when using WSL on Windows. To restore the previous behaviour,
-    after importing `sciris`, set the start method to "fork" as follows:
+    Mac/Windows. It can also result in an `EOFError` when using WSL on Windows. To restore the previous behavior,
+    use `start_method='fork'` (not available on Windows), e.g.:
 
     ```python
-    import multiprocessing
-    multiprocessing.set_start_method("fork", force=True)
+    results = sc.parallelize(f, iterarg=[1,2,3], start_method='fork')
     ```
+
+    **Note 5**: with process-based parallelizers (including the default), NumPy's global random number
+    generator is reseeded at the start of each job, with a different seed for each job, derived from the
+    parent process's generator (using a single draw from it). This means that functions that use `np.random`
+    give different results in each job, and in each call to `sc.parallelize()`, and that results are
+    reproducible if the parent is seeded (e.g. with `np.random.seed(1)`), regardless of the platform, start
+    method, or number of CPUs. The results differ from `serial=True`, where jobs draw from the parent's
+    generator in turn. Functions that set their own seed are unaffected.
 
     - *New in version 1.1.1:* "serial" argument
     - *New in version 2.0.0:* changed default parallelizer from `multiprocess.Pool` to `concurrent.futures.ProcessPoolExecutor`; replaced `maxload` with `maxcpu`/`maxmem`; added `returnpool` argument
@@ -803,13 +900,14 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     - *New in version 3.0.0:* new Parallel class; propagated "die" to jobs
     - *New in version 3.1.0:* new "globaldict" argument
     - *New in version 3.2.5:* "capture" and "lbkwargs" arguments
+    - *New in version 3.4.0:* "iterarg" and "iterkwargs" can be used together; with `die=False`, the exception is returned as the result; "start_method" argument; NumPy's global random number generator is reseeded for each job; the callback can stop the run early
     """
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs,
                  ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval,
                  parallelizer=parallelizer, serial=serial, progress=progress,
                  callback=callback, globaldict=globaldict, capture=capture, die=die,
-                 lbkwargs=lbkwargs, **func_kwargs)
+                 lbkwargs=lbkwargs, start_method=start_method, **func_kwargs)
 
     # Run it
     P.run()
@@ -829,7 +927,7 @@ class TaskArgs(sc.prettyobj):
         """
         def __init__(self, func, index, njobs, iterval, iterdict, args, kwargs, lbkwargs,
                      embarrassing, callback, progress, globaldict, useglobal, started,
-                     capture=False, die=True, counter=None):
+                     capture=False, die=True, counter=None, seed=None):
             self.func         = func         # The function being called
             self.index        = index        # The place in the queue
             self.njobs        = njobs        # The total number of iterations
@@ -847,6 +945,7 @@ class TaskArgs(sc.prettyobj):
             self.capture      = capture      # Whether to capture output as text
             self.die          = die          # Whether to raise an exception if the child task encounters one
             self.counter      = counter      # A shared counter of how many jobs have finished, used for the progress bar
+            self.seed         = seed         # If supplied, the seed for NumPy's global RNG for this job
             return
 
 
@@ -857,6 +956,11 @@ def _task(taskargs):
     *New in version 3.0.0:* renamed from "_parallel_task" to "_task"; return output dict with metadata
     """
 
+    # If the run has been stopped, skip this job
+    counter = taskargs.counter
+    if counter is not None and counter.stopped:
+        return dict(result=None, success=False, skipped=True, exception=None, stdout='', elapsed=0)
+
     # Handle inputs
     func   = taskargs.func
     index  = taskargs.index
@@ -864,11 +968,9 @@ def _task(taskargs):
     kwargs = taskargs.kwargs
     if args   is None: args   = ()
     if kwargs is None: kwargs = {}
-    if taskargs.iterval is not None:
-        if not isinstance(taskargs.iterval, tuple): # Ensure it's a tuple
-            taskargs.iterval = (taskargs.iterval,)
-        if not taskargs.embarrassing:
-            args = taskargs.iterval + args # If variable name is not supplied, prepend it to args
+    args = tuple(args) if isinstance(args, (list, tuple)) else (args,) # Ensure it's a tuple
+    if taskargs.iterval is not None and not taskargs.embarrassing: # iterval is already a tuple, created by make_argslist()
+        args = taskargs.iterval + args # If variable name is not supplied, prepend it to args
     kwargs = sc.mergedicts(kwargs, taskargs.iterdict) # Merge this iterdict, overwriting kwargs if there are conflicts
 
     # Handle load balancing
@@ -883,27 +985,25 @@ def _task(taskargs):
     success    = False
     exception  = None
     stdout     = ''
-    try: # Try to update the globaldict, but don't worry if we can't
-        globaldict[_jobkey(index)] = 0
-        if taskargs.useglobal:
-            kwargs['globaldict'] = taskargs.globaldict
-    except:
-        pass
+    if taskargs.useglobal:
+        kwargs['globaldict'] = globaldict
+
+    # Reseed NumPy's global RNG, if requested
+    if taskargs.seed is not None:
+        np.random.seed(taskargs.seed)
 
     # Call the function!
     try:
         if taskargs.capture:
-            with sc.capture() as stdout:
-                result = func(*args, **kwargs) # Call the function and capture the output
-            stdout = str(stdout) # Convert just to the plain text
+            try:
+                with sc.capture() as stdout:
+                    result = func(*args, **kwargs) # Call the function and capture the output
+            finally:
+                stdout = str(stdout) # Convert just to the plain text, even if the function failed
         else:
             result = func(*args, **kwargs) # Call the function!
         success = True
-        try: # Likewise, try to update the task progress
-            globaldict[_jobkey(index)] = 1
-        except:
-            pass
-    except Exception as E: # pragma: no cover
+    except Exception as E:
         if taskargs.die: # Usual case, raise an exception and stop
             try:
                 E.add_note(f'\nTask {index} failed: set die=False to keep going instead.\n\n{sc.traceback()}')
@@ -914,11 +1014,11 @@ def _task(taskargs):
             warnmsg = f'sc.parallelize(): Task {index} failed, but die=False so continuing.\n{sc.traceback()}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
             exception = E
+            result = E # As documented, store the exception as the result
     end = sc.time()
     elapsed = end - start
 
     # Update the count of finished jobs, and show progress if requested
-    counter = taskargs.counter
     if counter is not None:
         counter.increment()
     if taskargs.progress:
@@ -928,15 +1028,18 @@ def _task(taskargs):
     outdict = dict(
         result    = result,
         success   = success,
+        skipped   = False,
         exception = exception,
         stdout    = stdout,
         elapsed   = elapsed,
     )
 
     # Handle callback, if present
-    if taskargs.callback: # pragma: no cover
-        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, globaldict=globaldict, outdict=outdict)
+    if taskargs.callback:
+        data = dict(index=index, njobs=taskargs.njobs, args=args, kwargs=kwargs, globaldict=globaldict, outdict=outdict, stop=False)
         taskargs.callback(data)
+        if data['stop'] and counter is not None: # The callback can set this to stop the run
+            counter.stop()
 
     # Handle output
     return outdict
@@ -1049,7 +1152,7 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
         label += ': '
 
     if index is None:
-        pause = interval*2*np.random.rand()
+        pause = interval*2*np.random.default_rng().random() # Use a separate RNG so the global one isn't affected, and so it differs between processes
         index = ''
     else: # pragma: no cover
         pause = index*interval
@@ -1064,9 +1167,9 @@ def loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval
     # Loop until load is OK
     toohigh = True # Assume too high
     count = 0
-    maxcount = maxtime/float(interval)
+    start = time.time()
     string = ''
-    while toohigh and count < maxcount:
+    while toohigh and (time.time() - start) < maxtime: # Stop waiting after maxtime seconds
         count += 1
         cpu_current = cpuload(interval=cpu_interval) # If interval is too small, can give very inaccurate readings
         mem_current = memload()

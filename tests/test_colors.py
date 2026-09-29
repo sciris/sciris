@@ -54,9 +54,8 @@ def test_colormaps():
     print('Testing vectocolor')
     nanpos = 5
     nancolor = 'sienna'
-    x = np.random.rand(10)
-    x = sc.normalize(x) # To ensure the values span 0-1
-    x[nanpos] = np.nan
+    x = np.linspace(0, 1, 10)
+    x[nanpos] = np.nan # Not the min or max, so the values still span 0-1
     o.veccolors = sc.vectocolor(x, nancolor=nancolor, midpoint=0.3, cmap='turbo')
     assert (o.veccolors[nanpos,:] == sc.sanitizecolor(nancolor, asarray=True, alpha=1)).all()
 
@@ -137,6 +136,44 @@ def test_colorbars():
     return o
 
 
+def test_edge_cases():
+    sc.heading('Testing color edge cases')
+
+    # Integer colors are not truncated
+    assert np.allclose(sc.rgb2hsv([0,1,1]), [0.5,1,1])
+    assert np.allclose(sc.hsv2rgb([0,1,1]), [1,0,0])
+    assert np.allclose(sc.shifthue(colors=[(1,0,0)], hueshift=0.1), [[1,0.6,0]])
+    assert sc.rgb2hex([1,1,1]) == '#ffffff'
+    assert sc.sanitizecolor(1) == (1,1,1)
+    assert sc.sanitizecolor((0.1,0.2,0.3,0.9), alpha=0.5)[3] == 0.5
+
+    # Constant and empty vectors
+    assert sc.vectocolor([3,3,3])[:,3].all() # Not transparent
+    assert sc.vectocolor([]).shape == (0,4)
+    assert sc.gridcolors(3, ashex=True, asarray=True)[0] == sc.gridcolors(3, ashex=True)[0]
+
+    # Colormap demo doesn't reseed the global RNG, and returns the right figure
+    np.random.seed(1)
+    figs = sc.colormapdemo(n=10, smoothing=1, doshow=False)
+    assert len(figs['3d'].axes) == 2
+    a = np.random.rand()
+    np.random.seed(1)
+    assert a == np.random.rand()
+
+    # Colorbars handle NaNs, array ticklabels, and fig
+    fig = plt.figure()
+    ax = plt.gca()
+    cb = sc.manualcolorbar([1, np.nan, 3], axkwargs=[0.1,0.5,0.8,0.1])
+    assert cb.norm.vmin == 1 and cb.norm.vmax == 3
+    assert plt.gca() is ax
+    sc.manualcolorbar(ticks=[0,1], ticklabels=np.array(['a','b']))
+    plt.figure()
+    cb = sc.manualcolorbar(fig=fig)
+    assert cb.ax.figure is fig
+
+    return cb
+
+
 #%% Run as a script
 if __name__ == '__main__':
     T = sc.timer()
@@ -147,6 +184,7 @@ if __name__ == '__main__':
     c  = test_colors()
     cm = test_colormaps()
     cb = test_colorbars()
+    ce = test_edge_cases()
 
     if doplot:
         plt.show()

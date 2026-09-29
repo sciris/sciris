@@ -2,6 +2,7 @@
 Version: 2019jul09
 '''
 
+import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 import sciris as sc
@@ -81,6 +82,51 @@ def test_complex():
     return result
 
 
+def test_inputs():
+    """ Check that inputs of different shapes and lengths are handled correctly """
+    def sq(x): return float(np.sum((np.asarray(x) - 1.0)**2))
+    x0 = [1.5, 2.5, 3.5]
+    kw = dict(maxiters=200, verbose=0, randseed=1)
+
+    # One pinitial per parameter is the same as two per parameter
+    r1 = sc.asd(sq, x0, pinitial=[1,1,1], **kw)
+    r2 = sc.asd(sq, x0, pinitial=[1,1,1,1,1,1], **kw)
+    assert np.array_equal(r1.x, r2.x) and r1.fval < 1e-3
+
+    # Scalar bounds and step sizes are broadcast
+    for key,val in dict(xmin=0, xmax=10, sinitial=0.1).items():
+        r = sc.asd(sq, x0, **{key:val}, **kw)
+        assert r.fval < 1e-3
+
+    # An out-of-bounds starting point raises, or is clipped if die=False
+    def far(x): return float((x[0] - 4.9)**2 + (x[1] - 4.9)**2)
+    with pytest.raises(ValueError):
+        sc.asd(far, [4.8, 4.8], xmin=[0, 0], xmax=[1, 1], **kw)
+    with pytest.warns(UserWarning):
+        r = sc.asd(far, [4.8, 4.8], xmin=[0, 0], xmax=[1, 1], die=False, **kw)
+    assert np.array_equal(r.x, [1, 1])
+
+    # Objective values that are 0-d or 2-d size-1 arrays are accepted
+    for func in [lambda x: np.array(sq(x)), lambda x: np.array([[sq(x)]])]:
+        r = sc.asd(func, [3., 4.], **kw)
+        assert r.fval < 1e-3
+
+    # The objective is called with x in its original shape
+    target = np.array([[1., 2.], [3., 4.]])
+    r = sc.asd(lambda x: float(np.sum((x - target)**2)), np.zeros((2, 2)), **kw)
+    assert r.x.shape == (2,2) and r.fval < 1e-3
+    r = sc.asd(lambda x: float(np.sum((x - target)**2)), np.zeros((2, 2)), xmin=np.zeros((2,2)), xmax=5*np.ones((2,2)), **kw)
+    assert r.x.shape == (2,2) and r.fval < 1e-3
+    r = sc.asd(lambda x: float((x - 2)**2), 5., **kw)
+    assert r.x.shape == () and abs(r.x - 2) < 1e-2
+
+    # maxiters=0 does nothing
+    r = sc.asd(sq, x0, maxiters=0, verbose=0)
+    assert np.array_equal(r.x, x0) and r.exitreason == 'Maximum iterations reached'
+
+    return r
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
@@ -88,6 +134,7 @@ if __name__ == '__main__':
     r1 = test_simple()
     r2 = test_args()
     r3 = test_complex()
+    r4 = test_inputs()
 
     sc.toc()
     print('Done.')

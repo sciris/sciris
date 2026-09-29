@@ -2,10 +2,19 @@
 Test Sciris utility/helper functions.
 '''
 
+import sys
+import uuid
+import random
+import numbers
+import functools
+import threading
+import tempfile
+from collections import defaultdict
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import numpy as np
 import sciris as sc
-import functools
 import pytest
+
 
 
 #%% Adaptations from other libraries
@@ -19,6 +28,9 @@ def test_adaptations():
 
     print('\nTesting sha')
     o.sha = sc.sha({'a':np.random.rand(5)})
+    a = np.arange(3000)
+    b = a.copy(); b[1500] = -1
+    assert sc.sha(a, digest=True) != sc.sha(b, digest=True) # Long arrays aren't truncated
 
     print('\nTesting cp and dcp')
     o.sha2 = sc.dcp(o.sha.hexdigest())
@@ -26,6 +38,15 @@ def test_adaptations():
         o.sha3 = sc.cp(o.sha)
     with pytest.raises(ValueError):
         o.sha3 = sc.dcp(o.sha)
+
+    print('\nTesting robust dcp')
+    lock = threading.Lock() # Can't be copied
+    inner = [0, 1, lock, 3]
+    orig = dict(a=dict(b=inner), c=(inner,), d=defaultdict(list, lock=lock))
+    copied = sc.dcp(orig, die=False, verbose=False)
+    assert copied['a']['b'] == inner and copied['a']['b'] is not inner # Nothing truncated or aliased
+    assert copied['c'][0] is not inner
+    assert copied['d'].default_factory is list and copied['d']['lock'] is lock
 
     print('Testing asciify')
     o.ascii = sc.asciify('föö→λ ∈ ℝ')
@@ -37,6 +58,7 @@ def test_adaptations():
     print('\nTesting platforms')
     sc.getplatform()
     assert sc.iswindows() + sc.ismac() + sc.islinux() == 1
+    assert sc.getplatform('linux', platform='freebsd') is False
     assert not sc.isjupyter() # Assume this won't be called in Jupyter!
     shell = sc.isjupyter(detailed=True)
     print(shell)
@@ -65,9 +87,44 @@ def test_download_save(): # Split up to take advantage of parallelization
     return fn
 
 
+def test_urlopen_local():
+    print('\nTesting urlopen with a local server')
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == '/missing':
+                self.send_response(404)
+                self.end_headers()
+                return
+            self.send_response(200)
+            if self.path == '/latin1':
+                self.send_header('Content-Type', 'text/plain; charset=iso-8859-1')
+                body = 'café'.encode('latin-1')
+            else:
+                self.send_header('Content-Disposition', 'attachment; filename="temp_report.csv"')
+                body = self.path.encode()
+            self.end_headers()
+            self.wfile.write(body)
+
+    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = f'127.0.0.1:{server.server_address[1]}'
+    try:
+        assert sc.urlopen(url + '/missing', response='status') == 404
+        assert sc.urlopen(url + '/api?a=1', params=dict(b=2)) == '/api?a=1&b=2'
+        assert sc.urlopen(url + '/latin1') == 'café'
+        data = sc.download(f'http://{url}/v1/data', f'http://{url}/v2/data', save=False)
+        assert list(data.values()) == ['/v1/data', '/v2/data'] # Duplicate filenames are not merged
+        filename = sc.urlopen(url + '/report', save=True) # Filename from the Content-Disposition header
+        assert sc.path(filename).name == 'temp_report.csv'
+        sc.rmpath(filename)
+    finally:
+        server.shutdown()
+    return data
+
+
 def test_uuid():
     sc.heading('Test UID generation')
-    import uuid
 
     # Create them
     u = sc.objdict()
@@ -103,9 +160,16 @@ def test_uuid():
 
     print('\nTesting fast_uuid')
     u.uuids = sc.fast_uuid(n=100) # Generate 100 UUIDs
+    for i in range(10): # Duplicates are very likely, but should be removed
+        uids = sc.fast_uuid(which='numeric', length=1, n=5, safety=1, verbose=False)
+        assert len(set(uids)) == len(uids) == 5
+    random.seed(1); r1 = random.random()
+    random.seed(1); sc.fast_uuid(); r2 = random.random()
+    assert r1 == r2 # Python's global random stream isn't affected
 
     print('\nTesting uuid')
     u.uuid = sc.uuid()
+    assert sc.uuid(u.uuid, tostring=True, length=8) == str(u.uuid)[:8]
 
     return u
 
@@ -142,6 +206,15 @@ def test_tryexcept():
     # Catch (do not raise) only certain errors
     with sc.tryexcept(catch=IndexError): # Raise everything except IndexError
         values[2]
+    with sc.tryexcept(die=True, catch=IndexError):
+        values[2]
+
+    # Don't catch KeyboardInterrupt unless asked to
+    with pytest.raises(KeyboardInterrupt):
+        with sc.tryexcept():
+            raise KeyboardInterrupt
+    with sc.tryexcept(catch=KeyboardInterrupt):
+        raise KeyboardInterrupt
 
     # Storing the history of multiple exceptions
     te = None
@@ -303,6 +376,13 @@ def test_types():
     assert sc.promotetoarray(np.array(3))[0] == 3
     with pytest.raises(ValueError):
         sc.toarray('not convertible', dtype=float)
+    assert sc.toarray(np.bool_(True)).shape == (1,)
+    assert sc.toarray(None, keepnone=True)[0] is None
+    assert sc.toarray('abc')[0] == 'abc'
+    assert list(sc.toarray(dict(a=1, b=2).values())) == [1, 2]
+
+    print('\nTesting checktype')
+    assert sc.checktype(3, numbers.Number) # Abstract base classes work
 
     return o
 
@@ -397,6 +477,8 @@ def test_suggest():
     assert res4 == None
     assert res5a == ['foo', 'fou', 'fol']
     assert res5b == {'foo': 0.0, 'fou': 1.0, 'fol': 1.0, 'fal': 2.0, 'fil': 2.0}
+    assert sc.suggest('temprature', ['temperature', 'humidity', 'pressure'], which='jaro') == 'temperature'
+    assert sc.suggest('HIV', ['hiv', 'hpv', 'syphilis']) == 'hiv' # Input case is ignored too
     print(res1)
     print(res2)
     print(res3)
@@ -413,6 +495,10 @@ def test_misc():
     print('\nTesting runcommand')
     sc.runcommand('command_probably_not_found', printinput=True, printoutput=True)
     sc.runcommand('ls', wait=False)
+    T = sc.timer()
+    p = sc.runcommand('sleep 1', wait=False)
+    assert T.toc(output=True) < 0.5 # Returns immediately
+    p.wait()
 
     print('\nTesting gitinfo functions')
     o.gitinfo = sc.gitinfo()
@@ -429,11 +515,15 @@ def test_misc():
 
     print('\nTesting importbyname and importbypath')
     global lazynp
-    sc.importbyname(lazynp='numpy', lazy=True, namespace=globals())
+    sc.importbyname(lazynp='numpy', lazy=True) # Assigned to this module's namespace
     print(lazynp)
     assert isinstance(lazynp, sc.LazyModule)
     lazynp.array(0)
     assert not isinstance(lazynp, sc.LazyModule)
+    global lazypd
+    lazypd = sc.lazyimport('pandas') # Variable name and namespace are found automatically
+    lazypd.DataFrame
+    assert not isinstance(lazypd, sc.LazyModule)
     module_path = sc.thispath() / 'test_settings.py'
     test_set = sc.importbyname(path=module_path, variable='test_set')
     assert 'test_options' in dir(test_set)
@@ -441,6 +531,14 @@ def test_misc():
     assert 'test_options' in dir(test_set2)
     with pytest.raises(FileNotFoundError):
         sc.importbypath(path='/not/a/valid/path')
+    sc.importbyname(json_by_name='json') # Assigns to the caller's namespace by default
+    assert json_by_name.__name__ == 'json'
+    with tempfile.TemporaryDirectory() as folder:
+        bad_path = sc.makefilepath(folder=folder, filename='bad_module_to_import.py')
+        sc.savetext(bad_path, 'raise ValueError("Expected error")')
+        with pytest.raises(ValueError):
+            sc.importbypath(bad_path)
+        assert 'bad_module_to_import' not in sys.modules # Not left half-imported
 
     print('\nTesting get_caller()')
     o.caller = sc.getcaller(includeline=True)
@@ -457,6 +555,7 @@ def test_misc():
     s4 = sc.strsplit('  foo_bar  ', sep='_') # Returns ['foo', 'bar']
     assert s1 == s2 == s3 == target
     assert s4 == ['foo', 'bar']
+    assert sc.strsplit('cats and dogs', sep=' and ') == ['cats', 'dogs']
 
     print('\nTesting autolist')
     ls = sc.autolist('test')
@@ -504,6 +603,7 @@ if __name__ == '__main__':
     adapt     = test_adaptations()
     download  = test_download()
     filename  = test_download_save()
+    local     = test_urlopen_local()
     uid       = test_uuid()
     traceback = test_traceback()
     tryexc    = test_tryexcept()

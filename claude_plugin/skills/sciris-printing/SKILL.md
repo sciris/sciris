@@ -54,6 +54,6 @@ for i in sc.progressbar(range(100)):  # tqdm-based progress bar
 ## Numeric Formatting
 
 ```python
-sc.printmedian(data)                  # Print median with IQR
+sc.printmedian(data)                  # Print median with 95% CI
 sc.sigfig(123456, 3, sep=True)       # '123,000' (significant figures with separator)
 ```

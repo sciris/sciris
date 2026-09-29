@@ -9,8 +9,11 @@ Highlights:
 """
 
 import re
+import ast
 import os
 import sys
+import gzip
+import pickle
 import time
 import types
 import psutil
@@ -19,11 +22,11 @@ import pstats
 import cProfile
 import _thread
 import threading
-import tempfile
+import dill
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import sciris as sc
+plt = sc.lazyimport('matplotlib.pyplot') # Only import pyplot when it's first used, since it's slow to import
 
 
 ##############################################################################
@@ -33,11 +36,38 @@ import sciris as sc
 __all__ = ['checkmem', 'checkram', 'benchmark']
 
 
+class _ByteCounter:
+    """ File-like object that counts the bytes written to it, without storing them """
+    def __init__(self):
+        self.n = 0
+
+    def write(self, b):
+        self.n += len(b)
+        return len(b)
+
+
+def _pickled_size(obj, compresslevel=0):
+    """ Number of bytes needed to pickle (and optionally gzip) an object, without writing it to disk """
+    for method in ['pickle', 'dill']:
+        counter = _ByteCounter()
+        pickler = pickle if method == 'pickle' else dill
+        try:
+            if compresslevel:
+                with gzip.GzipFile(fileobj=counter, mode='wb', compresslevel=compresslevel) as fileobj:
+                    pickler.dump(obj, fileobj, protocol=pickle.HIGHEST_PROTOCOL)
+            else:
+                pickler.dump(obj, counter, protocol=pickle.HIGHEST_PROTOCOL)
+            return counter.n
+        except Exception:
+            if method == 'dill':
+                raise
+
+
 def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
              subtotals=True, plot=False, verbose=False, **kwargs):
     """
-    Checks how much memory the variable or variables in question use by dumping
-    them to file.
+    Checks how much memory the variable or variables in question use, by
+    counting the number of bytes needed to pickle them.
 
     Note on the different functions:
 
@@ -49,12 +79,12 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
         var (any): the variable being checked
         descend (bool): whether or not to descend one level into the object
         order (str): order in which to list items: "size" (default), "alphabetical", or "none"
-        compresslevel (int): level of compression to use when saving to file (typically 0)
+        compresslevel (int): if nonzero, report the size after gzip compression at this level
         maxitems (int): the maximum number of separate entries to check the size of
-        subtotals (bool): whether to include subtotals for different levels of depth
+        subtotals (bool): whether to include subtotals for different levels of depth (each subtotal is the size of the whole object, so it counts objects shared between items once)
         plot (bool): if descending, show the results as a pie chart
         verbose (bool or int): detail to print, if >1, print repr of objects along the way
-        **kwargs (dict): passed to `sc.load()`
+        **kwargs (dict): used internally for recursion
 
     **Examples**:
 
@@ -62,7 +92,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     import numpy as np
     import sciris as sc
 
-    list_obj = ['label', np.random.rand(2483,589)])
+    list_obj = ['label', np.random.rand(2483,589)]
     sc.checkmem(list_obj)
 
     nested_dict = dict(
@@ -80,7 +110,8 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     )
     sc.checkmem(nested_dict)
     ```
-    *New in version 3.0.0:* descend multiple levels; dataframe output; "alphabetical" renamed "order"
+    - *New in version 3.0.0:* descend multiple levels; dataframe output; "alphabetical" renamed "order"
+    - *New in version 3.4.0:* sizes are computed in memory rather than by saving to disk
     """
 
     # Handle input arguments -- used for recursion
@@ -90,18 +121,11 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
 
     def check_one_object(variable):
         """ Check the size of one variable """
-
         if verbose>1: # pragma: no cover
             print(f'  Checking size of {variable}...')
-
-        # Create a temporary file, save the object, check the size, remove it
-        filename = tempfile.mktemp()
-        sc.save(filename, variable, allow_empty=True, compresslevel=compresslevel)
-        filesize = os.path.getsize(filename)
-        os.remove(filename)
-
-        sizestr = sc.humanize_bytes(filesize)
-        return filesize, sizestr
+        bytesize = _pickled_size(variable, compresslevel=compresslevel)
+        sizestr = sc.humanize_bytes(bytesize)
+        return bytesize, sizestr
 
     # Initialize
     varnames  = []
@@ -115,10 +139,13 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     )
     df = sc.dataframe(columns=columns)
 
+    if isinstance(var, tuple(sc.sc_nested.atomic_classes)): # Check arrays and dataframes as single objects
+        descend = 0
+
     if descend:
         if isinstance(var, dict): # Handle dicts
             if verbose>1: print('Iterating over dict')
-            varnames = list(var.keys())
+            varnames = [str(k) for k in var.keys()] # Keys may not be strings
             variables = var.values()
         elif hasattr(var, '__dict__'): # It's an object
             if verbose>1: print('Iterating over class-like object')
@@ -130,6 +157,8 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             variables = var
         else:
             descend = 0 # Can't descend
+        if not len(variables):
+            descend = 0 # Nothing to descend into (e.g. an empty dict), so check the object itself
 
     # Create the object(s) to check the size(s) of
     if not descend:
@@ -140,7 +169,7 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     else:
         # Error checking
         n_variables = len(variables)
-        if n_variables > maxitems: # pragma: no cover
+        if n_variables > maxitems:
             errormsg = f'Cannot compute the sizes of {n_variables} items since maxitems is set to {maxitems}'
             raise RuntimeError(errormsg)
 
@@ -149,13 +178,13 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
             if verbose: # pragma: no cover
                 print(f'Processing variable {v} of {len(variables)}')
             label = _join.join([_prefix, varname]) if _prefix else varname
-            this_df = checkmem(variable, descend=descend-1, compresslevel=compresslevel, maxitems=maxitems, plot=False, verbose=False, _prefix=label, _depth=_depth+1)
+            this_df = checkmem(variable, descend=descend-1, compresslevel=compresslevel, maxitems=maxitems, subtotals=subtotals, plot=False, verbose=verbose, _prefix=label, _depth=_depth+1)
             df.concat(this_df, inplace=True)
 
     # Handle subtotals
     if subtotals and len(df) > 1:
         total_label = _prefix + ' (total)' if _prefix else 'Total'
-        total = df[np.logical_not(df.is_total)].bytesize.sum()
+        total, _ = check_one_object(var) # Check the whole object, so objects shared between items are counted once
         human_total = sc.humanize_bytes(total)
         df.appendrow(dict(variable=total_label, humansize=human_total, bytesize=total, depth=_depth, is_total=True))
 
@@ -163,14 +192,15 @@ def checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000,
     if _depth == 0 and len(df) > 1:
         # if subtotals:
 
-        if order == 'alphabetical': # pragma: no cover
+        if order == 'alphabetical':
             df.sortrows(col='variable')
         elif order == 'size':
             df.sortrows(col='bytesize', reverse=True)
 
-    if plot: # pragma: no cover
+    if plot:
+        pdf = df[np.logical_not(df.is_total)] # Don't plot the totals
         plt.axes(aspect=1)
-        plt.pie(df.bytesize, labels=df.variable, autopct='%0.2f')
+        plt.pie(pdf.bytesize, labels=pdf.variable, autopct='%0.2f')
 
     return df
 
@@ -205,12 +235,12 @@ def checkram(unit='mb', fmt='0.2f', start=0, to_string=True):
     mem_use = process.memory_info().rss/factor - start
     if to_string:
         output = f'{mem_use:{fmt}} {unit.upper()}'
-    else: # pragma: no cover
+    else:
         output = mem_use
     return output
 
 
-def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False):
+def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, legacy=True, return_timers=False):
     """
     Benchmark Python performance
 
@@ -229,6 +259,7 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
         verbose (bool): print out the results after each repeat
         which (str): whether to run Python tests, Numpy tests, or both (default)
         parallel (bool/int): whether to run the tests across all cores
+        legacy (bool): if True, use NumPy's legacy random number generator, so results are comparable with earlier versions (NB: dominated by generating random integers); if False, use the new generator, which weights the four NumPy operations more evenly (NB: NumPy results are considerably higher, typically 2-4x depending on the machine)
         return_timers (bool): if True, return the timer objects instead of the "MOPS" results
 
     Returns:
@@ -253,6 +284,7 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
     - *New in version 3.0.0.*
     - *New in version 3.1.0:* "parallel" argument; increased default scale
     - *New in version 3.2.4:* replaced "python" and "numpy" arguments with "which"
+    - *New in version 3.4.0:* "legacy" argument
     """
     # Handle which
     python = True if 'python' in which else False
@@ -290,11 +322,17 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
 
     def bm_numpy(prefix=''):
         N = sc.timer(verbose=verbose)
+        if legacy: # Use a separate generator in both cases, so the global one isn't affected
+            rng = np.random.RandomState()
+            randint = rng.randint
+        else:
+            rng = np.random.default_rng()
+            randint = rng.integers
         for r in range(repeats):
             N.tic()
             for i in range(np_outer):
-                a = np.random.random(int(np_inner)) # Operation 1: random floats
-                b = np.random.randint(10, size=int(np_inner)) # Operation 2: random integers
+                a = rng.random(int(np_inner)) # Operation 1: random floats
+                b = randint(10, size=int(np_inner)) # Operation 2: random integers
                 a + b # Operation 3: addition
                 a*b # Operation 4: multiplication
             N.toc(f'{prefix}Numpy, {np_ops}m operations')
@@ -326,7 +364,7 @@ def benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel
             N = sum(Nlist)
 
     # Handle output
-    if return_timers: # pragma: no cover
+    if return_timers:
         out = sc.objdict(python=P, numpy=N)
     else:
         pymops = py_ops/P.mean()*ncpus if P is not None else None # Handle if one or the other isn't run
@@ -441,7 +479,7 @@ class profile(sc.prettyobj):
     def parse_follow(self, strict=False):
         """ Do processing on the functions """
         # Figure out follow
-        if self.follow is None: # pragma: no cover
+        if self.follow is None:
             follow_funcs = [self.run_func]
         else:
             follow_funcs = listfuncs(self.follow, private=self.private, include=self.include, exclude=self.exclude, strict=strict)
@@ -493,9 +531,11 @@ class profile(sc.prettyobj):
 
         # Run the profiling
         with sc.timer(verbose=self.verbose) as T:
-            wrapper(*self.args, **self.kwargs) # pragma: no cover
+            try:
+                wrapper(*self.args, **self.kwargs) # pragma: no cover
+            finally:
+                prof.disable() # Turn off profiling, even if the function raised an exception
         self.run_func = orig_func # Restore run for argument passing
-        prof.disable() # Turn off profiling
 
         # Tidy up
         self.prof = prof
@@ -529,7 +569,7 @@ class profile(sc.prettyobj):
         if inplace:
             out = self
         else:
-            out = self.__class__.__new__(self.__class__) # New empty class
+            out = sc.cp(self) # Shallow copy, to keep the other attributes
         out.run_func = sc.mergelists(self.run_func, other.run_func)
         out.follow = sc.mergelists(self.follow, other.follow)
         out.follow_funcs = sc.mergelists(self.follow_funcs, other.follow_funcs)
@@ -568,7 +608,6 @@ class profile(sc.prettyobj):
     @staticmethod
     def _path_to_name(filepath, lineno):
         """ Helper function to convert a file/line number to a qualified path (via ChatGPT) """
-        import ast # Not used elsewhere
 
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
@@ -709,7 +748,7 @@ class profile(sc.prettyobj):
         if maxentries:
             if bytime == 1: # Skip the first entries
                 entries = entries[-maxentries:]
-            elif bytime == -1: # Skip the last entries
+            else: # Skip the last entries
                 entries = entries[:maxentries]
         return entries
 
@@ -744,13 +783,13 @@ class profile(sc.prettyobj):
         """
         # Assemble data
         df = self.to_df(bytime, maxentries)
-        ylabels = df.name.values
+        ylabels = list(df.name.values) # Copy, since modified below
         if bytime:
             y = np.arange(len(ylabels))
         else:
             y = df.order.values
 
-        x = df.time.values
+        x = df.time.values.copy() # Copy, since modified below
         pcts = df.percent.values
 
         if x.max() < 1:
@@ -810,14 +849,13 @@ def mprofile(run, follow=None, show_results=True, *args, **kwargs):
             errormsg = 'The "memory_profiler" Python package is required to perform profiling'
         raise ModuleNotFoundError(errormsg) from E
 
-    if follow is None: # pragma: no cover
+    if follow is None:
         follow = run
 
     lp = memp.LineProfiler()
     follow = sc.tolist(follow)
     for f in follow:
         lp.add_function(f)
-    lp.enable_by_count()
     try:
         wrapper = lp(run)
     except TypeError as e: # pragma: no cover
@@ -854,7 +892,7 @@ class cprofile(sc.prettyobj):
         - 'path': the file and line number
 
     Args:
-        sort (str): the column to sort by (default "cumpct")
+        sort (str): the column to sort by (default "cumtime")
         columns (str): what columns to show; options are "default" (above), "brief" (just func, cumtime, selftime), and "full" (as default plus percall and separate line numbers)
         mintime (float): exclude function times below this value
         maxitems (int): only include up to this many functions in the output
@@ -995,13 +1033,14 @@ class cprofile(sc.prettyobj):
         self.df = sc.dataframe(**data)
         reverse = sc.isarray(d[sort]) # If numeric, assume we want the highest first
         self.df = self.df.sortrows(sort, reverse=reverse)
-        self.df = self.df[:self.maxitems]
+        self.df = self.df[:maxitems]
 
         # Conver to ms if desired
         use_ms = sc.ifelse(self.use_ms, self.df.cumtime.max() < 1.0)
         if use_ms:
-            for col in ['cumtime', 'selftime']:
-                self.df[col] *= 1000
+            for col in ['cumtime', 'selftime', 'percall']:
+                if col in self.df.columns:
+                    self.df[col] *= 1000
 
         return self.df
 
@@ -1017,6 +1056,8 @@ class cprofile(sc.prettyobj):
 
     def start(self):
         """ Start profiling """
+        self.parsed = None # Reset any previous results
+        self.df = None
         return self.profile.enable()
 
     def stop(self):
@@ -1042,8 +1083,8 @@ def listfuncs(*args, private='__init__', include=None, exclude=None, strict=Fals
     Enumerate all functions in the supplied arguments; used in `sc.profile()`.
 
     If module(s) are supplied, recursively search them for functions and classes.
-    If class(es) are supplied, search them for methods. Otherwise, search input(s) for
-    functions.
+    If class(es) are supplied, search them (and their base classes) for methods.
+    Otherwise, search input(s) for functions.
 
     Args:
         args (list): the arguments to parse for functions; can be modules, classes, or functions.
@@ -1081,7 +1122,10 @@ def listfuncs(*args, private='__init__', include=None, exclude=None, strict=Fals
 
     def get_attrs(parent):
         """ Safely get the attributes of a module/class """
-        attrs = sc.objatt(parent, private=private, return_keys=True)
+        parents = parent.__mro__[:-1] if isinstance(parent, type) else [parent] # Include inherited methods, except from object
+        attrs = []
+        for par in parents:
+            attrs += [attr for attr in sc.objatt(par, private=private, return_keys=True) if attr not in attrs]
         objs = []
         for attr in attrs:
             try:
@@ -1120,12 +1164,12 @@ class tracecalls(sc.prettyobj):
     """
     Trace all function calls.
 
-    Alias to `sys.steprofile()`.
+    Alias to `sys.setprofile()`.
 
     Args:
         trace (str/list/regex): the module(s)/file(s) to trace calls from ('' matches all, but this is usually undesirable)
         exclude (str/list/regex): a list of modules/files to exclude (default excludes builtins; set to None to not exclude anything)
-        regex (bool): whether to interpret trace and exclude as regexes rather than simple string matching
+        regex (bool): whether to interpret trace and exclude as regexes rather than simple string matching; a call matches if the regex is found anywhere in its file path or its name (e.g. "^init_" matches functions whose names start with "init_")
         repeats (bool): whether to record repeat calls of the same function (default False)
         custom (func): if provided, use this rather than the built in logic for checking for matches
         verbose (bool): how much information to print (False=silent, None=default, True=debug)
@@ -1140,7 +1184,7 @@ class tracecalls(sc.prettyobj):
         mm.big_operation()
 
     # Explicitly
-    tc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)
+    tc = sc.tracecalls('mysubmodule', exclude='^init_', regex=True, repeats=True)
     tc.start()
     mm.big_operation()
     tc.stop()
@@ -1149,13 +1193,12 @@ class tracecalls(sc.prettyobj):
 
     - *New in version 3.2.0.*
     - *New in version 3.2.1:* "custom" argument added; "kwargs" removed
+    - *New in version 3.4.0:* regexes are searched for in the file path, qualified name, and function name separately
     """
     def __init__(self, trace='<default>', exclude='<default>', regex=False, repeats=False,
                  custom=None, verbose=None):
-        default_trace   = '.*' if regex else ''
-        default_exclude = {'.*<', '.*tracecalls'} if regex else {'<', 'tracecalls'}
-        trace   = default_trace   if trace   == '<default>' else trace
-        exclude = default_exclude if exclude == '<default>' else exclude
+        trace   = '' if trace == '<default>' else trace # Matches everything
+        exclude = {'<', 'tracecalls'} if exclude == '<default>' else exclude # Skip builtins (e.g. "<genexpr>") and this class
         self.trace   = trace   if isinstance(trace, set)   else set(sc.tolist(trace))
         self.exclude = exclude if isinstance(exclude, set) else set(sc.tolist(exclude))
         self.regex = regex
@@ -1243,8 +1286,9 @@ class tracecalls(sc.prettyobj):
         if self.custom is not None:
             return self.custom(e)
         elif self.regex:
-            allow = any(bool(re.match(token, e.full_name)) for token in self.trace)
-            exclude = any(bool(re.match(token, e.full_name)) for token in self.exclude)
+            names = [e.filename, e.name, e.co_name]
+            allow = any(re.search(token, name) for token in self.trace for name in names)
+            exclude = any(re.search(token, name) for token in self.exclude for name in names)
         else:
             allow = any(token in e.full_name for token in self.trace)
             exclude = any(token in e.full_name for token in self.exclude)
@@ -1276,7 +1320,7 @@ class tracecalls(sc.prettyobj):
         ddf = self.df.copy()
         ddf['indent'] = ['.'*i for i in self.df['stack'].values]
         ddf['label'] = ddf.indent + ddf.name
-        maxlen = min(maxlen, max([len(label) for label in ddf.label.values]))
+        maxlen = min(maxlen, max([len(label) for label in ddf.label.values], default=0))
         out = ''
         for i,(label,file,line) in ddf.enumrows(['label', 'filename', 'lineno'], tuple):
             out += f'{i} {label:{maxlen}s} # {file}:L{line}\n'
@@ -1285,7 +1329,7 @@ class tracecalls(sc.prettyobj):
 
     def to_df(self):
         """ Convert to a dataframe; if repeats=True, also count repeats """
-        df = sc.dataframe(self.entries)
+        df = sc.dataframe(self.entries, columns=['name', 'filename', 'lineno', 'stack']) # Specify columns in case there are no entries
         df['stack'] -= df['stack'].min()
         self.df = df
 
@@ -1323,7 +1367,7 @@ class tracecalls(sc.prettyobj):
             expected = []
             for item in raw:
                 if isinstance(item, str): # Handle a string
-                    expected.append(str)
+                    expected.append(item)
                     continue
                 else: # Handle an object
                     if not isinstance(item, type): # Handle an object instance
@@ -1433,12 +1477,17 @@ class resourcemonitor(sc.prettyobj): # pragma: no cover # For some reason pycov 
             label (str): optional label for printing progress
         """
 
-        def handler(signum, frame): # pragma: no cover
+        def handler(signum, frame):
             """ Custom exception handler """
             if self.exception is not None:
                 raise self.exception
-            else:
-                return self._orig_sigint()
+            elif callable(self._orig_sigint):
+                return self._orig_sigint(signum, frame)
+            elif self._orig_sigint != signal.SIG_IGN: # e.g. SIG_DFL
+                raise KeyboardInterrupt
+
+        if label is not None:
+            self.label = label
 
         if not self.running:
 
@@ -1469,7 +1518,7 @@ class resourcemonitor(sc.prettyobj): # pragma: no cover # For some reason pycov 
             errormsg = 'Could not reset signal, probably not calling from main thread'
             print(errormsg)
         if self.exception is not None and self.die: # This exception has likely already been raised, but if not, raise it now
-            raise self.exception # pragma: no cover
+            raise self.exception
         return self
 
 
@@ -1485,6 +1534,8 @@ class resourcemonitor(sc.prettyobj): # pragma: no cover # For some reason pycov 
 
     def monitor(self, label=None, *args, **kwargs):
         """ Actually run the resource monitor """
+        if label is not None:
+            self.label = label
         while self.running:
             self.count += 1
             is_ok, checkdata, checkstr = self.check()
@@ -1498,8 +1549,10 @@ class resourcemonitor(sc.prettyobj): # pragma: no cover # For some reason pycov 
                 self.exception = LimitExceeded(checkstr)
                 if self.callback:
                     self.callback(checkdata, checkstr)
-                if self.die: # pragma: no cover
-                    self.kill()
+                if self.die:
+                    self.kill() # Also prints the exception
+                elif self.verbose is not False:
+                    print(checkstr)
             time.sleep(self.interval)
 
         return
@@ -1559,17 +1612,19 @@ class resourcemonitor(sc.prettyobj): # pragma: no cover # For some reason pycov 
         return is_ok, checkdata, checkstr
 
 
-    def kill(self): # pragma: no cover
+    def kill(self):
         """ Kill all processes """
+        # Interrupt the main thread first (since listing processes can be slow) -- usually not recoverable, but the only way to interrupt it
+        _thread.interrupt_main()
+
         kill_verbose = self.verbose is not False # Print if self.verbose is True or None (just not False)
         if kill_verbose:
             print(self.exception)
             print('Killing processes...')
 
-        parent   = psutil.Process(self.parent)
-        children = parent.children(recursive=True)
-
+        parent = psutil.Process(self.parent)
         if self.kill_children:
+            children = parent.children(recursive=True)
             for c,child in enumerate(children):
                 if kill_verbose:
                     print(f'Killing child {c+1} of {len(children)}...')
@@ -1577,11 +1632,8 @@ class resourcemonitor(sc.prettyobj): # pragma: no cover # For some reason pycov 
 
         if self.kill_parent:
             if kill_verbose:
-                print(f'Killing parent (PID={self.parent_pid})')
+                print(f'Killing parent (PID={self.parent})')
             parent.kill()
-
-        # Finally, interrupt the main thread -- usually not recoverable, but the only way to interrupt it
-        _thread.interrupt_main()
 
         return
 

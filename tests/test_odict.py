@@ -2,6 +2,7 @@
 Define a suite of tests for the odict
 """
 
+import sys
 import numpy as np
 import sciris as sc
 import pytest
@@ -47,6 +48,10 @@ def test_insert():
     z.insert(0, 'cat', 11235813)
     z.insert(2, 'dog', 1123581321)
     assert len(z) == 5
+    z.insert(0, 'dog', 5)
+    assert z.keys()[0] == 'dog' and z['dog'] == 5 and len(z) == 5 # Existing key is moved and overwritten
+    z.insert(1, 'none', None)
+    assert z[1] is None # None is a valid value
     printexamples(z)
     return
 
@@ -66,7 +71,7 @@ def test_add():
 
 def test_make():
     sc.heading('Make:')
-    a = sc.odict().make(5) # Make an odict of length 5, populated with Nones and default key names
+    a = sc.odict().make(5) # Make an odict of length 5, populated with empty lists and default key names
     b = sc.odict().make('foo',34) # Make an odict with a single key 'foo' of value 34
     c = sc.odict().make(['a','b']) # Make an odict with keys 'a' and 'b'
     d = sc.odict().make(['a','b'], 0) # Make an odict with keys 'a' and 'b', initialized to 0
@@ -101,6 +106,7 @@ def test_each():
     f = z.fromeach(2, asdict=False) # Returns array([3,7])
     g = z.fromeach(ind=[1,3], asdict=True) # Returns sc.odict({'a':array([2,4]), 'b':array([6,8])})
     printexamples([f,g])
+    assert sc.odict(a=[1,2,3,4]).fromeach([1,3])['a'] == [2,4] # Lists can be indexed by a list
 
     sc.heading('To each:')
     z = sc.odict({'a':[1,2,3,4], 'b':[5,6,7,8]})
@@ -126,6 +132,7 @@ def test_find():
     c = yy.filter(['foo', 'bar'])
     d = yy.filtervals([1,2,3,4])
     printexamples([a,b,c,d])
+    assert sc.odict(a=np.array([1,2]), b=5).findbyval(5) == 'b' # Array values don't raise
     return
 
 
@@ -194,6 +201,7 @@ def test_other():
     o2.pop(0)
     o3.pop([0,1])
     o4.pop(slice(-1))
+    assert o2[0] == [5,6,7,8] # Indexing is correct after popping by index
 
     print('Testing copy')
     o.copy()
@@ -218,6 +226,8 @@ def test_other():
     w = v.reversed()
     v.reverse()
     assert v[:].tolist() == w[:].tolist() == [b,c,a]
+    v.sort(sortby=['a','b'])
+    assert v.keys() == ['a','b'] # Unlisted keys are dropped
 
     print('Testing promote')
     od  = sc.odict.promote(['There','are',4,'keys'])
@@ -226,6 +236,12 @@ def test_other():
 
     print('Testing clear')
     od.clear()
+
+    print('Testing inherited dict methods')
+    o5 = sc.odict(a=1)
+    o5[0]
+    o5.setdefault('b', 2)
+    assert o5[-1] == 2 # Indexing is correct after setdefault()
 
     return o
 
@@ -288,6 +304,7 @@ def test_asobj():
     json = obj.to_json()
     assert 'x' in json
     assert fk.foo is None
+    assert sc.dictobj(x=1) != sc.dictobj(x=2) and sc.dictobj(x=1) == {'x':1} # Compares contents
 
     return
 
@@ -336,6 +353,31 @@ def test_aliases():
     return
 
 
+def test_argparse():
+    sc.heading('Testing argparse')
+
+    def parse(cmd, **kwargs):
+        orig = sys.argv
+        sys.argv = ['script.py'] + cmd.split()
+        try:
+            return sc.argparse(**kwargs)
+        finally:
+            sys.argv = orig
+
+    defaults = dict(full=False, provenance=False, verbose=False)
+    assert parse('--verbose', **defaults) == dict(full=False, provenance=False, verbose=True) # Flags are matched by name, not position
+    assert parse('--full --verbose', **defaults) == dict(full=True, provenance=False, verbose=True)
+    assert parse('true verbose=yes', **defaults) == dict(full=True, provenance=False, verbose=True)
+    assert parse('--iterations 100 --output-file data.csv', iterations=10, output_file='') == dict(iterations=100, output_file='data.csv')
+    with pytest.raises(sc.KeyNotFoundError):
+        parse('--bogus', **defaults)
+    with pytest.raises(ValueError):
+        parse('--iterations', iterations=10) # Missing value
+    with pytest.raises(ValueError):
+        parse('1 2', iterations=10) # Too many positional arguments
+    return
+
+
 #%% Run as a script
 if __name__ == '__main__':
     sc.tic()
@@ -352,6 +394,7 @@ if __name__ == '__main__':
     test_other()
     test_asobj()
     test_aliases()
+    test_argparse()
 
     sc.toc()
     print('Done.')

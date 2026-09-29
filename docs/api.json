@@ -1,5 +1,5 @@
 {
-  "version": "3.3.0",
+  "version": "3.4.0",
   "description": "Fast, flexible tools to simplify scientific Python",
   "notes": [
     "Sciris is a library of utilities for scientific computing: containers, file I/O, dates, arrays, plotting, parallelization, and profiling.",
@@ -24,7 +24,7 @@
       "description": "Sciris: Simplifying scientific software in Python (JOSS 2023)"
     }
   ],
-  "n_entries": 274,
+  "n_entries": 275,
   "aliases": {
     "Timer": "timer",
     "cpu_load": "cpuload",
@@ -67,10 +67,10 @@
       "kind": "function",
       "module": "sc_math",
       "signature": "(val1=None, val2=None, eps=None, **kwargs)",
-      "summary": "Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()` and may be removed in future versions.",
+      "summary": "Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()`; deprecated, use `np.isclose()` instead.",
       "example": "sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True\nsc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)",
       "aliases": [],
-      "deprecated": false
+      "deprecated": true
     },
     {
       "name": "argparse",
@@ -186,7 +186,7 @@
       "name": "benchmark",
       "kind": "function",
       "module": "sc_profiling",
-      "signature": "(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False)",
+      "signature": "(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, legacy=True, return_timers=False)",
       "summary": "Benchmark Python performance",
       "example": "sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}\n\nnumpy_mops = sc.benchmark(which='numpy')\nif numpy_mops < 100:\n    print('Your computer is slow')\nelif numpy_mops > 400:\n    print('Your computer is fast')\nelse:\n    print('Your computer is normal')\n\nsc.benchmark(parallel=True) # Use all CPUs",
       "aliases": [],
@@ -257,8 +257,8 @@
       "kind": "function",
       "module": "sc_profiling",
       "signature": "(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)",
-      "summary": "Checks how much memory the variable or variables in question use by dumping them to file.",
-      "example": "import numpy as np\nimport sciris as sc\n\nlist_obj = ['label', np.random.rand(2483,589)])\nsc.checkmem(list_obj)\n\nnested_dict = dict(\n    foo = dict(\n        a = np.random.rand(5,10),\n        b = np.random.rand(5,20),\n        c = np.random.rand(5,50),\n    ),\n# [...]",
+      "summary": "Checks how much memory the variable or variables in question use, by counting the number of bytes needed to pickle them.",
+      "example": "import numpy as np\nimport sciris as sc\n\nlist_obj = ['label', np.random.rand(2483,589)]\nsc.checkmem(list_obj)\n\nnested_dict = dict(\n    foo = dict(\n        a = np.random.rand(5,10),\n        b = np.random.rand(5,20),\n        c = np.random.rand(5,50),\n    ),\n# [...]",
       "aliases": [],
       "deprecated": false
     },
@@ -422,7 +422,7 @@
       "module": "sc_dataframe",
       "signature": "(data=None, index=None, columns=None, dtype=None, copy=None, dtypes=None, nrows=None, **kwargs)",
       "summary": "An extension of the pandas `DataFrame` with additional convenience methods for accessing rows and columns and performing other operations, such as adding rows.",
-      "example": "df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame\ndf['x'] # Print out a column\ndf[0] # Print out a row\ndf['x',0] # Print out an element\ndf[0,:] = [123,6]; print(df) # Set values for a whole row\ndf['y'] = [8,5,0]; print(df) # Set values for a whole column\ndf['z'] = [14,14,14]; print(df) # Add new column\ndf.rmcol('z'); print(df) # Remove a column\ndf.addcol('z', [14,14,14]); print(df) # Alternate way to add new column\ndf.poprow(1); print(df) # Remove a row\ndf.append([555,2,14]); print(df) # Append a new row\ndf.insertrow(1,[556,2,14]); print(df) # Insert a new row\n# [...]",
+      "example": "df = sc.dataframe(cols=['x','y'], data=[[1238,2],[384,5],[666,7]]) # Create data frame\ndf['x'] # Print out a column\ndf[0] # Print out a row\ndf['x',0] # Print out an element\ndf[0,:] = [123,6]; print(df) # Set values for a whole row\ndf['y'] = [8,5,0]; print(df) # Set values for a whole column\ndf['z'] = [14,14,14]; print(df) # Add new column\ndf.popcols('z'); print(df) # Remove a column\ndf.addcol('z', [14,14,14]); print(df) # Alternate way to add new column\ndf.poprow(1); print(df) # Remove a row\ndf.append([555,2,14]); print(df) # Append a new row\ndf.insertrow(1,[556,2,14]); print(df) # Insert a new row\n# [...]",
       "aliases": [],
       "deprecated": false
     },
@@ -492,7 +492,7 @@
       "module": "sc_datetime",
       "signature": "(dateobj, dateformat=None, **kwargs)",
       "summary": "Convert a date to decimal year.",
-      "example": "sc.datetoyear('2010-07-01') # Returns approximately 2010.5\nsc.datetoyear(2010.5) # Returns datetime.date(2010, 7, 2)",
+      "example": "sc.datetoyear('2010-07-01') # Returns approximately 2010.5",
       "aliases": [],
       "deprecated": false
     },
@@ -512,7 +512,7 @@
       "module": "sc_datetime",
       "signature": "(*args)",
       "summary": "Convenience function to find the difference between two or more days. With only one argument, calculate days since Jan. 1st.",
-      "example": "diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16\ndiffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]\n\ndoy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01",
+      "example": "diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16\ndiffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]\n\ndoy = sc.daydiff('2022-03-20') # Returns 78, the number of days since 2022-01-01",
       "aliases": [],
       "deprecated": false
     },
@@ -812,7 +812,7 @@
       "name": "getnested",
       "kind": "function",
       "module": "sc_nested",
-      "signature": "(nested, keylist, safe=False, default=None)",
+      "signature": "(nested, keylist, safe=False, default=<not given>)",
       "summary": "Get the value for the given list of keys",
       "example": "sc.getnested(foo, ['a','b']) # Gets foo['a']['b']",
       "aliases": [],
@@ -1134,7 +1134,7 @@
       "name": "IterObj",
       "kind": "class",
       "module": "sc_nested",
-      "signature": "(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs)",
+      "signature": "(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, aliases=False, **kwargs)",
       "summary": "Object iteration manager",
       "example": "import sciris as sc\n\n# Create a simple class for storing data\nclass DataObj(sc.prettyobj):\n    def __init__(self, **kwargs):\n        self.keys   = tuple(kwargs.keys())\n        self.values = tuple(kwargs.values())\n\n# Create the data\nobj1 = DataObj(a=[1,2,3], b=[4,5,6])\nobj2 = DataObj(c=[7,8,9], d=[10])\nobj = DataObj(obj1=obj1, obj2=obj2)\n# [...]",
       "aliases": [],
@@ -1144,7 +1144,7 @@
       "name": "iterobj",
       "kind": "function",
       "module": "sc_nested",
-      "signature": "(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, *args, **kwargs)",
+      "signature": "(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, aliases=False, **kwargs)",
       "summary": "Iterate over an object and apply a function to each node (item with or without children).",
       "example": "data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))\n\n# Search through an object\ndef check_int(obj):\n    return isinstance(obj, int)\n\nout = sc.iterobj(data, check_int)\nprint(out)\n\n# Modify in place -- collapse mutliple short lines into one\ndef collapse(obj, maxlen):\n    string = str(obj)\n# [...]",
       "aliases": [],
@@ -1193,12 +1193,22 @@
       "deprecated": false
     },
     {
+      "name": "lazyimport",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(module, variable=None, namespace=None)",
+      "summary": "Import a module only when it is first used.",
+      "example": "plt = sc.lazyimport('matplotlib.pyplot') # Doesn't import pyplot yet\nplt.plot([1,3,2]) # Imports pyplot, and replaces plt with it",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
       "name": "LazyModule",
       "kind": "class",
       "module": "sc_utils",
-      "signature": "(module, variable, namespace=None, overwrite=True)",
+      "signature": "(module, variable=None, namespace=None, overwrite=True)",
       "summary": "Create a \"lazy\" module that is loaded if and only if an attribute is called.",
-      "example": "pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas\ndf = pd.DataFrame() # Not only does this work, but pd is now actually pandas",
+      "example": "pd = sc.LazyModule('pandas') # pd is a LazyModule, not actually pandas\ndf = pd.DataFrame() # Not only does this work, but pd is now actually pandas",
       "aliases": [],
       "deprecated": false
     },
@@ -1308,9 +1318,9 @@
       "name": "loadjson",
       "kind": "function",
       "module": "sc_fileio",
-      "signature": "(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', **kwargs)",
+      "signature": "(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', default=None, die=None, **kwargs)",
       "summary": "Convenience function for reading a JSON file (or string).",
-      "example": "json = sc.loadjson('my-file.json')\njson = sc.loadjson(string='{\"a\":null, \"b\":[1,2,3]}')",
+      "example": "json = sc.loadjson('my-file.json')\njson = sc.loadjson(string='{\"a\":null, \"b\":[1,2,3]}')\ncache = sc.loadjson('cache.json', default={}) # Use an empty dict if the file doesn't exist",
       "aliases": [],
       "deprecated": false
     },
@@ -1328,9 +1338,9 @@
       "name": "loadspreadsheet",
       "kind": "function",
       "module": "sc_fileio",
-      "signature": "(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs)",
+      "signature": "(filename=None, folder=None, fileobj=None, sheet=0, header=True, asdataframe=None, method='pandas', **kwargs)",
       "summary": "Load a spreadsheet as a dataframe or a list of lists.",
-      "example": "df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel(header=1)\nwb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook\ndata = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd",
+      "example": "df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel()\nwb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook\ndata = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd",
       "aliases": [],
       "deprecated": false
     },
@@ -1652,7 +1662,7 @@
       "module": "sc_settings",
       "signature": "(*args, **kwargs)",
       "summary": "Set options for Sciris.",
-      "example": "sc.options(dpi=150) # Larger size\nsc.options(style='simple', font='Rosario') # Change to the \"simple\" Sciris style with a custom font\nsc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes\nsc.options(interactive=False) # Turn off interactive plots\nsc.options(jupyter=True) # Defaults for Jupyter\nsc.options('defaults') # Reset to default options",
+      "example": "sc.options(dpi=150) # Larger size\nsc.options(style='simple', font='Rosario') # Change to the \"simple\" Sciris style with a custom font\nsc.options.set(fontsize=18, backend='agg') # Multiple changes\nsc.options(interactive=False) # Turn off interactive plots\nsc.options(jupyter=True) # Defaults for Jupyter\nsc.options('defaults') # Reset to default options",
       "aliases": [],
       "deprecated": false
     },
@@ -1680,7 +1690,7 @@
       "name": "Parallel",
       "kind": "class",
       "module": "sc_parallel",
-      "signature": "(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, **func_kwargs)",
+      "signature": "(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)",
       "summary": "Parallelization manager",
       "example": "import sciris as sc\n\ndef slowfunc(i):\n    sc.randsleep(seed=i)\n    return i**2\n\n# Standard usage\nP = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')\nP.run_async()\nP.monitor()\nP.finalize()\nprint(P.times)",
       "aliases": [],
@@ -1690,7 +1700,7 @@
       "name": "parallelize",
       "kind": "function",
       "module": "sc_parallel",
-      "signature": "(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, **func_kwargs)",
+      "signature": "(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)",
       "summary": "Execute a function in parallel.",
       "example": "def f(x):\n    return x*x\n\nresults = sc.parallelize(f, [1,2,3])",
       "aliases": [],
@@ -1990,9 +2000,9 @@
       "name": "randround",
       "kind": "function",
       "module": "sc_math",
-      "signature": "(x)",
+      "signature": "(x, rng=None)",
       "summary": "Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.",
-      "example": "sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])",
+      "example": "sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])\nsc.randround([0.5, 1.5, 2.5], rng=1) # Use a separate generator, so the global one isn't affected",
       "aliases": [],
       "deprecated": false
     },
@@ -2002,7 +2012,7 @@
       "module": "sc_datetime",
       "signature": "(delay=1.0, var=1.0, low=None, high=None, seed=None)",
       "summary": "Sleep for a nondeterminate period of time (useful for desynchronizing tasks)",
-      "example": "sc.randsleep(1) # Sleep for 0-2 s (average 1.0)\nsc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)\nsc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s\nsc.randsleeep(low=0.5, high=1.5) # Ditto",
+      "example": "sc.randsleep(1) # Sleep for 0-2 s (average 1.0)\nsc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)\nsc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s\nsc.randsleep(low=0.5, high=1.5) # Ditto",
       "aliases": [],
       "deprecated": false
     },
@@ -2122,7 +2132,7 @@
       "module": "sc_math",
       "signature": "(numerator=None, denominator=None, default=None, eps=None, warn=False)",
       "summary": "Handle divide-by-zero and divide-by-nan elegantly.",
-      "example": "sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1\nsc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5\nsc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])",
+      "example": "sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1\nsc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5\nsc.safedivide(3, np.array([1,3,0]), -1) # Returns array([ 3.,  1., -1.])\nsc.safedivide(1, np.nan, default=-1) # Returns -1",
       "aliases": [],
       "deprecated": false
     },
@@ -2216,7 +2226,7 @@
       "module": "sc_plotting",
       "signature": "(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, aslist=False, verbose=False, **kwargs)",
       "summary": "Save the requested plots to disk.",
-      "example": "import matplotlib.pyplot as plt\nimport sciris as sc\nfig1 = plt.figure(); plt.plot(np.random.rand(10))\nfig2 = plt.figure(); plt.plot(np.random.rand(10))\nsc.savefigs([fig1, fig2]) # Save everything to one PDF file\nsc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})\nsc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')\nsc.savefigs(fig1, position=[0.3,0.3,0.5,0.5])",
+      "example": "import matplotlib.pyplot as plt\nimport sciris as sc\nfig1 = plt.figure(); plt.plot(np.random.rand(10))\nfig2 = plt.figure(); plt.plot(np.random.rand(10))\nsc.savefigs([fig1, fig2]) # Save everything to one PDF file\nsc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})\nsc.savefigs([fig1, fig2], folder='/home/me', filetype='svg')",
       "aliases": [],
       "deprecated": false
     },
@@ -2306,7 +2316,7 @@
       "module": "sc_settings",
       "signature": "()",
       "summary": "Set options for Sciris.",
-      "example": "sc.options(dpi=150) # Larger size\nsc.options(style='simple', font='Rosario') # Change to the \"simple\" Sciris style with a custom font\nsc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes\nsc.options(interactive=False) # Turn off interactive plots\nsc.options(jupyter=True) # Defaults for Jupyter\nsc.options('defaults') # Reset to default options",
+      "example": "sc.options(dpi=150) # Larger size\nsc.options(style='simple', font='Rosario') # Change to the \"simple\" Sciris style with a custom font\nsc.options.set(fontsize=18, backend='agg') # Multiple changes\nsc.options(interactive=False) # Turn off interactive plots\nsc.options(jupyter=True) # Defaults for Jupyter\nsc.options('defaults') # Reset to default options",
       "aliases": [],
       "deprecated": false
     },
@@ -2314,7 +2324,7 @@
       "name": "search",
       "kind": "function",
       "module": "sc_nested",
-      "signature": "(obj, query='<sc_nested_custom_None>', key='<sc_nested_custom_None>', value='<sc_nested_custom_None>', type='<sc_nested_custom_None>', method='exact', **kwargs)",
+      "signature": "(obj, query=<not given>, key=<not given>, value=<not given>, type=<not given>, method='exact', **kwargs)",
       "summary": "Find a key/attribute or value within a list, dictionary or object.",
       "example": "# Create a nested dictionary\nnested = {'a':{'foo':1, 'bar':['moat', 'goat']}, 'b':{'car':3, 'cat':[1,2,4,8]}}\n\n# Find keys\nkeymatches = sc.search(nested, 'bar', flatten=True)\n\n# Find values\nval = 4\nvalmatches = sc.search(nested, value=val).keys()[0] # Returns  ('b', 'cat', 2)\nassert sc.getnested(nested, valmatches) == val # Get from the original nested object\n\n# Find values with a function\n# [...]",
       "aliases": [],
@@ -2346,7 +2356,7 @@
       "module": "sc_plotting",
       "signature": "(which=None, ax=None, data=None)",
       "summary": "A small script to determine how the y limits should be set. Looks at all data (a list of arrays) and computes the lower limit to use, e.g.:",
-      "example": "sc.setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)",
+      "example": "sc.setaxislim(data=[np.array([-3,4]), np.array([6,4,6])], ax=ax)",
       "aliases": [],
       "deprecated": false
     },
@@ -2558,7 +2568,7 @@
       "module": "sc_fileio",
       "signature": "(file=None, path=None, *args, frame=1, aspath=None, **kwargs)",
       "summary": "Tiny helper function to get the folder for a file, usually the current file. If not supplied, then use the current file.",
-      "example": "thisdir = sc.thisdir() # Get folder of calling file\nthisdir = sc.thisdir('.') # Ditto (usually)\nthisdir = sc.thisdir(__file__) # Ditto (usually)\nfile_in_same_dir = sc.thisdir(path='new_file.txt')\nfile_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file\nnp_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming \"import numpy as np\")",
+      "example": "thisdir = sc.thisdir() # Get folder of calling file\nthisdir = sc.thisdir('.') # Current working folder, which is usually the same\nthisdir = sc.thisdir(__file__) # Ditto (usually)\nfile_in_same_dir = sc.thisdir(path='new_file.txt')\nfile_in_sub_dir = sc.thisdir(path=['..', 'tests', 'mytests.py']) # Merge parent folder with subfolders and a file\nnp_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming \"import numpy as np\")",
       "aliases": [],
       "deprecated": false
     },
@@ -2578,7 +2588,7 @@
       "module": "sc_fileio",
       "signature": "(*args, frame=1, aspath=True, **kwargs)",
       "summary": "Alias for `sc.thisdir()` that returns a path by default instead of a string.",
-      "example": "thisdir = sc.thisdir() # Get folder of calling file\nthisdir = sc.thisdir('.') # Ditto (usually)\nthisdir = sc.thisdir(__file__) # Ditto (usually)\nfile_in_same_dir = sc.thisdir(path='new_file.txt')\nfile_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file\nnp_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming \"import numpy as np\")",
+      "example": "thisdir = sc.thisdir() # Get folder of calling file\nthisdir = sc.thisdir('.') # Current working folder, which is usually the same\nthisdir = sc.thisdir(__file__) # Ditto (usually)\nfile_in_same_dir = sc.thisdir(path='new_file.txt')\nfile_in_sub_dir = sc.thisdir(path=['..', 'tests', 'mytests.py']) # Merge parent folder with subfolders and a file\nnp_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming \"import numpy as np\")",
       "aliases": [],
       "deprecated": false
     },
@@ -2650,7 +2660,7 @@
       "name": "toctic",
       "kind": "function",
       "module": "sc_datetime",
-      "signature": "(returntic=False, returntoc=False, *args, **kwargs)",
+      "signature": "(*args, returntic=False, returntoc=False, **kwargs)",
       "summary": "A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.",
       "example": "sc.tic()\nslow_operation_1()\nsc.toctic()\nslow_operation_2()\nsc.toc()",
       "aliases": [],
@@ -2684,7 +2694,7 @@
       "module": "sc_profiling",
       "signature": "(trace='<default>', exclude='<default>', regex=False, repeats=False, custom=None, verbose=None)",
       "summary": "Trace all function calls.",
-      "example": "import mymodule as mm\n\n# In context block\nwith sc.tracecalls('mymodule'):\n    mm.big_operation()\n\n# Explicitly\ntc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)\ntc.start()\nmm.big_operation()\ntc.stop()\ntc.df.disp()",
+      "example": "import mymodule as mm\n\n# In context block\nwith sc.tracecalls('mymodule'):\n    mm.big_operation()\n\n# Explicitly\ntc = sc.tracecalls('mysubmodule', exclude='^init_', regex=True, repeats=True)\ntc.start()\nmm.big_operation()\ntc.stop()\ntc.df.disp()",
       "aliases": [],
       "deprecated": false
     },
@@ -2713,7 +2723,7 @@
       "kind": "function",
       "module": "sc_colors",
       "signature": "(apply=False)",
-      "summary": "NOTE: as of Matplotlib 3.4.0, this colormap is included by default, and will soon be removed from Sciris.",
+      "summary": "Alias to Matplotlib's turbo colormap, a map similar to Jet, but better. Set apply=True to use immediately.",
       "example": "cmap = sc.turbocolormap()\nsc.colormapdemo(cmap=cmap)",
       "aliases": [],
       "deprecated": false
@@ -2796,7 +2806,7 @@
       "module": "sc_datetime",
       "signature": "(year, as_date=True, **kwargs)",
       "summary": "Convert a decimal year to a date",
-      "example": "sc.yeartodate('2010-07-01') # Returns approximately 2010.5",
+      "example": "sc.yeartodate(2010.5) # Returns datetime.date(2010, 7, 2)",
       "aliases": [],
       "deprecated": false
     },

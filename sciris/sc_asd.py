@@ -16,9 +16,11 @@ import sciris as sc
 __all__ = ['asd']
 
 
-def _consistent_shape(userinput, origshape=False):
-    """ Ensure inputs have the right shape and data type. """
+def _consistent_shape(userinput, n=None, origshape=False):
+    """ Ensure inputs have the right shape and data type, optionally repeating them to length n """
     output = np.reshape(np.array(userinput, dtype='float'), -1)
+    if n is not None:
+        output = np.resize(output, n)
     if origshape:
         return output, np.shape(userinput)
     return output
@@ -40,7 +42,7 @@ def _validate_fval(fval, die=True):
     """ Validate that the objective function returns a scalar """
     if not sc.isnumber(fval):
         if isinstance(fval, np.ndarray) and fval.size == 1: # Automatically convert size-1 arrays to scalars
-            fval = fval[0]
+            fval = fval.item()
         else:
             errormsg = f'ASD: The objective function should return a scalar, not: {fval} (type: {type(fval)})'
             raise ValueError(errormsg)
@@ -69,14 +71,14 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         sdec         (2):     Step size learning rate (decrease)
         pinc         (2):     Parameter selection learning rate (increase)
         pdec         (2):     Parameter selection learning rate (decrease)
-        pinitial     (None):  Set initial parameter selection probabilities
-        sinitial     (None):  Set initial step sizes; if empty, calculated from stepsize instead
-        xmin         (None):  Min value allowed for each parameter
-        xmax         (None):  Max value allowed for each parameter
+        pinitial     (None):  Set initial parameter selection probabilities: a scalar, one value per parameter, or 2 per parameter (all the plus steps, then all the minus steps)
+        sinitial     (None):  Set initial step sizes (same layout as pinitial); if empty, calculated from stepsize instead
+        xmin         (None):  Min value allowed for each parameter (scalar or one per parameter)
+        xmax         (None):  Max value allowed for each parameter (scalar or one per parameter)
         maxiters     (1000):  Maximum number of iterations (1 iteration = 1 function evaluation)
         maxtime      (3600):  Maximum time allowed, in seconds
         abstol       (1e-6):  Minimum absolute change in objective function
-        reltol       (1e-3):  Minimum relative change in objective function
+        reltol       (1e-3):  Minimum relative change in objective function, summed over the last stalliters iterations
         stalliters   (10*n):  Number of iterations over which to calculate TolFun (n = number of parameters)
         stoppingfunc (None):  External method that can be used to stop the calculation from the outside.
         randseed     (None):  The random seed to use
@@ -134,6 +136,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     # Reshape initial point and get parameter count
     x, origshape = _consistent_shape(x, origshape=True)
     nparams = len(x)
+    n2params = 2 * nparams # Each parameter can step up or down
     maxrangeiters = 100  # Number of times to try generating a new parameter
 
     # Set defaults in one place
@@ -182,9 +185,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
     # Set initial parameter selection probabilities (uniform by default)
     if pinitial is None:
-        probabilities = np.ones(2 * nparams)
+        probabilities = np.ones(n2params)
     else:
-        probabilities = _consistent_shape(pinitial)
+        probabilities = _consistent_shape(pinitial, n2params)
     if not sum(probabilities):
         errormsg = 'ASD: The sum of input probabilities cannot be zero'
         raise ValueError(errormsg)
@@ -194,16 +197,25 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         stepsizes = abs(stepsize * x)
         stepsizes = np.concatenate((stepsizes, stepsizes))  # Two entries per parameter (up/down)
     else:
-        stepsizes = _consistent_shape(sinitial)
-
+        stepsizes = _consistent_shape(sinitial, n2params)
+    
     # Parameter bounds
-    xmin = np.zeros(nparams) - np.inf if xmin is None else _consistent_shape(xmin)
-    xmax = np.zeros(nparams) + np.inf if xmax is None else _consistent_shape(xmax)
+    xmin = np.zeros(nparams) - np.inf if xmin is None else _consistent_shape(xmin, nparams)
+    xmax = np.zeros(nparams) + np.inf if xmax is None else _consistent_shape(xmax, nparams)
 
     # Reject NaN in starting point
     if sum(np.isnan(x)):
         errormsg = f'ASD: At least one value in the vector of starting points is NaN:\n{x}'
         raise ValueError(errormsg)
+
+    # Validate starting value
+    xclipped = np.clip(x, xmin, xmax) # Clip the starting point to the bounds
+    if any(xclipped != x):
+        errormsg = f'ASD: Starting point is outside xmin/xmax; clipping from:\n{x}\nto:\n{xclipped}'
+        if die:
+            raise ValueError(errormsg)
+        warnings.warn(errormsg)
+        x = xclipped
 
     # Initialization
     if all(stepsizes == 0):
@@ -217,10 +229,13 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         args = []
 
     # Get initial function value
-    fval = function(x, *args, **kwargs)
+    x_reshaped = np.reshape(x, origshape) # Reshape x to its original shape
+    fval = function(x_reshaped, *args, **kwargs) # Call the objective function
     fval = _validate_fval(fval, die=die)
     fvalorig = fval
     xorig = x.copy()
+    if fvalorig < 0 and verbose:
+        print(f'ASD: Warning, negative objective function starting value ({fvalorig:n}) could lead to unexpected behavior')
 
     # Allocate history arrays
     abserrorhistory = np.zeros(stalliters)
@@ -243,8 +258,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         if fvalorig == minval:
             exitreason = f'Objective function already at minimum value ({fvalorig}), skipping optimization'
             break
-        if fvalorig < 0 and verbose:
-            print(f'ASD: Warning, negative objective function starting value ({fvalorig:n}) could lead to unexpected behavior')
+        if maxiters <= 0: # Nothing to do
+            exitreason = 'Maximum iterations reached'
+            break
 
         count += 1
         if verbose >= 3:
@@ -274,7 +290,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         xnew = x.copy()
         xnew[par] = newval
         try:
-            fvalnew = function(xnew, *args, **kwargs)
+            xnew_reshaped = np.reshape(xnew, origshape)
+            fvalnew = function(xnew_reshaped, *args, **kwargs)
             fvalnew = _validate_fval(fvalnew, die=die)
         except Exception as e:
             if die:
@@ -288,8 +305,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         relerrorhistory[count % stalliters] = max(0, ratio - 1.0)
         if verbose >= 2:
             print(offset + f'step={count} choice={choice}, par={par}, pm={pm}, origval={x[par]}, newval={xnew[par]}')
-        if newval < 0 and verbose:
-            print(f'ASD: Warning, negative objective function ({newval:n}) on step {count} could lead to unexpected behavior')
+        if fvalnew < 0 and verbose:
+            print(f'ASD: Warning, negative objective function ({fvalnew:n}) on step {count} could lead to unexpected behavior')
 
         # Accept or reject step and update learning state
         fvalold = fval
@@ -314,19 +331,22 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         allsteps[count, :] = x
 
         # Stopping criteria
+        elapsed = time.time() - start
+        abs_improvement = np.mean(abserrorhistory)
+        rel_improvement = np.sum(relerrorhistory)
         if count >= maxiters: # Stop if the iteration limit is exceeded # pragma: no cover
             exitreason = 'Maximum iterations reached'
             break
-        if (time.time() - start) > maxtime: # Stop if the time limit is exceeded # pragma: no cover
-            strtime, strmax = sc.sigfig([(time.time()-start), maxtime])
+        if elapsed > maxtime: # Stop if the time limit is exceeded # pragma: no cover
+            strtime, strmax = sc.sigfig([elapsed, maxtime])
             exitreason = f'Time limit reached ({strtime} > {strmax})'
             break
-        if (count > stalliters) and (abs(np.mean(abserrorhistory)) < abstol): # Stop if absolute improvement is too small
-            strabs, strtol = sc.sigfig([np.mean(abserrorhistory), abstol])
+        if (count > stalliters) and (abs_improvement < abstol): # Stop if absolute improvement is too small
+            strabs, strtol = sc.sigfig([abs_improvement, abstol])
             exitreason = f'Absolute improvement too small ({strabs} < {strtol})'
             break
-        if (count > stalliters) and (sum(relerrorhistory) < reltol): # Stop if relativeimprovement is too small
-            strrel, strtol = sc.sigfig([np.mean(relerrorhistory), reltol])
+        if (count > stalliters) and (rel_improvement < reltol): # Stop if relativeimprovement is too small
+            strrel, strtol = sc.sigfig([rel_improvement, reltol])
             exitreason = f'Relative improvement too small ({strrel} < {strtol})'
             break
         if stoppingfunc and stoppingfunc(): # Stop if explicitly requested # pragma: no cover

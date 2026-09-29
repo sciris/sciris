@@ -37,6 +37,16 @@ def test_3d(doplot=doplot):
     print('Testing scatter3d')
     sc.scatter3d(smoothdata, figkwargs=dict(num='scatter3d'))
 
+    print('Testing 3D edge cases')
+    figA, axA = plt.subplots(subplot_kw=dict(projection='3d'))
+    figB, axB = plt.subplots(subplot_kw=dict(projection='3d'))
+    assert sc.surf3d(data, fig=figA) is axA # Use the supplied figure, not the current one
+    sc.bar3d(z=data) # Keyword form
+    sc.bar3d(data, dz=data) # Positional data as the base
+    x,y,z = np.random.rand(3,10)
+    sc.plot3d(x, y, z, c=np.arange(10)) # Multicolored line
+    sc.plot3d(x, y, z, c=np.arange(9))
+
     if not doplot:
         plt.close('all')
 
@@ -92,6 +102,17 @@ def test_other(doplot=doplot):
     sc.SIticks()
     plt.title('SI ticks')
 
+    # Each axis is formatted according to its own range
+    fig, axs = plt.subplots(1, 2)
+    axs[0].plot([0, 0.5])
+    axs[1].plot([0, 1e6])
+    sc.commaticks(ax=fig)
+    fig.canvas.draw()
+    assert '0.1' in [t.get_text() for t in axs[0].get_yticklabels()]
+
+    # Ragged data
+    assert sc.setylim(data=[np.array([-3,4]), np.array([6,4,6])], ax=axs[0])[1] == 6
+
     try:
         sc.maximize()
     except Exception as E:
@@ -101,6 +122,7 @@ def test_other(doplot=doplot):
 
     # Need keep=True to avoid refresh which crashes when run via pytest-parallel
     sc.figlayout(keep=True)
+    sc.figlayout(False)
 
     # Test legends
     plt.figure('Legends')
@@ -109,7 +131,19 @@ def test_other(doplot=doplot):
     plt.plot([2,5,2], label='C')
     sc.orderlegend(reverse=True) # Legend order C, B, A
     sc.orderlegend([1,0,2], frameon=False) # Legend order B, A, C with no frame
+    sc.orderlegend(np.argsort([2,0,1])) # Arrays work too
+    assert [t.get_text() for t in plt.gca().get_legend().get_texts()] == ['B', 'C', 'A']
     sc.separatelegend()
+
+    # Moving legends preserves properties, and only hides empty axes
+    fig, axs = plt.subplots(1, 3)
+    axs[0].plot([1,2], label='A')
+    axs[0].legend(ncol=2)
+    axs[1].plot([1,2])
+    assert sc.movelegend(axs[0], axs[1])._ncols == 2
+    assert axs[1].axison
+    sc.movelegend(axs[0], axs[2])
+    assert not axs[2].axison
 
     # Test styles
     style = 'sciris.fancy' if sc.compareversions(mpl, '>=3.7') else sc.style_fancy # Matplotlib regression support
@@ -139,6 +173,16 @@ def test_saving(doplot=doplot):
     sc.savefigs(o.fig, filetype='fig', filename=fn.fig)
     sc.loadfig(fn.fig)
 
+    print('Testing save multiple figs')
+    fig2 = plt.figure('Save figs 2')
+    fn.pdf = sc.savefigs([o.fig, fig2]) # Default single PDF
+    fn.pngs = sc.savefigs([o.fig, fig2], filetype='png', filename='testfig.png') # Filename path only
+    assert len(set(fn.pngs)) == 2
+    fn.png = sc.savefigs(o.fig, filetype='png', filename='testfig.png') # Not the current figure
+    fn.png_ref = 'testfig_ref.png'
+    o.fig.savefig(fn.png_ref, dpi=200, bbox_inches='tight')
+    assert np.array_equal(plt.imread(fn.png), plt.imread(fn.png_ref))
+
     print('Testing save movie')
     frames = [plt.plot(np.cumsum(np.random.randn(100))) for i in range(2)] # Create frames
     sc.savemovie(frames, fn.movie) # Save movie as medium-quality gif
@@ -151,8 +195,15 @@ def test_saving(doplot=doplot):
         anim.addframe()
     anim.save()
 
+    print('Testing animation with figures')
+    anim = sc.animation(verbose=False)
+    for i in range(2):
+        anim.addframe(plt.figure())
+    assert anim.n_files == 2
+    anim.rmfiles()
+
     print('Tidying...')
-    for f in fn.values():
+    for f in sc.mergelists(*fn.values()):
         os.remove(f)
 
     if not doplot:
@@ -179,7 +230,29 @@ def test_dates(doplot=doplot):
 
     plt.figure('Datenum formatter')
     plt.plot(np.arange(500), np.random.randn(500))
-    sc.datenumformatter(start_date='2021-01-01')
+    sc.datenumformatter(start_date='2021-01-01', start=0)
+    assert plt.xlim()[0] == 0
+
+    def labels(fig, which='x'):
+        fig.canvas.draw()
+        return [t.get_text() for t in getattr(fig.axes[0], f'get_{which}ticklabels')()]
+
+    # Dates that look like years, and a date axis without a start date
+    fig = plt.figure()
+    plt.plot(sc.daterange('1975-01-01', '1975-07-01', asdate=True), np.arange(182))
+    sc.dateformatter()
+    assert 'Feb' in labels(fig)
+    sc.datenumformatter()
+    assert labels(fig)[1].startswith('1975')
+
+    # Other styles and axes
+    fig = plt.figure()
+    dates = sc.daterange('2021-01-01', '2021-03-01', asdate=True)
+    plt.plot(np.arange(len(dates)), dates)
+    sc.dateformatter(style=mpl.dates.DateFormatter('%Y/%m/%d'), axis='y')
+    assert labels(fig, 'y')[1].startswith('2021/') and not labels(fig, 'x')[1].startswith('19')
+    sc.dateformatter(style='auto', dateformat='%m/%d', axis='y')
+    assert labels(fig, 'y')[1].count('/') == 1
 
     # Plot more use cases
     x1 = np.arange(2020, 2050) # Numerical years
@@ -262,6 +335,13 @@ def test_saveload(doplot=doplot):
 
     with pytest.raises(ValueError):
         sc.savefig(fn.jpg)
+
+    # SVG, and check the caller
+    fn.svg = 'example.svg'
+    sc.savefig(fn.svg, comments=comments)
+    md3 = sc.loadmetadata(fn.svg)
+    assert md3['comments'] == comments
+    assert md3['calling_info']['filename'].endswith('test_plotting.py')
 
     # Tidy up
     for f in fn.values():

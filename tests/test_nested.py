@@ -91,7 +91,7 @@ def test_nested_detailed():
     # Test 7b: Not overwriting existing values
     with pytest.raises(ValueError):
         sc.setnested(o.d7, ['a', 'b'], 'newer_value', overwrite=False)
-    with pytest.raises(ValueError):
+    with pytest.raises(Exception): # Can't set a key inside a string
         sc.setnested(o.d7, ['a', 'b', 'new_value'], 'nested_value', overwrite=False)
 
     # Test 8: Setting complex objects (lists, dicts)
@@ -129,6 +129,7 @@ def test_nested_detailed():
         sc.getnested(o.d12, ['a','b'])
     assert sc.getnested(o.d12, ['a','b'], safe=True) == None
     assert sc.getnested(o.d12, ['a','b'], default='default') == 'default'
+    assert sc.getnested(o.d12, ['a','b'], default=None) == None # An explicit None default also implies safe
 
     # Test 13: copy
     d13 = sc.objdict(original='dict')
@@ -236,6 +237,7 @@ def test_search():
     print(valmatches)
     assert len(valmatches) == 1
     assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
+    assert sc.search(dict(a=np.arange(5), b=3), value=3).keys() == [('b',)] # Arrays are skipped rather than raising an error
 
     return o
 
@@ -286,6 +288,15 @@ def test_iterobj():
     print('After collapse:')
     sc.printjson(data)
     assert data['a']['x'] == '[1, 2, 3]'
+
+    # Other options
+    assert sc.iterobj(dict(a=1, b=[2]), lambda x: x*10, leaf=True) == {('a',): 10, ('b', 0): 20} # Only applied to leaves
+    shared = [1,2]
+    assert ('b',) not in sc.iterobj(dict(a=shared, b=shared)) # Repeated objects are skipped by default
+    assert ('b',) in sc.iterobj(dict(a=shared, b=shared), aliases=True) # With aliases=True, they're included, just not descended into
+    d = dict(t=(1,(2,3)))
+    sc.iterobj(d, lambda x: list(x) if isinstance(x, tuple) else x, atomic='default-tuple', inplace=True)
+    assert d == dict(t=[1,[2,3]]) # Nested tuples are converted too, since it descends into the new object
 
     return out1
 
@@ -403,6 +414,13 @@ def test_equal():
     # Test totally different objects
     assert not sc.equal(1, 'a')
     assert not sc.equal(dict(a=dict(x=1,y=2), b=3), dict(a=dict(x=1,y=2)), detailed=True).all(axis=None) # Returns a dataframe
+    assert not sc.equal(pd.Series([1,2], index=['a','b']), pd.Series([1,2], index=['c','d'])) # Different index
+
+    # Test objects that can't be compared
+    class ArrEq:
+        def __init__(self, v): self.v = np.array(v)
+        def __eq__(self, other): return self.v == other.v # Returns an array, not True/False
+    assert not sc.equal(ArrEq([1,2]), ArrEq([3,4]), method='eq', atomic=ArrEq) # Not equal since it can't be compared
 
     return out
 

@@ -36,7 +36,7 @@ sc.printjson(nest)                           # Pretty-print as JSON
 ### Capture output
 ```python
 with sc.capture() as text:
-    verbose_function()                       # All print output → text variable
+    verbose_function()                       # All print output → text (str-like; use str(text) for a str)
 lines = text.splitlines()
 ```
 

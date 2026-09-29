@@ -78,57 +78,37 @@ https://stackoverflow.com/questions/41554738/how-to-load-an-old-pickle-file
 def _load_filestr(filename, folder=None, verbose=False):
     """ Try different options for loading a file on disk into a string -- not for external use """
 
-    # Handle loading of either filename or file object
+    # Read the raw bytes from either a filename or a file object
     if isinstance(filename, Path):
         filename = str(filename)
     if sc.isstring(filename):
-        argtype = 'filename'
         filename = makefilepath(filename=filename, folder=folder, makedirs=False) # If it is a file, validate the folder (but don't create one if it's missing)
-    elif isinstance(filename, io.BytesIO):
-        argtype = 'fileobj'
-    else: # pragma: no cover
+        if verbose: print(f'Opening {filename} for reading...')
+        with open(filename, 'rb') as fileobj:
+            filestr = fileobj.read()
+    elif hasattr(filename, 'read'):
+        if verbose: print('Opening bytes for reading...')
+        filestr = filename.read()
+    else:
         errormsg = f'First argument to sc.load() must be a string or file object, not {type(filename)}; see also sc.loadstr()'
         raise TypeError(errormsg)
-    fileargs = {'mode': 'rb', argtype: filename}
 
-    if verbose:
-        if argtype == 'filename':
-            print(f'Opening {filename} for reading...')
-        else: # pragma: no cover
-            print('Opening bytes for reading...')
+    if not len(filestr):
+        errormsg = f'Unable to load "{filename}": file is empty'
+        raise UnpicklingError(errormsg)
 
+    # Decompress based on the magic bytes; otherwise, assume it's uncompressed
     try:
-        if verbose: print('  Reading as gzip file...')
-        with gz.GzipFile(**fileargs) as fileobj:
-            filestr = fileobj.read() # Convert it to a string
-    except Exception as E: # pragma: no cover
-        exc = type(E) # Figure out what kind of error it is
-        if exc == FileNotFoundError: # This is simple, just raise directly
-            raise E
-        elif exc == gz.BadGzipFile:
-            try: # If the gzip file failed, first try as a zstd compressed object
-                if verbose: print('  Reading as zstandard file...')
-                with open(filename, 'rb') as fh:
-                    zdcompressor = zstd.ZstdDecompressor()
-                    with zdcompressor.stream_reader(fh) as fileobj:
-                        filestr = fileobj.read()
-            except Exception as E2: # If that fails...
-                try: # Try as a regular binary object
-                    if verbose: print('  Reading as binary file...')
-                    with open(filename, 'rb') as fileobj:
-                        filestr = fileobj.read() # Convert it to a string
-                except Exception as E3:
-                    try: # And finally as a regular object
-                        if verbose: print('  Reading as nonbinary file...')
-                        with open(filename, 'r', encoding='utf-8') as fileobj:
-                            filestr = fileobj.read() # Convert it to a string
-                    except Exception as E4:
-                        gziperror = _gziperror(filename) + f'\nAdditional errors encountered:\n{str(E2)}\n{str(E3)}\n{str(E4)}'
-                        raise UnpicklingError(gziperror) from E
-        else:
-            exc = type(E)
-            errormsg = 'sc.load(): Could not open the # pragma: no cover file string for an unknown reason; see error above for details'
-            raise exc(errormsg) from E
+        if filestr[:2] == b'\x1f\x8b':
+            if verbose: print('  Reading as gzip file...')
+            filestr = gz.decompress(filestr)
+        elif filestr[:4] == b'\x28\xb5\x2f\xfd':
+            if verbose: print('  Reading as zstandard file...')
+            with zstd.ZstdDecompressor().stream_reader(io.BytesIO(filestr)) as fileobj:
+                filestr = fileobj.read()
+    except Exception as E:
+        errormsg = _gziperror(filename) + f'\nError encountered: {E}'
+        raise UnpicklingError(errormsg) from E
     return filestr
 
 
@@ -268,34 +248,30 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     - *New in version 3.0.0:* "allow_empty" argument; removed "args"
     """
 
-    def serialize(fileobj, obj, success, **kwargs):
-        """ Actually write a serial bytestream to disk """
+    def serialize(fileobj, obj, **kwargs):
+        """ Actually write a serial bytestream """
         # Try pickle first
         if method == 'pickle':
             try:
                 if verbose>=2: print('Saving as pickle...')
                 _savepickle(fileobj, obj, **kwargs) # Use pickle
-                success = True
-            except Exception as E: # pragma: no cover
+                return
+            except Exception as E:
                 if die is True:
                     raise E
                 else:
                     if verbose>=2: print(f'Exception when saving as pickle ({repr(E)}), saving as dill...')
 
         # If dill is requested or pickle failed, use dill
-        if not success: # pragma: no cover
-            if verbose>=2: print('Saving as dill...')
-            _savedill(fileobj, obj, **kwargs)
-
+        if verbose>=2: print('Saving as dill...')
+        _savedill(fileobj, obj, **kwargs)
         return
 
+    verbose = verbose or 0
+
     # Handle path
-    if filename is None: # If the user explicitly specifies None as the file, create a byte stream instead
-        tobytes = True
-        bytestream = io.BytesIO()
-    else:
-        tobytes = False
-        bytestream = None
+    tobytes = filename is None # If the user explicitly specifies None as the file, create a byte stream instead
+    if not tobytes:
 
         # Process and sanitize the filename passed in by the user
         filetypes = (str, type(Path()), type(None))
@@ -321,42 +297,26 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
         if not allow_empty and die != 'never': # die = 'never' is kept for backwards compatibility
             raise ValueError(errormsg)
 
-    # Compress and actually save
-    success = False
+    # Serialize and compress in memory, so a failure doesn't overwrite an existing file
+    if compression not in ['gz', 'gzip', 'zst', 'zstd', 'zstandard', 'none']:
+        errormsg = f"Invalid compression format '{compression}': must be 'gzip', 'zstd', or 'none'"
+        raise ValueError(errormsg)
+    with io.BytesIO() as fileobj:
+        serialize(fileobj, obj, **kwargs)
+        filestr = fileobj.getvalue()
+    if compression in ['gz', 'gzip']: # Main use case
+        filestr = gz.compress(filestr, compresslevel=compresslevel)
+    elif compression in ['zst', 'zstd', 'zstandard']:
+        filestr = zstd.ZstdCompressor(level=compresslevel).compress(filestr)
 
-    if compression in ['gz', 'gzip']:  # Main use case
-        # File extension is .gz
-        with gz.GzipFile(filename=filename, fileobj=bytestream, mode='wb', compresslevel=compresslevel) as fileobj:
-            serialize(fileobj, obj, success, **kwargs) # Actually write the file to disk as gzip (99% of use cases)
-
-    else:
-        if tobytes: # pragma: no cover
-            filecontext = closing(bytestream)
-        else:
-            filecontext = open(filename, 'wb')
-
-        if compression in ['zst', 'zstd', 'zstandard']:
-            # File extension is .zst
-            with filecontext as fh:
-                zcompressor = zstd.ZstdCompressor(level=compresslevel)
-                with zcompressor.stream_writer(fh) as fileobj:
-                    serialize(fileobj, obj, success, **kwargs) # Write the file to disk as zst
-        elif compression in ['none']:
-            # File extension can be anything
-            with filecontext as fileobj:
-                serialize(fileobj, obj, success, **kwargs) # Write as uncompressed data
-        else: # pragma: no cover
-            errormsg = f"Invalid compression format '{compression}': must be 'gzip', 'zstd', or 'none'"
-            raise ValueError(errormsg)
-
-    if verbose and filename: # pragma: no cover
+    # Actually save
+    if tobytes:
+        return io.BytesIO(filestr)
+    with open(filename, 'wb') as fileobj:
+        fileobj.write(filestr)
+    if verbose:
         print(f'Object saved to "{filename}"')
-
-    if filename:
-        return filename
-    else: # pragma: no cover
-        bytestream.seek(0)
-        return bytestream
+    return filename
 
 
 # Backwards compatibility for core functions
@@ -525,7 +485,7 @@ def loadzip(filename=None, folder=None, load=True, convert=True, **kwargs):
                 val = zf.read(name)
                 if convert:
                     if isinstance(val, (str, bytes)):
-                        try:    val = loadstr(val, **kwargs) # Try to load as a pickle or some kind of valid file
+                        try:    val = loadstr(val, **(dict(die=True) | kwargs)) # Try to load as a pickle, dying rather than returning junk
                         except: pass # Otherwise, just return the raw value
                     if isinstance(val, bytes): # If still bytes, try to convert
                         try:    val = val.decode()
@@ -559,10 +519,10 @@ def unzip(filename=None, outfolder='.', folder=None, members=None):
     """
     filename = makefilepath(filename=filename, folder=folder)
     with ZipFile(filename, 'r') as zf: # Load the zip file
-        names = zf.namelist()
+        names = members if members is not None else zf.namelist()
         zf.extractall(outfolder, members=members)
 
-    output = [makefilepath(filename=name, folder=outfolder, makedirs=True) for name in names]
+    output = [os.path.abspath(os.path.join(outfolder, name)) for name in names]
     return output
 
 
@@ -719,7 +679,7 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
     If not supplied, then use the current file.
 
     Args:
-        file (str): the file to get the directory from; usually __file__
+        file (str): the file to get the directory from; usually __file__ (note: a relative path is relative to the current working folder)
         path (str/list): additional path to append; passed to os.path.join()
         args  (list): also passed to os.path.join()
         frame (int): if file is None, which frame to pull the folder from (default 1, the file that calls this function)
@@ -733,10 +693,10 @@ def thisdir(file=None, path=None, *args, frame=1, aspath=None, **kwargs):
 
     ```python
     thisdir = sc.thisdir() # Get folder of calling file
-    thisdir = sc.thisdir('.') # Ditto (usually)
+    thisdir = sc.thisdir('.') # Current working folder, which is usually the same
     thisdir = sc.thisdir(__file__) # Ditto (usually)
     file_in_same_dir = sc.thisdir(path='new_file.txt')
-    file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
+    file_in_sub_dir = sc.thisdir(path=['..', 'tests', 'mytests.py']) # Merge parent folder with subfolders and a file
     np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
     ```
 
@@ -842,7 +802,7 @@ def getfilepaths(*args, aspath=True, **kwargs):
 
     *New version 2.1.0.*
     """
-    return getfilelist(*args, aspath=True, **kwargs)
+    return getfilelist(*args, aspath=aspath, **kwargs)
 
 getfilepaths.__doc__ += '\n\n' + getfilelist.__doc__
 
@@ -906,7 +866,7 @@ def sanitizepath(*args, aspath=True, **kwargs):
 
     *New version 2.1.0.*
     """
-    return sanitizefilename(*args, aspath=True, **kwargs)
+    return sanitizefilename(*args, aspath=aspath, **kwargs)
 
 sanitizepath.__doc__ += '\n\n' + sanitizefilename.__doc__
 
@@ -980,13 +940,14 @@ def makefilepath(filename=None, folder=None, ext=None, default=None, split=False
     # Extract basename; fall back to 'default' unless directory-only
     if filename is not None:
         basename = os.path.basename(filename)
-        if folder is None:
-            folder = os.path.dirname(filename)
+        folder = os.path.join(folder or '', os.path.dirname(filename)) # If the filename's folder is absolute, this ignores folder
     else:
         basename = '' if is_dirpath else 'default'
 
     # Add extension if defined but missing
-    if ext and basename and not basename.endswith(ext): # pragma: no cover
+    if ext:
+        ext = ext.lstrip('.')
+    if ext and basename and not basename.endswith('.' + ext):
         basename += '.' + ext
 
     # Sanitize base filename
@@ -1042,7 +1003,7 @@ def makepath(*args, aspath=True, **kwargs):
 
     *New version 2.1.0.*
     """
-    return makefilepath(*args, **kwargs, aspath=True)
+    return makefilepath(*args, **kwargs, aspath=aspath)
 
 makepath.__doc__ += '\n\n' + makefilepath.__doc__
 
@@ -1072,8 +1033,11 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
     """
 
     paths = sc.mergelists(path, *args)
+    removed = [] # Folders removed so far, whose contents no longer exist
     for path in paths:
-        if not os.path.exists(path): # pragma: no cover
+        if not os.path.exists(path):
+            if any(Path(os.path.abspath(path)).is_relative_to(r) for r in removed): # Already removed along with its folder
+                continue
             errormsg = f'Path "{path}" does not exist'
             if die:
                 raise FileNotFoundError(errormsg)
@@ -1081,9 +1045,9 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
                 print(errormsg)
             continue # Nothing else to do for this file
         else:
-            if os.path.isfile(path):
+            if os.path.isfile(path) or os.path.islink(path):
                 rm_func = os.remove
-            elif os.path.isdir(path): # pragma: no cover
+            elif os.path.isdir(path):
                 rm_func = shutil.rmtree
             else: # pragma: no cover
                 errormsg = f'Path "{path}" exists, but is neither a file nor a folder: unable to remove'
@@ -1091,6 +1055,7 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
                     raise FileNotFoundError(errormsg)
                 elif verbose:
                     print(errormsg)
+                continue
 
         if interactive: # pragma: no cover
             ans = input(f'Remove "{path}"? [n]o / (y)es / (a)ll / (q)uit: ')
@@ -1108,6 +1073,8 @@ def rmpath(path=None, *args, die=True, verbose=True, interactive=False, **kwargs
 
         try: # Yes is default
             rm_func(path)
+            if rm_func is shutil.rmtree:
+                removed.append(os.path.abspath(path))
             if verbose or interactive:
                 print(f'Removed "{path}"')
         except Exception as E: # pragma: no cover
@@ -1225,7 +1192,6 @@ __all__ += ['sanitizejson', 'jsonify', 'printjson', 'readjson', 'loadjson', 'sav
 
 # Prevent recursive calls by storing a list of seen objects
 jsonify_memo = threading.local()
-jsonify_memo.ids = set()
 
 def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=True, **kwargs):
     """
@@ -1260,6 +1226,7 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=T
     """
     kw = dict(verbose=verbose, die=die, custom=custom, strkeys=strkeys) # For passing during recursive calls
     obj_id = id(obj) # For avoiding recursion
+    memo_ids = jsonify_memo.__dict__.setdefault('ids', set()) # Created separately for each thread
 
     # Handle custom classes
     custom = sc.mergedicts(custom)
@@ -1283,8 +1250,9 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=T
 
     def get_output(obj):
         """ Do the conversion """
-        if isinstance(obj, custom_classes): # It matches one of the custom classes
-            return custom[obj.__class__](obj)
+        if isinstance(obj, custom_classes): # It matches one of the custom classes, so use the closest one
+            matches = [cls for cls in type(obj).__mro__ if cls in custom] or [cls for cls in custom_classes if isinstance(obj, cls)]
+            return custom[matches[0]](obj)
 
         # Try recognized types first
         if obj is None: # Return None unchanged
@@ -1294,13 +1262,13 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=T
             return bool(obj)
 
         if sc.isnumber(obj): # It's a number
-            if np.isnan(obj): # It's nan, so return None # pragma: no cover
-                return None
+            if isinstance(obj, (int, np.integer)):
+                return int(obj) # It's an integer
+            elif isinstance(obj, (complex, np.complexfloating)):
+                return str(obj) # JSON has no complex type, so use a string to keep both parts
             else:
-                if isinstance(obj, (int, np.integer)):
-                    return int(obj) # It's an integer
-                else:
-                    return float(obj)# It's something else, treat it as a float
+                obj = float(obj) # It's something else (e.g. Decimal), treat it as a float
+                return None if np.isnan(obj) else obj # It's nan, so return None
 
         if sc.isstring(obj): # It's a string of some kind
             try:    string = str(obj) # Try to convert it to ascii
@@ -1324,15 +1292,15 @@ def jsonify(obj, verbose=True, die=False, tostring=False, custom=None, strkeys=T
 
         # Then try defined JSON methods
         methods = ['to_json', 'tojson', 'toJSON', 'to_dict', 'todict']
-        if not obj_id in jsonify_memo.ids: # pragma: no cover
+        if not obj_id in memo_ids:
             for method in methods:
                 obj_meth = getattr(obj, method, None)
                 if callable(obj_meth):
                     try:
-                        jsonify_memo.ids.add(obj_id)
-                        return obj_meth()
+                        memo_ids.add(obj_id)
+                        return jsonify(obj_meth(), **kw) # Sanitize the output too, e.g. if it contains arrays
                     finally:
-                        jsonify_memo.ids.remove(obj_id)
+                        memo_ids.remove(obj_id)
 
         # None of the above
         try:
@@ -1409,7 +1377,7 @@ def readjson(string, **kwargs):
     return json.loads(string, **kwargs)
 
 
-def loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', **kwargs):
+def loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', default=None, die=None, **kwargs):
     """
     Convenience function for reading a JSON file (or string).
 
@@ -1419,6 +1387,8 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='u
         string (str): if not loading from a file, a string representation of the JSON
         fromfile (bool): whether or not to load from file
         encoding (str): the file encoding (default UTF-8, as required by the JSON standard)
+        default (any): if supplied, return this if the file doesn't exist or isn't valid JSON, rather than raising an exception
+        die (bool): whether to raise an exception if the JSON can't be loaded (default True, unless `default` is supplied)
         kwargs (dict): passed to `json.load()`
 
     Returns:
@@ -1429,24 +1399,33 @@ def loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='u
     ```python
     json = sc.loadjson('my-file.json')
     json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
+    cache = sc.loadjson('cache.json', default={}) # Use an empty dict if the file doesn't exist
     ```
     See also `sc.readjson()` for loading a JSON from
     a string.
 
-    *New in version 3.3.0:* default to UTF-8 encoding
+    - *New in version 3.3.0:* default to UTF-8 encoding
+    - *New in version 3.4.0:* "default" and "die" arguments
     """
-    if string is not None or not fromfile:
-        if string is None and filename is not None: # pragma: no cover
-            string = filename # Swap arguments
-        output = json.loads(string, **kwargs)
-    else:
-        filepath = makefilepath(filename=filename, folder=folder)
-        try:
-            with open(filepath, encoding=encoding) as f:
-                output = json.load(f, **kwargs)
-        except FileNotFoundError as E: # pragma: no cover
-            errormsg = f'No such file "{filename}". Use "string" argument or "fromfile=False" if loading a JSON string rather than a file.'
-            raise FileNotFoundError(errormsg) from E
+    if die is None:
+        die = default is None
+    try:
+        if string is not None or not fromfile:
+            if string is None and filename is not None: # pragma: no cover
+                string = filename # Swap arguments
+            output = json.loads(string, **kwargs)
+        else:
+            filepath = makefilepath(filename=filename, folder=folder)
+            try:
+                with open(filepath, encoding=encoding) as f:
+                    output = json.load(f, **kwargs)
+            except FileNotFoundError as E:
+                errormsg = f'No such file "{filename}". Use "string" argument or "fromfile=False" if loading a JSON string rather than a file.'
+                raise FileNotFoundError(errormsg) from E
+    except (OSError, ValueError): # ValueError includes json.JSONDecodeError
+        if die:
+            raise
+        output = default
     return output
 
 
@@ -1463,7 +1442,7 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         keepnone (bool): allow `sc.savejson(None)` to return 'null' rather than raising an exception
         sanitizepath (bool): whether to sanitize the path prior to saving
         encoding (str): the file encoding (default UTF-8, as required by the JSON standard)
-        kwargs (dict): passed to `json.dump()`
+        kwargs (dict): passed to `json.dumps()`
 
     Returns:
         The filename saved to
@@ -1485,8 +1464,9 @@ def savejson(filename=None, obj=None, folder=None, die=True, indent=2, keepnone=
         if die: raise ValueError(errormsg)
         else:   print(errormsg)
 
-    with open(filename, 'w', encoding=encoding) as f:
-        json.dump(jsonify(obj), f, indent=indent, **kwargs)
+    output = json.dumps(jsonify(obj), indent=indent, **kwargs).encode(encoding) # Convert fully before opening the file, so a failure doesn't overwrite it
+    with open(filename, 'wb') as f:
+        f.write(output)
 
     return filename
 
@@ -1539,7 +1519,7 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
     ```
     *New in version 3.3.0:* default to UTF-8 encoding
     """
-    import yaml # Optional import
+    import yaml # Imported here to speed up importing Sciris
 
     if loader is None:
         if safe: loader = yaml.loader.SafeLoader
@@ -1599,7 +1579,7 @@ def saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True,
     ```
     *New in version 3.3.0:* default to UTF-8 encoding
     """
-    import yaml # Optional import
+    import yaml # Imported here to speed up importing Sciris
 
     if dumpall: dump_func = yaml.dump_all
     else:       dump_func = yaml.dump
@@ -1664,7 +1644,7 @@ def jsonpickle(obj, filename=None, tostring=False, **kwargs):
     ```
     *New in version 3.1.0:* "filename" argument
     """
-    import jsonpickle as jp # Optional import
+    import jsonpickle as jp # Imported here to speed up importing Sciris
     import jsonpickle.ext.numpy as jsonpickle_numpy
     import jsonpickle.ext.pandas as jsonpickle_pandas
     jsonpickle_numpy.register_handlers()
@@ -1751,7 +1731,8 @@ class Blobject:
 
     def __init__(self, source=None, name=None, filename=None, blob=None):
         # Handle inputs
-        if source   is None and filename is not None: source   = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
+        if isinstance(source, Path): source = str(source)
+        if source   is None and filename is not None and blob is None: source = filename # Reset the source to be the filename, e.g. Spreadsheet(filename='foo.xlsx')
         if filename is None and sc.isstring(source):  filename = source   # Reset the filename to be the source, e.g. Spreadsheet('foo.xlsx')
         if name     is None and filename is not None: name     = os.path.basename(filename) # If not supplied, use the filename
         if blob is not None and source is not None: raise ValueError('Can initialize from either source or blob, but not both')
@@ -1818,6 +1799,7 @@ class Blobject:
 
     def save(self, filename=None):
         """ This function writes the spreadsheet to a file on disk. """
+        if filename is None: filename = self.filename
         filepath = makefilepath(filename=filename, makedirs=True)
         with open(filepath, mode='wb') as f:
             f.write(self.blob)
@@ -1990,7 +1972,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
         elif method in ['openpyxl', 'openpyexcel']:
             wb_reader = self.openpyxl if method == 'openpyxl' else self.openpyexcel
             wb_reader(**wbargs)
-            ws = self._getsheet(sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetname'))
+            ws = self._getsheet(sheetname=kwargs.get('sheetname'), sheetnum=kwargs.get('sheetnum'))
             rawdata = tuple(ws.rows)
             sheetoutput = np.empty(np.shape(rawdata), dtype=object)
             for r,rowdata in enumerate(rawdata):
@@ -2092,7 +2074,7 @@ Falling back to openpyxl, which is identical except for how cached cell values a
 
 
 
-def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs):
+def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=True, asdataframe=None, method='pandas', **kwargs):
     """
     Load a spreadsheet as a dataframe or a list of lists.
 
@@ -2104,15 +2086,15 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
         folder (str): optional folder to use with the filename
         fileobj (obj): load from file object rather than path
         sheet (str/int/list): name or number of sheet(s) to use (default 0)
-        asdataframe (bool): whether to return as a pandas/Sciris dataframe (default True)
-        header (bool): whether the 0-th row is to be read as the header
+        asdataframe (bool): for `method='xlrd'`, whether to return as a Sciris dataframe (default True)
+        header (bool/int): whether the 0-th row is to be read as the header; for `method='pandas'`, can also be the row number(s) to use
         method (str): how to read (default 'pandas', other choices 'openpyxl' and 'xlrd')
         kwargs (dict): passed to pd.read_excel(), openpyxl(), etc.
 
     **Examples**:
 
     ```python
-    df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel(header=1)
+    df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel()
     wb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook
     data = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd
     ```
@@ -2122,17 +2104,18 @@ def loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1,
     # Handle path and sheet name/number
     fullpath = makefilepath(filename=filename, folder=folder)
     for key in ['sheetname', 'sheetnum', 'sheet_name']:
-        sheet = kwargs.pop('sheetname', sheet)
+        sheet = kwargs.pop(key, sheet)
 
     # Load using pandas
     if method == 'pandas':
         if fileobj is not None: fullpath = fileobj # Substitute here for reading
+        if isinstance(header, bool): header = 0 if header else None # Convert to a row number
         data = pd.read_excel(fullpath, sheet_name=sheet, header=header, **kwargs)
         return data
 
     # Load using openpyxl
     elif method == 'openpyxl': # pragma: no cover
-        spread = Spreadsheet(fullpath)
+        spread = Spreadsheet(fileobj if fileobj is not None else fullpath)
         wb = spread.openpyxl(**kwargs)
         return wb
 
@@ -2266,7 +2249,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     testdata5[0,:] = ['A', 'B', 'C'] # Create header
     testdata5[1:,:] = np.random.rand(nrows,ncols) # Create data
     formatdata[1:,:] = 'plain' # Format data
-    formatdata[testdata5>0.7] = 'big' # Find "big" numbers and format them differently
+    formatdata[1:,:][testdata5[1:,:]>0.7] = 'big' # Find "big" numbers and format them differently
     formatdata[0,:] = 'header' # Format header
     sc.savespreadsheet(filename='test5.xlsx', data=testdata5, formats=formats, formatdata=formatdata)
     ```
@@ -2274,7 +2257,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     """
     workbook_args = sc.mergedicts({'nan_inf_to_errors': True}, workbook_args)
     try:
-        import xlsxwriter # Optional import
+        import xlsxwriter # Imported here to speed up importing Sciris
     except ModuleNotFoundError as e: # pragma: no cover
         raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx', makedirs=True)
@@ -2319,13 +2302,12 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     workbook = xlsxwriter.Workbook(fullpath, workbook_args)
 
     # Optionally add formats
+    thisformat = workbook.add_format({}) # Plain formatting
     if formats is not None:
         if verbose: print(f'  Adding {len(formats)} formats')
         workbook_formats = dict()
         for formatkey,formatval in formats.items():
             workbook_formats[formatkey] = workbook.add_format(formatval)
-    else: # pragma: no cover
-        thisformat = workbook.add_format({}) # Plain formatting
 
     # Actually write the data
     for sheetname in datadict.keys():
@@ -2368,12 +2350,12 @@ __all__ += ['UnpicklingWarning', 'UnpicklingError', 'Failed']
 # Pandas provides a class compatibility map, so use that by default
 try:
     known_fixes = pd.compat.pickle_compat._class_locations_map
-except (NameError or AttributeError): # pragma: no cover
+except (NameError, AttributeError): # pragma: no cover
     warnmsg = 'Could not load full pandas pickle compatibility map; using manual subset of known regressions'
     warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
     known_fixes = {
-        ('pandas.core.indexes.numeric', 'Int64Index'): {'pandas.core.indexes.numeric.Int64Index':'pandas.core.indexes.api.Index'},
-        ('pandas.core.indexes.numeric', 'Float64Index'): {'pandas.core.indexes.numeric.Float64Index':'pandas.core.indexes.api.Index'},
+        ('pandas.core.indexes.numeric', 'Int64Index'): ('pandas.core.indexes.base', 'Index'),
+        ('pandas.core.indexes.numeric', 'Float64Index'): ('pandas.core.indexes.base', 'Index'),
     }
 
 # Keep a temporary global variable of unpickling errors, and a permanent one of failed classes
@@ -2552,8 +2534,12 @@ def _remap_module(remapping, module_name, name):
         remapped = (module_name, name)
 
     # Check if we have a string or tuple
-    if isinstance(remapped, str): # Split a string into a tuple, e.g. 'foo.bar.Cat' to ('foo.bar', 'Cat')
-        remapped = tuple(remapped.rsplit('.', 1)) # e.g. 'foo.bar.Cat' -> ('foo.bar',)
+    if isinstance(remapped, str): # Convert a string into a tuple
+        try: # If the whole string is a module, e.g. 'foo.bar' -> ('foo.bar',)
+            importlib.import_module(remapped)
+            remapped = (remapped,)
+        except ImportError: # Otherwise, split off the class, e.g. 'foo.bar.Cat' -> ('foo.bar', 'Cat')
+            remapped = tuple(remapped.rsplit('.', 1))
 
     # If it's a tuple, handle it as a new name
     if isinstance(remapped, tuple):
@@ -2569,7 +2555,10 @@ def _remap_module(remapping, module_name, name):
 
         # Actually attempt the import
         module = importlib.import_module(module_name)
-        obj = getattr(module, name) # pragma: no cover
+        obj = getattr(module, name)
+        if inspect.ismodule(obj):
+            errormsg = f'Remapping "{module_name}.{name}" gives a module, not a class'
+            raise TypeError(errormsg)
 
     # Otherwise, assume the user supplied the object/class directly
     else:
@@ -2619,6 +2608,8 @@ class _RobustUnpickler(dill.Unpickler):
         try:
             obj = super().load(*args, **kwargs) # Actually load the object!
         except Exception as E:
+            if self.die:
+                raise E
             if self.verbose is not False:
                 warnmsg = f'Top-level unpickling error: \n{str(E)}'
                 warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
@@ -2653,7 +2644,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
     )
 
     # Methods that allow for loading an object without any failed instances (if die=True)
-    if   method is None:      unpicklers = ['pickle', 'pandas', 'latin', 'dill', 'bytestr']
+    if   method is None:      unpicklers = ['pickle', 'pandas', 'latin', 'dill'] + ([] if die else ['bytestr'])
     elif method == 'pickle':  unpicklers = ['pickle', 'pandas', 'latin']
     elif method == 'dill':    unpicklers = ['dill']
     else:                     unpicklers = sc.tolist(method)
@@ -2666,7 +2657,7 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
         unpicklers += ['robust']
 
     errors = {}
-    obj = None
+    obj = sc._not_given # Sentinel, since None is a valid object
 
     if verbose:
         print(f'Loading data using these methods in sequence: {sc.strjoin(unpicklers)}')
@@ -2674,12 +2665,15 @@ def _unpickler(string=None, die=False, verbose=None, remapping=None, method=None
         try:
             if verbose: print(f'Loading file using method "{unpickler}"...')
             obj = methods[unpickler](string, **kwargs)
+            if unpickler == 'bytestr':
+                warnmsg = 'File could not be unpickled, so returning its contents as a string'
+                warnings.warn(warnmsg, category=UnpicklingWarning, stacklevel=2)
             break
         except Exception as E:
             errors[unpickler] = sc.traceback(E)
             if verbose: print(f'{unpickler} failed ({E})')
 
-    if obj is None:
+    if obj is sc._not_given:
         errormsg = 'All available unpickling methods failed: ' + '\n'.join([f'{k}: {v}' for k,v in errors.items()])
         raise UnpicklingError(errormsg)
     elif len(unpickling_errors):

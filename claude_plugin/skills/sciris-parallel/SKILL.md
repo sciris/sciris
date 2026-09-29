@@ -55,7 +55,7 @@ P.finalize()                              # Collect results
 
 print(P.success)       # Per-job success flags
 print(P.exceptions)    # Any exceptions that occurred
-print(P.results)       # Results (None for failed jobs)
+print(P.results)       # Results (the exception for failed jobs)
 print(P.times)         # Per-job timing
 ```
 

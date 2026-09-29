@@ -20,6 +20,7 @@ Highlights:
 ##############################################################################
 #%% Imports
 ##############################################################################
+import os
 import re
 import sys
 import types
@@ -29,6 +30,7 @@ import string
 import numbers
 import pprint
 import hashlib
+import html
 import getpass
 import inspect
 import warnings
@@ -48,11 +50,21 @@ import sciris as sc
 
 # Handle types
 _stringtypes = (str, bytes, bytearray)
-_numtype     = (numbers.Number,)
+_numtype     = (numbers.Number, np.bool_) # np.bool_ is the only NumPy scalar that isn't a numbers.Number
 _booltypes   = (bool, np.bool_)
 
+class _NotGiven:
+    """ Sentinel for arguments that were not supplied, since None is a valid value """
+    def __repr__(self):
+        return '<not given>'
+_not_given = _NotGiven()
+
+def _is_given(obj):
+    """ Check whether an argument was supplied, i.e. isn't the `_not_given` sentinel """
+    return obj is not _not_given
+
 # Store these for access by other modules
-__all__ = ['_stringtypes', '_numtype', '_booltypes']
+__all__ = ['_stringtypes', '_numtype', '_booltypes', '_not_given', '_is_given']
 
 
 ##############################################################################
@@ -63,6 +75,11 @@ __all__ = ['_stringtypes', '_numtype', '_booltypes']
 __all__ += ['fast_uuid', 'uuid', 'cp', 'dcp', 'robust_dcp', 'pp', 'sha', 'traceback', 'getuser',
            'getplatform', 'iswindows', 'islinux', 'ismac', 'isjupyter', 'asciify']
 
+
+# A separate RNG for fast_uuid(), so Python's global random stream isn't affected; reseeded in forked child processes (as the global one is) so they don't give the same UUIDs
+_uuid_rng = rnd.Random()
+if hasattr(os, 'register_at_fork'): # Not available on Windows, which doesn't fork
+    os.register_at_fork(after_in_child=_uuid_rng.seed)
 
 def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safety=1000, recursion=0, recursion_limit=10, verbose=True):
     """
@@ -123,10 +140,10 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
             raise ValueError(errormsg)
 
     # Secure uses system random which is secure, but >10x slower
-    if secure: # pragma: no cover
+    if secure:
         choices_func = rnd.SystemRandom().choices
     else:
-        choices_func = rnd.choices
+        choices_func = _uuid_rng.choices
 
     # Generate the UUID(s) string as one big block
     uid_str = ''.join(choices_func(charlist, k=length*n))
@@ -142,7 +159,8 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
     else:
         # Split from one long string into multiple and check length
         output = [uid_str[chunk*length:(chunk+1)*length] for chunk in range(len(uid_str)//length)]
-        n_unique_keys = len(dict.fromkeys(output))
+        output = list(dict.fromkeys(output)) # Remove duplicates
+        n_unique_keys = len(output)
 
         # Check that length is correct, i.e. no duplicates!
         while n_unique_keys != n:
@@ -158,8 +176,8 @@ def fast_uuid(which=None, length=None, n=1, secure=False, forcelist=False, safet
             # Extend the list of UIDs
             new_n = n - n_unique_keys
             new_uuids = fast_uuid(which=which, length=length, n=new_n, secure=secure, safety=safety, recursion=recursion, recursion_limit=recursion_limit, verbose=verbose, forcelist=True)
-            output.extend(new_uuids)
-            n_unique_keys = len(dict.fromkeys(output)) # Recalculate the number of keys
+            output = list(dict.fromkeys(output + new_uuids)) # Remove any new duplicates
+            n_unique_keys = len(output) # Recalculate the number of keys
 
     return output
 
@@ -202,42 +220,43 @@ def uuid(uid=None, which=None, die=False, tostring=False, length=None, n=1, **kw
         return fast_uuid(which=which, length=length, n=n, **kwargs) # ...or just go to fast_uuid()
 
     # If a UUID was supplied, try to parse it
+    uuid_list = None
     if uid is not None:
+        if n != 1:
+            errormsg = f'Cannot create {n} UUIDs from the single UUID supplied'
+            raise ValueError(errormsg)
         try:
-            if isinstance(uid, py_uuid.UUID):
-                output = uid # Use directly
-            else: # Convert
-                output = py_uuid.UUID(uid)
-        except Exception as E: # pragma: no cover
+            if not isinstance(uid, py_uuid.UUID): # Convert
+                uid = py_uuid.UUID(uid)
+            uuid_list = [uid]
+        except Exception as E:
             errormsg = f'Could not convert "{uid}" to a UID ({repr(E)})'
             if die:
                 raise TypeError(errormsg)
             else:
-                print(errormsg)
-                uid = None # Just create a new one
+                print(errormsg) # Just create a new one
 
-    # If not, make a new one
-    if uid is None:
-        uuid_list = []
-        for i in range(n): # Loop over
-            uid = uuid_func(**kwargs)  # If not supplied, create a new UUID
+    # If not, make new ones
+    if uuid_list is None:
+        uuid_list = [uuid_func(**kwargs) for i in range(n)]
 
-            # Convert to a string, and optionally trim
-            if tostring or length:
-                uid = str(uid)
-            if length:
-                if length<len(uid):
-                    uid = uid[:length]
-                else:
-                    errormsg = f'Cannot choose first {length} chars since UID has length {len(uid)}'
-                    raise ValueError(errormsg)
-            uuid_list.append(uid)
+    # Convert to a string, and optionally trim
+    for i,uid in enumerate(uuid_list):
+        if tostring or length:
+            uid = str(uid)
+        if length:
+            if length<len(uid):
+                uid = uid[:length]
+            else:
+                errormsg = f'Cannot choose first {length} chars since UID has length {len(uid)}'
+                raise ValueError(errormsg)
+        uuid_list[i] = uid
 
-        # Process the output: string if 1, list if more
-        if len(uuid_list) == 1:
-            output = uuid_list[0]
-        else:
-            output = uuid_list
+    # Process the output: string if 1, list if more
+    if len(uuid_list) == 1:
+        output = uuid_list[0]
+    else:
+        output = uuid_list
 
     return output
 
@@ -280,8 +299,8 @@ def dcp(obj, memo=None, die=True, verbose=True):
     - *New in verison 3.2.4:* fall back to `sc.robust_dcp()` instead of `sc.cp()`; "verbose" argument added
     """
     try:
-        output = copy.deepcopy(obj, memo=memo)
-    except Exception as E: # pragma: no cover
+        output = _clean_deepcopy(obj, memo=memo)
+    except Exception as E:
         errormsg = f'Could not perform deep copy of {type(obj)}:\n{E}'
         if die:
             errormsg += '\n\nUse sc.dcp(obj, die=False) to perform a robust copy instead.'
@@ -292,6 +311,18 @@ def dcp(obj, memo=None, die=True, verbose=True):
                 warnmsg = errormsg + '\nPerforming robust copy instead...'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
     return output
+
+
+def _clean_deepcopy(obj, memo=None):
+    """ Deepcopy, but if it fails, remove the partial copies it left in the memo so they aren't reused """
+    n = len(memo) if memo else 0
+    try:
+        return copy.deepcopy(obj, memo=memo)
+    except Exception:
+        if memo:
+            for key in list(memo)[n:]: # New entries are added at the end
+                del memo[key]
+        raise
 
 
 def robust_dcp(obj, _memo=None, verbose=False):
@@ -305,8 +336,8 @@ def robust_dcp(obj, _memo=None, verbose=False):
 
     - *New in version 3.2.4.*
     """
-    # Immutable primitives that never need copying
-    primitives = (int, float, complex, bool, str, bytes, tuple, frozenset, types.NoneType)
+    # Immutable primitives that never need copying (not tuples, which may contain mutable objects)
+    primitives = (int, float, complex, bool, str, bytes, frozenset, types.NoneType)
     exceptions = [] # Print exceptions if verbose=True
 
     def print_exc(exceptions, obj):
@@ -331,20 +362,43 @@ def robust_dcp(obj, _memo=None, verbose=False):
 
     # First, try vanilla deepcopy
     try:
-        dup = copy.deepcopy(obj, memo=_memo)
+        dup = _clean_deepcopy(obj, memo=_memo)
         _memo[obj_id] = dup
         return dup
     except Exception as e: # fall through and attempt element-wise copy
         if verbose: exceptions.append(e)
 
+    def copy_item(value):
+        """ Deep-copy an element or attribute, else shallow-copy it, else return the original """
+        try:
+            return robust_dcp(value, verbose=verbose, _memo=_memo)
+        except Exception as e:
+            if verbose: exceptions.append(e)
+            try: # Shallow fallback on *this* item
+                return copy.copy(value)
+            except Exception as e:
+                if verbose: exceptions.append(e)
+                return value
+
     # Containers
-    kw = dict(verbose=verbose, _memo=_memo)
     if isinstance(obj, abc.Mapping):
-        dup = obj.__class__((robust_dcp(k, **kw), robust_dcp(v, **kw)) for k, v in obj.items())
+        items = [(copy_item(k), copy_item(v)) for k, v in obj.items()]
+        try: # Copy and refill, to preserve e.g. the default_factory of a defaultdict
+            dup = copy.copy(obj)
+            dup.clear()
+            dup.update(items)
+        except Exception:
+            dup = obj.__class__(items)
+    elif isinstance(obj, tuple) and hasattr(obj, '_fields'): # A namedtuple, which takes positional arguments
+        dup = obj.__class__(*[copy_item(x) for x in obj])
     elif isinstance(obj, (abc.Sequence, abc.Set)) and not isinstance(obj, (str, bytes, bytearray)):
-        dup = obj.__class__(robust_dcp(x, verbose=verbose, _memo=_memo) for x in obj)
+        dup = obj.__class__(copy_item(x) for x in obj)
     else: # Plain custom object: allocate blank instance, then copy attributes
-        dup = object.__new__(obj.__class__)
+        try:
+            dup = object.__new__(obj.__class__)
+        except TypeError as e: # e.g. a lock, which can't be created this way: leave the original reference
+            if verbose: exceptions.append(e)
+            return obj
         _memo[obj_id] = dup  # stash early to handle self-refs
         try:
             attrs = vars(obj)  # works for classes with __dict__
@@ -353,15 +407,7 @@ def robust_dcp(obj, _memo=None, verbose=False):
             if verbose: exceptions.append(e)
 
         for name, value in attrs.items():
-            try:
-                copied_val = robust_dcp(value, **kw)
-            except Exception as e:
-                if verbose: exceptions.append(e)
-                try: # Shallow fallback on *this* attribute
-                    copied_val = copy.copy(value)
-                except Exception as e:
-                    copied_val = value
-                    if verbose: exceptions.append(e)
+            copied_val = copy_item(value)
             try:
                 setattr(dup, name, copied_val)
             except AttributeError as e: # read-only attribute: leave original reference
@@ -424,7 +470,7 @@ def pp(obj, jsonify=False, doprint=None, output=False, sort_dicts=False, **kwarg
         except Exception as E: # pragma: no cover
             print(f'Could not jsonify object ("{str(E)}"), printing default...')
             toprint = obj # If problems are encountered, just return the object
-    else: # pragma: no cover
+    else:
         toprint = obj
 
     # Decide what to do with object
@@ -458,7 +504,9 @@ def sha(obj, digest=False, asint=False, encoding='utf-8'):
     """
     # Prepare argument
     if not isinstance(obj, (str, bytes)): # Ensure it's actually a string
-        obj = repr(obj) # More robust than str()
+        pd_opts = ['display.max_rows', None, 'display.max_columns', None, 'display.max_colwidth', None, 'display.precision', 17]
+        with np.printoptions(threshold=sys.maxsize, floatmode='unique'), pd.option_context(*pd_opts): # Don't truncate or round arrays or dataframes
+            obj = repr(obj) # More robust than str()
     if isinstance(obj, str): # If it's unicode, encode it to bytes first
         obj = obj.encode(encoding)
 
@@ -520,7 +568,7 @@ def traceback(exc=None, value=None, tb=None, verbose=False, *args, **kwargs):
         out = ''.join(py_traceback.format_exception(*exc_info, **kwargs))
     else:
         out = py_traceback.format_exc(*args, **kwargs)
-    if verbose: # pragma: no cover
+    if verbose:
         print(out)
     return out
 
@@ -581,11 +629,11 @@ def getplatform(expected=None, platform=None, die=False):
 
     # Handle output
     if expected is not None:
-        output = (expected.lower() in mapping[plat]) # Check if it's as expecte
+        output = (expected.lower() in mapping.get(plat, [])) # Check if it's as expected ('other' has no aliases)
         if not output and die: # pragma: no cover
             errormsg = f'System is "{plat}", not "{expected}"'
             raise EnvironmentError(errormsg)
-    else: # pragma: no cover
+    else:
         output = plat
     return output
 
@@ -625,6 +673,10 @@ def isjupyter(detailed=False):
     ```
     *New in version 3.0.0.*
     """
+    # IPython is always imported if it's running, so don't import it (which is slow) if it hasn't been
+    if not detailed and 'IPython' not in sys.modules:
+        return False
+
     # First check if we can import it
     output = None
     is_jupyter = False
@@ -740,6 +792,7 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
     """
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
+    from urllib import error as ue
 
     T = sc.timer()
 
@@ -755,14 +808,19 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
     if prefix is not None:
         if not full_url.startswith(prefix):
             full_url = prefix + '://' + full_url # Leaves https alone, but adds http:// otherwise
-    if params is not None: # pragma: no cover
-        full_url = full_url + '?' + up.urlencode(params)
-    if data is not None: # pragma: no cover
+    if params is not None:
+        full_url += ('&' if '?' in full_url else '?') + up.urlencode(params) # Append to an existing query string if present
+    if data is not None:
         data = up.urlencode(data).encode(encoding='utf-8', errors='ignore')
 
     if verbose: print(f'Downloading {url}...')
     request = ur.Request(full_url, headers=headers, data=data)
-    resp = ur.urlopen(request) # Actually open the URL
+    try:
+        resp = ur.urlopen(request) # Actually open the URL
+    except ue.HTTPError as E: # e.g. 404
+        if response == 'status':
+            return E.code # Return the error status rather than raising
+        raise
     if response in ['text', 'json']:
         output = resp.read()
         if response == 'json':
@@ -774,8 +832,8 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
         elif convert:
             if verbose>1: print('Converting from bytes to text...')
             try:
-                output = output.decode()
-            except Exception as E: # pragma: no cover
+                output = output.decode(resp.headers.get_content_charset() or 'utf-8') # Use the declared charset, if any
+            except Exception as E:
                 if die:
                     raise E
                 elif verbose:
@@ -790,19 +848,16 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
         raise ValueError(errormsg)
 
     # Set filename -- from https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
-    if filename is None and save: # pragma: no cover
-        headers = dict(resp.getheaders())
-        string = "Content-Disposition"
-        if string in headers.keys():
-            filename = re.findall("filename=(.+)", headers[string])[0]
-        else:
+    if filename is None and save:
+        filename = resp.headers.get_filename() # From the "Content-Disposition" header, if present
+        if not filename:
             filename = url.rstrip('/').split('/')[-1] # Remove trailing /, then pull out the last chunk
 
     if filename is not None and save is not False:
         if verbose: print(f'Saving to {filename}...')
         filename = sc.makefilepath(filename, makedirs=True)
         if isinstance(output, bytes): # Raw HTML data
-            with open(filename, 'wb') as f: # pragma: no cover
+            with open(filename, 'wb') as f:
                 f.write(output)
         elif isinstance(output, dict): # If it's a JSON
             sc.savejson(filename, output)
@@ -870,7 +925,9 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
         if save: # Filenames generated by urlopen(), pass None
             keys = [None]*n_urls
         else: # Otherwise, turn the URL into a filename
-            keys = [url.split('/')[-1] for url in urls] # Turn e.g. 'http://mysite.com/tree/index.html' into 'index.html'
+            keys = []
+            for url in urls: # Turn e.g. 'http://mysite.com/tree/index.html' into 'index.html', or 'index.html1' if it's a duplicate
+                keys.append(uniquename(url.split('/')[-1], keys))
     elif n_keys != n_urls: # pragma: no cover
         errormsg = f'Cannot process {n_urls} URLs and {n_keys} filenames'
         raise ValueError(errormsg)
@@ -889,7 +946,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
         for key,url in zip(keys, urls):
             try:
                 output = urlopen(url=url, filename=key, **func_kwargs)
-            except Exception as E: # pragma: no cover
+            except Exception as E:
                 if die:
                     raise E
                 else:
@@ -925,12 +982,11 @@ def htmlify(string, reverse=False, tostring=False):
     output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'
     ```
     """
-    import html
     if not reverse: # Convert to HTML
         output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
         output = output.replace(b'\n', b'<br>') # Replace newlines with <br>
         output = output.replace(b'\t', b'&nbsp;&nbsp;&nbsp;&nbsp;') # Replace tabs with 4 spaces
-        if tostring: # Convert from bytestring to unicode # pragma: no cover
+        if tostring: # Convert from bytestring to unicode
             output = output.decode()
     else: # Convert from HTML
         output = html.unescape(string)
@@ -976,14 +1032,14 @@ def flexstr(arg, *args, force=True, join=''):
             except: # pragma: no cover
                 if force: output = repr(arg) # If that fails, just print its representation
                 else:     output = arg
-        else: # pragma: no cover
+        else:
             if force: output = repr(arg)
             else:     output = arg # Optionally don't do anything for non-strings
         outlist.append(output)
 
     if len(outlist) == 1:
         outstr = outlist[0]
-    else: # pragma: no cover
+    else:
         if force:
             outstr = join.join(outlist)
         else:
@@ -1079,7 +1135,7 @@ def isiterable(obj, *args, exclude=None, minlen=None):
     objlist = [obj]
     n_args = len(args)
     exclude = tuple(tolist(exclude))
-    if n_args: # pragma: no cover
+    if n_args:
         objlist.extend(args)
 
     # Determine iterability
@@ -1097,7 +1153,7 @@ def isiterable(obj, *args, exclude=None, minlen=None):
                 tf = False
 
             # Check length
-            if minlen is not None: # pragma: no cover
+            if minlen is not None:
                 try:
                     assert len(obj) >= minlen
                 except:
@@ -1156,9 +1212,9 @@ def checktype(obj=None, objtype=None, subtype=None, die=False):
     elif objtype in ['bool', 'boolean']:       objinstance = _booltypes
     elif objtype in ['arr', 'array']:          objinstance = np.ndarray
     elif objtype in ['listlike', 'arraylike']: objinstance = (list, tuple, np.ndarray, pd.Series) # Anything suitable as a numerical array
-    elif type(objtype) == type:                objinstance = objtype # Don't need to do anything
+    elif isinstance(objtype, type):            objinstance = objtype # Don't need to do anything (including for e.g. abstract base classes)
     elif isinstance(objtype, tuple):           objinstance = objtype # Ditto
-    elif isinstance(objtype, list):            objinstance = tuple(objtype) # Convert from a list to a tuple # pragma: no cover
+    elif isinstance(objtype, list):            objinstance = tuple(objtype) # Convert from a list to a tuple
     elif objtype is None: # pragma: no cover
         errormsg = "No object type was supplied; did you mean to use objtype='none' instead?"
         raise ValueError(errormsg)
@@ -1196,16 +1252,18 @@ def isnumber(obj, isnan=None):
     """
     Determine whether or not the input is a number.
 
-    Identical to isinstance(obj, numbers.Number) unless isnan is specified.
+    Identical to isinstance(obj, numbers.Number) unless isnan is specified (except
+    that NumPy booleans are also counted as numbers, like Python booleans).
 
     Args:
         obj (any): the object to check if it's a number
         isnan (bool): an optional additional check to determine whether the number is/isn't NaN
 
     - *New in version 3.2.0:* use `isinstance()` directly
+    - *New in version 3.4.0:* `np.bool_` is a number
     """
     output = isinstance(obj, _numtype)
-    if output and isnan is not None: # It is a number, so can check for nan # pragma: no cover
+    if output and isnan is not None: # It is a number, so can check for nan
         output = (np.isnan(obj) == isnan) # See if they match
     return output
 
@@ -1238,7 +1296,7 @@ def isarray(obj, dtype=None):
         if dtype is None:
             return True
         else:
-            if obj.dtype == dtype: # pragma: no cover
+            if obj.dtype == dtype:
                 return True
             else:
                 return False
@@ -1327,6 +1385,7 @@ def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
     - *New in version 1.1.0:* replaced "skipnone" with "keepnone"; allowed passing kwargs to `np.array()`.
     - *New in version 2.0.1:* added support for pandas Series and DataFrame
     - *New in version 3.1.0:* "asobject" argument; cast mixed-type arrays to object rather than string by default
+    - *New in version 3.4.0:* strings, sets, dict views, and generators are converted to 1-d arrays; `keepnone=True` fixed
     """
     # Handle None
     skipnone = kwargs.pop('skipnone', None)
@@ -1336,12 +1395,14 @@ def toarray(x, keepnone=False, asobject=True, dtype=None, **kwargs):
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
     # Handle different inputs
-    if isnumber(x) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3 or np.array(3)
+    if isnumber(x) or isinstance(x, (str, bytes)) or (isinstance(x, np.ndarray) and not np.shape(x)): # e.g. 3, 'a', or np.array(3)
         x = [x]
     elif isinstance(x, (pd.DataFrame, pd.Series)):
         x = x.values
-    elif x is None and not keepnone:
-        x = []
+    elif isinstance(x, (abc.MappingView, abc.Set, abc.Iterator)): # e.g. dict.keys(), {1,2}, or a generator
+        x = list(x)
+    elif x is None:
+        x = [None] if keepnone else []
 
     # Actually convert to an array
     output = np.array(x, dtype=dtype, **kwargs)
@@ -1407,9 +1468,9 @@ def tolist(obj=None, objtype=None, keepnone=False, coerce='default'):
             coerce = None
         elif coerce == 'default':
             coerce = default_coerce
-        elif coerce == 'tuple': # pragma: no cover
+        elif coerce == 'tuple':
             coerce = default_coerce + (tuple,)
-        elif coerce == 'array': # pragma: no cover
+        elif coerce == 'array':
             coerce = default_coerce + (np.ndarray,)
         elif coerce == 'full':
             coerce = default_coerce + (tuple, np.ndarray)
@@ -1557,7 +1618,7 @@ def mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=Tr
     """
     # Warn about deprecated keys
     renamed = ['strict', 'overwrite', 'copy']
-    if any([k in kwargs for k in renamed]): # pragma: no cover
+    if any([k in kwargs for k in renamed]):
         warnmsg = f'sc.mergedicts() arguments "{strjoin(renamed)}" have been renamed with underscores as of v1.3.3; using these as keywords is undesirable'
         warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
 
@@ -1754,7 +1815,7 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 ##############################################################################
 
 __all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'uniquename',
-            'suggest', 'importbyname', 'importbypath']
+            'suggest', 'importbyname', 'lazyimport', 'importbypath']
 
 
 def strjoin(*args, sep=', '):
@@ -1779,7 +1840,7 @@ def strjoin(*args, sep=', '):
             obj.append(arg)
         elif isiterable(arg):
             obj.extend([str(item) for item in arg])
-        else: # pragma: no cover
+        else:
             obj.append(str(arg))
     output = sep.join(obj)
     return output
@@ -1807,7 +1868,7 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
 
     Args:
         string    (str):      the string to split
-        sep       (str/list): the types of separator to accept (default space or comma, i.e. [' ', ','])
+        sep       (str/list): the separator, or list of separators, to accept (default space or comma, i.e. [' ', ','])
         skipempty (bool):     whether to skip empty entries (i.e. from consecutive delimiters)
         lstrip    (bool):     whether to strip any extra spaces on the left
         rstrip    (bool):     whether to strip any extra spaces on the right
@@ -1818,12 +1879,15 @@ def strsplit(string, sep=None, skipempty=True, lstrip=True, rstrip=True):
         sc.strsplit('a,b,c') # Returns ['a', 'b', 'c']
         sc.strsplit('a, b, c') # Returns ['a', 'b', 'c']
         sc.strsplit('  foo_bar  ', sep='_') # Returns ['foo', 'bar']
+        sc.strsplit('cats and dogs', sep=' and ') # Returns ['cats', 'dogs']
 
-    *New in version 2.0.0.*
+    - *New in version 2.0.0.*
     """
     strlist = []
     if sep is None:
         sep = [' ', ',']
+    elif isinstance(sep, str): # A single separator, not a set of characters
+        sep = [sep]
 
     # Generate a character sequence that isn't in the string
     special = '∙' # Pick an obscure Unicode character
@@ -1856,7 +1920,7 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
     Args:
         command (str): the command to run
         printinput (bool): whether to print the input string
-        printoutput (bool): whether to print the output (default: False if wait=True, True if wait=False)
+        printoutput (bool): whether to print the output if wait=True (if wait=False, output is printed as it comes)
         wait (bool): whether to wait for the process to return (else, return immediately with the subprocess)
 
     **Examples**:
@@ -1874,8 +1938,6 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
         defaults = dict(shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) # Redirect both to the pipe
     else:
         defaults = dict(shell=True, bufsize=0)
-    if printoutput is None:
-        printoutput = False if wait else True
     kwargs = mergedicts(defaults, kwargs)
     if printinput:
         print(command)
@@ -1890,12 +1952,7 @@ def runcommand(command, printinput=False, printoutput=None, wait=True, **kwargs)
             except Exception as E: # If something goes wrong, just leave it # pragma: no cover
                 warnmsg = f'Could not decode bytestring: {E}'
                 warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
-        else: # Run in background
-            if printoutput: # ...but print output as it comes if asked
-                while p.returncode is None:
-                    stdout, stderr = p.communicate()
-                    if stdout: print(stdout) # Usually None, but just in case
-                    if stderr: print(stderr)
+        else: # Run in background, printing output as it comes
             output = p # Return the subprocess instead of the output
     except Exception as E: # pragma: no cover
         output = f'runcommand(): shell command failed: {str(E)}' # This is for a Python error, not a shell error -- those get passed to output
@@ -1988,7 +2045,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
     ```
     """
     try:
-        import jellyfish # To allow as an optional import
+        import jellyfish # Imported here since it's hard to install on some platforms
     except ModuleNotFoundError as e: # pragma: no cover
         raise ModuleNotFoundError('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
 
@@ -2003,7 +2060,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
     mapping = {
         'damerau':     jellyfish.damerau_levenshtein_distance,
         'levenshtein': jellyfish.levenshtein_distance,
-        'jaro':        jaro,
+        'jaro':        lambda a,b: 1 - jaro(a,b), # Convert from similarity to distance
     }
 
     keys = list(mapping.keys())
@@ -2019,7 +2076,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
     # Similarly, stripping whitespace is a free operation. This ensures that something like
     # 'foo ' will match 'Foo' ahead of 'boo '
     for i, s in enumerate(valid_inputs):
-        distance[i]    = dist_func(user_input, s.strip().lower())
+        distance[i]    = dist_func(user_input.strip().lower(), s.strip().lower())
         cs_distance[i] = dist_func(user_input, s.strip())
 
     # If there is a tie for the minimum distance, use the case sensitive comparison
@@ -2058,10 +2115,8 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
                 return suggestions[:n]
 
 
-def _assign_to_namespace(var, obj, namespace=None, overwrite=True): # pragma: no cover
-    """ Helper function to assign an object to the global namespace """
-    if namespace is None:
-        namespace = globals()
+def _assign_to_namespace(var, obj, namespace, overwrite=True):
+    """ Helper function to assign an object to the (caller's) global namespace """
     if var in namespace and not overwrite:
         errormsg = f'Cannot assign to variable "{var}" since it already exists and overwrite=False'
         raise NameError(errormsg)
@@ -2083,8 +2138,8 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
         module (str): name of the module to import
         variable (str): the name of the variable to assign the module to (by default, the module's name)
         path (str/path): optionally load from path instead of by name
-        namespace (dict): the namespace to load the modules into (by default, globals)
-        lazy (bool): whether to create a LazyModule object instead of load the actual module
+        namespace (dict): the namespace to load the modules into (by default, the caller's global namespace)
+        lazy (bool): whether to create a LazyModule object instead of load the actual module (see also `sc.lazyimport()`)
         overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
         die (bool): whether to raise an exception if encountered
         verbose (bool): whether to print a warning if an module can't be imported
@@ -2102,10 +2157,13 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
 
     - *New in version 2.1.0:* "verbose" argument
     - *New in version 3.0.0:* "path" argument
+    - *New in version 3.4.0:* "namespace" defaults to the caller's global namespace
     """
     # Initialize
     if variable is None:
         variable = module
+    if namespace is None:
+        namespace = sys._getframe(1).f_globals # The caller's global namespace
 
     # Map modules to variables
     mapping = {}
@@ -2133,14 +2191,39 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
                 else:   return False
 
         _assign_to_namespace(var=variable, obj=lib, namespace=namespace, overwrite=overwrite)
-        if namespace:
-            namespace[variable] = lib
         libs.append(lib)
 
     if len(libs) == 1:
         libs = libs[0]
 
     return libs
+
+
+def lazyimport(module, variable=None, namespace=None):
+    """
+    Import a module only when it is first used.
+
+    Useful for modules that are slow to import, but aren't always needed. Once
+    an attribute is accessed, the variable is replaced by the actual module.
+
+    Args:
+        module (str): name of the module to import
+        variable (str): the name of the variable to assign the module to (not usually needed)
+        namespace (dict): the namespace to load the module into (by default, the caller's global namespace)
+
+    **Example**:
+
+    ```python
+    plt = sc.lazyimport('matplotlib.pyplot') # Doesn't import pyplot yet
+    plt.plot([1,3,2]) # Imports pyplot, and replaces plt with it
+    ```
+    See also `sc.importbyname()` and `sc.LazyModule()`.
+
+    *New in version 3.4.0.*
+    """
+    if namespace is None:
+        namespace = sys._getframe(1).f_globals # The caller's global namespace
+    return LazyModule(module, variable=variable, namespace=namespace)
 
 
 def importbypath(path, name=None, overwrite=False):
@@ -2210,7 +2293,15 @@ def importbypath(path, name=None, overwrite=False):
         sys.modules[orig_name] = module
 
     # Now actually "execute" the module, i.e. load it into memory
-    spec.loader.exec_module(module)
+    try:
+        spec.loader.exec_module(module)
+    except: # If it fails, don't leave the partially loaded module in sys.modules
+        sys.modules.pop(name, None)
+        if restore:
+            sys.modules[orig_name] = orig_module
+        elif renamed:
+            sys.modules.pop(orig_name, None)
+        raise
 
     # Finally, clean up the original module name
     if restore and not overwrite:
@@ -2242,7 +2333,7 @@ class KeyNotFoundError(KeyError):
     ```
     """
 
-    def __str__(self): # pragma: no cover
+    def __str__(self):
         return Exception.__str__(self)
 
 
@@ -2309,7 +2400,7 @@ class Link:
         try:    self.uid = obj.uid # If the object has a UID, store it separately
         except: self.uid = None # If not, just use None
 
-    def __repr__(self): # pragma: no cover
+    def __repr__(self):
         """ Just use default """
         output  = sc.prepr(self)
         return output
@@ -2320,7 +2411,7 @@ class Link:
             if type(self.obj)==LinkException: # If the link is broken, raise it now
                 raise self.obj
             return self.obj
-        else: # pragma: no cover
+        else:
             self.__init__(obj)
             return
 
@@ -2337,24 +2428,25 @@ class LazyModule:
     """
     Create a "lazy" module that is loaded if and only if an attribute is called.
 
-    Typically not for use by the user, but is used by `sc.importbyname()`.
-
     Args:
         module (str): name of the module to (not) load
-        variable (str): variable name to assign the module to
-        namespace (dict): the namespace to use (if not supplied, globals())
+        variable (str): variable name to assign the module to (in addition to any variables in the namespace that refer to this object)
+        namespace (dict): the namespace to use (if not supplied, the caller's global namespace)
         overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
 
     **Example**:
 
     ```python
-    pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas
+    pd = sc.LazyModule('pandas') # pd is a LazyModule, not actually pandas
     df = pd.DataFrame() # Not only does this work, but pd is now actually pandas
     ```
-    *New in version 2.0.0.*
+    - *New in version 2.0.0.*
+    - *New in version 3.4.0:* "variable" is optional, and "namespace" defaults to the caller's
     """
 
-    def __init__(self, module, variable, namespace=None, overwrite=True):
+    def __init__(self, module, variable=None, namespace=None, overwrite=True):
+        if namespace is None:
+            namespace = sys._getframe(1).f_globals # The caller's global namespace
         self._variable  = variable
         self._module    = module
         self._namespace = namespace
@@ -2363,14 +2455,14 @@ class LazyModule:
 
 
     def __repr__(self):
-        output = f"<sc.LazyModule({self._variable}='{self._module}') at {hex(id(self))}>"
+        output = f"<sc.LazyModule('{self._module}') at {hex(id(self))}>"
         return output
 
 
     def __getattr__(self, attr):
         """ In most cases, when an attribute is retrieved we want to replace this module with the actual one """
         _builtin_keys = ['_variable', '_module', '_namespace', '_overwrite', '_load']
-        if attr in _builtin_keys: # pragma: no cover
+        if attr in _builtin_keys:
             obj = object.__getattribute__(self, attr)
         else:
             obj = self._load(attr)
@@ -2381,7 +2473,11 @@ class LazyModule:
         """ Stop being lazy and load the module """
         var = self._variable
         lib = importlib.import_module(self._module)
-        _assign_to_namespace(var, lib, namespace=self._namespace, overwrite=self._overwrite)
+        if var is not None:
+            _assign_to_namespace(var, lib, namespace=self._namespace, overwrite=self._overwrite)
+        for key,val in list(self._namespace.items()): # Replace any other variables that refer to this object
+            if val is self:
+                self._namespace[key] = lib
         if attr:
             obj = getattr(lib, attr)
         else: # pragma: no cover
@@ -2396,7 +2492,8 @@ class tryexcept(cl.suppress):
     Effectively an alias to `contextlib.suppress()`, which itself is a programmatic
     equivalent to using try-except blocks.
 
-    By default, all errors are caught. If `catch` is not None, then by default
+    By default, all errors are caught (but not e.g. `KeyboardInterrupt`, which is
+    not an `Exception`, unless it is included in `catch`). If `catch` is not None, then by default
     raise all other exceptions; if `die` is an exception (list of exceptions),
     then by default suppress all other exceptions.
 
@@ -2461,8 +2558,9 @@ class tryexcept(cl.suppress):
         catchtypes = []
         if die is None and catch is None: # Default: do not die
             self.defaultdie = False
-        elif die in [True, False, 0, 1]: # It's truthy: use it directly # pragma: no cover
+        elif die in [True, False, 0, 1]: # It's truthy: use it directly
             self.defaultdie = die
+            catchtypes = tolist(catch) # Catch these regardless
         elif die is None and catch is not None: # We're asked to catch some things, so die otherwise
             self.defaultdie = True
             catchtypes = tolist(catch)
@@ -2507,7 +2605,7 @@ class tryexcept(cl.suppress):
 
         if exc_type is not None:
             self.data.append([exc_type, exc_val, traceback])
-            die = (self.defaultdie or issubclass(exc_type, self.dietypes))
+            die = (self.defaultdie or issubclass(exc_type, self.dietypes) or not issubclass(exc_type, Exception)) # Don't catch e.g. KeyboardInterrupt unless asked to
             live = issubclass(exc_type, self.catchtypes)
 
             if self.verbose > 1:
@@ -2527,7 +2625,7 @@ class tryexcept(cl.suppress):
             if die and not live:
                 return
             else:
-                if self.verbose: # Print everything # pragma: no cover
+                if self.verbose: # Print everything
                     print(self.outputstr)
                 return True
 

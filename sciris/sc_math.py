@@ -26,7 +26,7 @@ __all__ = ['approx', 'safedivide', 'findinds', 'findfirst', 'findlast', 'findnea
 def approx(val1=None, val2=None, eps=None, **kwargs):
     """
     Determine whether two scalars (or an array and a scalar) approximately match.
-    Alias for `np.isclose()` and may be removed in future versions.
+    Alias for `np.isclose()`; deprecated, use `np.isclose()` instead.
 
     Args:
         val1 (number or array): the first value
@@ -40,7 +40,11 @@ def approx(val1=None, val2=None, eps=None, **kwargs):
     sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True
     sc.approx([3,12,11.9], 12) # Returns array([False, True, False], dtype=bool)
     ```
+
+    - *New in version 3.4.0:* deprecated
     """
+    warnmsg = 'sc.approx() has been deprecated as of v3.4.0 and will be removed in a future version; use np.isclose() instead'
+    warnings.warn(warnmsg, category=FutureWarning, stacklevel=2)
     if eps is not None:
         kwargs['atol'] = eps # Rename kwarg to match np.isclose()
     output = np.isclose(a=val1, b=val2, **kwargs)
@@ -51,38 +55,65 @@ def safedivide(numerator=None, denominator=None, default=None, eps=None, warn=Fa
     """
     Handle divide-by-zero and divide-by-nan elegantly.
 
+    Wherever the denominator is zero (to within `eps`) or nan, the output is set
+    to `default` instead. The numerator and denominator can each be a scalar or
+    an array (of any shape, so long as the two can be broadcast together); the
+    inputs are never modified.
+
+    Args:
+        numerator   (number or array): the numerator of the division (default 1.0)
+        denominator (number or array): the denominator of the division (default 1.0)
+        default     (number):          the value to use where the denominator is invalid (default 0.0)
+        eps         (float):           absolute tolerance for treating the denominator as zero (default `numpy.isclose()`'s, i.e. 1e-8)
+        warn        (bool):            whether to raise a warning if any invalid denominators were encountered
+
     **Examples**:
 
     ```python
     sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1
     sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5
-    sc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])
+    sc.safedivide(3, np.array([1,3,0]), -1) # Returns array([ 3.,  1., -1.])
+    sc.safedivide(1, np.nan, default=-1) # Returns -1
     ```
+
+    - *New in version 3.4.0:* fixes to denominators and warnings
     """
     # Set some defaults
     if numerator   is None: numerator   = 1.0
     if denominator is None: denominator = 1.0
     if default     is None: default     = 0.0
 
-    # Handle types
-    if isinstance(numerator,   list): numerator   = np.array(numerator)
-    if isinstance(denominator, list): denominator = np.array(denominator)
+    # Handle types: leave scalars as they are, and convert everything else to a numeric array
+    def checkarray(val, label):
+        """ Convert the input to a numeric array, with a helpful error message if not possible """
+        if sc.isnumber(val):
+            return val
+        try:
+            arr = np.asarray(val)
+            assert np.issubdtype(arr.dtype, np.number)
+        except Exception as E:
+            errormsg = f'sc.safedivide() {label} type {type(val)} not understood: must be a number or numeric array'
+            raise TypeError(errormsg) from E
+        return arr
 
-    # Handle the logic
-    invalid = approx(denominator, 0.0, eps=eps)
-    if sc.isnumber(denominator): # The denominator is a scalar
-        if invalid:
-            output = default
-        else: # pragma: no cover
-            output = numerator/denominator
-    elif sc.checktype(denominator, 'array'):
-        if not warn:
-            denominator[invalid] = 1.0 # Replace invalid values with 1
-        output = numerator/denominator
-        output[invalid] = default
-    else: # pragma: no cover # Unclear input, raise exception
-        errormsg = f'Input type {type(denominator)} not understood: must be number or array'
-        raise TypeError(errormsg)
+    num = checkarray(numerator,   'numerator')
+    den = checkarray(denominator, 'denominator')
+
+    # Find the invalid entries: zero (to within eps) or nan
+    atol = 1e-8 if eps is None else eps # Use numpy's default if not supplied
+    invalid = np.isclose(den, 0.0, atol=atol) | np.isnan(den)
+
+    if warn and np.any(invalid):
+        n_invalid = int(np.sum(invalid))
+        warnmsg = f'sc.safedivide(): replacing {n_invalid} zero or nan denominator value(s) with default={default}'
+        warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
+
+    # Handle the logic: replace invalid denominators before dividing, to avoid Numpy warnings
+    if sc.isnumber(num) and sc.isnumber(den): # Both are scalars, so return a scalar
+        output = default if invalid else num/den
+    else:
+        safeden = np.where(invalid, 1.0, den) # Replace invalid values with 1
+        output = np.where(invalid, default, num/safeden)
 
     return output
 
@@ -100,7 +131,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
         arr    (array): the array to find values in
         val    (float): if provided, the value to match
         args   (list):  if provided, additional boolean arrays
-        eps    (float): the precision for matching (default 1e-6, equivalent to `numpy.isclose`'s atol)
+        eps    (float): the precision for matching (default 1e-6, equivalent to `numpy.isclose`'s atol; rtol is 0 unless supplied)
         first  (bool):  whether to return the first matching value (equivalent to ind=0)
         last   (bool):  whether to return the last matching value (equivalent to ind=-1)
         ind    (int):   index of match to retrieve
@@ -130,6 +161,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
 
     # Handle kwargs
     atol = kwargs.pop('atol', eps) # Ensure atol isn't specified twice
+    kwargs.setdefault('rtol', 0) # Otherwise numpy uses a relative tolerance, so e.g. 100000 matches 100001
     if 'val1' in kwargs or 'val2' in kwargs: # pragma: no cover
         arr = kwargs.pop('val1', arr)
         val = kwargs.pop('val2', val)
@@ -156,7 +188,7 @@ def findinds(arr=None, val=None, *args, eps=1e-6, first=False, last=False, ind=N
 
     # Handle any additional inputs
     for arg in arglist:
-        if arg.shape != boolarr.shape: # pragma: no cover
+        if arg.shape != boolarr.shape:
             errormsg = f'Could not handle inputs with shapes {boolarr.shape} vs {arg.shape}'
             raise ValueError(errormsg)
         boolarr *= arg
@@ -211,10 +243,14 @@ def findnearest(series=None, value=None):
     sc.findnearest([2,3,6,3], 6) # returns 2
     sc.findnearest([0,2,4,6,8,10], [3, 4, 5]) # returns array([1, 2, 2])
     ```
+
+    - *New in version 3.4.0:* NaNs in the series are ignored; unsigned integers are handled
     """
     series = sc.toarray(series)
+    if series.dtype.kind == 'u': # Avoid underflow when subtracting
+        series = series.astype(np.int64)
     if not sc.isiterable(value):
-        output = np.argmin(abs(series-value))
+        output = np.nanargmin(abs(series-value))
     else:
         output = []
         for val in value: output.append(findnearest(series, val))
@@ -227,12 +263,12 @@ def count(arr=None, val=None, eps=1e-6, **kwargs):
     Count the number of matching elements.
 
     Similar to `numpy.count_nonzero()`, but allows for slight mismatches (e.g.,
-    floats vs. ints). Equivalent to `len(sc.findinds())`.
+    floats vs. ints). Equivalent to `len(sc.findinds())` for 1D arrays.
 
     Args:
         arr (array): the array to find values in
         val (float): if provided, the value to match
-        eps (float): the precision for matching (default 1e-6, equivalent to `numpy.isclose`'s atol)
+        eps (float): the precision for matching (default 1e-6, equivalent to `numpy.isclose`'s atol; rtol is 0 unless supplied)
         kwargs (dict): passed to `numpy.isclose()`
 
     **Examples**:
@@ -241,9 +277,13 @@ def count(arr=None, val=None, eps=1e-6, **kwargs):
     sc.count(rand(10)<0.5) # returns e.g. 4
     sc.count([2,3,6,3], 3) # returns 2
     ```
-    *New in version 2.0.0.*
+    - *New in version 2.0.0.*
+    - *New in version 3.4.0:* fixed multidimensional arrays
     """
-    output = len(findinds(arr=arr, val=val, eps=eps, **kwargs))
+    inds = findinds(arr=arr, val=val, eps=eps, **kwargs)
+    if isinstance(inds, tuple): # Multidimensional arrays return a tuple of index arrays, one per dimension
+        inds = inds[0]
+    output = len(inds)
     return output
 
 
@@ -277,7 +317,7 @@ def getvalidinds(data=None, filterdata=None): # pragma: no cover
     data = sc.toarray(data)
     if filterdata is None: filterdata = data # So it can work on a single input -- more or less replicates sanitize() then
     filterdata = sc.toarray(filterdata)
-    if filterdata.dtype=='bool': filterindices = filterdata # It's already boolean, so leave it as is
+    if filterdata.dtype=='bool': filterindices = findinds(filterdata) # It's already boolean, so just convert to indices
     else:                        filterindices = findinds(~np.isnan(filterdata)) # Else, assume it's nans that need to be removed
     dataindices = findinds(~np.isnan(data)) # Also check validity of data
     validindices = np.intersect1d(dataindices, filterindices)
@@ -325,7 +365,7 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
         Args:
             data        (arr/list)   : array or list with numbers to be sanitized
             returninds  (bool)       : whether to return indices of non-nan/valid elements, indices are with respect the shape of data
-            replacenans (float/str)  : whether to replace the NaNs with the specified value, or if `True` or a string, using interpolation
+            replacenans (float/str)  : if None or False, remove the NaNs; if a value, replace them with it; if `True` or a string, use interpolation
             defaultval  (float)      : value to return if the sanitized array is empty
             die         (bool)       : whether to raise an exception if the sanitization failed (otherwise return an empty array)
             verbose     (bool)       : whether to print out a warning if no valid values are found
@@ -344,12 +384,15 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
 
         - *New in version 2.0.0:* handle multidimensional arrays
         - *New in version 3.0.0:* return zero-length arrays if all NaN
+        - *New in version 3.4.0:* `replacenans=False` removes NaNs, and `replacenans=0` works for multidimensional data
         """
+        if replacenans is False: # False means remove the NaNs, the same as None
+            replacenans = None
         try:
             data = sc.toarray(data) # Make sure it's an array
             is_multidim = data.ndim > 1
             if is_multidim:
-                if not replacenans:
+                if replacenans is None:
                     errormsg = 'For multidimensional data, NaNs cannot be removed. Set replacenans=<value>, or flatten data before use.'
                     raise ValueError(errormsg)
             inds = np.nonzero(~pd.isna(data))
@@ -365,8 +408,11 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
                         if is_multidim:
                             errormsg = 'Cannot perform interpolation on multidimensional data; use replacenans=<value> instead'
                             raise NotImplementedError(errormsg)
-                        newx = range(len(data)) # Create a new x array the size of the original array
-                        sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
+                        if len(inds): # Can only interpolate if there are valid values
+                            newx = range(len(data)) # Create a new x array the size of the original array
+                            sanitized = smoothinterp(newx, inds, sanitized, method=replacenans, smoothness=0) # Replace nans with interpolated values
+                        else:
+                            sanitized = data.copy() # Otherwise, leave the NaNs
                     else: # pragma: no cover
                         errormsg = f'Interpolation method "{replacenans}" not found: must be "nearest" or "linear"'
                         raise ValueError(errormsg)
@@ -381,10 +427,10 @@ def sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die
                 else:
                     inds = []
 
-                    if verbose: # pragma: no cover
+                    if verbose:
                         if label is None: label = 'these input data'
                         print(f'sc.sanitize(): no valid values found for {label}. Returning 0.')
-        except Exception as E: # pragma: no cover
+        except Exception as E:
             if die:
                 raise E
             else:
@@ -426,7 +472,6 @@ def findnans(data=None, **kwargs):
     return inds
 
 
-_nan_fill = -528876923.87569493 # Define a random value that would never be encountered otherwise
 def nanequal(arr, *args, scalar=False, equal_nan=True):
     """
     Compare two or more arrays for equality element-wise, treating NaN values as equal.
@@ -449,20 +494,18 @@ def nanequal(arr, *args, scalar=False, equal_nan=True):
     arr3 = [3, np.nan, 'foo']
     sc.nanequal(arr3, arr3, arr3, scalar=True) # Returns True
     ```
-    *New in version 3.1.0.*
+    - *New in version 3.1.0.*
+    - *New in version 3.4.0:* fixed float32 vs. float64 NaNs, and `equal_nan=False` with lists
     """
 
     if not len(args): # pragma: no cover
         errormsg = 'Only one array provided; requires 2 or more'
         raise ValueError(errormsg)
 
+    arr = sc.toarray(arr)
     others = [sc.toarray(arg) for arg in args] # Convert everything to an array
-
-    # Remove Nans from base array
     if equal_nan:
-        isnan = pd.isna(arr)
-        arr = sc.toarray(arr).copy()
-        arr[isnan] = _nan_fill # Fill in NaN values
+        arr_isnan = pd.isna(arr)
 
     eqarr = None
 
@@ -473,11 +516,9 @@ def nanequal(arr, *args, scalar=False, equal_nan=True):
             else:
                 return np.array([False])
         else:
-            if equal_nan:
-                isnan = pd.isna(other)
-                other = other.copy()
-                other[isnan] = _nan_fill # Fill in NaN values
             eq = (arr == other) # Do the comparison
+            if equal_nan:
+                eq = eq | (arr_isnan & pd.isna(other)) # NaNs in the same positions count as equal
             if eqarr is None:
                 eqarr = eq
             else:
@@ -575,7 +616,7 @@ def numdigits(n, *args, count_minus=False, count_decimal=False):
         abs_n = abs(n)
         is_decimal = 0 < abs_n < 1
         n_digits = 1
-        if n < 0 and count_minus: # pragma: no cover
+        if n < 0 and count_minus:
             n_digits += 1
         if is_decimal:
             if count_decimal:
@@ -700,10 +741,14 @@ def normalize(arr, minval=0.0, maxval=1.0):
     ```python
     normarr = sc.normalize([2,3,7,27]) # Returns array([0.  , 0.04, 0.2 , 1.  ])
     ```
+
+    - *New in version 3.4.0:* constant input returns `minval` rather than NaN
     """
     out = np.array(arr, dtype=float) # Ensure it's a float so divide works
     out -= out.min()
-    out /= out.max()
+    outmax = out.max()
+    if outmax: # Skip for constant input, which would otherwise be 0/0
+        out /= outmax
     out *= (maxval - minval)
     out += minval
     if isinstance(arr, list): out = out.tolist() # Preserve type
@@ -736,6 +781,7 @@ def inclusiverange(*args, stretch=False, **kwargs):
     ```
 
     - *New in version 3.2.0*: "stretch" argument
+    - *New in version 3.4.0*: the endpoint is no longer dropped due to floating-point error, e.g. `sc.inclusiverange(0, 1.2, 0.2)`
     """
     # Handle args
     if len(args) == 0:
@@ -767,8 +813,10 @@ def inclusiverange(*args, stretch=False, **kwargs):
 
     # Handle case with a non-integer number of steps
     nsteps = (stop-start)/step
-    int_steps = int(nsteps)
-    if not nsteps.is_integer() and not stretch:
+    round_steps = round(nsteps)
+    is_int = abs(nsteps - round_steps) <= 1e-9*max(1, abs(nsteps)) # Allow for floating-point error, e.g. (1.2-0)/0.2 = 5.999999999999999
+    int_steps = round_steps if is_int else int(nsteps)
+    if not is_int and not stretch:
         stop = start + step*int_steps # Create a new stop based on the step
 
     # Actually generate -- can't use arange since handles floating point arithmetic badly, e.g. compare arange(2000, 2020, 0.2) with arange(2000, 2020.2, 0.2)
@@ -777,7 +825,7 @@ def inclusiverange(*args, stretch=False, **kwargs):
     return x
 
 
-def randround(x):
+def randround(x, rng=None):
     """
     Round a float, list, or array probabilistically to the nearest integer. Works
     for both positive and negative values.
@@ -787,6 +835,7 @@ def randround(x):
 
     Args:
         x (int, list, arr): the floating point numbers to probabilistically convert to the nearest integer
+        rng (int/Generator): if provided, the random number generator (or seed for a new one) to use; by default, use NumPy's global generator
 
     Returns:
         Array of integers
@@ -795,17 +844,24 @@ def randround(x):
 
     ```python
     sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
+    sc.randround([0.5, 1.5, 2.5], rng=1) # Use a separate generator, so the global one isn't affected
     ```
 
     - *New in version 1.0.0.*
     - *New in version 3.0.0:* allow arrays of arbitrary shape
+    - *New in version 3.4.0:* "rng" argument
     """
+    if rng is None:
+        rng = np.random
+    elif not hasattr(rng, 'random'): # It's a seed rather than a generator (or RandomState)
+        rng = np.random.default_rng(rng)
+
     if isinstance(x, np.ndarray):
-        output = np.array(np.floor(x+np.random.random(x.shape)), dtype=int)
+        output = np.array(np.floor(x+rng.random(x.shape)), dtype=int)
     elif isinstance(x, list):
-        output = [randround(i) for i in x]
+        output = [randround(i, rng=rng) for i in x]
     else:
-        output = int(np.floor(x+np.random.random()))
+        output = int(np.floor(x+rng.random()))
     return output
 
 
@@ -891,6 +947,7 @@ def sem(a, axis=None, *args, **kwargs):
     Args:
         a (arr): array to calculate the SEM of
         axis (int): axis to calculate the SEM along
+        args (list): passed to `numpy.std`
         kwargs (dict): passed to `numpy.std`
 
     **Example**:
@@ -901,9 +958,10 @@ def sem(a, axis=None, *args, **kwargs):
     ```
 
     - *New in version 3.2.0.*
+    - *New in version 3.4.0:* arguments (e.g. `ddof`) are now passed to `numpy.std`
     """
     a = sc.toarray(a)
-    std = a.std(axis=axis)
+    std = a.std(axis, *args, **kwargs)
     if axis is None:
         n = a.size
     elif sc.isnumber(axis):
@@ -934,7 +992,7 @@ def similarity(*args, method='jaccard'):
         errormsg = 'Provide at least two sets to compare.'
         raise ValueError(errormsg)
     if method not in ('jaccard', 'dice'):
-        errormsg = 'Method must be "jaccard" or "dice", not "{method}"'
+        errormsg = f'Method must be "jaccard" or "dice", not "{method}"'
         raise ValueError(errormsg)
 
     sets = [set(c) for c in args]
@@ -1039,34 +1097,22 @@ def convolve(a, v):
 
     - *New in version 1.3.0.*
     - *New in version 1.3.1:* handling the case where len(a) < len(v)
+    - *New in version 3.4.0:* fixed the case where len(a) < len(v), and integer input
     """
 
     # Handle types
     a = np.array(a)
     v = np.array(v)
 
-    # Perform standard Numpy convolution
-    out = np.convolve(a, v, mode='same')
+    # Perform standard Numpy convolution, and re-weight each point by the kernel weight that overlaps the data
+    num = np.convolve(a, v, mode='same')
+    den = np.convolve(np.ones(len(a)), v, mode='same')
+    out = num/den*v.sum()
 
-    # Handle edge weights
-    len_a = len(a) # Length of input array
-    len_v = len(v) # Length of kernel
-    minlen = min(len_a, len_v)
-    vtot = v.sum() # Total kernel weight
-    len_lhs = minlen // 2 # Number of points to re-weight on LHS
-    len_rhs = (minlen-1) // 2 # Ditto
-    if len_lhs:
-        w_lhs = np.cumsum(v)/vtot # Cumulative sum of kernel weights on the LHS, divided by total weight
-        w_lhs = w_lhs[-1-len_lhs:-1] # Trim to the correct length
-        out[:len_lhs] = out[:len_lhs]/w_lhs # Re-weight
-    if len_rhs:
-        w_rhs = (np.cumsum(v[::-1])[::-1]/vtot) # Ditto, reversed for RHS
-        w_rhs = w_rhs[1:len_rhs+1] # Ditto
-        out[-len_rhs:] = out[-len_rhs:]/w_rhs # Ditto
-
-    # Handle the case where len(v) > len(a)
-    len_diff = max(0, len_v - len_a)
-    if len_diff: # pragma: no cover
+    # Handle the case where len(v) > len(a), since then Numpy returns len(v) points
+    len_a = len(a)
+    len_diff = max(0, len(v) - len_a)
+    if len_diff:
         lhs_trim = len_diff // 2
         out = out[lhs_trim:lhs_trim+len_a]
 
@@ -1091,14 +1137,15 @@ def smooth(data, repeats=None, kernel=None, legacy=False):
     data = np.random.randn(5,5)
     smoothdata = sc.smooth(data)
     ```
-    *New in version 1.3.0:* Fix edge effects.
+    - *New in version 1.3.0:* Fix edge effects.
+    - *New in version 3.4.0:* fixed integer input, short arrays, and 2D arrays with few columns
     """
     if repeats is None:
         repeats = int(np.floor(len(data)/5))
     if kernel is None:
         kernel = [0.25,0.5,0.25]
     kernel = np.array(kernel)
-    output = np.array(data).copy()
+    output = _asfloat(data) # Also makes a copy
 
     # Only convolve the kernel with itself -- equivalent to doing the full convolution multiple times
     v = kernel.copy()
@@ -1131,8 +1178,8 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     """
     Smoothly interpolate over values
 
-    Unlike `np.interp()`, this function does exactly pass
-    through each data point:
+    Unlike `np.interp()`, this function does *not* exactly pass through each
+    data point (unless `smoothness=0`).
 
     Args:
         newx (arr): the points at which to interpolate
@@ -1141,6 +1188,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         smoothness (float): how much to smooth
         growth (float): the growth rate to apply past the ends of the data
         ensurefinite (bool):  ensure all values are finite (including skipping NaNs)
+        keepends (bool): if True, pad the ends with constant values before smoothing (which pulls the ends inward); if False, extrapolate the slope
         method (str): the type of interpolation to use (options are 'linear' or 'nearest')
 
     Returns:
@@ -1169,6 +1217,7 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     ```
 
     - *New in verison 3.0.0:* "ensurefinite" now defaults to True; removed "skipnans" argument
+    - *New in version 3.4.0:* fixed "growth" when all of "newx" is outside the data
     """
     # Ensure arrays and remove NaNs
     if sc.isnumber(newx):  newx = [newx] # Make sure it has dimension
@@ -1251,10 +1300,18 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
         futureindices = findinds(newx>origx[-1])
         if len(pastindices): # If there are past data points
             firstpoint = pastindices[-1]+1
-            newy[pastindices] = newy[firstpoint] * np.exp((newx[pastindices]-newx[firstpoint])*growth) # Get last 'good' data point and apply inverse growth
-        if len(futureindices): # If there are past data points
+            if firstpoint < len(newx): # Get first 'good' data point
+                x0, y0 = newx[firstpoint], newy[firstpoint]
+            else: # Or, if all points are in the past, use the first data point
+                x0, y0 = finiteorigx[0], finiteorigy[0]
+            newy[pastindices] = y0 * np.exp((newx[pastindices]-x0)*growth) # Apply inverse growth
+        if len(futureindices): # If there are future data points
             lastpoint = futureindices[0]-1
-            newy[futureindices] = newy[lastpoint] * np.exp((newx[futureindices]-newx[lastpoint])*growth) # Get last 'good' data point and apply growth
+            if lastpoint >= 0: # Get last 'good' data point
+                x0, y0 = newx[lastpoint], newy[lastpoint]
+            else: # Or, if all points are in the future, use the last data point
+                x0, y0 = finiteorigx[-1], finiteorigy[-1]
+            newy[futureindices] = y0 * np.exp((newx[futureindices]-x0)*growth) # Apply growth
 
     # Add infinities back in, if they exist
     if any(~np.isfinite(origy)): # pragma: no cover # Infinities exist, need to add them back in manually since interp can only handle nan
@@ -1282,6 +1339,11 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
 # For Gaussian functions -- doubles the speed to convert to 32 bit, functions faster than lambdas
 def _arr32(arr): return np.array(arr, dtype=np.float32)
 def _f32(x):     return np.float32(x)
+
+def _asfloat(arr):
+    """ Convert to a new floating-point array, preserving the precision of float input """
+    arr = np.array(arr)
+    return arr if arr.dtype.kind == 'f' else arr.astype(float)
 
 
 def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
@@ -1325,7 +1387,8 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
     # Simple usage
     sc.gauss1d(y)
     ```
-    *New in version 1.3.0.*
+    - *New in version 1.3.0.*
+    - *New in version 3.4.0:* fixed integer input, list input with `use32=False`, and NaNs from float32 underflow
     """
 
     # Swap inputs if x is provided but not y
@@ -1337,10 +1400,8 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
         xi = x
 
     # Convert to arrays
-    try:
-        orig_dtype = y.dtype
-    except: # pragma: no cover
-        orig_dtype = np.float64
+    x, y, xi = _asfloat(x), _asfloat(y), _asfloat(xi)
+    orig_dtype = y.dtype
     if use32:
         x, y, xi, = _arr32(x), _arr32(y), _arr32(xi)
 
@@ -1353,8 +1414,8 @@ def gauss1d(x=None, y=None, xi=None, scale=None, use32=True):
 
     def calc(xi):
         """ Calculate the calculation """
-        dist = (x - xi)/scale
-        weights = np.exp(-dist**2)
+        dist = ((x - xi)/scale)**2
+        weights = np.exp(-(dist - dist.min())) # Subtracting the minimum doesn't change the normalized weights, but avoids underflow
         weights = weights/np.sum(weights)
         val = np.sum(weights*y)
         return val
@@ -1423,6 +1484,7 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
 
     - *New in version 1.3.0.*
     - *New in version 1.3.1:* default arguments; support for 2D inputs
+    - *New in version 3.4.0:* fixed integer input, and NaNs from float32 underflow
     """
     # Swap variables if needed
     if z is None and x is not None: # pragma: no cover
@@ -1448,6 +1510,7 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
         x, y = np.meshgrid(x, y)
 
     # Handle data types
+    z = _asfloat(z)
     orig_dtype = z.dtype
     if xi is None: xi = sc.dcp(x)
     if yi is None: yi = sc.dcp(y)
@@ -1472,7 +1535,7 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
     xi = xi.flatten()
     yi = yi.flatten()
     ni = len(xi)
-    if len(x) != len(y) != len(z): # pragma: no cover
+    if not (len(x) == len(y) == len(z)):
         errormsg = f'Input arrays do not have the same number of elements: x = {len(x)}, y = {len(y)}, z = {len(z)}'
         raise ValueError(errormsg)
     if len(xi) != len(yi): # pragma: no cover
@@ -1482,7 +1545,7 @@ def gauss2d(x=None, y=None, z=None, xi=None, yi=None, scale=1.0, xscale=1.0, ysc
     def calc(xi, yi):
         """ Calculate the calculation """
         dist = ((x - xi)/xsc)**2 + ((y - yi)/ysc)**2
-        weights = np.exp(-dist)
+        weights = np.exp(-(dist - dist.min())) # Subtracting the minimum doesn't change the normalized weights, but avoids underflow
         weights = weights/np.sum(weights)
         val = np.sum(weights*z)
         return val

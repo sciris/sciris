@@ -1,4 +1,4 @@
-# Sciris v3.3.0
+# Sciris v3.4.0
 
 > Fast, flexible tools to simplify scientific Python
 
@@ -7,7 +7,7 @@
 - Signatures are as introspected from the current version; summaries are the first paragraph of each docstring.
 - Aliases are alternative names for the same object; the canonical name is the one listed, and is the one to prefer when writing new code.
 
-This file lists all 274 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
+This file lists all 275 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
 
 ## Links
 
@@ -17,7 +17,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
 ## Math and arrays (sc_math)
 
-- `sc.approx(val1=None, val2=None, eps=None, **kwargs)`: Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()` and may be removed in future versions.
+- `sc.approx(val1=None, val2=None, eps=None, **kwargs)`: Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()`; deprecated, use `np.isclose()` instead. [DEPRECATED]
 
   ```python
   sc.approx(2*6, 11.9999999, eps=1e-6) # Returns True
@@ -202,10 +202,11 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   sc.perturb([1,2,3], 0.1, normal=True) # Returns e.g. array([1.03574377, 2.00286363, 3.53437126])
   ```
 
-- `sc.randround(x)`: Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.
+- `sc.randround(x, rng=None)`: Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.
 
   ```python
   sc.randround(np.random.randn(8)) # Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])
+  sc.randround([0.5, 1.5, 2.5], rng=1) # Use a separate generator, so the global one isn't affected
   ```
 
 - `sc.rolling(data, window=7, operation='mean', replacenans=None, **kwargs)`: Alias to `pandas.Series.rolling()` (window) method to smooth a series.
@@ -220,7 +221,8 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   ```python
   sc.safedivide(numerator=0, denominator=0, default=1, eps=0) # Returns 1
   sc.safedivide(numerator=5, denominator=2.0, default=1, eps=1e-3) # Returns 2.5
-  sc.safedivide(3, np.array([1,3,0]), -1, warn=True) # Returns array([ 3,  1, -1])
+  sc.safedivide(3, np.array([1,3,0]), -1) # Returns array([ 3.,  1., -1.])
+  sc.safedivide(1, np.nan, default=-1) # Returns -1
   ```
 
 - `sc.sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die=True, verbose=False, label=None)`: Sanitize input to remove NaNs. (NB: `sc.sanitize()` and `sc.rmnans()` are aliases.) [aliases: sc.rmnans()]
@@ -381,7 +383,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   df[0,:] = [123,6]; print(df) # Set values for a whole row
   df['y'] = [8,5,0]; print(df) # Set values for a whole column
   df['z'] = [14,14,14]; print(df) # Add new column
-  df.rmcol('z'); print(df) # Remove a column
+  df.popcols('z'); print(df) # Remove a column
   df.addcol('z', [14,14,14]); print(df) # Alternate way to add new column
   df.poprow(1); print(df) # Remove a row
   df.append([555,2,14]); print(df) # Append a new row
@@ -461,17 +463,18 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
       data[datafile] = sc.loadany(datafile)
   ```
 
-- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', **kwargs)`: Convenience function for reading a JSON file (or string).
+- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', default=None, die=None, **kwargs)`: Convenience function for reading a JSON file (or string).
 
   ```python
   json = sc.loadjson('my-file.json')
   json = sc.loadjson(string='{"a":null, "b":[1,2,3]}')
+  cache = sc.loadjson('cache.json', default={}) # Use an empty dict if the file doesn't exist
   ```
 
-- `sc.loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs)`: Load a spreadsheet as a dataframe or a list of lists.
+- `sc.loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=True, asdataframe=None, method='pandas', **kwargs)`: Load a spreadsheet as a dataframe or a list of lists.
 
   ```python
-  df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel(header=1)
+  df = sc.loadspreadsheet('myfile.xlsx') # Alias to pd.read_excel()
   wb = sc.loadspreadsheet('myfile.xlsx', method='openpyxl') # Returns workbook
   data = sc.loadspreadsheet('myfile.xlsx', method='xlrd', asdataframe=False) # Returns raw data; requires xlrd
   ```
@@ -641,10 +644,10 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
   ```python
   thisdir = sc.thisdir() # Get folder of calling file
-  thisdir = sc.thisdir('.') # Ditto (usually)
+  thisdir = sc.thisdir('.') # Current working folder, which is usually the same
   thisdir = sc.thisdir(__file__) # Ditto (usually)
   file_in_same_dir = sc.thisdir(path='new_file.txt')
-  file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
+  file_in_sub_dir = sc.thisdir(path=['..', 'tests', 'mytests.py']) # Merge parent folder with subfolders and a file
   np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
   ```
 
@@ -659,10 +662,10 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
   ```python
   thisdir = sc.thisdir() # Get folder of calling file
-  thisdir = sc.thisdir('.') # Ditto (usually)
+  thisdir = sc.thisdir('.') # Current working folder, which is usually the same
   thisdir = sc.thisdir(__file__) # Ditto (usually)
   file_in_same_dir = sc.thisdir(path='new_file.txt')
-  file_in_sub_dir = sc.thisdir('..', 'tests', 'mytests.py') # Merge parent folder with sufolders and a file
+  file_in_sub_dir = sc.thisdir(path=['..', 'tests', 'mytests.py']) # Merge parent folder with subfolders and a file
   np_dir = sc.thisdir(np) # Get the folder that Numpy is loaded from (assuming "import numpy as np")
   ```
 
@@ -1003,8 +1006,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   fig2 = plt.figure(); plt.plot(np.random.rand(10))
   sc.savefigs([fig1, fig2]) # Save everything to one PDF file
   sc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})
-  sc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')
-  sc.savefigs(fig1, position=[0.3,0.3,0.5,0.5])
+  sc.savefigs([fig1, fig2], folder='/home/me', filetype='svg')
   ```
 
 - `sc.savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs)`: Save a set of Matplotlib artists as a movie.
@@ -1042,7 +1044,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.setaxislim(which=None, ax=None, data=None)`: A small script to determine how the y limits should be set. Looks at all data (a list of arrays) and computes the lower limit to use, e.g.:
 
   ```python
-  sc.setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)
+  sc.setaxislim(data=[np.array([-3,4]), np.array([6,4,6])], ax=ax)
   ```
 
 - `sc.setxlim(data=None, ax=None)`: Alias for `sc.setaxislim(which='x')`
@@ -1228,7 +1230,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   colors = sc.shifthue(colors=[(1,0,0),(0,1,0)], hueshift=0.5)
   ```
 
-- `sc.turbocolormap(apply=False)`: NOTE: as of Matplotlib 3.4.0, this colormap is included by default, and will soon be removed from Sciris.
+- `sc.turbocolormap(apply=False)`: Alias to Matplotlib's turbo colormap, a map similar to Jet, but better. Set apply=True to use immediately.
 
   ```python
   cmap = sc.turbocolormap()
@@ -1262,7 +1264,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   ```
 
 - `sc.memload()`: Takes a snapshot of current fraction of memory usage via `psutil` [aliases: sc.mem_load()]
-- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Parallelization manager
+- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)`: Parallelization manager
 
   ```python
   import sciris as sc
@@ -1279,7 +1281,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   print(P.times)
   ```
 
-- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Execute a function in parallel.
+- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)`: Execute a function in parallel.
 
   ```python
   def f(x):
@@ -1291,7 +1293,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
 ## Profiling and resource monitoring (sc_profiling)
 
-- `sc.benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False)`: Benchmark Python performance
+- `sc.benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, legacy=True, return_timers=False)`: Benchmark Python performance
 
   ```python
   sc.benchmark() # Returns e.g. {'python': 11.43, 'numpy': 236.595}
@@ -1307,13 +1309,13 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   sc.benchmark(parallel=True) # Use all CPUs
   ```
 
-- `sc.checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)`: Checks how much memory the variable or variables in question use by dumping them to file.
+- `sc.checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)`: Checks how much memory the variable or variables in question use, by counting the number of bytes needed to pickle them.
 
   ```python
   import numpy as np
   import sciris as sc
 
-  list_obj = ['label', np.random.rand(2483,589)])
+  list_obj = ['label', np.random.rand(2483,589)]
   sc.checkmem(list_obj)
 
   nested_dict = dict(
@@ -1399,7 +1401,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
       mm.big_operation()
 
   # Explicitly
-  tc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)
+  tc = sc.tracecalls('mysubmodule', exclude='^init_', regex=True, repeats=True)
   tc.start()
   mm.big_operation()
   tc.stop()
@@ -1565,10 +1567,17 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   raise sc.KeyNotFoundError('The key "foo" is not available, but these are: "bar", "cat"')
   ```
 
-- `sc.LazyModule(module, variable, namespace=None, overwrite=True)`: Create a "lazy" module that is loaded if and only if an attribute is called.
+- `sc.lazyimport(module, variable=None, namespace=None)`: Import a module only when it is first used.
 
   ```python
-  pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas
+  plt = sc.lazyimport('matplotlib.pyplot') # Doesn't import pyplot yet
+  plt.plot([1,3,2]) # Imports pyplot, and replaces plt with it
+  ```
+
+- `sc.LazyModule(module, variable=None, namespace=None, overwrite=True)`: Create a "lazy" module that is loaded if and only if an attribute is called.
+
+  ```python
+  pd = sc.LazyModule('pandas') # pd is a LazyModule, not actually pandas
   df = pd.DataFrame() # Not only does this work, but pd is now actually pandas
   ```
 
@@ -1813,7 +1822,6 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
   ```python
   sc.datetoyear('2010-07-01') # Returns approximately 2010.5
-  sc.datetoyear(2010.5) # Returns datetime.date(2010, 7, 2)
   ```
 
 - `sc.day(obj, *args, start_date=None, **kwargs)`: Convert a string, date/datetime object, or int to a day (int), the number of days since the start day. See also `sc.date()` and `sc.daydiff()``. If a start day is not supplied, it returns the number of days into the current year.
@@ -1829,7 +1837,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   diff  = sc.daydiff('2020-03-20', '2020-04-05') # Returns 16
   diffs = sc.daydiff('2020-03-20', '2020-04-05', '2020-05-01') # Returns [16, 26]
 
-  doy = sc.daydiff('2022-03-20') # Returns 79, the number of days since 2022-01-01
+  doy = sc.daydiff('2022-03-20') # Returns 78, the number of days since 2022-01-01
   ```
 
 - `sc.elapsedtimestr(pasttime, maxdays=5, minseconds=10, shortmonths=True)`: Accepts a datetime object or a string in ISO 8601 format and returns a human-readable string explaining when this time was.
@@ -1863,7 +1871,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   sc.randsleep(1) # Sleep for 0-2 s (average 1.0)
   sc.randsleep(2, 0.1) # Sleep for 1.8-2.2 s (average 2.0)
   sc.randsleep([0.5, 1.5]) # Sleep for 0.5-1.5 s
-  sc.randsleeep(low=0.5, high=1.5) # Ditto
+  sc.randsleep(low=0.5, high=1.5) # Ditto
   ```
 
 - `sc.readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbose=False)`: Convenience function for loading a date from a string. If dateformat is None, this function tries a list of standard date types. Note: in most cases `sc.date()` should be used instead.
@@ -1930,7 +1938,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   sc.toc(T, label='slow_func2')
   ```
 
-- `sc.toctic(returntic=False, returntoc=False, *args, **kwargs)`: A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.
+- `sc.toctic(*args, returntic=False, returntoc=False, **kwargs)`: A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.
 
   ```python
   sc.tic()
@@ -1943,7 +1951,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.yeartodate(year, as_date=True, **kwargs)`: Convert a decimal year to a date
 
   ```python
-  sc.yeartodate('2010-07-01') # Returns approximately 2010.5
+  sc.yeartodate(2010.5) # Returns datetime.date(2010, 7, 2)
   ```
 
 
@@ -1977,7 +1985,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   {'a_b': 1, 'a_c_d': 2, 'a_c_e': 3}
   ```
 
-- `sc.getnested(nested, keylist, safe=False, default=None)`: Get the value for the given list of keys
+- `sc.getnested(nested, keylist, safe=False, default=<not given>)`: Get the value for the given list of keys
 
   ```python
   sc.getnested(foo, ['a','b']) # Gets foo['a']['b']
@@ -1989,7 +1997,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   twigs = sc.iternested(foo)
   ```
 
-- `sc.IterObj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs)`: Object iteration manager
+- `sc.IterObj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, aliases=False, **kwargs)`: Object iteration manager
 
   ```python
   import sciris as sc
@@ -2007,7 +2015,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   # [...]
   ```
 
-- `sc.iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, *args, **kwargs)`: Iterate over an object and apply a function to each node (item with or without children).
+- `sc.iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, aliases=False, **kwargs)`: Iterate over an object and apply a function to each node (item with or without children).
 
   ```python
   data = dict(a=dict(x=[1,2,3], y=[4,5,6]), b=dict(foo='string', bar='other_string'))
@@ -2040,7 +2048,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
 - `sc.mergenested(dict1, dict2, die=False, verbose=False, _path=None)`: Merge different nested dictionaries
 - `sc.nestedloop(inputs, loop_order)`: Zip list of lists in order
-- `sc.search(obj, query='<sc_nested_custom_None>', key='<sc_nested_custom_None>', value='<sc_nested_custom_None>', type='<sc_nested_custom_None>', method='exact', **kwargs)`: Find a key/attribute or value within a list, dictionary or object.
+- `sc.search(obj, query=<not given>, key=<not given>, value=<not given>, type=<not given>, method='exact', **kwargs)`: Find a key/attribute or value within a list, dictionary or object.
 
   ```python
   # Create a nested dictionary
@@ -2081,7 +2089,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   ```python
   sc.options(dpi=150) # Larger size
   sc.options(style='simple', font='Rosario') # Change to the "simple" Sciris style with a custom font
-  sc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
+  sc.options.set(fontsize=18, backend='agg') # Multiple changes
   sc.options(interactive=False) # Turn off interactive plots
   sc.options(jupyter=True) # Defaults for Jupyter
   sc.options('defaults') # Reset to default options
@@ -2098,7 +2106,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   ```python
   sc.options(dpi=150) # Larger size
   sc.options(style='simple', font='Rosario') # Change to the "simple" Sciris style with a custom font
-  sc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
+  sc.options.set(fontsize=18, backend='agg') # Multiple changes
   sc.options(interactive=False) # Turn off interactive plots
   sc.options(jupyter=True) # Defaults for Jupyter
   sc.options('defaults') # Reset to default options
@@ -2109,4 +2117,4 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
 - `sc.ddict(...)`: defaultdict(default_factory=None, /, [...]) --> dict with default factory
 
-<!-- Generated by `python make_api.py` for Sciris v3.3.0: llms-full.txt -->
+<!-- Generated by `python make_api.py` for Sciris v3.4.0: llms-full.txt -->
