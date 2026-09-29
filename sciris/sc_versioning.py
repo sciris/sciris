@@ -13,6 +13,7 @@ Highlights:
 
 import os
 import re
+import html
 import time
 import zlib
 import types
@@ -448,7 +449,7 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
     dict_fn = dict if asdict else sc.objdict
 
     # Get calling info
-    calling_info = dict_fn(getcaller(relframe=relframe+1, tostring=False))
+    calling_info = dict_fn(getcaller(relframe=relframe, tostring=False))
 
     # Store metadata
     md = dict_fn(
@@ -568,19 +569,15 @@ def loadmetadata(filename, load_all=False, die=True):
     elif lcfn.endswith('svg'): # pragma: no cover
 
         # Load SVG as text and parse it
-        svg = sc.loadtext(filename).splitlines()
-        flag = _metadataflag + '=' # Start of the line
+        svg = sc.loadtext(filename)
+        flag = _metadataflag + '=' # Start of the metadata
         end = '</'
-
-        found = False
-        for line in svg:
-            if flag in line:
-                found = True
-                break
+        start = svg.find(flag)
 
         # Usual case, can find metadata
-        if found:
-            jsonstr = line[line.find(flag)+len(flag):line.find(end)]
+        if start >= 0:
+            start += len(flag)
+            jsonstr = html.unescape(svg[start:svg.find(end, start)]) # The JSON spans multiple lines, and may include escaped characters
             md = sc.loadjson(string=jsonstr)
 
         # Can't find metadata

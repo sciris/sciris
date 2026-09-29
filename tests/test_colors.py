@@ -54,9 +54,8 @@ def test_colormaps():
     print('Testing vectocolor')
     nanpos = 5
     nancolor = 'sienna'
-    x = np.random.rand(10)
-    x = sc.normalize(x) # To ensure the values span 0-1
-    x[nanpos] = np.nan
+    x = np.linspace(0, 1, 10)
+    x[nanpos] = np.nan # Not the min or max, so the values still span 0-1
     o.veccolors = sc.vectocolor(x, nancolor=nancolor, midpoint=0.3, cmap='turbo')
     assert (o.veccolors[nanpos,:] == sc.sanitizecolor(nancolor, asarray=True, alpha=1)).all()
 

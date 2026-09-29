@@ -1005,8 +1005,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   fig2 = plt.figure(); plt.plot(np.random.rand(10))
   sc.savefigs([fig1, fig2]) # Save everything to one PDF file
   sc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})
-  sc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')
-  sc.savefigs(fig1, position=[0.3,0.3,0.5,0.5])
+  sc.savefigs([fig1, fig2], folder='/home/me', filetype='svg')
   ```
 
 - `sc.savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=None, bitrate=None, interval=None, repeat=False, repeat_delay=None, blit=False, verbose=True, **kwargs)`: Save a set of Matplotlib artists as a movie.
@@ -1044,7 +1043,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.setaxislim(which=None, ax=None, data=None)`: A small script to determine how the y limits should be set. Looks at all data (a list of arrays) and computes the lower limit to use, e.g.:
 
   ```python
-  sc.setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)
+  sc.setaxislim(data=[np.array([-3,4]), np.array([6,4,6])], ax=ax)
   ```
 
 - `sc.setxlim(data=None, ax=None)`: Alias for `sc.setaxislim(which='x')`

@@ -2216,7 +2216,7 @@
       "module": "sc_plotting",
       "signature": "(figs=None, filetype=None, filename=None, folder=None, savefigargs=None, aslist=False, verbose=False, **kwargs)",
       "summary": "Save the requested plots to disk.",
-      "example": "import matplotlib.pyplot as plt\nimport sciris as sc\nfig1 = plt.figure(); plt.plot(np.random.rand(10))\nfig2 = plt.figure(); plt.plot(np.random.rand(10))\nsc.savefigs([fig1, fig2]) # Save everything to one PDF file\nsc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})\nsc.savefigs([fig1, fig2], filepath='/home/me', filetype='svg')\nsc.savefigs(fig1, position=[0.3,0.3,0.5,0.5])",
+      "example": "import matplotlib.pyplot as plt\nimport sciris as sc\nfig1 = plt.figure(); plt.plot(np.random.rand(10))\nfig2 = plt.figure(); plt.plot(np.random.rand(10))\nsc.savefigs([fig1, fig2]) # Save everything to one PDF file\nsc.savefigs(fig2, 'png', filename='myfig.png', savefigargs={'dpi':200})\nsc.savefigs([fig1, fig2], folder='/home/me', filetype='svg')",
       "aliases": [],
       "deprecated": false
     },
@@ -2346,7 +2346,7 @@
       "module": "sc_plotting",
       "signature": "(which=None, ax=None, data=None)",
       "summary": "A small script to determine how the y limits should be set. Looks at all data (a list of arrays) and computes the lower limit to use, e.g.:",
-      "example": "sc.setaxislim([np.array([-3,4]), np.array([6,4,6])], ax)",
+      "example": "sc.setaxislim(data=[np.array([-3,4]), np.array([6,4,6])], ax=ax)",
       "aliases": [],
       "deprecated": false
     },
