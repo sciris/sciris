@@ -85,9 +85,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-bfd64266a099ba3d9a6cb1a21780adaa.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -668,7 +668,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="sciris.sc_profiling.LimitExceeded">LimitExceeded</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sc_profiling.LimitExceeded()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Custom exception for use with the <a href="../api/sc_profiling.html#sciris.sc_profiling.resourcemonitor" title="0"><code>sc.resourcemonitor()</code></a> monitor.</p>
-<p>It inherits from <a href="https://docs.python.org/3/library/exceptions.html#MemoryError" title="1"><code>MemoryError</code></a> since this is the most similar built-in Python except, and it inherits from <a href="https://docs.python.org/3/library/exceptions.html#KeyboardInterrupt" title="1"><code>KeyboardInterrupt</code></a> since this is the means by which the monitor interrupts the main Python thread.</p>
+<p>It inherits from <a href="https://docs.python.org/3/builtins/exceptions.html#MemoryError" title="1"><code>MemoryError</code></a> since this is the most similar built-in Python except, and it inherits from <a href="https://docs.python.org/3/builtins/exceptions.html#KeyboardInterrupt" title="1"><code>KeyboardInterrupt</code></a> since this is the means by which the monitor interrupts the main Python thread.</p>
 </section>
 <section id="sciris.sc_profiling.cprofile" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_profiling.cprofile">cprofile</h3>
@@ -708,57 +708,57 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>sort</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
-<td>the column to sort by (default “cumpct”)</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
+<td>the column to sort by (default “cumtime”)</td>
 <td><code>'cumtime'</code></td>
 </tr>
 <tr class="even">
 <td>columns</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>what columns to show; options are “default” (above), “brief” (just func, cumtime, selftime), and “full” (as default plus percall and separate line numbers)</td>
 <td><code>'default'</code></td>
 </tr>
 <tr class="odd">
 <td>mintime</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>exclude function times below this value</td>
 <td><code>0.001</code></td>
 </tr>
 <tr class="even">
 <td>maxitems</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>only include up to this many functions in the output</td>
 <td><code>100</code></td>
 </tr>
 <tr class="odd">
 <td>maxfunclen</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>maximum length of the function name to print</td>
 <td><code>40</code></td>
 </tr>
 <tr class="even">
 <td>maxpathlen</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>maximum length of the function path to print</td>
 <td><code>40</code></td>
 </tr>
 <tr class="odd">
 <td>use_ms</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, convert to milliseconds; if None, scale if and only if all durations are &lt;1 second</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>stripdirs</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to strip folder information from the file paths</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
 <td>show</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to show results of the profiling as soon as it’s complete</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -909,65 +909,65 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>follow</td>
 <td><code>function</code></td>
 <td>The function, list of functions, class, or module to be followed in the profiler; if None, defaults to the run function</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>private</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a> / <a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default <code>'__init__'</code>)</td>
 <td><code>'__init__'</code></td>
 </tr>
 <tr class="even">
 <td>include</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>if a class/module is supplied, include only functions matching this string</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>exclude</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>if a class/module is supplied, exclude functions matching this string</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>unwrap</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if true (default), then unwrap functions wrapped by decorators (otherwise, the decorator is profiled)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
 <td>skipzero</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>skip functions with 0 time (i.e.&nbsp;that were not run); default false (i.e.&nbsp;do include them)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>do_run</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to run immediately (default: true)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
 <td>print_stats</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to print the statistics of the profile to stdout (default True)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>verbose</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>list the functions to be profiled</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
 <td>args</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>Passed to the function to be run</td>
 <td><code>()</code></td>
 </tr>
 <tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>Passed to the function to be run</td>
 <td><code>{}</code></td>
 </tr>
@@ -1100,21 +1100,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td>inplace</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, modify this instance in place</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="odd">
 <td>swap</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, put “other” first</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>overwrite</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, overwrite duplicates (with the one that took more time)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1151,27 +1151,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>bytime</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, order events by total time rather than actual order</td>
 <td><code>1</code></td>
 </tr>
 <tr class="even">
 <td>maxentries</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>how many entries to show</td>
 <td><code>10</code></td>
 </tr>
 <tr class="odd">
 <td>figkwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <a href="https://matplotlib.org/stable/api/figure_api.html#module-plt.figure" title="1"><code>plt.figure()</code></a></td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>barkwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <code>plt.bar()</code></td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1195,9 +1195,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>disp</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to display results (<code>self.disp()</code>) after run; if None, use <code>self.verbose</code> value</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1221,7 +1221,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>bytime</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>if 1, sort by increasing time (default); if -1, sort by decreasing; if 0, do not sort by time</td>
 <td><code>1</code></td>
 </tr>
@@ -1261,69 +1261,69 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>mem</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>maximum virtual memory allowed (as a fraction of total RAM)</td>
 <td><code>0.9</code></td>
 </tr>
 <tr class="even">
 <td>cpu</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>maximum CPU usage (NB: included for completeness only; typically one would not terminate a process just due to high CPU usage)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>time</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>maximum time limit in seconds</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>interval</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>how frequently to check memory/CPU usage (in seconds)</td>
 <td><code>1.0</code></td>
 </tr>
 <tr class="odd">
 <td>label</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>an optional label to use while printing out progress</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>start</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to start the resource monitor on initialization (else call <code>start()</code>)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
 <td>die</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to raise an exception if the resource limit is exceeded</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="even">
 <td>kill_children</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to kill child processes (if False, will not work with multiprocessing)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
 <td>kill_parent</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to also kill the parent process (will usually exit Python interpreter in the process)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>callback</td>
 <td><code>func</code></td>
 <td>optional callback if the resource limit is exceeded</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>verbose</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>detail to print out (default: if exceeded; True: every step; False: no output)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1408,9 +1408,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>label</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>optional label for printing progress</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1439,7 +1439,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Trace all function calls.</p>
-<p>Alias to <code>sys.steprofile()</code>.</p>
+<p>Alias to <a href="https://docs.python.org/3/library/sys.html#sys.setprofile" title="1"><code>sys.setprofile()</code></a>.</p>
 <section id="parameters-8" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-8">Parameters</h4>
 <table class="caption-top table">
@@ -1454,39 +1454,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>trace</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a> / <code>regex</code></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a> / <code>regex</code></td>
 <td>the module(s)/file(s) to trace calls from (’’ matches all, but this is usually undesirable)</td>
 <td><code>'&lt;default&gt;'</code></td>
 </tr>
 <tr class="even">
 <td>exclude</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a> / <code>regex</code></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a> / <code>regex</code></td>
 <td>a list of modules/files to exclude (default excludes builtins; set to None to not exclude anything)</td>
 <td><code>'&lt;default&gt;'</code></td>
 </tr>
 <tr class="odd">
 <td>regex</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
-<td>whether to interpret trace and exclude as regexes rather than simple string matching</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to interpret trace and exclude as regexes rather than simple string matching; a call matches if the regex is found anywhere in its file path or its name (e.g.&nbsp;“^init_” matches functions whose names start with “init_”)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>repeats</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to record repeat calls of the same function (default False)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="odd">
 <td>custom</td>
 <td><code>func</code></td>
 <td>if provided, use this rather than the built in logic for checking for matches</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>verbose</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>how much information to print (False=silent, None=default, True=debug)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1498,7 +1498,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    mm.big_operation()</span>
 <span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Explicitly</span></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>tc <span class="op">=</span> sc.tracecalls(<span class="st">'*mysubmodule*'</span>, exclude<span class="op">=</span><span class="st">'^init*'</span>, regex<span class="op">=</span><span class="va">True</span>, repeats<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>tc <span class="op">=</span> sc.tracecalls(<span class="st">'mysubmodule'</span>, exclude<span class="op">=</span><span class="st">'^init_'</span>, regex<span class="op">=</span><span class="va">True</span>, repeats<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>tc.start()</span>
 <span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>mm.big_operation()</span>
 <span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>tc.stop()</span>
@@ -1506,6 +1506,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><em>New in version 3.2.0.</em></li>
 <li><em>New in version 3.2.1:</em> “custom” argument added; “kwargs” removed</li>
+<li><em>New in version 3.4.0:</em> regexes are searched for in the file path, qualified name, and function name separately</li>
 </ul>
 </section>
 <section id="methods-3" class="level4">
@@ -1558,15 +1559,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>expected</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#set">set</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a> / <a href="https://docs.python.org/3/library/functions.html#any">any</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#set">set</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a> / <a href="https://docs.python.org/3/builtins/functions.html#any">any</a></td>
 <td>if a list of set of strings, check those function names; if object(s) or classes are supplied, check each method</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>die</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>raise an exception if any expected function calls were not called</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1619,7 +1620,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#sciris.sc_profiling.checkmem">checkmem</a></td>
-<td>Checks how much memory the variable or variables in question use by dumping</td>
+<td>Checks how much memory the variable or variables in question use, by</td>
 </tr>
 <tr class="odd">
 <td><a href="#sciris.sc_profiling.checkram">checkram</a></td>
@@ -1643,8 +1644,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    which<span class="op">=</span><span class="st">'python, numpy'</span>,</span>
 <span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    parallel<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    return_timers<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    legacy<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    return_timers<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Benchmark Python performance</p>
 <p>Performs a set of standard operations in both Python and Numpy and times how long they take. Results are returned in terms of millions of operations per second (MOPS). With default settings, this function should take very approximately 0.1 s to run (depending on the machine, of course!).</p>
 <p>For Python, these operations are: for loops, list append/indexing, dict set/get, and arithmetic. For Numpy, these operations are: random floats, random ints, addition, and multiplication.</p>
@@ -1662,39 +1664,45 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>repeats</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>the number of times to repeat each test</td>
 <td><code>5</code></td>
 </tr>
 <tr class="even">
 <td>scale</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>the scale factor to use for the size of the loops/arrays (default 1e3 for Python and 1e6 for NumPy)</td>
 <td><code>1</code></td>
 </tr>
 <tr class="odd">
 <td>verbose</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>print out the results after each repeat</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>which</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>whether to run Python tests, Numpy tests, or both (default)</td>
 <td><code>'python, numpy'</code></td>
 </tr>
 <tr class="odd">
 <td>parallel</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a> / <a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a> / <a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>whether to run the tests across all cores</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
+<td>legacy</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>if True, use NumPy’s legacy random number generator, so results are comparable with earlier versions (NB: dominated by generating random integers); if False, use the new generator, which weights the four NumPy operations more evenly (NB: NumPy results are considerably higher, typically 2-4x depending on the machine)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="odd">
 <td>return_timers</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, return the timer objects instead of the “MOPS” results</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1738,6 +1746,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><em>New in version 3.0.0.</em></li>
 <li><em>New in version 3.1.0:</em> “parallel” argument; increased default scale</li>
 <li><em>New in version 3.2.4:</em> replaced “python” and “numpy” arguments with “which”</li>
+<li><em>New in version 3.4.0:</em> “legacy” argument</li>
 </ul>
 </section>
 </section>
@@ -1754,7 +1763,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
 <span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Checks how much memory the variable or variables in question use by dumping them to file.</p>
+<p>Checks how much memory the variable or variables in question use, by counting the number of bytes needed to pickle them.</p>
 <p>Note on the different functions:</p>
 <pre><code>- `sc.memload()` checks current total system memory consumption
 - `sc.checkram()` checks RAM (virtual memory) used by the current Python process
@@ -1773,56 +1782,56 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>var</td>
-<td><a href="https://docs.python.org/3/library/functions.html#any">any</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#any">any</a></td>
 <td>the variable being checked</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>descend</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether or not to descend one level into the object</td>
 <td><code>1</code></td>
 </tr>
 <tr class="odd">
 <td>order</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>order in which to list items: “size” (default), “alphabetical”, or “none”</td>
 <td><code>'size'</code></td>
 </tr>
 <tr class="even">
 <td>compresslevel</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
-<td>level of compression to use when saving to file (typically 0)</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
+<td>if nonzero, report the size after gzip compression at this level</td>
 <td><code>0</code></td>
 </tr>
 <tr class="odd">
 <td>maxitems</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>the maximum number of separate entries to check the size of</td>
 <td><code>1000</code></td>
 </tr>
 <tr class="even">
 <td>subtotals</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
-<td>whether to include subtotals for different levels of depth</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to include subtotals for different levels of depth (each subtotal is the size of the whole object, so it counts objects shared between items once)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
 <td>plot</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if descending, show the results as a pie chart</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>verbose</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a> or <a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a> or <a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>detail to print, if &gt;1, print repr of objects along the way</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="odd">
 <td>**kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
-<td>passed to <a href="../api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>used internally for recursion</td>
 <td><code>{}</code></td>
 </tr>
 </tbody>
@@ -1831,7 +1840,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>list_obj <span class="op">=</span> [<span class="st">'label'</span>, np.random.rand(<span class="dv">2483</span>,<span class="dv">589</span>)])</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>list_obj <span class="op">=</span> [<span class="st">'label'</span>, np.random.rand(<span class="dv">2483</span>,<span class="dv">589</span>)]</span>
 <span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>sc.checkmem(list_obj)</span>
 <span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>nested_dict <span class="op">=</span> <span class="bu">dict</span>(</span>
@@ -1848,7 +1857,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>    cat <span class="op">=</span> np.random.rand(<span class="dv">5</span>,<span class="dv">10</span>),</span>
 <span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a>sc.checkmem(nested_dict)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>New in version 3.0.0:</em> descend multiple levels; dataframe output; “alphabetical” renamed “order”</p>
+<ul>
+<li><em>New in version 3.0.0:</em> descend multiple levels; dataframe output; “alphabetical” renamed “order”</li>
+<li><em>New in version 3.4.0:</em> sizes are computed in memory rather than by saving to disk</li>
+</ul>
 </section>
 </section>
 <section id="sciris.sc_profiling.checkram" class="level3">
@@ -1877,7 +1889,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>    strict<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Enumerate all functions in the supplied arguments; used in <a href="../api/sc_profiling.html#sciris.sc_profiling.profile" title="0"><code>sc.profile()</code></a>.</p>
-<p>If module(s) are supplied, recursively search them for functions and classes. If class(es) are supplied, search them for methods. Otherwise, search input(s) for functions.</p>
+<p>If module(s) are supplied, recursively search them for functions and classes. If class(es) are supplied, search them (and their base classes) for methods. Otherwise, search input(s) for functions.</p>
 <section id="parameters-12" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-12">Parameters</h4>
 <table class="caption-top table">
@@ -1892,33 +1904,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>args</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>the arguments to parse for functions; can be modules, classes, or functions.</td>
 <td><code>()</code></td>
 </tr>
 <tr class="even">
 <td>private</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a> / <a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>if True and a class is supplied, follow private functions; if a string/list, follow only those private functions (default <code>'__init__'</code>)</td>
 <td><code>'__init__'</code></td>
 </tr>
 <tr class="odd">
 <td>include</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>if a class/module is supplied, include only functions matching this string</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>exclude</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>if a class/module is supplied, exclude functions matching this string</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>strict</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, raise an exception if something is not a function, rather than recurse into it</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1954,13 +1966,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>follow</td>
 <td><code>function</code></td>
 <td>The function or list of functions to be followed in the profiler; if None, defaults to the run function</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>show_results</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to print the statistics of the profile to stdout</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="even">
 <td>args, kwargs</td>
@@ -2434,7 +2446,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.3.0 (2026-08-08).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.4.0 (2026-09-28).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

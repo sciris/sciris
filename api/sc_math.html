@@ -85,9 +85,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-bfd64266a099ba3d9a6cb1a21780adaa.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -611,26 +611,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#parameters-16" id="toc-parameters-16" class="nav-link" data-scroll-target="#parameters-16">Parameters</a></li>
   </ul></li>
-  <li><a href="#sciris.sc_math.safedivide" id="toc-sciris.sc_math.safedivide" class="nav-link" data-scroll-target="#sciris.sc_math.safedivide">safedivide</a></li>
-  <li><a href="#sciris.sc_math.sanitize" id="toc-sciris.sc_math.sanitize" class="nav-link" data-scroll-target="#sciris.sc_math.sanitize">sanitize</a>
+  <li><a href="#sciris.sc_math.safedivide" id="toc-sciris.sc_math.safedivide" class="nav-link" data-scroll-target="#sciris.sc_math.safedivide">safedivide</a>
   <ul class="collapse">
   <li><a href="#parameters-17" id="toc-parameters-17" class="nav-link" data-scroll-target="#parameters-17">Parameters</a></li>
   </ul></li>
-  <li><a href="#sciris.sc_math.sem" id="toc-sciris.sc_math.sem" class="nav-link" data-scroll-target="#sciris.sc_math.sem">sem</a>
+  <li><a href="#sciris.sc_math.sanitize" id="toc-sciris.sc_math.sanitize" class="nav-link" data-scroll-target="#sciris.sc_math.sanitize">sanitize</a>
   <ul class="collapse">
   <li><a href="#parameters-18" id="toc-parameters-18" class="nav-link" data-scroll-target="#parameters-18">Parameters</a></li>
   </ul></li>
-  <li><a href="#sciris.sc_math.similarity" id="toc-sciris.sc_math.similarity" class="nav-link" data-scroll-target="#sciris.sc_math.similarity">similarity</a>
+  <li><a href="#sciris.sc_math.sem" id="toc-sciris.sc_math.sem" class="nav-link" data-scroll-target="#sciris.sc_math.sem">sem</a>
   <ul class="collapse">
   <li><a href="#parameters-19" id="toc-parameters-19" class="nav-link" data-scroll-target="#parameters-19">Parameters</a></li>
   </ul></li>
-  <li><a href="#sciris.sc_math.smooth" id="toc-sciris.sc_math.smooth" class="nav-link" data-scroll-target="#sciris.sc_math.smooth">smooth</a>
+  <li><a href="#sciris.sc_math.similarity" id="toc-sciris.sc_math.similarity" class="nav-link" data-scroll-target="#sciris.sc_math.similarity">similarity</a>
   <ul class="collapse">
   <li><a href="#parameters-20" id="toc-parameters-20" class="nav-link" data-scroll-target="#parameters-20">Parameters</a></li>
   </ul></li>
-  <li><a href="#sciris.sc_math.smoothinterp" id="toc-sciris.sc_math.smoothinterp" class="nav-link" data-scroll-target="#sciris.sc_math.smoothinterp">smoothinterp</a>
+  <li><a href="#sciris.sc_math.smooth" id="toc-sciris.sc_math.smooth" class="nav-link" data-scroll-target="#sciris.sc_math.smooth">smooth</a>
   <ul class="collapse">
   <li><a href="#parameters-21" id="toc-parameters-21" class="nav-link" data-scroll-target="#parameters-21">Parameters</a></li>
+  </ul></li>
+  <li><a href="#sciris.sc_math.smoothinterp" id="toc-sciris.sc_math.smoothinterp" class="nav-link" data-scroll-target="#sciris.sc_math.smoothinterp">smoothinterp</a>
+  <ul class="collapse">
+  <li><a href="#parameters-22" id="toc-parameters-22" class="nav-link" data-scroll-target="#parameters-22">Parameters</a></li>
   <li><a href="#returns-1" id="toc-returns-1" class="nav-link" data-scroll-target="#returns-1">Returns</a></li>
   </ul></li>
   </ul></li>
@@ -797,7 +800,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="sciris.sc_math.approx" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_math.approx">approx</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sc_math.approx(val1<span class="op">=</span><span class="va">None</span>, val2<span class="op">=</span><span class="va">None</span>, eps<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Determine whether two scalars (or an array and a scalar) approximately match. Alias for <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#np.isclose" title="1"><code>np.isclose()</code></a> and may be removed in future versions.</p>
+<p>Determine whether two scalars (or an array and a scalar) approximately match. Alias for <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#np.isclose" title="1"><code>np.isclose()</code></a>; deprecated, use <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#np.isclose" title="1"><code>np.isclose()</code></a> instead.</p>
 <section id="parameters" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
 <table class="caption-top table">
@@ -814,23 +817,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>val1</td>
 <td><code>number</code> or <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
 <td>the first value</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>val2</td>
 <td><code>number</code></td>
 <td>the second value</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>eps</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>absolute tolerance</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to np.isclose()</td>
 <td><code>{}</code></td>
 </tr>
@@ -839,6 +842,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Examples</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sc.approx(<span class="dv">2</span><span class="op">*</span><span class="dv">6</span>, <span class="fl">11.9999999</span>, eps<span class="op">=</span><span class="fl">1e-6</span>) <span class="co"># Returns True</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>sc.approx([<span class="dv">3</span>,<span class="dv">12</span>,<span class="fl">11.9</span>], <span class="dv">12</span>) <span class="co"># Returns array([False, True, False], dtype=bool)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 3.4.0:</em> deprecated</li>
+</ul>
 </section>
 </section>
 <section id="sciris.sc_math.cat" class="level3">
@@ -859,13 +865,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>args</td>
-<td><a href="https://docs.python.org/3/library/functions.html#any">any</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#any">any</a></td>
 <td>items to concatenate into an array</td>
 <td><code>()</code></td>
 </tr>
 <tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <a href="https://numpy.org/doc/stable/reference/generated/numpy.concatenate.html#numpy.concatenate" title="1"><code>numpy.concatenate</code></a></td>
 <td><code>{}</code></td>
 </tr>
@@ -926,6 +932,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><em>New in version 1.3.0.</em></li>
 <li><em>New in version 1.3.1:</em> handling the case where len(a) &lt; len(v)</li>
+<li><em>New in version 3.4.0:</em> fixed the case where len(a) &lt; len(v), and integer input</li>
 </ul>
 </section>
 </section>
@@ -933,7 +940,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="sciris.sc_math.count">count</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sc_math.count(arr<span class="op">=</span><span class="va">None</span>, val<span class="op">=</span><span class="va">None</span>, eps<span class="op">=</span><span class="fl">1e-06</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Count the number of matching elements.</p>
-<p>Similar to <a href="https://numpy.org/doc/stable/reference/generated/numpy.count_nonzero.html#numpy.count_nonzero" title="1"><code>numpy.count_nonzero()</code></a>, but allows for slight mismatches (e.g., floats vs.&nbsp;ints). Equivalent to <code>len(sc.findinds())</code>.</p>
+<p>Similar to <a href="https://numpy.org/doc/stable/reference/generated/numpy.count_nonzero.html#numpy.count_nonzero" title="1"><code>numpy.count_nonzero()</code></a>, but allows for slight mismatches (e.g., floats vs.&nbsp;ints). Equivalent to <code>len(sc.findinds())</code> for 1D arrays.</p>
 <section id="parameters-3" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
 <table class="caption-top table">
@@ -950,23 +957,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>arr</td>
 <td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
 <td>the array to find values in</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>val</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>if provided, the value to match</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>eps</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
-<td>the precision for matching (default 1e-6, equivalent to <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#numpy.isclose" title="1"><code>numpy.isclose</code></a>’s atol)</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
+<td>the precision for matching (default 1e-6, equivalent to <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#numpy.isclose" title="1"><code>numpy.isclose</code></a>’s atol; rtol is 0 unless supplied)</td>
 <td><code>1e-06</code></td>
 </tr>
 <tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#numpy.isclose" title="1"><code>numpy.isclose()</code></a></td>
 <td><code>{}</code></td>
 </tr>
@@ -975,7 +982,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Examples</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>sc.count(rand(<span class="dv">10</span>)<span class="op">&lt;</span><span class="fl">0.5</span>) <span class="co"># returns e.g. 4</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>sc.count([<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">6</span>,<span class="dv">3</span>], <span class="dv">3</span>) <span class="co"># returns 2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>New in version 2.0.0.</em></p>
+<ul>
+<li><em>New in version 2.0.0.</em></li>
+<li><em>New in version 3.4.0:</em> fixed multidimensional arrays</li>
+</ul>
 </section>
 </section>
 <section id="sciris.sc_math.dataindex" class="level3">
@@ -1026,53 +1036,53 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>arr</td>
 <td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
 <td>the array to find values in</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>val</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>if provided, the value to match</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>args</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>if provided, additional boolean arrays</td>
 <td><code>()</code></td>
 </tr>
 <tr class="even">
 <td>eps</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
-<td>the precision for matching (default 1e-6, equivalent to <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#numpy.isclose" title="1"><code>numpy.isclose</code></a>’s atol)</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
+<td>the precision for matching (default 1e-6, equivalent to <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#numpy.isclose" title="1"><code>numpy.isclose</code></a>’s atol; rtol is 0 unless supplied)</td>
 <td><code>1e-06</code></td>
 </tr>
 <tr class="odd">
 <td>first</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to return the first matching value (equivalent to ind=0)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>last</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to return the last matching value (equivalent to ind=-1)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="odd">
 <td>ind</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>index of match to retrieve</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>die</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to raise an exception if first or last is true and no matches were found</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#numpy.isclose" title="1"><code>numpy.isclose()</code></a></td>
 <td><code>{}</code></td>
 </tr>
@@ -1129,13 +1139,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>series</td>
 <td><a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
 <td>the array of numbers to look for nearest matches in</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>value</td>
 <td><code>scalar</code> or <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
 <td>the number or numbers to compare against</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1144,6 +1154,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>sc.findnearest([<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">6</span>,<span class="dv">3</span>], <span class="dv">6</span>) <span class="co"># returns 2</span></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>sc.findnearest([<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">6</span>,<span class="dv">3</span>], <span class="dv">6</span>) <span class="co"># returns 2</span></span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>sc.findnearest([<span class="dv">0</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">8</span>,<span class="dv">10</span>], [<span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>]) <span class="co"># returns array([1, 2, 2])</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 3.4.0:</em> NaNs in the series are ignored; unsigned integers are handled</li>
+</ul>
 </section>
 </section>
 <section id="sciris.sc_math.gauss1d" class="level3">
@@ -1167,31 +1180,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>x</td>
 <td><code>arr</code></td>
 <td>1D list of x coordinates</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>y</td>
 <td><code>arr</code></td>
 <td>1D list of y values at each of the x coordinates</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>xi</td>
 <td><code>arr</code></td>
 <td>1D list of points to calculate the interpolated y</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>scale</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>how much smoothing to apply (by default, width of 5 data points)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>use32</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>convert arrays to 32-bit floats (doubles speed for large arrays)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1219,7 +1232,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Simple usage</span></span>
 <span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>sc.gauss1d(y)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>New in version 1.3.0.</em></p>
+<ul>
+<li><em>New in version 1.3.0.</em></li>
+<li><em>New in version 3.4.0:</em> fixed integer input, list input with <code>use32=False</code>, and NaNs from float32 underflow</li>
+</ul>
 </section>
 </section>
 <section id="sciris.sc_math.gauss2d" class="level3">
@@ -1254,61 +1270,61 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>x</td>
 <td><code>arr</code></td>
 <td>1D or 2D array of x coordinates (if None, take from z)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>y</td>
 <td><code>arr</code></td>
 <td>ditto, for y</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>z</td>
 <td><code>arr</code></td>
 <td>1D or 2D array of z values at each of the (x,y) points</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>xi</td>
 <td><code>arr</code></td>
 <td>1D or 2D array of points to calculate the interpolated Z; if None, same as x</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>yi</td>
 <td><code>arr</code></td>
 <td>ditto, for y</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>scale</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>overall scale factor</td>
 <td><code>1.0</code></td>
 </tr>
 <tr class="odd">
 <td>xscale</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>ditto, just for x</td>
 <td><code>1.0</code></td>
 </tr>
 <tr class="even">
 <td>yscale</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>ditto, just for y</td>
 <td><code>1.0</code></td>
 </tr>
 <tr class="odd">
 <td>grid</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, then return Z at a grid of (xi,yi) rather than at points</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>use32</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>convert arrays to 32-bit floats (doubles speed for large arrays)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1343,6 +1359,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><em>New in version 1.3.0.</em></li>
 <li><em>New in version 1.3.1:</em> default arguments; support for 2D inputs</li>
+<li><em>New in version 3.4.0:</em> fixed integer input, and NaNs from float32 underflow</li>
 </ul>
 </section>
 </section>
@@ -1381,31 +1398,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>start</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>value to start at</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>stop</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>value to stop at</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
 <td>step</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>step size</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>stretch</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, adjust the step size to end exactly at stop if needed</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="odd">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <a href="https://numpy.org/doc/stable/reference/generated/numpy.linspace.html#numpy.linspace" title="1"><code>numpy.linspace</code></a></td>
 <td><code>{}</code></td>
 </tr>
@@ -1420,6 +1437,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> sc.inclusiverange(<span class="dv">0</span>, <span class="dv">10</span>, <span class="dv">3</span>, stretch<span class="op">=</span><span class="va">True</span>) <span class="co"># Like np.linspace(0,10,int(10/3)+1)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><em>New in version 3.2.0</em>: “stretch” argument</li>
+<li><em>New in version 3.4.0</em>: the endpoint is no longer dropped due to floating-point error, e.g.&nbsp;<code>sc.inclusiverange(0, 1.2, 0.2)</code></li>
 </ul>
 </section>
 </section>
@@ -1461,13 +1479,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="odd">
 <td>full</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to return a full data structure</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <a href="https://numpy.org/doc/stable/reference/generated/numpy.polyfit.html#numpy.polyfit" title="1"><code>numpy.polyfit</code></a></td>
 <td><code>{}</code></td>
 </tr>
@@ -1509,15 +1527,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td>args</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>one or more arrays to compare to</td>
 <td><code>()</code></td>
 </tr>
 <tr class="odd">
 <td>scalar</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to return a true/false value (else return the array)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1528,7 +1546,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>arr3 <span class="op">=</span> [<span class="dv">3</span>, np.nan, <span class="st">'foo'</span>]</span>
 <span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>sc.nanequal(arr3, arr3, arr3, scalar<span class="op">=</span><span class="va">True</span>) <span class="co"># Returns True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>New in version 3.1.0.</em></p>
+<ul>
+<li><em>New in version 3.1.0.</em></li>
+<li><em>New in version 3.4.0:</em> fixed float32 vs.&nbsp;float64 NaNs, and <code>equal_nan=False</code> with lists</li>
+</ul>
 </section>
 </section>
 <section id="sciris.sc_math.normalize" class="level3">
@@ -1555,13 +1576,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td>minval</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>minimum value in rescaled array</td>
 <td><code>0.0</code></td>
 </tr>
 <tr class="odd">
 <td>maxval</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>maximum value in rescaled array</td>
 <td><code>1.0</code></td>
 </tr>
@@ -1569,6 +1590,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <p><strong>Example</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>normarr <span class="op">=</span> sc.normalize([<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">7</span>,<span class="dv">27</span>]) <span class="co"># Returns array([0.  , 0.04, 0.2 , 1.  ])</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 3.4.0:</em> constant input returns <code>minval</code> rather than NaN</li>
+</ul>
 </section>
 </section>
 <section id="sciris.sc_math.normsum" class="level3">
@@ -1595,9 +1619,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td>total</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>amount to sum to (default 1)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1627,27 +1651,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>n</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a> / <a href="https://docs.python.org/3/library/functions.html#float">float</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a> / <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/functions.html#float">float</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a> / <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
 <td>number or list of numbers</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>args</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>additional numbers</td>
 <td><code>()</code></td>
 </tr>
 <tr class="odd">
 <td>count_minus</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to count the minus sign as a digit</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>count_decimal</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to count the decimal point as a digit</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1682,27 +1706,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>n</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>number of points; or an array to perturb</td>
 <td><code>1</code></td>
 </tr>
 <tr class="even">
 <td>span</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>width of distribution on either side of 1 (or standard deviation if normal=True)</td>
 <td><code>0.5</code></td>
 </tr>
 <tr class="odd">
 <td>randseed</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>seed passed to the reseed Numpy’s random number generator</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>normal</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to use a normal distribution instead of uniform</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1719,7 +1743,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sciris.sc_math.randround" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_math.randround">randround</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>sc_math.randround(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>sc_math.randround(x, rng<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.</p>
 <section id="adapted-from" class="level4 doc-section doc-section-adapted-from">
 <h4 class="doc-section doc-section-adapted-from anchored" data-anchor-id="adapted-from">Adapted from</h4>
@@ -1739,9 +1763,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>x</td>
-<td>(<a href="https://docs.python.org/3/library/functions.html#int">int</a>, <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a>, <code>arr</code>)</td>
+<td>(<a href="https://docs.python.org/3/builtins/functions.html#int">int</a>, <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a>, <code>arr</code>)</td>
 <td>the floating point numbers to probabilistically convert to the nearest integer</td>
 <td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>rng</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <code>Generator</code></td>
+<td>if provided, the random number generator (or seed for a new one) to use; by default, use NumPy’s global generator</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1770,10 +1800,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>sc.randround(np.random.randn(<span class="dv">8</span>)) <span class="co"># Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>sc.randround(np.random.randn(<span class="dv">8</span>)) <span class="co"># Returns e.g. array([-1,  0,  1, -2,  2,  0,  0,  0])</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>sc.randround([<span class="fl">0.5</span>, <span class="fl">1.5</span>, <span class="fl">2.5</span>], rng<span class="op">=</span><span class="dv">1</span>) <span class="co"># Use a separate generator, so the global one isn't affected</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><em>New in version 1.0.0.</em></li>
 <li><em>New in version 3.0.0:</em> allow arrays of arbitrary shape</li>
+<li><em>New in version 3.4.0:</em> “rng” argument</li>
 </ul>
 </section>
 </section>
@@ -1795,31 +1827,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>data</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a> / <code>arr</code></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a> / <code>arr</code></td>
 <td>the 1D or 2D data to be smoothed</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>window</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>the length of the window</td>
 <td><code>7</code></td>
 </tr>
 <tr class="odd">
 <td>operation</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>the operation to perform: ‘mean’ (default), ‘median’, ‘sum’, or ‘none’</td>
 <td><code>'mean'</code></td>
 </tr>
 <tr class="even">
 <td>replacenans</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a> / <a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a> / <a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>if None, leave NaNs; if False, remove them; if a value, replace with that value; if the string ‘nearest’ or ‘linear’, do interpolation (see <code>sc.rmnans()</code> for details)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.rolling.html#pandas.Series.rolling" title="1"><code>pandas.Series.rolling()</code></a></td>
 <td><code>{}</code></td>
 </tr>
@@ -1840,10 +1872,60 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>    warn<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Handle divide-by-zero and divide-by-nan elegantly.</p>
+<p>Wherever the denominator is zero (to within <code>eps</code>) or nan, the output is set to <code>default</code> instead. The numerator and denominator can each be a scalar or an array (of any shape, so long as the two can be broadcast together); the inputs are never modified.</p>
+<section id="parameters-17" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-17">Parameters</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>numerator</td>
+<td><code>number</code> or <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>the numerator of the division (default 1.0)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>denominator</td>
+<td><code>number</code> or <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td>the denominator of the division (default 1.0)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>default</td>
+<td><code>number</code></td>
+<td>the value to use where the denominator is invalid (default 0.0)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="even">
+<td>eps</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
+<td>absolute tolerance for treating the denominator as zero (default <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#numpy.isclose" title="1"><code>numpy.isclose()</code></a>’s, i.e.&nbsp;1e-8)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
+</tr>
+<tr class="odd">
+<td>warn</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to raise a warning if any invalid denominators were encountered</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+</tbody>
+</table>
 <p><strong>Examples</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>sc.safedivide(numerator<span class="op">=</span><span class="dv">0</span>, denominator<span class="op">=</span><span class="dv">0</span>, default<span class="op">=</span><span class="dv">1</span>, eps<span class="op">=</span><span class="dv">0</span>) <span class="co"># Returns 1</span></span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>sc.safedivide(numerator<span class="op">=</span><span class="dv">5</span>, denominator<span class="op">=</span><span class="fl">2.0</span>, default<span class="op">=</span><span class="dv">1</span>, eps<span class="op">=</span><span class="fl">1e-3</span>) <span class="co"># Returns 2.5</span></span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>sc.safedivide(<span class="dv">3</span>, np.array([<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">0</span>]), <span class="op">-</span><span class="dv">1</span>, warn<span class="op">=</span><span class="va">True</span>) <span class="co"># Returns array([ 3,  1, -1])</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>sc.safedivide(<span class="dv">3</span>, np.array([<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">0</span>]), <span class="op">-</span><span class="dv">1</span>) <span class="co"># Returns array([ 3.,  1., -1.])</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>sc.safedivide(<span class="dv">1</span>, np.nan, default<span class="op">=-</span><span class="dv">1</span>) <span class="co"># Returns -1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 3.4.0:</em> fixes to denominators and warnings</li>
+</ul>
+</section>
 </section>
 <section id="sciris.sc_math.sanitize" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_math.sanitize">sanitize</h3>
@@ -1858,8 +1940,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Sanitize input to remove NaNs. (NB: <a href="../api/sc_math.html#sciris.sc_math.sanitize" title="0"><code>sc.sanitize()</code></a> and <code>sc.rmnans()</code> are aliases.)</p>
 <p>Returns an array with the sanitized data. If <code>replacenans=True</code>, the sanitized array is of the same length/size as data. If <code>replacenans=False</code>, the sanitized array may be shorter than data.</p>
-<section id="parameters-17" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-17">Parameters</h4>
+<section id="parameters-18" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-18">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1885,7 +1967,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>replacenans (float/str)</td>
 <td></td>
-<td>whether to replace the NaNs with the specified value, or if <a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a> or a string, using interpolation</td>
+<td>if None or False, remove the NaNs; if a value, replace them with it; if <a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a> or a string, use interpolation</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
@@ -1924,6 +2006,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><em>New in version 2.0.0:</em> handle multidimensional arrays</li>
 <li><em>New in version 3.0.0:</em> return zero-length arrays if all NaN</li>
+<li><em>New in version 3.4.0:</em> <code>replacenans=False</code> removes NaNs, and <code>replacenans=0</code> works for multidimensional data</li>
 </ul>
 </section>
 </section>
@@ -1932,8 +2015,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>sc_math.sem(a, axis<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Calculate the standard error of the mean (SEM).</p>
 <p>Shortcut (for a 1D array) to <code>array.std()/np.sqrt(len(array))</code>.</p>
-<section id="parameters-18" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-18">Parameters</h4>
+<section id="parameters-19" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-19">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1952,13 +2035,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td>axis</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>axis to calculate the SEM along</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
+<td>args</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
+<td>passed to <a href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="1"><code>numpy.std</code></a></td>
+<td><code>()</code></td>
+</tr>
+<tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <a href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="1"><code>numpy.std</code></a></td>
 <td><code>{}</code></td>
 </tr>
@@ -1969,6 +2058,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>sem <span class="op">=</span> sc.sem(data) <span class="co"># Roughly 0.1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><em>New in version 3.2.0.</em></li>
+<li><em>New in version 3.4.0:</em> arguments (e.g.&nbsp;<code>ddof</code>) are now passed to <a href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="1"><code>numpy.std</code></a></li>
 </ul>
 </section>
 </section>
@@ -1977,8 +2067,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>sc_math.similarity(<span class="op">*</span>args, method<span class="op">=</span><span class="st">'jaccard'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Compute pair-wise similarity for two or more sets</p>
 <p>If two arguments, returns a scalar similarity between 0 and 1. If three or more, compute the matrix of similarities. Similarity is computed by default via the Jaccard index, which is the length of the intersection of the sets divided by the length of their union.</p>
-<section id="parameters-19" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-19">Parameters</h4>
+<section id="parameters-20" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-20">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1991,13 +2081,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>*args</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#set">set</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a> / <code>arr</code></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#set">set</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a> / <code>arr</code></td>
 <td>Two or more iterables to compute the</td>
 <td><code>()</code></td>
 </tr>
 <tr class="even">
 <td>method</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>Similarity metric: ‘jaccard’ (default) or ‘dice’</td>
 <td><code>'jaccard'</code></td>
 </tr>
@@ -2013,8 +2103,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>sc_math.smooth(data, repeats<span class="op">=</span><span class="va">None</span>, kernel<span class="op">=</span><span class="va">None</span>, legacy<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Very simple function to smooth a 1D or 2D array.</p>
 <p>See also <a href="../api/sc_math.html#sciris.sc_math.gauss1d" title="0"><code>sc.gauss1d()</code></a> for simple Gaussian smoothing.</p>
-<section id="parameters-20" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-20">Parameters</h4>
+<section id="parameters-21" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-21">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2033,28 +2123,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td>repeats</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>number of times to apply smoothing (by default, scale to be 1/5th the length of data)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>kernel</td>
 <td><code>arr</code></td>
 <td>the smoothing kernel to use (default: <code>[0.25, 0.5, 0.25]</code>)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>legacy</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, use the old (pre-1.3.0) method of calculation that doesn’t correct for edge effects</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
 <p><strong>Example</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> np.random.randn(<span class="dv">5</span>,<span class="dv">5</span>)</span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>smoothdata <span class="op">=</span> sc.smooth(data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><em>New in version 1.3.0:</em> Fix edge effects.</p>
+<ul>
+<li><em>New in version 1.3.0:</em> Fix edge effects.</li>
+<li><em>New in version 3.4.0:</em> fixed integer input, short arrays, and 2D arrays with few columns</li>
+</ul>
 </section>
 </section>
 <section id="sciris.sc_math.smoothinterp" class="level3">
@@ -2070,9 +2163,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span><span class="st">'linear'</span>,</span>
 <span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Smoothly interpolate over values</p>
-<p>Unlike <a href="https://numpy.org/doc/stable/reference/generated/numpy.interp.html#np.interp" title="1"><code>np.interp()</code></a>, this function does exactly pass through each data point:</p>
-<section id="parameters-21" class="level4 doc-section doc-section-parameters">
-<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-21">Parameters</h4>
+<p>Unlike <a href="https://numpy.org/doc/stable/reference/generated/numpy.interp.html#np.interp" title="1"><code>np.interp()</code></a>, this function does <em>not</em> exactly pass through each data point (unless <code>smoothness=0</code>).</p>
+<section id="parameters-22" class="level4 doc-section doc-section-parameters">
+<h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-22">Parameters</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2087,41 +2180,47 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>newx</td>
 <td><code>arr</code></td>
 <td>the points at which to interpolate</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>origx</td>
 <td><code>arr</code></td>
 <td>the original x coordinates</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>origy</td>
 <td><code>arr</code></td>
 <td>the original y coordinates</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>smoothness</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>how much to smooth</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>growth</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>the growth rate to apply past the ends of the data</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>ensurefinite</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>ensure all values are finite (including skipping NaNs)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
+<td>keepends</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>if True, pad the ends with constant values before smoothing (which pulls the ends inward); if False, extrapolate the slope</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
 <td>method</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>the type of interpolation to use (options are ‘linear’ or ‘nearest’)</td>
 <td><code>'linear'</code></td>
 </tr>
@@ -2171,6 +2270,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb57-17"><a href="#cb57-17" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><em>New in verison 3.0.0:</em> “ensurefinite” now defaults to True; removed “skipnans” argument</li>
+<li><em>New in version 3.4.0:</em> fixed “growth” when all of “newx” is outside the data</li>
 </ul>
 
 
@@ -2612,7 +2712,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.3.0 (2026-08-08).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.4.0 (2026-09-28).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

@@ -85,9 +85,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-bfd64266a099ba3d9a6cb1a21780adaa.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -539,6 +539,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#useful-attributes-and-properties" id="toc-useful-attributes-and-properties" class="nav-link" data-scroll-target="#useful-attributes-and-properties">Useful attributes and properties</a></li>
   <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a>
   <ul class="collapse">
+  <li><a href="#sciris.sc_parallel.Parallel.close" id="toc-sciris.sc_parallel.Parallel.close" class="nav-link" data-scroll-target="#sciris.sc_parallel.Parallel.close">close</a></li>
   <li><a href="#sciris.sc_parallel.Parallel.disp" id="toc-sciris.sc_parallel.Parallel.disp" class="nav-link" data-scroll-target="#sciris.sc_parallel.Parallel.disp">disp</a></li>
   <li><a href="#sciris.sc_parallel.Parallel.finalize" id="toc-sciris.sc_parallel.Parallel.finalize" class="nav-link" data-scroll-target="#sciris.sc_parallel.Parallel.finalize">finalize</a></li>
   <li><a href="#sciris.sc_parallel.Parallel.init" id="toc-sciris.sc_parallel.Parallel.init" class="nav-link" data-scroll-target="#sciris.sc_parallel.Parallel.init">init</a></li>
@@ -552,6 +553,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#sciris.sc_parallel.Parallel.set_defaults" id="toc-sciris.sc_parallel.Parallel.set_defaults" class="nav-link" data-scroll-target="#sciris.sc_parallel.Parallel.set_defaults">set_defaults</a></li>
   <li><a href="#sciris.sc_parallel.Parallel.set_method" id="toc-sciris.sc_parallel.Parallel.set_method" class="nav-link" data-scroll-target="#sciris.sc_parallel.Parallel.set_method">set_method</a></li>
   <li><a href="#sciris.sc_parallel.Parallel.set_ncpus" id="toc-sciris.sc_parallel.Parallel.set_ncpus" class="nav-link" data-scroll-target="#sciris.sc_parallel.Parallel.set_ncpus">set_ncpus</a></li>
+  <li><a href="#sciris.sc_parallel.Parallel.stop" id="toc-sciris.sc_parallel.Parallel.stop" class="nav-link" data-scroll-target="#sciris.sc_parallel.Parallel.stop">stop</a></li>
   <li><a href="#sciris.sc_parallel.Parallel.validate_args" id="toc-sciris.sc_parallel.Parallel.validate_args" class="nav-link" data-scroll-target="#sciris.sc_parallel.Parallel.validate_args">validate_args</a></li>
   </ul></li>
   </ul></li>
@@ -638,17 +640,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    capture<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    lbkwargs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>func_kwargs,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    start_method<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>func_kwargs,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Parallelization manager</p>
 <p>For arguments and usage documentation, see <a href="../api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a>. Briefly, this class validates input arguments, sets the number of CPUs, creates a process (or thread) pool, starts the jobs running, retrieves the results from each job, and processes them into outputs.</p>
 <section id="useful-methods" class="level4 doc-section doc-section-useful-methods">
 <h4 class="doc-section doc-section-useful-methods anchored" data-anchor-id="useful-methods">Useful methods</h4>
-<p>reset(): reset the Parallel object to its initial pre-run state run_async(): the method that actually executes the parallelization (NB, used with every method, not only async ones) monitor(): monitor the progress of an asynchronous run finalize(): get the results from each job and process it run(): shortcut to calling run_async() followed by finalize()</p>
+<p>reset(): reset the Parallel object to its initial pre-run state run_async(): the method that actually executes the parallelization (NB, used with every method, not only async ones) monitor(): monitor the progress of an asynchronous run finalize(): get the results from each job and process it close(): close the pool and shut down the manager (called automatically by finalize()) stop(): don’t start any more jobs; jobs already running will finish run(): shortcut to calling run_async() followed by finalize()</p>
 </section>
 <section id="useful-attributes-and-properties" class="level4 doc-section doc-section-useful-attributes-and-properties">
 <h4 class="doc-section doc-section-useful-attributes-and-properties anchored" data-anchor-id="useful-attributes-and-properties">Useful attributes and properties</h4>
-<p>running (bool): whether or not the jobs are running ready (bool): whether or not the jobs are ready status (str): a string description of the current state (not run, running, or done) jobs (list): a list of jobs to run or being run (empty prior to run) results (list): list of all results (the output from the jobs; empty prior to run) success (list): whether each job completed successfully (true/false) exceptions (list): if not, store the exceptions that were raised times (dict): timing information on when the jobs were started, when they finished, and how long each job took</p>
+<p>running (bool): whether or not the jobs are running ready (bool): whether or not the jobs are ready status (str): a string description of the current state (not run, running, or done) jobs (list): a list of jobs to run or being run (empty prior to run) results (list): list of all results (the output from the jobs; empty prior to run) success (list): whether each job completed successfully (true/false) skipped (list): whether each job was skipped because the run was stopped (true/false) exceptions (list): if not, store the exceptions that were raised times (dict): timing information on when the jobs were started, when they finished, and how long each job took</p>
 <p><strong>Example</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -665,6 +668,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><em>New in version 3.0.0.</em></li>
 <li><em>New in version 3.1.0:</em> “globaldict” argument</li>
+<li><em>New in version 3.4.0:</em> <code>close()</code> and <code>stop()</code> methods</li>
 </ul>
 </section>
 <section id="methods" class="level4">
@@ -678,56 +682,64 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
+<td><a href="#sciris.sc_parallel.Parallel.close">close</a></td>
+<td>Close the pool and shut down the manager (if any); called automatically by finalize()</td>
+</tr>
+<tr class="even">
 <td><a href="#sciris.sc_parallel.Parallel.disp">disp</a></td>
 <td>Display the full representation of the object</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#sciris.sc_parallel.Parallel.finalize">finalize</a></td>
 <td>Get results from the jobs and close the pool</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#sciris.sc_parallel.Parallel.init">init</a></td>
 <td>Perform all remaining initialization steps; this can safely be called after object creation</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#sciris.sc_parallel.Parallel.make_argslist">make_argslist</a></td>
 <td>Construct argument list</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#sciris.sc_parallel.Parallel.make_pool">make_pool</a></td>
 <td>Make the pool and map function</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#sciris.sc_parallel.Parallel.monitor">monitor</a></td>
 <td>Monitor progress – only usable with async</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#sciris.sc_parallel.Parallel.process_results">process_results</a></td>
 <td>Parse the returned results dict into separate lists</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#sciris.sc_parallel.Parallel.reset">reset</a></td>
 <td>Reset to the pre-run state</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#sciris.sc_parallel.Parallel.run">run</a></td>
 <td>Actually run the parallelization</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#sciris.sc_parallel.Parallel.run_async">run_async</a></td>
 <td>Choose how to run in parallel, and do it</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#sciris.sc_parallel.Parallel.set_defaults">set_defaults</a></td>
 <td>Define defaults for parallelization</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="#sciris.sc_parallel.Parallel.set_method">set_method</a></td>
 <td>Choose which method to use for parallelization</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="#sciris.sc_parallel.Parallel.set_ncpus">set_ncpus</a></td>
 <td>Configure number of CPUs</td>
+</tr>
+<tr class="odd">
+<td><a href="#sciris.sc_parallel.Parallel.stop">stop</a></td>
+<td>Stop the run early: jobs that have already started will finish, but no new jobs will start</td>
 </tr>
 <tr class="even">
 <td><a href="#sciris.sc_parallel.Parallel.validate_args">validate_args</a></td>
@@ -735,78 +747,88 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
+<section id="sciris.sc_parallel.Parallel.close" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.close">close</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.close()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Close the pool and shut down the manager (if any); called automatically by finalize()</p>
+</section>
 <section id="sciris.sc_parallel.Parallel.disp" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.disp">disp</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Display the full representation of the object</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.finalize" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.finalize">finalize</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.finalize(</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    get_results<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    close_pool<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    process_results<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.finalize(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    get_results<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    close_pool<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    process_results<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Get results from the jobs and close the pool</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.init" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.init">init</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.init()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.init()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Perform all remaining initialization steps; this can safely be called after object creation</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.make_argslist" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.make_argslist">make_argslist</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.make_argslist()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.make_argslist()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Construct argument list</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.make_pool" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.make_pool">make_pool</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.make_pool()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.make_pool()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Make the pool and map function</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.monitor" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.monitor">monitor</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.monitor(interval<span class="op">=</span><span class="fl">0.1</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.monitor(interval<span class="op">=</span><span class="fl">0.1</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Monitor progress – only usable with async</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.process_results" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.process_results">process_results</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.process_results()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.process_results()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Parse the returned results dict into separate lists</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.reset" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.reset">reset</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.reset()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.reset()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Reset to the pre-run state</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.run" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.run">run</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.run()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.run()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Actually run the parallelization</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.run_async" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.run_async">run_async</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.run_async()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.run_async()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Choose how to run in parallel, and do it</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.set_defaults" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.set_defaults">set_defaults</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.set_defaults()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.set_defaults()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Define defaults for parallelization</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.set_method" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.set_method">set_method</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.set_method()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.set_method()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Choose which method to use for parallelization</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.set_ncpus" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.set_ncpus">set_ncpus</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.set_ncpus()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.set_ncpus()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Configure number of CPUs</p>
+</section>
+<section id="sciris.sc_parallel.Parallel.stop" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.stop">stop</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.stop()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Stop the run early: jobs that have already started will finish, but no new jobs will start</p>
 </section>
 <section id="sciris.sc_parallel.Parallel.validate_args" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_parallel.Parallel.validate_args">validate_args</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.validate_args()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.Parallel.validate_args()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Validate iterarg and iterkwargs</p>
 </section>
 </section>
@@ -846,12 +868,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <section id="sciris.sc_parallel.cpu_count" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_parallel.cpu_count">cpu_count</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.cpu_count()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.cpu_count()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Alias to <a href="https://docs.python.org/3/library/multiprocessing.html#multiprocessing.cpu_count" title="1"><code>multiprocessing.cpu_count()</code></a></p>
 </section>
 <section id="sciris.sc_parallel.cpuload" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_parallel.cpuload">cpuload</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.cpuload(interval<span class="op">=</span><span class="fl">0.1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.cpuload(interval<span class="op">=</span><span class="fl">0.1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Takes a snapshot of current CPU usage via <code>psutil</code></p>
 <section id="parameters" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
@@ -867,7 +889,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>interval</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>number of seconds over which to estimate CPU load</td>
 <td><code>0.1</code></td>
 </tr>
@@ -901,17 +923,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sciris.sc_parallel.loadbalancer" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_parallel.loadbalancer">loadbalancer</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.loadbalancer(</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    maxcpu<span class="op">=</span><span class="fl">0.9</span>,</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    maxmem<span class="op">=</span><span class="fl">0.9</span>,</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    interval<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    cpu_interval<span class="op">=</span><span class="fl">0.1</span>,</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    maxtime<span class="op">=</span><span class="dv">36000</span>,</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.loadbalancer(</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    maxcpu<span class="op">=</span><span class="fl">0.9</span>,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    maxmem<span class="op">=</span><span class="fl">0.9</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    interval<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    cpu_interval<span class="op">=</span><span class="fl">0.1</span>,</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    maxtime<span class="op">=</span><span class="dv">36000</span>,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Delay execution while CPU load is too high – a very simple load balancer.</p>
 <section id="parameters-1" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h4>
@@ -982,12 +1004,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Examples</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simplest usage -- delay if CPU or memory load is &gt;80%</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>sc.loadbalancer()</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Use a maximum CPU load of 50%, maximum memory of 90%, and stagger the start by process number</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> nproc <span class="kw">in</span> processlist:</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    sc.loadbalancer(maxload<span class="op">=</span><span class="fl">0.5</span>, maxmem<span class="op">=</span><span class="fl">0.8</span>, index<span class="op">=</span>nproc)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simplest usage -- delay if CPU or memory load is &gt;80%</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>sc.loadbalancer()</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Use a maximum CPU load of 50%, maximum memory of 90%, and stagger the start by process number</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> nproc <span class="kw">in</span> processlist:</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    sc.loadbalancer(maxload<span class="op">=</span><span class="fl">0.5</span>, maxmem<span class="op">=</span><span class="fl">0.8</span>, index<span class="op">=</span>nproc)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><em>New in version 2.0.0:</em> <code>maxmem</code> argument; <code>maxload</code> renamed <code>maxcpu</code></li>
 <li><em>New in version 3.0.0:</em> <code>maxcpu</code> and <code>maxmem</code> set to 0.9 by default</li>
@@ -997,7 +1019,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sciris.sc_parallel.memload" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_parallel.memload">memload</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.memload()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.memload()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Takes a snapshot of current fraction of memory usage via <code>psutil</code></p>
 <p>Note on the different functions:</p>
 <pre><code>- `sc.memload()` checks current total system memory consumption
@@ -1030,30 +1052,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sciris.sc_parallel.parallelize" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_parallel.parallelize">parallelize</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.parallelize(</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    func,</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    iterarg<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    iterkwargs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    args<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    kwargs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    ncpus<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    maxcpu<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    maxmem<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>    interval<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>    parallelizer<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    serial<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    progress<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    callback<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    globaldict<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>    capture<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>    lbkwargs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>func_kwargs,</span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>sc_parallel.parallelize(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    func,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    iterarg<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    iterkwargs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    args<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    kwargs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    ncpus<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    maxcpu<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    maxmem<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    interval<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    parallelizer<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    serial<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    progress<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    callback<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>    globaldict<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>    capture<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    lbkwargs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>    start_method<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>func_kwargs,</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Execute a function in parallel.</p>
 <p>Most simply, <a href="../api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> acts as a shortcut for using <code>pool.map</code>. However, it also provides flexibility in how arguments are passed to the function, load balancing, etc.</p>
 <p>Either or both of <code>iterarg</code> or <code>iterkwargs</code> can be used. <code>iterarg</code> can be an iterable or an integer; if the latter, it will run the function that number of times and not pass the argument to the function (which may be useful for running “embarrassingly parallel” simulations). <code>iterkwargs</code> is a dict of iterables; each iterable must be the same length (and the same length of <code>iterarg</code>, if it exists), and each dict key will be used as a kwarg to the called function. Any other kwargs passed to <a href="../api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> will also be passed to the function.</p>
-<p>This function can either use a fixed number of CPUs or allocate dynamically based on load. If <code>ncpus</code> is <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a>, then it will allocate the number of CPUs dynamically. Memory (<code>maxmem</code>) and CPU load (<code>maxcpu</code>) limits can also be specified.</p>
+<p>This function can either use a fixed number of CPUs or allocate dynamically based on load. If <code>ncpus</code> is <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>, then it will allocate the number of CPUs dynamically. Memory (<code>maxmem</code>) and CPU load (<code>maxcpu</code>) limits can also be specified.</p>
 <section id="parameters-2" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h4>
 <table class="caption-top table">
@@ -1141,7 +1164,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>callback (func)</td>
 <td></td>
-<td>an optional function to call from each worker</td>
+<td>an optional function to call from each worker after each job; it receives a dict of data on the job; if it sets <code>data['stop'] = True</code>, no further jobs are started (see Example 7)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
@@ -1169,6 +1192,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><em>required</em></td>
 </tr>
 <tr class="even">
+<td>start_method (str)</td>
+<td></td>
+<td>how to start worker processes for process-based parallelizers, e.g.&nbsp;“fork”, “spawn”, or “forkserver” (default: the system default; see Note 4)</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
 <td>func_kwargs (dict)</td>
 <td></td>
 <td>merged with kwargs (see above)</td>
@@ -1201,57 +1230,69 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Example 1 – simple usage as a shortcut to multiprocess.map()</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x):</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">*</span>x</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(f, [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>Example 2 – simple usage for “embarrassingly parallel” processing</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rnd():</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    np.random.seed()</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.random.random()</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(rnd, <span class="dv">10</span>, ncpus<span class="op">=</span><span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>Example 3 – three different equivalent ways to use multiple arguments</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x,y):</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">*</span>y</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x):</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">*</span>x</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>results1 <span class="op">=</span> sc.parallelize(func<span class="op">=</span>f, iterarg<span class="op">=</span>[(<span class="dv">1</span>,<span class="dv">2</span>),(<span class="dv">2</span>,<span class="dv">3</span>),(<span class="dv">3</span>,<span class="dv">4</span>)])</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>results2 <span class="op">=</span> sc.parallelize(func<span class="op">=</span>f, iterkwargs<span class="op">=</span>{<span class="st">'x'</span>:[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], <span class="st">'y'</span>:[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>]})</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>results3 <span class="op">=</span> sc.parallelize(func<span class="op">=</span>f, iterkwargs<span class="op">=</span>[{<span class="st">'x'</span>:<span class="dv">1</span>, <span class="st">'y'</span>:<span class="dv">2</span>}, {<span class="st">'x'</span>:<span class="dv">2</span>, <span class="st">'y'</span>:<span class="dv">3</span>}, {<span class="st">'x'</span>:<span class="dv">3</span>, <span class="st">'y'</span>:<span class="dv">4</span>}])</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> results1 <span class="op">==</span> results2 <span class="op">==</span> results3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>Example 4 – using non-iterated arguments and dynamic load balancing</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> myfunc(i, x, y):</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    np.random.seed()</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    xy <span class="op">=</span> [x<span class="op">+</span>i<span class="op">*</span>np.random.randn(<span class="dv">100</span>), y<span class="op">+</span>i<span class="op">*</span>np.random.randn(<span class="dv">100</span>)]</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> xy</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>xylist1 <span class="op">=</span> sc.parallelize(myfunc, iterarg<span class="op">=</span><span class="bu">range</span>(<span class="dv">5</span>), kwargs<span class="op">=</span>{<span class="st">'x'</span>:<span class="dv">3</span>, <span class="st">'y'</span>:<span class="dv">8</span>}, maxcpu<span class="op">=</span><span class="fl">0.8</span>, interval<span class="op">=</span><span class="fl">0.2</span>) <span class="co"># Use kwargs dict</span></span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>xylist2 <span class="op">=</span> sc.parallelize(myfunc, x<span class="op">=</span><span class="dv">5</span>, y<span class="op">=</span><span class="dv">10</span>, iterarg<span class="op">=</span>[<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">2</span>], parallelizer<span class="op">=</span><span class="st">'multiprocessing'</span>) <span class="co"># Supply kwargs directly and use a different parallelizer</span></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> p,xylist <span class="kw">in</span> <span class="bu">enumerate</span>([xylist1, xylist2]):</span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    plt.subplot(<span class="dv">2</span>,<span class="dv">1</span>,p<span class="op">+</span><span class="dv">1</span>)</span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i,xy <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">reversed</span>(xylist)):</span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>        plt.scatter(xy[<span class="dv">0</span>], xy[<span class="dv">1</span>], label<span class="op">=</span><span class="st">'Run </span><span class="sc">%i</span><span class="st">'</span><span class="op">%</span>i)</span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>    plt.legend()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>Example 5 – using a custom parallelization function</strong>:</p>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(f, [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Example 2 – simple usage for “embarrassingly parallel” processing</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rnd():</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    np.random.seed()</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.random.random()</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(rnd, <span class="dv">10</span>, ncpus<span class="op">=</span><span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Example 3 – three different equivalent ways to use multiple arguments</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x,y):</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [x]<span class="op">*</span>y</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">*</span>y</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> multiprocessing <span class="im">as</span> mp</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>pool <span class="op">=</span> mp.Pool(processes<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(f, iterkwargs<span class="op">=</span><span class="bu">dict</span>(x<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], y<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]), parallelizer<span class="op">=</span>pool.<span class="bu">map</span>) <span class="co"># Note: parallelizer is pool.map, not pool</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>Example 6 – using Sciris as an interface to Dask</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x,y):</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [x]<span class="op">*</span>y</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dask_map(task, argslist):</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="im">import</span> dask</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    queued <span class="op">=</span> [dask.delayed(task)(args) <span class="cf">for</span> args <span class="kw">in</span> argslist]</span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">list</span>(dask.compute(<span class="op">*</span>queued))</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>results1 <span class="op">=</span> sc.parallelize(func<span class="op">=</span>f, iterarg<span class="op">=</span>[(<span class="dv">1</span>,<span class="dv">2</span>),(<span class="dv">2</span>,<span class="dv">3</span>),(<span class="dv">3</span>,<span class="dv">4</span>)])</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>results2 <span class="op">=</span> sc.parallelize(func<span class="op">=</span>f, iterkwargs<span class="op">=</span>{<span class="st">'x'</span>:[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], <span class="st">'y'</span>:[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>]})</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>results3 <span class="op">=</span> sc.parallelize(func<span class="op">=</span>f, iterkwargs<span class="op">=</span>[{<span class="st">'x'</span>:<span class="dv">1</span>, <span class="st">'y'</span>:<span class="dv">2</span>}, {<span class="st">'x'</span>:<span class="dv">2</span>, <span class="st">'y'</span>:<span class="dv">3</span>}, {<span class="st">'x'</span>:<span class="dv">3</span>, <span class="st">'y'</span>:<span class="dv">4</span>}])</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> results1 <span class="op">==</span> results2 <span class="op">==</span> results3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Example 4 – using non-iterated arguments and dynamic load balancing</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> myfunc(i, x, y):</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    np.random.seed()</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    xy <span class="op">=</span> [x<span class="op">+</span>i<span class="op">*</span>np.random.randn(<span class="dv">100</span>), y<span class="op">+</span>i<span class="op">*</span>np.random.randn(<span class="dv">100</span>)]</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> xy</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>xylist1 <span class="op">=</span> sc.parallelize(myfunc, iterarg<span class="op">=</span><span class="bu">range</span>(<span class="dv">5</span>), kwargs<span class="op">=</span>{<span class="st">'x'</span>:<span class="dv">3</span>, <span class="st">'y'</span>:<span class="dv">8</span>}, maxcpu<span class="op">=</span><span class="fl">0.8</span>, interval<span class="op">=</span><span class="fl">0.2</span>) <span class="co"># Use kwargs dict</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>xylist2 <span class="op">=</span> sc.parallelize(myfunc, x<span class="op">=</span><span class="dv">5</span>, y<span class="op">=</span><span class="dv">10</span>, iterarg<span class="op">=</span>[<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">2</span>], parallelizer<span class="op">=</span><span class="st">'multiprocessing'</span>) <span class="co"># Supply kwargs directly and use a different parallelizer</span></span>
 <span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(f, iterkwargs<span class="op">=</span><span class="bu">dict</span>(x<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], y<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]), parallelizer<span class="op">=</span>dask_map)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> p,xylist <span class="kw">in</span> <span class="bu">enumerate</span>([xylist1, xylist2]):</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    plt.subplot(<span class="dv">2</span>,<span class="dv">1</span>,p<span class="op">+</span><span class="dv">1</span>)</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i,xy <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">reversed</span>(xylist)):</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>        plt.scatter(xy[<span class="dv">0</span>], xy[<span class="dv">1</span>], label<span class="op">=</span><span class="st">'Run </span><span class="sc">%i</span><span class="st">'</span><span class="op">%</span>i)</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    plt.legend()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Example 5 – using a custom parallelization function</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x,y):</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [x]<span class="op">*</span>y</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> multiprocessing <span class="im">as</span> mp</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>pool <span class="op">=</span> mp.Pool(processes<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(f, iterkwargs<span class="op">=</span><span class="bu">dict</span>(x<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], y<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]), parallelizer<span class="op">=</span>pool.<span class="bu">map</span>) <span class="co"># Note: parallelizer is pool.map, not pool</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Example 6 – using Sciris as an interface to Dask</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x,y):</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [x]<span class="op">*</span>y</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dask_map(task, argslist):</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="im">import</span> dask</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    queued <span class="op">=</span> [dask.delayed(task)(args) <span class="cf">for</span> args <span class="kw">in</span> argslist]</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">list</span>(dask.compute(<span class="op">*</span>queued))</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(f, iterkwargs<span class="op">=</span><span class="bu">dict</span>(x<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], y<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]), parallelizer<span class="op">=</span>dask_map)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Example 7 – stopping at the first failure</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x):</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> x <span class="op">==</span> <span class="dv">50</span>:</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">'Intentional failure'</span>)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">**</span><span class="dv">2</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> callback(data):</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> data[<span class="st">'outdict'</span>][<span class="st">'success'</span>]:</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>        data[<span class="st">'stop'</span>] <span class="op">=</span> <span class="va">True</span> <span class="co"># Don't start any more jobs</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(f, iterarg<span class="op">=</span><span class="bu">range</span>(<span class="dv">100</span>), callback<span class="op">=</span>callback, die<span class="op">=</span><span class="va">False</span>) <span class="co"># Jobs that were not run have a result of None</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Jobs that have already started will finish. Note that jobs do not necessarily run in order, and that stopping is not supported for custom parallelizers that run jobs in separate processes. See <a href="../api/sc_parallel.html#sciris.sc_parallel.Parallel" title="0"><code>sc.Parallel()</code></a> for how to stop a run from the parent process instead.</p>
 <p><strong>Note 1</strong>: the default parallelizer <code>"multiprocess"</code> uses <code>dill</code> for pickling, so is the most versatile (e.g., it can pickle non-top-level functions). However, it is also the slowest for passing large amounts of data. You can switch between these with <code>parallelizer='fast'</code> (<a href="https://docs.python.org/3/library/concurrent.futures.html#module-concurrent.futures" title="1"><code>concurrent.futures</code></a>) and <code>parallelizer='robust'</code> (<code>multiprocess</code>).</p>
 <p>The <code>parallelizer</code> argument allows a wide range of different parallelizers (including different aliases for each), and also supports user-supplied ones. Note that in most cases, the default parallelizer will suffice. However, the full list of options is:</p>
 <pre><code>- `None`, `'default'`, `'robust'`, `'multiprocess'`: the slow but robust dill-based parallelizer `multiprocess`
@@ -1263,17 +1304,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Note 2</strong>: If parallelizing figure generation, use a non-interactive backend, or make sure (a) figure is closed inside the function call, and (b) the figure object is not returned. Otherwise, parallelization won’t increase speed (and might even be slower than serial!).</p>
 <p><strong>Note 3</strong>: to use on Windows, parallel calls must contained with an <code>if __name__ == '__main__'</code> block.</p>
 <p>For example:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x,y):</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">*</span>y</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">'__main__'</span>:</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    results <span class="op">=</span> sc.parallelize(func<span class="op">=</span>f, iterarg<span class="op">=</span>[(<span class="dv">1</span>,<span class="dv">2</span>),(<span class="dv">2</span>,<span class="dv">3</span>),(<span class="dv">3</span>,<span class="dv">4</span>)])</span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(results)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>Note 4</strong>: In Python 3.14, the default process start method on Linux was changed from “fork” to “forkserver”. This does not use copy-on-write to share memory with worker processes but rather behaves more like “spawn” on Mac/Windows. It can also result in an <a href="https://docs.python.org/3/library/exceptions.html#EOFError" title="1"><code>EOFError</code></a> when using WSL on Windows. To restore the previous behaviour, after importing <code>sciris</code>, set the start method to “fork” as follows:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> multiprocessing</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>multiprocessing.set_start_method(<span class="st">"fork"</span>, force<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f(x,y):</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">*</span>y</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">'__main__'</span>:</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    results <span class="op">=</span> sc.parallelize(func<span class="op">=</span>f, iterarg<span class="op">=</span>[(<span class="dv">1</span>,<span class="dv">2</span>),(<span class="dv">2</span>,<span class="dv">3</span>),(<span class="dv">3</span>,<span class="dv">4</span>)])</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(results)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Note 4</strong>: In Python 3.14, the default process start method on Linux was changed from “fork” to “forkserver”. This does not use copy-on-write to share memory with worker processes but rather behaves more like “spawn” on Mac/Windows. It can also result in an <a href="https://docs.python.org/3/builtins/exceptions.html#EOFError" title="1"><code>EOFError</code></a> when using WSL on Windows. To restore the previous behavior, use <code>start_method='fork'</code> (not available on Windows), e.g.:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(f, iterarg<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], start_method<span class="op">=</span><span class="st">'fork'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Note 5</strong>: with process-based parallelizers (including the default), NumPy’s global random number generator is reseeded at the start of each job, with a different seed for each job, derived from the parent process’s generator (using a single draw from it). This means that functions that use <a href="https://numpy.org/doc/stable/reference/random/index.html#module-np.random" title="1"><code>np.random</code></a> give different results in each job, and in each call to <a href="../api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a>, and that results are reproducible if the parent is seeded (e.g.&nbsp;with <code>np.random.seed(1)</code>), regardless of the platform, start method, or number of CPUs. The results differ from <code>serial=True</code>, where jobs draw from the parent’s generator in turn. Functions that set their own seed are unaffected.</p>
 <ul>
 <li><em>New in version 1.1.1:</em> “serial” argument</li>
 <li><em>New in version 2.0.0:</em> changed default parallelizer from <code>multiprocess.Pool</code> to <a href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor" title="1"><code>concurrent.futures.ProcessPoolExecutor</code></a>; replaced <code>maxload</code> with <code>maxcpu</code>/<code>maxmem</code>; added <code>returnpool</code> argument</li>
@@ -1281,6 +1322,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><em>New in version 3.0.0:</em> new Parallel class; propagated “die” to jobs</li>
 <li><em>New in version 3.1.0:</em> new “globaldict” argument</li>
 <li><em>New in version 3.2.5:</em> “capture” and “lbkwargs” arguments</li>
+<li><em>New in version 3.4.0:</em> “iterarg” and “iterkwargs” can be used together; with <code>die=False</code>, the exception is returned as the result; “start_method” argument; NumPy’s global random number generator is reseeded for each job; the callback can stop the run early</li>
 </ul>
 
 
@@ -1722,7 +1764,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.3.0 (2026-08-08).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.4.0 (2026-09-28).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

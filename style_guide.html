@@ -84,9 +84,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-bfd64266a099ba3d9a6cb1a21780adaa.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -536,7 +536,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="type-annotated-code-gsg221">2.21 Type Annotated Code (<a href="https://google.github.io/styleguide/pyguide.html#221-type-annotated-code">GSG221</a>)</h3>
 <p><strong>Difference</strong>: Do <em>not</em> use type annotations.</p>
 <p><strong>Reason</strong>: Type annotations are useful for ensuring that simple functions do exactly what they’re supposed to as part of a complex whole. They prioritize consistency over convenience, which is the correct priority for very low-level library functions, but not for functions and classes that aim to make it as easy as possible for the user.</p>
-<p>For example, in Sciris, dates can be specified as numbers (<code>22</code>), strings (<code>'2022-02-02'</code>), or date objects (<code>datetime.date(2022, 2, 2)</code>), etc. Likewise, many quantities can be specified as a scalar, list, or array. If a function <em>usually</em> only needs a single input but can optionally operate on more than one, it adds burden on the user to require them to provide e.g.&nbsp;<code>np.array([0.3])</code> rather than just <code>0.3</code>. In addition, most functions have default arguments of <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a>, in which case Sciris will use “sensible” defaults.</p>
+<p>For example, in Sciris, dates can be specified as numbers (<code>22</code>), strings (<code>'2022-02-02'</code>), or date objects (<code>datetime.date(2022, 2, 2)</code>), etc. Likewise, many quantities can be specified as a scalar, list, or array. If a function <em>usually</em> only needs a single input but can optionally operate on more than one, it adds burden on the user to require them to provide e.g.&nbsp;<code>np.array([0.3])</code> rather than just <code>0.3</code>. In addition, most functions have default arguments of <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>, in which case Sciris will use “sensible” defaults.</p>
 <p>Attempting to apply type annotations to the flexibility Sciris gives to the user would result in monstrosities like:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> count_days(<span class="va">self</span>, start_day: typing.Union[<span class="va">None</span>, <span class="bu">str</span>, <span class="bu">int</span>, dt.date, dt.datetime, pd.Timestamp],</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>               end_day: typing.Union[<span class="va">None</span>, <span class="bu">str</span>, <span class="bu">int</span>, dt.date, dt.datetime, pd.Timestamp]) <span class="op">-&gt;</span> <span class="bu">int</span>:</span>
@@ -589,7 +589,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="blank-lines-gsg35">3.5 Blank Lines (<a href="https://google.github.io/styleguide/pyguide.html#35-blank-lines">GSG35</a>)</h3>
 <p><strong>Difference</strong>: Always use (at least) one extra blank line between levels as within a level.</p>
 <p><strong>Reason</strong>: Google’s recommendation (two blank lines between functions or classes, one blank line between methods) is appropriate for small-to-medium classes and methods. However, for large methods (e.g.&nbsp;&gt;50 lines) with multiple blank lines within them, using only a single blank line can mark it hard to tell where one method stops and the next one starts. Thus, for a method that contains blank lines within itself, use <em>two</em> blank lines between methods (and then do that consistently for the rest of the class). For separating large classes/functions (&gt;500 lines), or classes whose methods are separated by two blank lines, separating them by three blank lines is preferable.</p>
-<p>While not explicitly covered by the Google style guide, <strong>return</strong> statements should be used at the end of each function and method, even if that block returns <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a> (in which case use <code>return</code>, not <code>return None</code>). This helps delimit larger methods/functions. However, always ask whether a function/method <em>should</em> return <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a>; if a function can return something that might be useful, it should.</p>
+<p>While not explicitly covered by the Google style guide, <strong>return</strong> statements should be used at the end of each function and method, even if that block returns <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a> (in which case use <code>return</code>, not <code>return None</code>). This helps delimit larger methods/functions. However, always ask whether a function/method <em>should</em> return <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>; if a function can return something that might be useful, it should.</p>
 </section>
 <section id="whitespace-gsg36" class="level3">
 <h3 class="anchored" data-anchor-id="whitespace-gsg36">3.6 Whitespace (<a href="https://google.github.io/styleguide/pyguide.html#36-whitespace">GSG36</a>)</h3>
@@ -1125,7 +1125,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.3.0 (2026-08-08).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.4.0 (2026-09-28).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

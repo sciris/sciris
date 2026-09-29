@@ -85,9 +85,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-bfd64266a099ba3d9a6cb1a21780adaa.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -694,37 +694,37 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>label</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>label identifying this timer</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>auto</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to automatically increment the label</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="odd">
 <td>start</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to start timing from object creation (else, call <a href="../api/sc_datetime.html#sciris.sc_datetime.timer.tic" title="0"><code>timer.tic()</code></a> explicitly)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="even">
 <td>unit</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>the unit of time to display; see options above</td>
 <td><code>'auto'</code></td>
 </tr>
 <tr class="odd">
 <td>verbose</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to print output on each timing</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a> when invoked</td>
 <td><code>{}</code></td>
 </tr>
@@ -752,7 +752,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><em>New in version 2.0.0:</em> <code>plot()</code> method; <code>total()</code> method; <code>indivtimings</code> and <code>cumtimings</code> properties</li>
 <li><em>New in version 2.1.0:</em> <code>total</code> as property instead of method; updated repr; added disp() method</li>
 <li><em>New in version 3.0.0:</em> <code>unit</code> argument; <code>verbose</code> argument; <code>sum, min, max, mean, std</code> methods; <code>rawtimings</code> property</li>
-<li><em>New in version 3.1.0:</em> Timers can be combined by addition, including <a href="https://docs.python.org/3/library/functions.html#sum" title="1"><code>sum()</code></a></li>
+<li><em>New in version 3.1.0:</em> Timers can be combined by addition, including <a href="https://docs.python.org/3/builtins/functions.html#sum" title="1"><code>sum()</code></a></li>
 <li><em>New in version 3.1.5:</em> <code>T.timings</code> is now an <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> instead of an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a></li>
 <li><em>New in version 3.2.2:</em> <a href="../api/sc_datetime.html#sciris.sc_datetime.timer" title="0"><code>sc.timer()</code></a> can be used as a function decorator</li>
 <li><em>New in version 3.2.5:</em> <code>.string</code> attribute (e.g.&nbsp;‘3.25 s’)</li>
@@ -904,32 +904,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>cumulative</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
-<td>how the timings will be presented, individual or cumulative</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
 <td>fig</td>
 <td><code>fig</code></td>
 <td>an existing figure to draw the plot in</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
-</tr>
-<tr class="odd">
-<td>figkwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
-<td>passed to <a href="https://matplotlib.org/stable/api/figure_api.html#module-plt.figure" title="1"><code>plt.figure()</code></a></td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
-<td>grid</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
-<td>whether to show a grid</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td>figkwargs</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
+<td>passed to <a href="https://matplotlib.org/stable/api/figure_api.html#module-plt.figure" title="1"><code>plt.figure()</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
+<td>grid</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to show a grid</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
+</tr>
+<tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <code>plt.bar()</code></td>
 <td><code>{}</code></td>
 </tr>
@@ -1120,49 +1114,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>obj</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/functions.html#int">int</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a> / <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a> / <a href="https://docs.python.org/3/library/array.html#module-array">array</a></td>
 <td>the object to convert; if None, return current date</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>args</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/functions.html#int">int</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></td>
 <td>additional objects to convert</td>
 <td><code>()</code></td>
 </tr>
 <tr class="odd">
 <td>start_date</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></td>
 <td>the starting date, if an integer is supplied</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>readformat</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>the format to read the date in; passed to <a href="../api/sc_datetime.html#sciris.sc_datetime.readdate" title="0"><code>sc.readdate()</code></a> (NB: can also use “format” instead of “readformat”)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>to</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>the output format: ‘date’ (default), ‘datetime’, ‘str’ (or ‘string’), ‘pandas’, or ‘numpy’</td>
 <td><code>'date'</code></td>
 </tr>
 <tr class="even">
 <td>as_date</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>alternate method of choosing between output format of ‘date’ (True) or ‘str’ (False); if None, use “to” instead</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>outformat</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>the format to output the date in, if returning a string</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>only used for deprecated argument aliases</td>
 <td><code>{}</code></td>
 </tr>
@@ -1182,7 +1176,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>dates</td>
-<td><a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> or <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> or <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>either a single date object, or a list of them (matching input data type where possible)</td>
 </tr>
 </tbody>
@@ -1214,7 +1208,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
 <span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Perform calculations on a date string (or date object), returning a string (or a date). Wrapper to <a href="https://matplotlib.org/stable/api/dates_api.html#matplotlib.dates.relativedelta" title="0"><code>dateutil.relativedelta.relativedelta()</code></a>.</p>
-<p>If <code>datestr</code> is <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a>, then return the delta object rather than the new date.</p>
+<p>If <code>datestr</code> is <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>, then return the delta object rather than the new date.</p>
 <section id="parameters-3" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
 <table class="caption-top table">
@@ -1229,31 +1223,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>datestr</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None">None</a> / <a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None">None</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>the starting date (typically a string); if None, return the relative delta</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>days</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>the number of days (positive or negative) to increment</td>
 <td><code>0</code></td>
 </tr>
 <tr class="odd">
 <td>months</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>as above</td>
 <td><code>0</code></td>
 </tr>
 <tr class="even">
 <td>years</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a> / <a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> / <a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>as above; if a float, converted to days (NB: fractional months and weeks are not supported)</td>
 <td><code>0</code></td>
 </tr>
 <tr class="odd">
 <td>weeks</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>as above</td>
 <td><code>0</code></td>
 </tr>
@@ -1265,13 +1259,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="odd">
 <td>as_date</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>if True, return a date object; otherwise, return as input type</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>passed to <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date()</code></a></td>
 <td><code>{}</code></td>
 </tr>
@@ -1397,15 +1391,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>dateobj</td>
-<td>(<a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a>, <a href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas">pd</a>.<code>TimeStamp</code>)</td>
-<td>The datetime instance to convert</td>
+<td>(<a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a>, <a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a>, <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a>, <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas">pd</a>.<code>TimeStamp</code>, <a href="https://numpy.org/doc/stable/reference/index.html#module-numpy">np</a>.<a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.datetime64">datetime64</a>)</td>
+<td>The date to convert</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>dateformat</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>If dateobj is a string, the optional date conversion format to use</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1434,8 +1428,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>sc.datetoyear(<span class="st">'2010-07-01'</span>) <span class="co"># Returns approximately 2010.5</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>sc.datetoyear(<span class="fl">2010.5</span>) <span class="co"># Returns datetime.date(2010, 7, 2)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>sc.datetoyear(<span class="st">'2010-07-01'</span>) <span class="co"># Returns approximately 2010.5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>By Luke Davis from https://stackoverflow.com/a/42424261, adapted by Romesh Abeysuriya.</p>
 <ul>
 <li><em>New in version 1.0.0.</em></li>
@@ -1462,21 +1455,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>obj</td>
-<td>(<a href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a>, <a href="https://docs.python.org/3/library/functions.html#int">int</a>, <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a>, <a href="https://docs.python.org/3/library/array.html#module-array">array</a>)</td>
+<td>(<a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a>, <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a>, <a href="https://docs.python.org/3/builtins/functions.html#int">int</a>, <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a>, <a href="https://docs.python.org/3/library/array.html#module-array">array</a>)</td>
 <td>convert any of these objects to a day relative to the start day</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>args</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>additional days</td>
 <td><code>()</code></td>
 </tr>
 <tr class="odd">
 <td>start_date</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> or <a href="../api/sc_datetime.html#sciris.sc_datetime.date">date</a></td>
 <td>the start day; if none is supplied, return days since (supplied year)-01-01.</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1494,7 +1487,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>days</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a> or <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a> or <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>the day(s) in simulation time (matching input data type where possible)</td>
 </tr>
 </tbody>
@@ -1516,7 +1509,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>diff  <span class="op">=</span> sc.daydiff(<span class="st">'2020-03-20'</span>, <span class="st">'2020-04-05'</span>) <span class="co"># Returns 16</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>diffs <span class="op">=</span> sc.daydiff(<span class="st">'2020-03-20'</span>, <span class="st">'2020-04-05'</span>, <span class="st">'2020-05-01'</span>) <span class="co"># Returns [16, 26]</span></span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>doy <span class="op">=</span> sc.daydiff(<span class="st">'2022-03-20'</span>) <span class="co"># Returns 79, the number of days since 2022-01-01</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>doy <span class="op">=</span> sc.daydiff(<span class="st">'2022-03-20'</span>) <span class="co"># Returns 78, the number of days since 2022-01-01</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><em>New in version 1.0.0.</em></li>
 <li><em>New in version 3.0.0:</em> Calculated relative days with one argument</li>
@@ -1561,19 +1554,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>obj</td>
 <td><a href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></td>
 <td>the datetime object to convert</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>astype</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>what to return; choices are “str” (default), “dateobj”, “float” (full timestamp), “int” (timestamp to second precision)</td>
 <td><code>'str'</code></td>
 </tr>
 <tr class="odd">
 <td>dateformat</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>if <code>astype</code> is <code>'str'</code>, use this output format</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1659,33 +1652,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>delay</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a> / <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>average duration in seconds to sleep for; if a pair of values, treat as low and high</td>
 <td><code>1.0</code></td>
 </tr>
 <tr class="even">
 <td>var</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>how much variability to have (default, 1.0, i.e.&nbsp;from 0 to 2*interval)</td>
 <td><code>1.0</code></td>
 </tr>
 <tr class="odd">
 <td>low</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>optionally define lower bound of sleep</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>high</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>optionally define upper bound of sleep</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>seed</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>if provided, reset the random seed</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1693,7 +1686,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>sc.randsleep(<span class="dv">1</span>) <span class="co"># Sleep for 0-2 s (average 1.0)</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>sc.randsleep(<span class="dv">2</span>, <span class="fl">0.1</span>) <span class="co"># Sleep for 1.8-2.2 s (average 2.0)</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>sc.randsleep([<span class="fl">0.5</span>, <span class="fl">1.5</span>]) <span class="co"># Sleep for 0.5-1.5 s</span></span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>sc.randsleeep(low<span class="op">=</span><span class="fl">0.5</span>, high<span class="op">=</span><span class="fl">1.5</span>) <span class="co"># Ditto</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>sc.randsleep(low<span class="op">=</span><span class="fl">0.5</span>, high<span class="op">=</span><span class="fl">1.5</span>) <span class="co"># Ditto</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><em>New in version 2.0.0.</em> <em>New in version 3.0.0:</em> “seed” argument</p>
 </section>
 </section>
@@ -1726,33 +1719,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>datestr</td>
-<td>(<a href="https://docs.python.org/3/library/functions.html#int">int</a>, <a href="https://docs.python.org/3/library/functions.html#float">float</a>, <a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a>)</td>
+<td>(<a href="https://docs.python.org/3/builtins/functions.html#int">int</a>, <a href="https://docs.python.org/3/builtins/functions.html#float">float</a>, <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> or <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a>)</td>
 <td>the string containing the date, or the timestamp (in seconds), or a list of either</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>args</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>additional dates to convert</td>
 <td><code>()</code></td>
 </tr>
 <tr class="odd">
 <td>dateformat</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or <a href="https://docs.python.org/3/library/stdtypes.html#list">list</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> or <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
 <td>the format for the date, if known; if ‘dmy’ or ‘mdy’, try as day-month-year or month-day-year formats; can also be a list of options</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>return_defaults</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>don’t convert the date, just return the defaults</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="odd">
 <td>verbose</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>return detailed error messages</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1824,21 +1817,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>delay</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>time, in seconds, to wait for</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>start</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>if provided, the start time</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>verbose</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to print details</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1905,61 +1898,61 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>start</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>the starting time, as returned by e.g.&nbsp;<a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a></td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>label</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>optional label to add</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>baselabel</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>optional base label; default is “Elapsed time:”</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>sigfigs</td>
-<td><a href="https://docs.python.org/3/library/functions.html#int">int</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#int">int</a></td>
 <td>number of significant figures for time estimate</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>reset</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>reset the time; like calling <a href="../api/sc_datetime.html#sciris.sc_datetime.toctic" title="0"><code>sc.toctic()</code></a> or <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a> again</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>unit</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>the unit of time to display; see options above</td>
 <td><code>'s'</code></td>
 </tr>
 <tr class="odd">
 <td>output</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to return the output (otherwise print); if output=‘message’, then return the message string; if output=‘both’, then return both</td>
-<td><a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
 <tr class="even">
 <td>verbose</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to print (true by default)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
 <td>elapsed</td>
-<td><a href="https://docs.python.org/3/library/functions.html#float">float</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
 <td>use a pre-calculated elapsed time instead of recalculating (not recommneded)</td>
-<td><a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
 <td>kwargs</td>
-<td><a href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
 <td>not used; only for handling deprecations</td>
 <td><code>{}</code></td>
 </tr>
@@ -1982,7 +1975,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sciris.sc_datetime.toctic" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_datetime.toctic">toctic</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.toctic(returntic<span class="op">=</span><span class="va">False</span>, returntoc<span class="op">=</span><span class="va">False</span>, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>sc_datetime.toctic(<span class="op">*</span>args, returntic<span class="op">=</span><span class="va">False</span>, returntoc<span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>A convenience fuction for multiple timings. Can return the default output of either <a href="../api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a> or <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a> (default neither). Arguments are passed to <a href="../api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a>. Equivalent to <code>sc.toc(reset=True)</code>.</p>
 <p><strong>Example</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>sc.tic()</span>
@@ -2010,15 +2003,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>year</td>
-<td>(<a href="https://docs.python.org/3/library/functions.html#int">int</a>, <a href="https://docs.python.org/3/library/functions.html#float">float</a>)</td>
+<td>(<a href="https://docs.python.org/3/builtins/functions.html#int">int</a>, <a href="https://docs.python.org/3/builtins/functions.html#float">float</a>)</td>
 <td>The numerical year to convert to a DateTime</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>as_date</td>
-<td><a href="https://docs.python.org/3/library/functions.html#bool">bool</a></td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>If True (default), return an <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date</code></a> object, otherwise return a string</td>
-<td><a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a></td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -2042,7 +2035,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>sc.yeartodate(<span class="st">'2010-07-01'</span>) <span class="co"># Returns approximately 2010.5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>sc.yeartodate(<span class="fl">2010.5</span>) <span class="co"># Returns datetime.date(2010, 7, 2)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><em>New in version 3.2.1.</em></li>
 </ul>
@@ -2486,7 +2479,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.3.0 (2026-08-08).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.4.0 (2026-09-28).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

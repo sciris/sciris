@@ -50,9 +50,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-59bbe17bcc329699ad5a3bdbd458b7e1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-d342424364c7ebd2f5093d8f3d5cd022.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-bfd64266a099ba3d9a6cb1a21780adaa.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -451,6 +451,26 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#whats-new" id="toc-whats-new" class="nav-link active" data-scroll-target="#whats-new">What’s new</a>
   <ul>
+  <li><a href="#version-3.4.0-2026-09-28" id="toc-version-3.4.0-2026-09-28" class="nav-link" data-scroll-target="#version-3.4.0-2026-09-28">Version 3.4.0 (2026-09-28)</a>
+  <ul>
+  <li><a href="#major-changes" id="toc-major-changes" class="nav-link" data-scroll-target="#major-changes">Major changes</a></li>
+  <li><a href="#math" id="toc-math" class="nav-link" data-scroll-target="#math">Math</a></li>
+  <li><a href="#dictionaries" id="toc-dictionaries" class="nav-link" data-scroll-target="#dictionaries">Dictionaries</a></li>
+  <li><a href="#dataframes-sc.dataframe" id="toc-dataframes-sc.dataframe" class="nav-link" data-scroll-target="#dataframes-sc.dataframe">Dataframes (<code>sc.dataframe</code>)</a></li>
+  <li><a href="#files" id="toc-files" class="nav-link" data-scroll-target="#files">Files</a></li>
+  <li><a href="#printing" id="toc-printing" class="nav-link" data-scroll-target="#printing">Printing</a></li>
+  <li><a href="#colors-and-plotting" id="toc-colors-and-plotting" class="nav-link" data-scroll-target="#colors-and-plotting">Colors and plotting</a></li>
+  <li><a href="#settings-sc.options" id="toc-settings-sc.options" class="nav-link" data-scroll-target="#settings-sc.options">Settings (<code>sc.options</code>)</a></li>
+  <li><a href="#parallelization" id="toc-parallelization" class="nav-link" data-scroll-target="#parallelization">Parallelization</a></li>
+  <li><a href="#profiling" id="toc-profiling" class="nav-link" data-scroll-target="#profiling">Profiling</a></li>
+  <li><a href="#timing" id="toc-timing" class="nav-link" data-scroll-target="#timing">Timing</a></li>
+  <li><a href="#dates" id="toc-dates" class="nav-link" data-scroll-target="#dates">Dates</a></li>
+  <li><a href="#utilities" id="toc-utilities" class="nav-link" data-scroll-target="#utilities">Utilities</a></li>
+  <li><a href="#versioning" id="toc-versioning" class="nav-link" data-scroll-target="#versioning">Versioning</a></li>
+  <li><a href="#nested-objects" id="toc-nested-objects" class="nav-link" data-scroll-target="#nested-objects">Nested objects</a></li>
+  <li><a href="#asd" id="toc-asd" class="nav-link" data-scroll-target="#asd">ASD</a></li>
+  <li><a href="#random-numbers" id="toc-random-numbers" class="nav-link" data-scroll-target="#random-numbers">Random numbers</a></li>
+  </ul></li>
   <li><a href="#version-3.3.0-2026-08-08" id="toc-version-3.3.0-2026-08-08" class="nav-link" data-scroll-target="#version-3.3.0-2026-08-08">Version 3.3.0 (2026-08-08)</a></li>
   <li><a href="#version-3.2.9-2026-03-06" id="toc-version-3.2.9-2026-03-06" class="nav-link" data-scroll-target="#version-3.2.9-2026-03-06">Version 3.2.9 (2026-03-06)</a></li>
   <li><a href="#version-3.2.8-2026-02-28" id="toc-version-3.2.8-2026-02-28" class="nav-link" data-scroll-target="#version-3.2.8-2026-02-28">Version 3.2.8 (2026-02-28)</a></li>
@@ -484,16 +504,16 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#improvements-and-new-features" id="toc-improvements-and-new-features" class="nav-link" data-scroll-target="#improvements-and-new-features">Improvements and new features</a>
   <ul class="collapse">
-  <li><a href="#parallelization" id="toc-parallelization" class="nav-link" data-scroll-target="#parallelization">1. Parallelization</a></li>
+  <li><a href="#parallelization-1" id="toc-parallelization-1" class="nav-link" data-scroll-target="#parallelization-1">1. Parallelization</a></li>
   <li><a href="#dataframe" id="toc-dataframe" class="nav-link" data-scroll-target="#dataframe">2. Dataframe</a></li>
   <li><a href="#timedate" id="toc-timedate" class="nav-link" data-scroll-target="#timedate">3. Time/date</a></li>
-  <li><a href="#files" id="toc-files" class="nav-link" data-scroll-target="#files">4. Files</a></li>
-  <li><a href="#printing" id="toc-printing" class="nav-link" data-scroll-target="#printing">5. Printing</a></li>
-  <li><a href="#profiling" id="toc-profiling" class="nav-link" data-scroll-target="#profiling">6. Profiling</a></li>
-  <li><a href="#versioning" id="toc-versioning" class="nav-link" data-scroll-target="#versioning">7. Versioning</a></li>
-  <li><a href="#math" id="toc-math" class="nav-link" data-scroll-target="#math">8. Math</a></li>
-  <li><a href="#dictionaries" id="toc-dictionaries" class="nav-link" data-scroll-target="#dictionaries">9. Dictionaries</a></li>
-  <li><a href="#nested-objects" id="toc-nested-objects" class="nav-link" data-scroll-target="#nested-objects">10. Nested objects</a></li>
+  <li><a href="#files-1" id="toc-files-1" class="nav-link" data-scroll-target="#files-1">4. Files</a></li>
+  <li><a href="#printing-1" id="toc-printing-1" class="nav-link" data-scroll-target="#printing-1">5. Printing</a></li>
+  <li><a href="#profiling-1" id="toc-profiling-1" class="nav-link" data-scroll-target="#profiling-1">6. Profiling</a></li>
+  <li><a href="#versioning-1" id="toc-versioning-1" class="nav-link" data-scroll-target="#versioning-1">7. Versioning</a></li>
+  <li><a href="#math-1" id="toc-math-1" class="nav-link" data-scroll-target="#math-1">8. Math</a></li>
+  <li><a href="#dictionaries-1" id="toc-dictionaries-1" class="nav-link" data-scroll-target="#dictionaries-1">9. Dictionaries</a></li>
+  <li><a href="#nested-objects-1" id="toc-nested-objects-1" class="nav-link" data-scroll-target="#nested-objects-1">10. Nested objects</a></li>
   <li><a href="#system-and-platform" id="toc-system-and-platform" class="nav-link" data-scroll-target="#system-and-platform">11. System and platform</a></li>
   <li><a href="#plotting" id="toc-plotting" class="nav-link" data-scroll-target="#plotting">12. Plotting</a></li>
   <li><a href="#other" id="toc-other" class="nav-link" data-scroll-target="#other">13. Other</a></li>
@@ -511,7 +531,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#version-2.0.3-2022-10-24" id="toc-version-2.0.3-2022-10-24" class="nav-link" data-scroll-target="#version-2.0.3-2022-10-24">Version 2.0.3 (2022-10-24)</a></li>
   <li><a href="#version-2.0.2-2022-10-22" id="toc-version-2.0.2-2022-10-22" class="nav-link" data-scroll-target="#version-2.0.2-2022-10-22">Version 2.0.2 (2022-10-22)</a>
   <ul>
-  <li><a href="#parallelization-1" id="toc-parallelization-1" class="nav-link" data-scroll-target="#parallelization-1">Parallelization</a></li>
+  <li><a href="#parallelization-2" id="toc-parallelization-2" class="nav-link" data-scroll-target="#parallelization-2">Parallelization</a></li>
   <li><a href="#bugfixes-4" id="toc-bugfixes-4" class="nav-link" data-scroll-target="#bugfixes-4">Bugfixes</a></li>
   <li><a href="#other-changes-3" id="toc-other-changes-3" class="nav-link" data-scroll-target="#other-changes-3">Other changes</a></li>
   </ul></li>
@@ -530,8 +550,8 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#major" id="toc-major" class="nav-link" data-scroll-target="#major">Major</a></li>
   <li><a href="#timedate-1" id="toc-timedate-1" class="nav-link" data-scroll-target="#timedate-1">Time/date</a></li>
   <li><a href="#plotting-1" id="toc-plotting-1" class="nav-link" data-scroll-target="#plotting-1">Plotting</a></li>
-  <li><a href="#math-1" id="toc-math-1" class="nav-link" data-scroll-target="#math-1">Math</a></li>
-  <li><a href="#files-1" id="toc-files-1" class="nav-link" data-scroll-target="#files-1">Files</a></li>
+  <li><a href="#math-2" id="toc-math-2" class="nav-link" data-scroll-target="#math-2">Math</a></li>
+  <li><a href="#files-2" id="toc-files-2" class="nav-link" data-scroll-target="#files-2">Files</a></li>
   <li><a href="#other-1" id="toc-other-1" class="nav-link" data-scroll-target="#other-1">Other</a></li>
   </ul></li>
   <li><a href="#housekeeping" id="toc-housekeeping" class="nav-link" data-scroll-target="#housekeeping">Housekeeping</a></li>
@@ -547,7 +567,7 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#changes-to-odict-and-objdict" id="toc-changes-to-odict-and-objdict" class="nav-link" data-scroll-target="#changes-to-odict-and-objdict">Changes to odict and objdict</a></li>
   <li><a href="#plotting-3" id="toc-plotting-3" class="nav-link" data-scroll-target="#plotting-3">Plotting</a></li>
-  <li><a href="#printing-1" id="toc-printing-1" class="nav-link" data-scroll-target="#printing-1">Printing</a></li>
+  <li><a href="#printing-2" id="toc-printing-2" class="nav-link" data-scroll-target="#printing-2">Printing</a></li>
   <li><a href="#other-changes-5" id="toc-other-changes-5" class="nav-link" data-scroll-target="#other-changes-5">Other changes</a></li>
   </ul></li>
   <li><a href="#version-1.3.0-2021-12-30" id="toc-version-1.3.0-2021-12-30" class="nav-link" data-scroll-target="#version-1.3.0-2021-12-30">Version 1.3.0 (2021-12-30)</a>
@@ -619,6 +639,284 @@ ul.task-list li input[type="checkbox"] {
 <h1>What’s new</h1>
 <p>All major updates to Sciris are documented here.</p>
 <p>By import convention, components of the Sciris library are listed beginning with <code>sc.</code>, e.g.&nbsp;<a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>.</p>
+<section id="version-3.4.0-2026-09-28" class="level2">
+<h2 class="anchored" data-anchor-id="version-3.4.0-2026-09-28">Version 3.4.0 (2026-09-28)</h2>
+<section id="major-changes" class="level3">
+<h3 class="anchored" data-anchor-id="major-changes">Major changes</h3>
+<ol type="1">
+<li><code>import sciris</code> is about 30% faster, since Matplotlib is now only imported when first used.</li>
+<li>The new <a href="./api/sc_utils.html#sciris.sc_utils.lazyimport" title="0"><code>sc.lazyimport()</code></a> function imports a module only when it’s first used, e.g.&nbsp;<code>plt = sc.lazyimport('matplotlib.pyplot')</code>.</li>
+<li><a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> can now be stopped early, with results returned for the jobs that ran.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.loadjson" title="0"><code>sc.loadjson()</code></a> has new <code>default</code> and <code>die</code> arguments, e.g.&nbsp;<code>sc.loadjson('cache.json', default={})</code>.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.argparse" title="0"><code>sc.argparse()</code></a> now matches flags by name (e.g.&nbsp;<code>--verbose</code> sets a boolean argument to <a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a>).</li>
+<li>Removed the legacy module (<code>sciris._extras.legacy</code>), which contained <code>sc.loadobj2or3()</code>, <code>sc.parallelcmd()</code>, and <code>sc.parallel_progress()</code>.</li>
+<li>Some fixes change behavior that existing code may rely on (see the sections below for details):
+<ul>
+<li><strong>Math</strong>: <a href="./api/sc_math.html#sciris.sc_math.findinds" title="0"><code>sc.findinds()</code></a> and <a href="./api/sc_math.html#sciris.sc_math.count" title="0"><code>sc.count()</code></a> now use only an absolute tolerance; <code>replacenans=False</code> now removes NaNs rather than replacing them with 0.</li>
+<li><strong>Dictionaries</strong>: in-place <a href="./api/sc_odict.html#sciris.sc_odict.odict.sort" title="0"><code>sc.odict.sort()</code></a> now drops unlisted keys.</li>
+<li><strong>Files</strong>: <a href="./api/sc_fileio.html#sciris.sc_fileio.loadspreadsheet" title="0"><code>sc.loadspreadsheet()</code></a> now reads the first row as the header; <a href="./api/sc_fileio.html#sciris.sc_fileio.makefilepath" title="0"><code>sc.makefilepath()</code></a> now prepends <code>folder</code> rather than replacing the filename’s folder; and <a href="./api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a> raises an error for empty files.</li>
+<li><strong>Parallelization</strong>: with <code>die=False</code>, <a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> returns the exception (rather than <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>) for failed jobs; and each job is now reseeded, so jobs no longer give identical “random” numbers.</li>
+<li><strong>Utilities</strong>: <a href="./api/sc_utils.html#sciris.sc_utils.sha" title="0"><code>sc.sha()</code></a> now handles large arrays and dataframes; and <a href="./api/sc_utils.html#sciris.sc_utils.tryexcept" title="0"><code>sc.tryexcept()</code></a> no longer catches <a href="https://docs.python.org/3/builtins/exceptions.html#KeyboardInterrupt" title="1"><code>KeyboardInterrupt</code></a> or <a href="https://docs.python.org/3/builtins/exceptions.html#SystemExit" title="1"><code>SystemExit</code></a>.</li>
+<li><strong>Versioning</strong>: <code>~=</code> in <a href="./api/sc_versioning.html#sciris.sc_versioning.compareversions" title="0"><code>sc.compareversions()</code></a> now means a compatible release (rather than “not equal”); and <a href="./api/sc_versioning.html#sciris.sc_versioning.gitinfo" title="0"><code>sc.gitinfo()</code></a> with a folder now uses that folder’s repository (rather than its parent’s).</li>
+<li><strong>Nested objects</strong>: <a href="./api/sc_nested.html#sciris.sc_nested.equal" title="0"><code>sc.equal()</code></a> now treats failed comparisons as not equal; and <a href="./api/sc_nested.html#sciris.sc_nested.getnested" title="0"><code>sc.getnested()</code></a> raises an error for missing attributes.</li>
+<li><strong>Random numbers</strong>: Sciris functions (except <a href="./api/sc_math.html#sciris.sc_math.randround" title="0"><code>sc.randround()</code></a>) no longer draw from the global random number stream.</li>
+</ul></li>
+</ol>
+<p>The rest of the changes are a colossal number of tiny LLM-assisted bugfixes:</p>
+</section>
+<section id="math" class="level3">
+<h3 class="anchored" data-anchor-id="math">Math</h3>
+<ol type="1">
+<li><a href="./api/sc_math.html#sciris.sc_math.safedivide" title="0"><code>sc.safedivide()</code></a>: nan denominators are now also replaced by <code>default</code>, input arrays are no longer modified, lists and tuples are accepted, array numerators with scalar denominators are handled, and <code>warn=True</code> now raises a warning.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.findinds" title="0"><code>sc.findinds()</code></a> and <a href="./api/sc_math.html#sciris.sc_math.count" title="0"><code>sc.count()</code></a> now use only an absolute tolerance (<code>eps</code>), so e.g.&nbsp;100000 no longer matches 100001.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.approx" title="0"><code>sc.approx()</code></a> is deprecated; use <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#np.isclose" title="1"><code>np.isclose()</code></a> instead.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.count" title="0"><code>sc.count()</code></a> now works for multidimensional arrays.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.findnearest" title="0"><code>sc.findnearest()</code></a> ignores NaNs and handles unsigned integers.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.inclusiverange" title="0"><code>sc.inclusiverange()</code></a> no longer drops the endpoint for some decimal steps (e.g.&nbsp;<code>sc.inclusiverange(0, 1.2, 0.2)</code>).</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.sanitize" title="0"><code>sc.sanitize()</code></a>, <a href="./api/sc_math.html#sciris.sc_math.rolling" title="0"><code>sc.rolling()</code></a>, and <a href="./api/sc_math.html#sciris.sc_math.fillnans" title="0"><code>sc.fillnans()</code></a> now remove NaNs with <code>replacenans=False</code> (rather than replacing them with 0), accept <code>replacenans=0</code> for 2D data, and no longer crash when interpolating all-NaN data.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.sem" title="0"><code>sc.sem()</code></a> now passes arguments (e.g.&nbsp;<code>ddof</code>) to <a href="https://numpy.org/doc/stable/reference/generated/numpy.std.html#numpy.std" title="1"><code>numpy.std()</code></a>.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.nanequal" title="0"><code>sc.nanequal()</code></a> now handles float32 vs.&nbsp;float64 NaNs, and lists with <code>equal_nan=False</code>.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.normalize" title="0"><code>sc.normalize()</code></a> returns <code>minval</code> rather than NaN for constant input.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.getvalidinds" title="0"><code>sc.getvalidinds()</code></a> handles boolean filters.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.convolve" title="0"><code>sc.convolve()</code></a> and <a href="./api/sc_math.html#sciris.sc_math.smooth" title="0"><code>sc.smooth()</code></a> now give correct values when the kernel is longer than the data (including arrays of length 1 or 2, and 2D arrays with few columns).</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.convolve" title="0"><code>sc.convolve()</code></a>, <a href="./api/sc_math.html#sciris.sc_math.smooth" title="0"><code>sc.smooth()</code></a>, <a href="./api/sc_math.html#sciris.sc_math.gauss1d" title="0"><code>sc.gauss1d()</code></a>, and <a href="./api/sc_math.html#sciris.sc_math.gauss2d" title="0"><code>sc.gauss2d()</code></a> no longer truncate integer input.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.gauss1d" title="0"><code>sc.gauss1d()</code></a> and <a href="./api/sc_math.html#sciris.sc_math.gauss2d" title="0"><code>sc.gauss2d()</code></a> no longer return NaN due to float32 underflow, and <code>sc.gauss1d(use32=False)</code> accepts lists.</li>
+<li><code>sc.smoothinterp(growth=...)</code> works when all of <code>newx</code> is outside the data.</li>
+</ol>
+</section>
+<section id="dictionaries" class="level3">
+<h3 class="anchored" data-anchor-id="dictionaries">Dictionaries</h3>
+<ol type="1">
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a> integer indexing is now correct after popping or deleting by index, and after <a href="./api/sc_odict.html#sciris.sc_odict.odict.setdefault" title="0"><code>sc.odict.setdefault()</code></a>, <a href="./api/sc_odict.html#sciris.sc_odict.odict.popitem" title="0"><code>sc.odict.popitem()</code></a>, <a href="./api/sc_odict.html#sciris.sc_odict.odict.clear" title="0"><code>sc.odict.clear()</code></a>, and <code>|=</code>.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict.insert" title="0"><code>sc.odict.insert()</code></a> with an existing key moves and overwrites it.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict.insert" title="0"><code>sc.odict.insert()</code></a> and <a href="./api/sc_odict.html#sciris.sc_odict.odict.append" title="0"><code>sc.odict.append()</code></a> accept a value of <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>.</li>
+<li>In-place <a href="./api/sc_odict.html#sciris.sc_odict.odict.sort" title="0"><code>sc.odict.sort()</code></a> now drops unlisted keys (as <a href="https://docs.python.org/3/builtins/functions.html#sorted" title="1"><code>sorted()</code></a> does) and no longer reverses the caller’s list.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict.sort" title="0"><code>sc.odict.sort()</code></a> accepts numpy boolean masks and tuple keys.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict.copy" title="0"><code>sc.odict.copy()</code></a> keeps <code>defaultdict</code> behavior.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict.rename" title="0"><code>sc.odict.rename()</code></a> handles negative indices.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict.findbyval" title="0"><code>sc.odict.findbyval()</code></a> handles array values.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict.fromeach" title="0"><code>sc.odict.fromeach()</code></a> accepts a list of indices for list values.</li>
+<li><code>sc.odict.disp(numformat=...)</code> works.</li>
+<li><code>dict + odict</code> gives the right operand precedence.</li>
+<li><code>transpose=True</code> works for empty odicts.</li>
+<li>Integer keys (e.g.&nbsp;from <a href="./api/sc_odict.html#sciris.sc_odict.odict.makefrom" title="0"><code>sc.odict.makefrom()</code></a>) are respected by assignment, <a href="./api/sc_odict.html#sciris.sc_odict.odict.pop" title="0"><code>sc.odict.pop()</code></a>, <a href="./api/sc_odict.html#sciris.sc_odict.odict.sort" title="0"><code>sc.odict.sort()</code></a>, and <a href="./api/sc_odict.html#sciris.sc_odict.odict.reverse" title="0"><code>sc.odict.reverse()</code></a>.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj</code></a> now compares by contents, and supports <code>|</code> and <a href="https://docs.python.org/3/builtins/functions.html#reversed" title="1"><code>reversed()</code></a>.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.counter" title="0"><code>sc.counter</code></a> arithmetic now returns an <a href="./api/sc_odict.html#sciris.sc_odict.counter" title="0"><code>sc.counter</code></a>.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.argparse" title="0"><code>sc.argparse()</code></a> converts <a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a>/<code>no</code>/<code>0</code> to <a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a> for boolean defaults and splits comma-separated values for list defaults, and <a href="./api/sc_odict.html#sciris.sc_odict.argparse.add" title="0"><code>sc.argparse.add()</code></a> after parsing now raises an error.</li>
+</ol>
+</section>
+<section id="dataframes-sc.dataframe" class="level3">
+<h3 class="anchored" data-anchor-id="dataframes-sc.dataframe">Dataframes (<a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe" title="0"><code>sc.dataframe</code></a>)</h3>
+<ol type="1">
+<li>Dicts of columns and lists of records are no longer transposed when appended/concatenated.</li>
+<li><a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.poprow" title="0"><code>sc.dataframe.poprow()</code></a> no longer removes other rows with the same label.</li>
+<li>Value-based row selection accepts a list of values.</li>
+<li><a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.flexget" title="0"><code>sc.dataframe.flexget()</code></a>, <a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.to_odict" title="0"><code>sc.dataframe.to_odict()</code></a>, <a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.findrow" title="0"><code>sc.dataframe.findrow()</code></a> (including <code>default=None</code>, and <code>asdict=True</code>), <a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.insertrow" title="0"><code>sc.dataframe.insertrow()</code></a>, <a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.replacecol" title="0"><code>sc.dataframe.replacecol()</code></a> (with <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>/NaN), <a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.filtercols" title="0"><code>sc.dataframe.filtercols()</code></a>, <code>sc.dataframe.sortrows(returninds=True)</code>, <a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.sort" title="0"><code>sc.dataframe.sort()</code></a>, <a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.sortcols" title="0"><code>sc.dataframe.sortcols()</code></a>, <a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.equal" title="0"><code>sc.dataframe.equal()</code></a> (which now also compares the index), and <a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.read_csv_string" title="0"><code>sc.dataframe.read_csv_string()</code></a> (indented strings) have been fixed.</li>
+<li><code>sc.dataframe.get()</code> is now the standard pandas method, and the unused <code>cast</code> and <code>default</code> arguments have been removed.</li>
+</ol>
+</section>
+<section id="files" class="level3">
+<h3 class="anchored" data-anchor-id="files">Files</h3>
+<ol type="1">
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a> and <a href="./api/sc_fileio.html#sciris.sc_fileio.savejson" title="0"><code>sc.savejson()</code></a> no longer destroy the existing file if saving fails.</li>
+<li><code>sc.save(filename=None)</code> and <a href="./api/sc_fileio.html#sciris.sc_fileio.dumpstr" title="0"><code>sc.dumpstr()</code></a> work with any compression, and <code>sc.save(verbose=None)</code> works.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a> accepts any file object (and <a href="./api/sc_fileio.html#sciris.sc_fileio.loadstr" title="0"><code>sc.loadstr()</code></a> uncompressed or zstd bytes), can load a saved <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>, raises an error for empty files (and for non-pickles with <code>die=True</code>) rather than returning a string, and respects <code>die=True</code> with <code>remapping</code>.</li>
+<li>Remapping to a module name (e.g.&nbsp;<code>'newpkg.newmod'</code>) now works.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.makefilepath" title="0"><code>sc.makefilepath()</code></a> (and hence the <code>folder</code> argument of other functions) now prepends <code>folder</code> to the filename’s own folder rather than replacing it, and handles <code>ext</code> with a leading dot.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.unzip" title="0"><code>sc.unzip()</code></a> returns the correct paths.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.rmpath" title="0"><code>sc.rmpath()</code></a> removes symlinks to folders and the output of <a href="./api/sc_fileio.html#sciris.sc_fileio.getfilelist" title="0"><code>sc.getfilelist()</code></a>, and skips paths it can’t remove.</li>
+<li><code>aspath=False</code> now works in <a href="./api/sc_fileio.html#sciris.sc_fileio.getfilepaths" title="0"><code>sc.getfilepaths()</code></a>, <a href="./api/sc_fileio.html#sciris.sc_fileio.sanitizepath" title="0"><code>sc.sanitizepath()</code></a>, and <a href="./api/sc_fileio.html#sciris.sc_fileio.makepath" title="0"><code>sc.makepath()</code></a>.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.jsonify" title="0"><code>sc.jsonify()</code></a> works in threads, handles <code>Decimal</code> and complex numbers (as strings), matches subclasses in <code>custom</code>, and sanitizes the output of <code>to_dict()</code> methods.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.loadspreadsheet" title="0"><code>sc.loadspreadsheet()</code></a> now reads the first row (not the second) as the header by default, and accepts <code>sheetnum</code>/<code>sheet_name</code>, and <code>fileobj</code> with <code>method='openpyxl'</code>.</li>
+<li><code>sc.Spreadsheet.readcells(sheetnum=...)</code> reads the right sheet.</li>
+<li><code>sc.savespreadsheet(formats=...)</code> works without <code>formatdata</code>.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.Blobject" title="0"><code>sc.Blobject</code></a> saves to its own filename by default and accepts <code>Path</code> sources.</li>
+</ol>
+</section>
+<section id="printing" class="level3">
+<h3 class="anchored" data-anchor-id="printing">Printing</h3>
+<ol type="1">
+<li><a href="./api/sc_printing.html#sciris.sc_printing.strip_ansi" title="0"><code>sc.strip_ansi()</code></a> no longer deletes text after non-color ANSI codes (e.g.&nbsp;from progress bars).</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.capture" title="0"><code>sc.capture</code></a> no longer subclasses <a href="https://docs.python.org/3/builtins/stdtypes.html#str" title="1"><code>str</code></a> (so <code>'%s' % txt</code> works, but <code>isinstance(txt, str)</code> is now <a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a>) and no longer duplicates text when reused.</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.prepr" title="0"><code>sc.prepr()</code></a>/<a href="./api/sc_printing.html#sciris.sc_printing.pr" title="0"><code>sc.pr()</code></a> no longer evaluate properties, lay out columns correctly for any number of items, and report the correct number of entries not shown when <code>maxtime</code> is exceeded.</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.sigfig" title="0"><code>sc.sigfig()</code></a> handles string <code>formats</code>, custom <code>sep</code> characters (keeping trailing zeros), <code>keepints</code> for negative numbers, and rounding up to the next power of ten.</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.sigfiground" title="0"><code>sc.sigfiground()</code></a> no longer overflows for large or infinite values and works on Python 3.10-3.11.</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.arraymean" title="0"><code>sc.arraymean()</code></a> formats each value when <code>axis</code> is supplied and no longer returns NaN for constant data.</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.arraymedian" title="0"><code>sc.arraymedian()</code></a> accepts tuples and NumPy integers, no longer modifies the input list, and rounds the bounds when the median is 0.</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.printarr" title="0"><code>sc.printarr()</code></a> handles float32, negative, and empty arrays.</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.colorize" title="0"><code>sc.colorize()</code></a> with no arguments resets the color, and an unknown color no longer discards the string.</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.heading" title="0"><code>sc.heading()</code></a> accepts <code>fg</code>, <code>bg</code>, and <code>style</code>.</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.slacknotification" title="0"><code>sc.slacknotification()</code></a> strips whitespace from the webhook and reports failed sends.</li>
+<li><a href="./api/sc_printing.html#sciris.sc_printing.percentcomplete" title="0"><code>sc.percentcomplete()</code></a> prints at the correct intervals for short loops.</li>
+</ol>
+</section>
+<section id="colors-and-plotting" class="level3">
+<h3 class="anchored" data-anchor-id="colors-and-plotting">Colors and plotting</h3>
+<ol type="1">
+<li><a href="./api/sc_colors.html#sciris.sc_colors.rgb2hsv" title="0"><code>sc.rgb2hsv()</code></a>, <a href="./api/sc_colors.html#sciris.sc_colors.hsv2rgb" title="0"><code>sc.hsv2rgb()</code></a>, <a href="./api/sc_colors.html#sciris.sc_colors.shifthue" title="0"><code>sc.shifthue()</code></a>, and <a href="./api/sc_colors.html#sciris.sc_colors.rgb2hex" title="0"><code>sc.rgb2hex()</code></a> now handle integer colors.</li>
+<li><a href="./api/sc_colors.html#sciris.sc_colors.vectocolor" title="0"><code>sc.vectocolor()</code></a> now handles constant and empty input.</li>
+<li><a href="./api/sc_colors.html#sciris.sc_colors.sanitizecolor" title="0"><code>sc.sanitizecolor()</code></a> accepts integer greys, and <code>alpha</code> now overrides an existing alpha.</li>
+<li><a href="./api/sc_colors.html#sciris.sc_colors.gridcolors" title="0"><code>sc.gridcolors()</code></a> now respects <code>ashex</code> when <code>asarray=True</code>.</li>
+<li><code>apply=True</code> in the colormap functions now applies the customized colormap rather than the default one.</li>
+<li><a href="./api/sc_colors.html#sciris.sc_colors.manualcolorbar" title="0"><code>sc.manualcolorbar()</code></a> now handles data containing NaNs or constant values, and <code>ticklabels</code> given as an array, uses <code>fig</code>, and no longer changes the current axes.</li>
+<li><code>sc.fig3d(returnax=True)</code> now returns the figure containing the axes, rather than creating an extra blank figure.</li>
+<li><a href="./api/sc_colors.html#sciris.sc_colors.turbocolormap" title="0"><code>sc.turbocolormap()</code></a> now returns Matplotlib’s (identical) built-in turbo colormap.</li>
+<li>The 3D plotting functions now draw into the supplied <code>fig</code> (rather than the current figure).</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.plot3d" title="0"><code>sc.plot3d()</code></a> accepts an array <code>c</code>.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.bar3d" title="0"><code>sc.bar3d()</code></a> accepts <code>z</code> as a keyword.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.commaticks" title="0"><code>sc.commaticks()</code></a> formats each axis according to its own range.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.setaxislim" title="0"><code>sc.setaxislim()</code></a> handles ragged lists of arrays.</li>
+<li><code>sc.figlayout(True)</code>/<code>sc.figlayout(False)</code> now work.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.dateformatter" title="0"><code>sc.dateformatter()</code></a> no longer treats dates from 1974-76 as years, accepts a <code>Formatter</code> object as <code>style</code>, no longer changes the x-axis when <code>axis='y'</code>, and accepts <code>dateformat</code> with <code>style='auto'</code>.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.datenumformatter" title="0"><code>sc.datenumformatter()</code></a> gives the correct dates for a date axis without <code>start_date</code>.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.dateformatter" title="0"><code>sc.dateformatter()</code></a> and <a href="./api/sc_plotting.html#sciris.sc_plotting.datenumformatter" title="0"><code>sc.datenumformatter()</code></a> both accept <code>start=0</code>.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.savefigs" title="0"><code>sc.savefigs()</code></a> now works without a filename, saves the figures it is given (rather than the current figure), and saves multiple figures to separate files.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.savefig" title="0"><code>sc.savefig()</code></a> records the correct caller (as does <a href="./api/sc_versioning.html#sciris.sc_versioning.metadata" title="0"><code>sc.metadata()</code></a>), and its SVG metadata can now be loaded by <a href="./api/sc_versioning.html#sciris.sc_versioning.loadmetadata" title="0"><code>sc.loadmetadata()</code></a>.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.orderlegend" title="0"><code>sc.orderlegend()</code></a> accepts arrays.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.movelegend" title="0"><code>sc.movelegend()</code></a> preserves <code>ncol</code> and respects <code>invisible</code>, and only hides the destination axes if it’s empty.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.animation" title="0"><code>sc.animation()</code></a> now works with figures passed to <a href="./api/sc_plotting.html#sciris.sc_plotting.animation.addframe" title="0"><code>sc.animation.addframe()</code></a> or <code>fig</code>, uses <code>imagefolder</code> with ffmpeg, and respects <code>verbose</code>.</li>
+<li><a href="./api/sc_plotting.html#sciris.sc_plotting.savemovie" title="0"><code>sc.savemovie()</code></a> respects <code>interval</code>.</li>
+</ol>
+</section>
+<section id="settings-sc.options" class="level3">
+<h3 class="anchored" data-anchor-id="settings-sc.options">Settings (<code>sc.options</code>)</h3>
+<ol type="1">
+<li>Nested <code>sc.options.context()</code> blocks no longer raise an error or leave the outer setting in place, and <code>sc.options.context(backend=...)</code> now restores the backend.</li>
+<li><code>sc.options.reset()</code> no longer changes the stored defaults, and now restores all rcParams changed by a Matplotlib style (e.g.&nbsp;<code>'fivethirtyeight'</code>).</li>
+<li>Invalid values (e.g.&nbsp;<code>sc.options(dpi='invalid')</code>) are no longer stored.</li>
+<li>The Matplotlib-related environment variables (e.g.&nbsp;<code>SCIRIS_BACKEND</code>, <code>SCIRIS_DPI</code>, <code>SCIRIS_STYLE</code>) are now applied on import.</li>
+<li><code>sc.options.use_style()</code> and <code>sc.options.with_style()</code> with no style now use the current style.</li>
+<li><code>sc.options.update()</code> now checks and applies options, and <code>sc.options.setdefault()</code> can no longer add them.</li>
+<li><code>sc.options.help()</code> shows the correct environment variable names and respects <code>output=True</code>.</li>
+<li><code>sc.help(flags=...)</code> now works.</li>
+</ol>
+</section>
+<section id="parallelization" class="level3">
+<h3 class="anchored" data-anchor-id="parallelization">Parallelization</h3>
+<ol type="1">
+<li><a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> now accepts <code>iterarg</code> and <code>iterkwargs</code> together (as documented), <code>args</code> as a list, <code>iterarg</code> elements of <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>, and <code>ncpus</code> as a float (e.g.&nbsp;<code>sc.cpu_count()/2</code>).</li>
+<li><code>maxcpu</code>, <code>maxmem</code>, and <code>interval</code> in <code>lbkwargs</code> are no longer overwritten.</li>
+<li>With <code>die=False</code>, the exception is now returned as the result (rather than <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>), including with <code>capture=True</code> (which previously could crash the run).</li>
+<li>Worker and manager processes are now shut down after a failed run, and after the run by <a href="./api/sc_parallel.html#sciris.sc_parallel.Parallel" title="0"><code>sc.Parallel</code></a> objects (the new <a href="./api/sc_parallel.html#sciris.sc_parallel.Parallel.close" title="0"><code>sc.Parallel.close()</code></a> method).</li>
+<li>Exceptions such as <a href="https://docs.python.org/3/builtins/exceptions.html#NotImplementedError" title="1"><code>NotImplementedError</code></a> are no longer replaced by <a href="https://docs.python.org/3/builtins/exceptions.html#IndexError" title="1"><code>IndexError</code></a>.</li>
+<li><a href="./api/sc_parallel.html#sciris.sc_parallel.Parallel.reset" title="0"><code>sc.Parallel.reset()</code></a> no longer makes the <a href="./api/sc_parallel.html#sciris.sc_parallel.Parallel" title="0"><code>sc.Parallel</code></a> object unrunnable.</li>
+<li><code>globaldict</code> works with <code>-copy</code> parallelizers and with empty dicts for custom parallelizers, and no longer has progress keys (e.g.&nbsp;<code>_job0</code>) added.</li>
+<li><code>serial=True</code> now works with async parallelizers.</li>
+<li>The deprecated <code>maxload</code> argument now works.</li>
+<li><code>capture=True</code> with <code>parallelizer='thread'</code> now raises an error rather than redirecting output between threads.</li>
+<li><a href="./api/sc_parallel.html#sciris.sc_parallel.loadbalancer" title="0"><code>sc.loadbalancer()</code></a> no longer uses (or affects) NumPy’s global random number generator, so the start of each process is now staggered.</li>
+<li><a href="./api/sc_parallel.html#sciris.sc_parallel.loadbalancer" title="0"><code>sc.loadbalancer()</code></a>’s <code>maxtime</code> is now measured in seconds rather than in number of checks.</li>
+<li>NumPy’s global random number generator is now reseeded for each job of a process-based parallelizer, so jobs no longer give identical “random” numbers on Linux, and results are reproducible if the parent is seeded (on any platform).</li>
+<li>The new <code>start_method</code> argument sets how worker processes are started (e.g.&nbsp;<code>'fork'</code>).</li>
+</ol>
+</section>
+<section id="profiling" class="level3">
+<h3 class="anchored" data-anchor-id="profiling">Profiling</h3>
+<ol type="1">
+<li><a href="./api/sc_profiling.html#sciris.sc_profiling.profile" title="0"><code>sc.profile()</code></a> no longer leaves the profiler running if the function raises an exception (which blocked <a href="./api/sc_profiling.html#sciris.sc_profiling.cprofile" title="0"><code>sc.cprofile()</code></a>), and <a href="./api/sc_profiling.html#sciris.sc_profiling.mprofile" title="0"><code>sc.mprofile()</code></a> no longer leaves a trace hook installed (which slowed all later code).</li>
+<li><a href="./api/sc_profiling.html#sciris.sc_profiling.profile.plot" title="0"><code>sc.profile.plot()</code></a> no longer raises an error for durations under 1 s.</li>
+<li><code>p1 + p2</code> returns a fully working profile.</li>
+<li><code>maxentries</code> works with <code>bytime=0</code>.</li>
+<li><a href="./api/sc_profiling.html#sciris.sc_profiling.listfuncs" title="0"><code>sc.listfuncs()</code></a> (and hence <code>follow=&lt;class&gt;</code>) includes inherited methods.</li>
+<li><a href="./api/sc_profiling.html#sciris.sc_profiling.cprofile" title="0"><code>sc.cprofile()</code></a> no longer reports stale results when reused, <code>sc.cprofile.to_df(maxitems=...)</code> now works, and <code>percall</code> is in the same units as the other times.</li>
+<li><a href="./api/sc_profiling.html#sciris.sc_profiling.tracecalls.check_expected" title="0"><code>sc.tracecalls.check_expected()</code></a> now works with a list of strings.</li>
+<li><a href="./api/sc_profiling.html#sciris.sc_profiling.tracecalls" title="0"><code>sc.tracecalls()</code></a> no longer raises an error (hiding the original exception) when nothing matches.</li>
+<li>With <code>sc.tracecalls(regex=True)</code>, patterns are now searched for in the file path, qualified name (e.g.&nbsp;<code>Sim.init_sim</code>), and function name separately, so e.g.&nbsp;<code>exclude='^init_'</code> works.</li>
+<li><a href="./api/sc_profiling.html#sciris.sc_profiling.checkmem" title="0"><code>sc.checkmem()</code></a> checks arrays and dataframes as single objects (rather than raising an error for large arrays), handles non-string dict keys, passes <code>subtotals</code> and <code>verbose</code> to nested levels, and no longer includes totals in the pie chart.</li>
+<li><a href="./api/sc_profiling.html#sciris.sc_profiling.checkmem" title="0"><code>sc.checkmem()</code></a> is also faster, since sizes are now computed in memory rather than by saving to disk, subtotals count objects shared between items once, and empty objects are now checked (rather than giving an empty result).</li>
+<li><a href="./api/sc_profiling.html#sciris.sc_profiling.resourcemonitor" title="0"><code>sc.resourcemonitor()</code></a> interrupts a busy main thread promptly, no longer raises an error with <code>kill_parent=True</code> or on Ctrl-C, prints the breach with <code>die=False</code>, and respects <code>sc.resourcemonitor.start(label=...)</code>.</li>
+<li><a href="./api/sc_profiling.html#sciris.sc_profiling.benchmark" title="0"><code>sc.benchmark()</code></a> has a new <code>legacy</code> argument: by default it uses NumPy’s legacy random number generator so results match earlier versions, while <code>legacy=False</code> uses the new generator, which weights the four NumPy operations more evenly (and gives considerably higher NumPy results, typically 2-4x depending on the machine).</li>
+</ol>
+</section>
+<section id="timing" class="level3">
+<h3 class="anchored" data-anchor-id="timing">Timing</h3>
+<ol type="1">
+<li><a href="./api/sc_datetime.html#sciris.sc_datetime.timer" title="0"><code>sc.timer</code></a> laps (e.g.&nbsp;<a href="./api/sc_datetime.html#sciris.sc_datetime.timer.tt" title="0"><code>sc.timer.tt()</code></a>) no longer reset the <a href="./api/sc_datetime.html#sciris.sc_datetime.tic" title="0"><code>sc.tic()</code></a> time.</li>
+<li><a href="./api/sc_datetime.html#sciris.sc_datetime.timer.toc" title="0"><code>sc.timer.toc()</code></a> accepts <code>unit</code> and <code>elapsed</code>, and <code>sc.timer.string</code>/<code>sc.timer.message</code> use the timer’s unit.</li>
+<li><a href="./api/sc_datetime.html#sciris.sc_datetime.timer.indivtimings" title="0"><code>sc.timer.indivtimings</code></a> no longer includes time outside timed blocks.</li>
+<li><a href="./api/sc_datetime.html#sciris.sc_datetime.timer.toctotal" title="0"><code>sc.timer.toctotal()</code></a> uses the timer’s formatting options.</li>
+<li>Positional arguments to <a href="./api/sc_datetime.html#sciris.sc_datetime.toctic" title="0"><code>sc.toctic()</code></a> are now passed to <a href="./api/sc_datetime.html#sciris.sc_datetime.toc" title="0"><code>sc.toc()</code></a>.</li>
+<li><a href="./api/sc_datetime.html#sciris.sc_datetime.randsleep" title="0"><code>sc.randsleep()</code></a> respects <code>low</code> or <code>high</code> supplied alone, and raises an error if the lower bound is negative.</li>
+<li><code>sc.timedsleep(verbose=True)</code> warns when the delay has already passed.</li>
+<li>“millisecond” and “msec” are now valid units.</li>
+</ol>
+</section>
+<section id="dates" class="level3">
+<h3 class="anchored" data-anchor-id="dates">Dates</h3>
+<ol type="1">
+<li><a href="./api/sc_datetime.html#sciris.sc_datetime.day" title="0"><code>sc.day()</code></a> now measures each date from its own year (not the first date’s).</li>
+<li><a href="./api/sc_datetime.html#sciris.sc_datetime.datedelta" title="0"><code>sc.datedelta()</code></a> no longer drops <code>days</code> when <code>years</code> is fractional, keeps single-element lists as lists, and respects <code>outformat</code>.</li>
+<li><a href="./api/sc_datetime.html#sciris.sc_datetime.daterange" title="0"><code>sc.daterange()</code></a> accepts an integer <code>interval</code>, no longer drifts off month-ends with month/year intervals, and respects <code>readformat</code> with <a href="./api/sc_datetime.html#sciris.sc_datetime.datedelta" title="0"><code>sc.datedelta()</code></a> arguments.</li>
+<li><code>sc.date(to='datetime')</code> now works.</li>
+<li><a href="./api/sc_datetime.html#sciris.sc_datetime.getdate" title="0"><code>sc.getdate()</code></a>, <a href="./api/sc_datetime.html#sciris.sc_datetime.datetoyear" title="0"><code>sc.datetoyear()</code></a>, and <a href="./api/sc_datetime.html#sciris.sc_datetime.elapsedtimestr" title="0"><code>sc.elapsedtimestr()</code></a> accept dates, datetimes, and timezone-aware input.</li>
+<li><code>sc.datetoyear(dateformat=...)</code> now works.</li>
+<li><code>sc.readdate(verbose=True)</code> gives details with <code>'dmy'</code>/<code>'mdy'</code>.</li>
+</ol>
+</section>
+<section id="utilities" class="level3">
+<h3 class="anchored" data-anchor-id="utilities">Utilities</h3>
+<ol type="1">
+<li><code>sc.dcp(die=False)</code> no longer truncates nested containers, aliases mutable objects inside tuples, or fails on containers holding uncopyable objects (e.g.&nbsp;locks).</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.sha" title="0"><code>sc.sha()</code></a> no longer truncates large arrays and dataframes (so their hashes have changed).</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.uuid" title="0"><code>sc.uuid()</code></a> and <a href="./api/sc_utils.html#sciris.sc_utils.fast_uuid" title="0"><code>sc.fast_uuid()</code></a> no longer return duplicates, and <code>sc.uuid(uid=...)</code> respects <code>tostring</code> and <code>length</code>.</li>
+<li><code>sc.suggest(which='jaro')</code> returns the most similar option (yes really) and ignores case.</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.importbypath" title="0"><code>sc.importbypath()</code></a> cleans up after failed imports.</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.tryexcept" title="0"><code>sc.tryexcept()</code></a> no longer catches <a href="https://docs.python.org/3/builtins/exceptions.html#KeyboardInterrupt" title="1"><code>KeyboardInterrupt</code></a> or <a href="https://docs.python.org/3/builtins/exceptions.html#SystemExit" title="1"><code>SystemExit</code></a> by default, and respects <code>catch</code> with <code>die=True</code>.</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.isnumber" title="0"><code>sc.isnumber()</code></a> and <a href="./api/sc_utils.html#sciris.sc_utils.toarray" title="0"><code>sc.toarray()</code></a> handle NumPy booleans, and <a href="./api/sc_utils.html#sciris.sc_utils.toarray" title="0"><code>sc.toarray()</code></a> also handles strings, sets, dict views, and generators.</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.checktype" title="0"><code>sc.checktype()</code></a> and <a href="./api/sc_utils.html#sciris.sc_utils.tolist" title="0"><code>sc.tolist()</code></a> accept abstract base classes.</li>
+<li><code>sc.runcommand(wait=False)</code> returns immediately.</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.getplatform" title="0"><code>sc.getplatform()</code></a> handles unrecognized platforms.</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.strsplit" title="0"><code>sc.strsplit()</code></a> treats a multi-character <code>sep</code> as one separator.</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.urlopen" title="0"><code>sc.urlopen()</code></a> returns error statuses with <code>response='status'</code>, appends <code>params</code> to existing query strings, uses the declared charset, and unquotes saved filenames.</li>
+<li><code>sc.download(save=False)</code> no longer merges URLs with the same filename.</li>
+<li>The new <a href="./api/sc_utils.html#sciris.sc_utils.lazyimport" title="0"><code>sc.lazyimport()</code></a> function imports a module only when it’s first used, e.g.&nbsp;<code>plt = sc.lazyimport('matplotlib.pyplot')</code> (which now assigns modules to the caller’s namespace by default).</li>
+</ol>
+</section>
+<section id="versioning" class="level3">
+<h3 class="anchored" data-anchor-id="versioning">Versioning</h3>
+<ol type="1">
+<li><a href="./api/sc_versioning.html#sciris.sc_versioning.gitinfo" title="0"><code>sc.gitinfo()</code></a> with a folder (including the default, the current folder) now uses the repository in that folder rather than its parent’s.</li>
+<li><a href="./api/sc_versioning.html#sciris.sc_versioning.compareversions" title="0"><code>sc.compareversions()</code></a> treats <code>~=</code> as a compatible release (e.g.&nbsp;<code>~=1.2.3</code> means <code>&gt;=1.2.3, ==1.2.*</code>) rather than as “not equal”.</li>
+<li><code>sc.savearchive(user=False)</code> no longer stores the username, and archives no longer contain a spurious <code>frame</code> field.</li>
+<li><a href="./api/sc_versioning.html#sciris.sc_versioning.loadarchive" title="0"><code>sc.loadarchive()</code></a> retries loading as intended (rather than raising an <a href="https://docs.python.org/3/builtins/exceptions.html#AttributeError" title="1"><code>AttributeError</code></a>), and re-raises the original error type if that fails.</li>
+<li><a href="./api/sc_versioning.html#sciris.sc_versioning.loadmetadata" title="0"><code>sc.loadmetadata()</code></a> returns an <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a> for PNG files (as for JSON and ZIP files).</li>
+</ol>
+</section>
+<section id="nested-objects" class="level3">
+<h3 class="anchored" data-anchor-id="nested-objects">Nested objects</h3>
+<ol type="1">
+<li><a href="./api/sc_nested.html#sciris.sc_nested.equal" title="0"><code>sc.equal()</code></a> no longer reports objects as equal when a comparison fails (this now counts as not equal, or raises an error with <code>die=True</code>), or when pandas objects differ only in their index (or Series name).</li>
+<li><a href="./api/sc_nested.html#sciris.sc_nested.equal" title="0"><code>sc.equal()</code></a> now passes <code>union</code> through, and a custom <code>rootkey</code>, and <code>leaf=True</code> with empty objects, now work.</li>
+<li><code>sc.iterobj(leaf=True)</code> no longer applies the function to the root object.</li>
+<li>The new <code>aliases=True</code> argument of <a href="./api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> includes further references to the same object (without descending into them again).</li>
+<li><code>sc.iterobj(inplace=True)</code> descends into the object returned by the function (so e.g.&nbsp;nested tuples can be converted to lists) and works with <code>__slots__</code>.</li>
+<li><code>sc.iterobj(to_df=True)</code> no longer drops a row with <code>leaf=True</code> or gives the wrong depth with <code>flatten=True</code>.</li>
+<li>The unusable <code>*args</code> argument of <a href="./api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> has been removed.</li>
+<li><a href="./api/sc_nested.html#sciris.sc_nested.getnested" title="0"><code>sc.getnested()</code></a> with <code>safe=True</code> or <code>default</code> (including <code>default=None</code>) now works for object attributes and for non-integer keys into lists, and a missing attribute otherwise raises an error rather than returning <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>.</li>
+<li><code>sc.setnested(overwrite=False)</code> now works for lists and objects, and integer keys into an <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a> no longer replace the entry.</li>
+<li><a href="./api/sc_nested.html#sciris.sc_nested.search" title="0"><code>sc.search()</code></a> no longer raises an error for objects containing arrays.</li>
+<li><a href="./api/sc_nested.html#sciris.sc_nested.mergenested" title="0"><code>sc.mergenested()</code></a> handles arrays.</li>
+</ol>
+</section>
+<section id="asd" class="level3">
+<h3 class="anchored" data-anchor-id="asd">ASD</h3>
+<ol type="1">
+<li>The objective function is now called with <code>x</code> in its original shape.</li>
+<li><code>pinitial</code>, <code>sinitial</code>, <code>xmin</code>, and <code>xmax</code> can be scalars or have one value per parameter.</li>
+<li>Objective functions can return 0-d or 2-d size-1 arrays.</li>
+<li>An error is raised if the starting point is outside <code>xmin</code>/<code>xmax</code>.</li>
+</ol>
+</section>
+<section id="random-numbers" class="level3">
+<h3 class="anchored" data-anchor-id="random-numbers">Random numbers</h3>
+<ol type="1">
+<li>Sciris functions no longer draw from (or change) the global random number generators.</li>
+<li><a href="./api/sc_parallel.html#sciris.sc_parallel.loadbalancer" title="0"><code>sc.loadbalancer()</code></a> and <a href="./api/sc_profiling.html#sciris.sc_profiling.benchmark" title="0"><code>sc.benchmark()</code></a> leave NumPy’s global stream unchanged (<a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> takes a single draw from it, to seed the jobs).</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.fast_uuid" title="0"><code>sc.fast_uuid()</code></a> uses its own generator rather than Python’s global one.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.randround" title="0"><code>sc.randround()</code></a>, whose purpose is to generate random numbers, still uses NumPy’s global generator by default, but has a new <code>rng</code> argument for using a separate one.</li>
+</ol>
+</section>
+</section>
 <section id="version-3.3.0-2026-08-08" class="level2">
 <h2 class="anchored" data-anchor-id="version-3.3.0-2026-08-08">Version 3.3.0 (2026-08-08)</h2>
 <ol type="1">
@@ -647,7 +945,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="version-3.2.8-2026-02-28" class="level2">
 <h2 class="anchored" data-anchor-id="version-3.2.8-2026-02-28">Version 3.2.8 (2026-02-28)</h2>
 <ol type="1">
-<li>Changed resolution order in <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> so that dunder attributes (e.g.&nbsp;<code>__await__</code>) are never accidentally set as dict keys. Attempting to set an existing attribute as a key now raises <a href="https://docs.python.org/3/library/exceptions.html#KeyError" title="1"><code>KeyError</code></a> instead of <a href="https://docs.python.org/3/library/exceptions.html#ValueError" title="1"><code>ValueError</code></a>.</li>
+<li>Changed resolution order in <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> so that dunder attributes (e.g.&nbsp;<code>__await__</code>) are never accidentally set as dict keys. Attempting to set an existing attribute as a key now raises <a href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="1"><code>KeyError</code></a> instead of <a href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="1"><code>ValueError</code></a>.</li>
 <li>Fixed a bug in <a href="./api/sc_profiling.html#sciris.sc_profiling.profile" title="0"><code>sc.profile()</code></a> that prevented profiling information from being printed for certain combinations of filenames.</li>
 </ol>
 </section>
@@ -702,7 +1000,7 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe.read_excel" title="0"><code>sc.dataframe.read_excel()</code></a> can now load multiple sheets.</li>
 <li><a href="./api/sc_datetime.html#sciris.sc_datetime.daydiff" title="0"><code>sc.daydiff()</code></a> can now take a single list of dates as input.</li>
 <li><a href="./api/sc_plotting.html#sciris.sc_plotting.dateformatter" title="0"><code>sc.dateformatter</code></a> now correctly interprets integer year x-axes (with values between 1700 and 2300) as dates.</li>
-<li><a href="./api/sc_utils.html#sciris.sc_utils.isfunc" title="0"><code>sc.isfunc</code></a> now returns <a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a> for lambda and partial functions.</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.isfunc" title="0"><code>sc.isfunc</code></a> now returns <a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a> for lambda and partial functions.</li>
 <li><a href="./api/sc_utils.html#sciris.sc_utils.tryexcept" title="0"><code>sc.tryexcept()</code></a> now has a <code>message</code> argument.</li>
 </ol>
 </section>
@@ -794,7 +1092,7 @@ ul.task-list li input[type="checkbox"] {
 <li>Added a new profiler, <a href="./api/sc_profiling.html#sciris.sc_profiling.cprofile" title="0"><code>sc.cprofile()</code></a>, as an interface to Python’s built-in <a href="https://docs.python.org/3/library/profile.html">cProfile</a>.</li>
 <li>Updated <a href="./api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> to include several new arguments: <code>skip</code> will skip objects to avoid iterating over; <code>depthfirst</code> switches between depth-first (default) and breadth-first (new) iteration options; <code>flatten</code> returns object traces as strings rather than tuples; and <code>to_df</code> converts the output to a dataframe.</li>
 <li>Pretty-repr functions and classes (e.g.&nbsp;<a href="./api/sc_printing.html#sciris.sc_printing.pr" title="0"><code>sc.pr()</code></a>, <a href="./api/sc_printing.html#sciris.sc_printing.prettyobj" title="0"><code>sc.prettyobj()</code></a>) now include protections against infinite recursion. <a href="./api/sc_printing.html#sciris.sc_printing.prettyobj" title="0"><code>sc.prettyobj()</code></a> was linked back to <a href="./api/sc_utils.html#sciris.sc_utils" title="0"><code>sc.sc_utils</code></a> to prevent unpickling errors (partially reversing the change in version 3.1.4).</li>
-<li><a href="./api/sc_odict.html#sciris.sc_odict.dictobj.copy" title="0"><code>sc.dictobj.copy()</code></a> now returns another <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>dictobj</code></a> (previously it returned a <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="1"><code>dict</code></a>).</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.dictobj.copy" title="0"><code>sc.dictobj.copy()</code></a> now returns another <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>dictobj</code></a> (previously it returned a <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>).</li>
 <li><a href="./api/sc_versioning.html#sciris.sc_versioning.require" title="0"><code>sc.require()</code></a> has been reimplemented to be faster and avoid <code>pkg_resources</code> deprecations.</li>
 </ol>
 </section>
@@ -803,7 +1101,7 @@ ul.task-list li input[type="checkbox"] {
 <ol type="1">
 <li>Added a new <a href="./api/sc_printing.html#sciris.sc_printing.quickobj" title="0"><code>sc.quickobj()</code></a> class, which is like <a href="./api/sc_printing.html#sciris.sc_printing.prettyobj" title="0"><code>sc.prettyobj()</code></a> except it only prints attribute names, not values. This is useful for large objects that can be slow to print.</li>
 <li><a href="./api/sc_printing.html#sciris.sc_printing.pr" title="0"><code>sc.pr()</code></a> has a new <code>vals=False</code> argument that skips printing attribute values. The default column width was also increased (from 18 to 22 chars).</li>
-<li>A new function <a href="./api/sc_utils.html#sciris.sc_utils.ifelse" title="0"><code>sc.ifelse()</code></a> was added, which is a shortcut to finding the first non-<a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a> (or non-<a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a>) value in a list.</li>
+<li>A new function <a href="./api/sc_utils.html#sciris.sc_utils.ifelse" title="0"><code>sc.ifelse()</code></a> was added, which is a shortcut to finding the first non-<a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a> (or non-<a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a>) value in a list.</li>
 <li>Updated <a href="./api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> to prevent recursion, and to handle atomic classes (i.e.&nbsp;objects that are not descended into) more flexibly.</li>
 </ol>
 </section>
@@ -824,9 +1122,9 @@ ul.task-list li input[type="checkbox"] {
 <li>Fixed incorrect printout on the final iteration of <a href="./api/sc_asd.html#sciris.sc_asd.asd" title="0"><code>sc.asd()</code></a> in verbose mode.</li>
 <li>Fixed incorrect plotting of non-cumulative data in <a href="./api/sc_plotting.html#sciris.sc_plotting.stackedbar" title="0"><code>sc.stackedbar()</code></a>.</li>
 <li><code>sc.download(..., save=False)</code> now returns an <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a> (instead of an <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a>).</li>
-<li><code>sc.checktype(obj, 'arraylike')</code> is now more robust to handling non-array-like objects (e.g., a ragged list of lists now returns <a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a> instead of raising an exception).</li>
+<li><code>sc.checktype(obj, 'arraylike')</code> is now more robust to handling non-array-like objects (e.g., a ragged list of lists now returns <a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a> instead of raising an exception).</li>
 <li><a href="./api/sc_versioning.html#sciris.sc_versioning.require" title="0"><code>sc.require()</code></a> now takes an optional <code>message</code> argument, allowing for a custom message if the requirement(s) aren’t met.</li>
-<li>Removed <a href="https://docs.python.org/3/library/functions.html#object" title="1"><code>object</code></a> from the list of classes shown by <a href="./api/sc_printing.html#sciris.sc_printing.prepr" title="0"><code>sc.prepr()</code></a> (since all objects derive from <a href="https://docs.python.org/3/library/functions.html#object" title="1"><code>object</code></a>).</li>
+<li>Removed <a href="https://docs.python.org/3/builtins/functions.html#object" title="1"><code>object</code></a> from the list of classes shown by <a href="./api/sc_printing.html#sciris.sc_printing.prepr" title="0"><code>sc.prepr()</code></a> (since all objects derive from <a href="https://docs.python.org/3/builtins/functions.html#object" title="1"><code>object</code></a>).</li>
 </ol>
 </section>
 <section id="version-3.1.2-2023-11-01" class="level2">
@@ -840,10 +1138,10 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="version-3.1.1-2023-10-29">Version 3.1.1 (2023-10-29)</h2>
 <ol type="1">
 <li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a> now supports steps in slice-based indexing, e.g.: <code>myodict['foo':'bar':5]</code> will select every 5th item from <code>'foo'</code> to <code>'bar'</code> inclusive.</li>
-<li><a href="./api/sc_odict.html#sciris.sc_odict.odict.copy" title="0"><code>sc.odict.copy()</code></a> now behaves the same as <a href="https://docs.python.org/3/library/stdtypes.html#dict.copy" title="1"><code>dict.copy()</code></a>; the previous behavior (which copied an item) is deprecated. Instead of <code>mydict.copy(oldkey, newkey)</code>, use <code>mydict[newkey] = sc.dcp(mydict[oldkey])</code> instead.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict.copy" title="0"><code>sc.odict.copy()</code></a> now behaves the same as <a href="https://docs.python.org/3/builtins/stdtypes.html#dict.copy" title="1"><code>dict.copy()</code></a>; the previous behavior (which copied an item) is deprecated. Instead of <code>mydict.copy(oldkey, newkey)</code>, use <code>mydict[newkey] = sc.dcp(mydict[oldkey])</code> instead.</li>
 <li><a href="./api/sc_utils.html#sciris.sc_utils.download" title="0"><code>sc.download()</code></a> now defaults to expecting <code>filename:URL</code> pairs rather than <code>URL:filename</code> pairs (e.g.&nbsp;<code>sc.download({'wikipedia.html':'http://wikipedia.org/index.html'})</code>, though it can accept either as long as <a href="https://docs.python.org/3/library/http.html#module-http" title="1"><code>http</code></a> appears in one.</li>
 <li><a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> has more robust error handling (previously, certain types of exceptions, such as HTTP errors, were not caught even if <code>die=False</code>).</li>
-<li><a href="./api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a> has improved support for loading old pickles, including a new <code>NoneObj</code> class that is used when the user explicitly remaps an old class/function to <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a>.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a> has improved support for loading old pickles, including a new <code>NoneObj</code> class that is used when the user explicitly remaps an old class/function to <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>.</li>
 <li><a href="./api/sc_fileio.html#sciris.sc_fileio.sanitizefilename" title="0"><code>sc.sanitizefilename()</code></a> now excludes newlines and tabs even when <code>strict=False</code>.</li>
 <li><a href="./api/sc_utils.html#sciris.sc_utils.runcommand" title="0"><code>sc.runcommand()</code></a> now prints out terminal output in real time if <code>wait=False</code>.</li>
 <li>Added support for Python 3.12. Note: <code>line_profiler</code> is not compatible with Python 3.12 at the time of writing, so <a href="./api/sc_profiling.html#sciris.sc_profiling.profile" title="0"><code>sc.profile()</code></a> is not available on Python 3.12.</li>
@@ -855,7 +1153,7 @@ ul.task-list li input[type="checkbox"] {
 <h3 class="anchored" data-anchor-id="new-features-1">New features</h3>
 <ol type="1">
 <li><a href="./api/sc_nested.html#sciris.sc_nested.equal" title="0"><code>sc.equal()</code></a> compares two (or more) arbitrarily complex objects. It can handle arrays, dataframes, custom objects with no <code>__eq__</code> method defined, etc. It can also print a detailed comparison of the objects.</li>
-<li><a href="./api/sc_math.html#sciris.sc_math.nanequal" title="0"><code>sc.nanequal()</code></a> is an extension of <a href="https://numpy.org/doc/stable/reference/generated/numpy.array_equal.html#np.array_equal" title="1"><code>np.array_equal()</code></a> to handle a broader range of types (e.g., mixed-type <a href="https://docs.python.org/3/library/functions.html#object" title="1"><code>object</code></a> arrays that cannot be cast to float). Other <code>NaN</code>-related methods have also been updated to be more robust.</li>
+<li><a href="./api/sc_math.html#sciris.sc_math.nanequal" title="0"><code>sc.nanequal()</code></a> is an extension of <a href="https://numpy.org/doc/stable/reference/generated/numpy.array_equal.html#np.array_equal" title="1"><code>np.array_equal()</code></a> to handle a broader range of types (e.g., mixed-type <a href="https://docs.python.org/3/builtins/functions.html#object" title="1"><code>object</code></a> arrays that cannot be cast to float). Other <code>NaN</code>-related methods have also been updated to be more robust.</li>
 <li><a href="./api/sc_colors.html#sciris.sc_colors.manualcolorbar" title="0"><code>sc.manualcolorbar()</code></a> allows highly customized colorbars to be added to plots, including to plots with no “mappable” data (e.g., scatterplots).</li>
 <li>Added <code>sc.options.reset()</code> as an alias to <code>sc.options.set('defaults')</code>.</li>
 </ol>
@@ -866,7 +1164,7 @@ ul.task-list li input[type="checkbox"] {
 <li>Sciris is now compatible with a broader range of dependencies (e.g., Python, NumPy, pandas, and Matplotlib); in most cases, the latest version of Sciris is now backwards-compatible with all dependency versions since January 2021.</li>
 <li>Updated <a href="./api/sc_printing.html#sciris.sc_printing.pr" title="0"><code>sc.pr()</code></a> to include class attributes (as well as instance attributes), and added a new function <a href="./api/sc_printing.html#sciris.sc_printing.classatt" title="0"><code>sc.classatt()</code></a> to list them.</li>
 <li><a href="./api/sc_datetime.html#sciris.sc_datetime.readdate" title="0"><code>sc.readdate()</code></a> now returns <a href="https://docs.python.org/3/library/datetime.html#module-datetime" title="1"><code>datetime</code></a> objects unchanged, rather than raising an exception.</li>
-<li>Fixed <a href="https://docs.python.org/3/library/functions.html#repr" title="1"><code>repr</code></a> for empty <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>.</li>
+<li>Fixed <a href="https://docs.python.org/3/builtins/functions.html#repr" title="1"><code>repr</code></a> for empty <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>.</li>
 <li>Fixed transposed ordering for <a href="./api/sc_plotting.html#sciris.sc_plotting.bar3d" title="0"><code>sc.bar3d()</code></a>.</li>
 </ol>
 </section>
@@ -897,8 +1195,8 @@ ul.task-list li input[type="checkbox"] {
 </ol>
 <section id="improvements-and-new-features" class="level3">
 <h3 class="anchored" data-anchor-id="improvements-and-new-features">Improvements and new features</h3>
-<section id="parallelization" class="level4">
-<h4 class="anchored" data-anchor-id="parallelization">1. Parallelization</h4>
+<section id="parallelization-1" class="level4">
+<h4 class="anchored" data-anchor-id="parallelization-1">1. Parallelization</h4>
 <ol type="1">
 <li>There is a new <a href="./api/sc_parallel.html#sciris.sc_parallel.Parallel" title="0"><code>sc.Parallel()</code></a> class, which is used to implement the (more or less unchanged) <a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> function.</li>
 <li><a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> now has a <code>progress</code> argument that will show a progress bar; the <code>returnpool</code> argument has been removed (use <a href="./api/sc_parallel.html#sciris.sc_parallel.Parallel" title="0"><code>sc.Parallel()</code></a> instead).</li>
@@ -926,8 +1224,8 @@ ul.task-list li input[type="checkbox"] {
 <li>More accurate computation of self-time in <a href="./api/sc_datetime.html#sciris.sc_datetime.timedsleep" title="0"><code>sc.timedsleep()</code></a>.</li>
 </ol>
 </section>
-<section id="files" class="level4">
-<h4 class="anchored" data-anchor-id="files">4. Files</h4>
+<section id="files-1" class="level4">
+<h4 class="anchored" data-anchor-id="files-1">4. Files</h4>
 <ol type="1">
 <li>A new function <a href="./api/sc_fileio.html#sciris.sc_fileio.unzip" title="0"><code>sc.unzip()</code></a> extracts zip files to disk, while <a href="./api/sc_fileio.html#sciris.sc_fileio.loadzip" title="0"><code>sc.loadzip()</code></a> now defaults to loading the zip file contents to memory. <a href="./api/sc_fileio.html#sciris.sc_fileio.savezip" title="0"><code>sc.savezip()</code></a> can now save both data and files, and its <code>filelist</code> argument has been renamed <code>files</code>.</li>
 <li>If a saved file can’t be unpickled, <a href="./api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a> now defaults to using <code>dill</code>, and has more robust error handling (see also “versioning” updates below).</li>
@@ -938,8 +1236,8 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="./api/sc_fileio.html#sciris.sc_fileio.thisdir" title="0"><code>sc.thisdir()</code></a> now gives a correct answer when running in a Jupyter notebook.</li>
 </ol>
 </section>
-<section id="printing" class="level4">
-<h4 class="anchored" data-anchor-id="printing">5. Printing</h4>
+<section id="printing-1" class="level4">
+<h4 class="anchored" data-anchor-id="printing-1">5. Printing</h4>
 <ol type="1">
 <li><a href="./api/sc_printing.html#sciris.sc_printing.progressbar" title="0"><code>sc.progressbar()</code></a> can now be used to wrap an iterable, in which case it acts as an alias to <code>tqdm.tqdm()</code>.</li>
 <li>The new <a href="./api/sc_printing.html#sciris.sc_printing.progressbars" title="0"><code>sc.progressbars()</code></a> class will create and manage multiple progress bars, which can be useful for monitoring multiple parallel long-running jobs.</li>
@@ -951,15 +1249,15 @@ ul.task-list li input[type="checkbox"] {
 <li><code>sc.sigfigs()</code> is a new alias of <a href="./api/sc_printing.html#sciris.sc_printing.sigfig" title="0"><code>sc.sigfig()</code></a>.</li>
 </ol>
 </section>
-<section id="profiling" class="level4">
-<h4 class="anchored" data-anchor-id="profiling">6. Profiling</h4>
+<section id="profiling-1" class="level4">
+<h4 class="anchored" data-anchor-id="profiling-1">6. Profiling</h4>
 <ol type="1">
 <li>The new <a href="./api/sc_profiling.html#sciris.sc_profiling.benchmark" title="0"><code>sc.benchmark()</code></a> function runs tests on both regular Python and Numpy operations and reports the performance of the current machine.</li>
 <li><a href="./api/sc_profiling.html#sciris.sc_profiling.checkmem" title="0"><code>sc.checkmem()</code></a> now returns a dataframe, can descend multiple levels through an object, reports subtotals, and has an <code>order</code> argument instead of <code>alphabetical</code>.</li>
 </ol>
 </section>
-<section id="versioning" class="level4">
-<h4 class="anchored" data-anchor-id="versioning">7. Versioning</h4>
+<section id="versioning-1" class="level4">
+<h4 class="anchored" data-anchor-id="versioning-1">7. Versioning</h4>
 <ol type="1">
 <li>A new versioning module has been added.</li>
 <li>A new function <a href="./api/sc_versioning.html#sciris.sc_versioning.metadata" title="0"><code>sc.metadata()</code></a> gathers all relevant metadata and returns a dict that can be used for versioning.</li>
@@ -968,8 +1266,8 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="./api/sc_versioning.html#sciris.sc_versioning.require" title="0"><code>sc.require()</code></a> now has the option to raise a warning instead of an error if a module is not found.</li>
 </ol>
 </section>
-<section id="math" class="level4">
-<h4 class="anchored" data-anchor-id="math">8. Math</h4>
+<section id="math-1" class="level4">
+<h4 class="anchored" data-anchor-id="math-1">8. Math</h4>
 <ol type="1">
 <li><a href="./api/sc_math.html#sciris.sc_math.findnans" title="0"><code>sc.findnans()</code></a> is a new alias for <code>sc.findinds(np.isnan(data))</code>. <code>sc.rmnans()</code> is a new alias for <a href="./api/sc_math.html#sciris.sc_math.sanitize" title="0"><code>sc.sanitize()</code></a>.</li>
 <li><a href="./api/sc_math.html#sciris.sc_math.randround" title="0"><code>sc.randround()</code></a> now works with multidimensional arrays. (Thanks to <a href="https://github.com/jamiecohen">Jamie Cohen</a> for the suggestion.)</li>
@@ -978,16 +1276,16 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="./api/sc_math.html#sciris.sc_math.cat" title="0"><code>sc.cat()</code></a> now works on 2D arrays.</li>
 </ol>
 </section>
-<section id="dictionaries" class="level4">
-<h4 class="anchored" data-anchor-id="dictionaries">9. Dictionaries</h4>
+<section id="dictionaries-1" class="level4">
+<h4 class="anchored" data-anchor-id="dictionaries-1">9. Dictionaries</h4>
 <ol type="1">
-<li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> now inherits from <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="1"><code>dict</code></a> rather than <code>OrderedDict</code>. This makes initialization and some other operations nearly four times faster.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> now inherits from <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> rather than <code>OrderedDict</code>. This makes initialization and some other operations nearly four times faster.</li>
 <li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> can now be initialized with integer keys.</li>
 <li>There is a new <a href="./api/sc_odict.html#sciris.sc_odict.dictobj.to_json" title="0"><code>sc.dictobj.to_json()</code></a> method. <a href="./api/sc_odict.html#sciris.sc_odict.dictobj.fromkeys" title="0"><code>sc.dictobj.fromkeys()</code></a> is now a static method.</li>
 </ol>
 </section>
-<section id="nested-objects" class="level4">
-<h4 class="anchored" data-anchor-id="nested-objects">10. Nested objects</h4>
+<section id="nested-objects-1" class="level4">
+<h4 class="anchored" data-anchor-id="nested-objects-1">10. Nested objects</h4>
 <ol type="1">
 <li>Nested “dictionary” operations can now act on other types of object, including lists and regular objects.</li>
 <li><a href="./api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> applies a function iteratively to an object.</li>
@@ -1068,7 +1366,7 @@ ul.task-list li input[type="checkbox"] {
 <h3 class="anchored" data-anchor-id="bugfixes-3">Bugfixes</h3>
 <ol type="1">
 <li>Fixed bug where <code>sc.save(filename=None)</code> would incorrectly result in creation of a file on disk in addition to returning a <a href="https://docs.python.org/3/library/io.html#io.BytesIO" title="1"><code>io.BytesIO</code></a> stream.</li>
-<li>Fixed bug where <a href="./api/sc_profiling.html#sciris.sc_profiling.checkmem" title="0"><code>sc.checkmem()</code></a> would sometimes raise an exception when saving a <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a> object to check its size.</li>
+<li>Fixed bug where <a href="./api/sc_profiling.html#sciris.sc_profiling.checkmem" title="0"><code>sc.checkmem()</code></a> would sometimes raise an exception when saving a <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a> object to check its size.</li>
 <li>Fixed bug where <a href="./api/sc_parallel.html#sciris.sc_parallel.loadbalancer" title="0"><code>sc.loadbalancer()</code></a> would sometimes fail if <code>interval</code> was 0 (it is now required to be at least 1 ms).</li>
 </ol>
 </section>
@@ -1103,8 +1401,8 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="version-2.0.2-2022-10-22" class="level2">
 <h2 class="anchored" data-anchor-id="version-2.0.2-2022-10-22">Version 2.0.2 (2022-10-22)</h2>
-<section id="parallelization-1" class="level3">
-<h3 class="anchored" data-anchor-id="parallelization-1">Parallelization</h3>
+<section id="parallelization-2" class="level3">
+<h3 class="anchored" data-anchor-id="parallelization-2">Parallelization</h3>
 <ol type="1">
 <li>The default parallelizer has been changed from <code>multiprocess</code> to <a href="https://docs.python.org/3/library/concurrent.futures.html#module-concurrent.futures" title="1"><code>concurrent.futures</code></a>. The latter is faster, but less robust (e.g., it can’t parallelize lambda functions). If an error is encountered, it will automatically fall back to the former.</li>
 <li>For debugging, instead of <code>sc.parallelize(..., serial=True)</code>, you can also now use <code>sc.parallelize(..., parallelizer='serial')</code>.</li>
@@ -1145,7 +1443,7 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="./api/sc_fileio.html#sciris.sc_fileio.sanitizefilename" title="0"><code>sc.sanitizefilename()</code></a> now handles more characters, including Unicode, and has many new options.</li>
 <li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> now allows you to delete by index instead of key.</li>
 <li><a href="./api/sc_utils.html#sciris.sc_utils.download" title="0"><code>sc.download()</code></a> now creates folders if they do not already exist.</li>
-<li><code>sc.checktype(obj, 'arraylike')</code> now returns <a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a> for pandas <code>Series</code> objects.</li>
+<li><code>sc.checktype(obj, 'arraylike')</code> now returns <a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a> for pandas <code>Series</code> objects.</li>
 <li><code>sc.promotetoarray()</code> now converts pandas <code>Series</code> or <code>DataFrame</code> objects into arrays.</li>
 <li><a href="./api/sc_fileio.html#sciris.sc_fileio.savetext" title="0"><code>sc.savetext()</code></a> can now save arrays (like <a href="https://numpy.org/doc/stable/reference/generated/numpy.savetxt.html#np.savetxt" title="1"><code>np.savetxt()</code></a>).</li>
 </ol>
@@ -1182,7 +1480,7 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="./api/sc_math.html#sciris.sc_math.count" title="0"><code>sc.count()</code></a> counts the number of matching elements in an array (similar to <a href="https://numpy.org/doc/stable/reference/generated/numpy.count_nonzero.html#np.count_nonzero" title="1"><code>np.count_nonzero()</code></a>, but more flexible with e.g.&nbsp;float vs.&nbsp;int mismatches).</li>
 <li><code>sc.rmnans()</code> and <a href="./api/sc_math.html#sciris.sc_math.fillnans" title="0"><code>sc.fillnans()</code></a> have been added as aliases of <a href="./api/sc_math.html#sciris.sc_math.sanitize" title="0"><code>sc.sanitize()</code></a> with default options.</li>
 <li><a href="./api/sc_utils.html#sciris.sc_utils.strsplit" title="0"><code>sc.strsplit()</code></a> will automatically split common types of delimited strings (e.g.&nbsp;<code>sc.strsplit('a b c')</code>).</li>
-<li><a href="./api/sc_settings.html#sciris.sc_settings.parse_env" title="0"><code>sc.parse_env()</code></a> parses environment variables into common types (e.g., will interpret <code>'False'</code> as <a href="https://docs.python.org/3/library/constants.html#False" title="1"><code>False</code></a>).</li>
+<li><a href="./api/sc_settings.html#sciris.sc_settings.parse_env" title="0"><code>sc.parse_env()</code></a> parses environment variables into common types (e.g., will interpret <code>'False'</code> as <a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a>).</li>
 <li><a href="./api/sc_utils.html#sciris.sc_utils.LazyModule" title="0"><code>sc.LazyModule()</code></a> handles lazily loaded modules (see <a href="./api/sc_utils.html#sciris.sc_utils.importbyname" title="0"><code>sc.importbyname()</code></a> for usage).</li>
 <li><a href="./api/sc_datetime.html#sciris.sc_datetime.randsleep" title="0"><code>sc.randsleep()</code></a> sleeps for a nondeterministic period of time.</li>
 </ol>
@@ -1190,7 +1488,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="bugfixes-6" class="level3">
 <h3 class="anchored" data-anchor-id="bugfixes-6">Bugfixes</h3>
 <ol type="1">
-<li><a href="./api/sc_utils.html#sciris.sc_utils.mergedicts" title="0"><code>sc.mergedicts()</code></a> now handles keyword arguments (previously they were silently ignored). Non-dict inputs also now raise an error by default rather than being silently ignored (except for <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a>).</li>
+<li><a href="./api/sc_utils.html#sciris.sc_utils.mergedicts" title="0"><code>sc.mergedicts()</code></a> now handles keyword arguments (previously they were silently ignored). Non-dict inputs also now raise an error by default rather than being silently ignored (except for <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>).</li>
 <li><a href="./api/sc_fileio.html#sciris.sc_fileio.savespreadsheet" title="0"><code>sc.savespreadsheet()</code></a> now allows NaNs to be saved.</li>
 <li><a href="./api/sc_fileio.html#sciris.sc_fileio.loadspreadsheet" title="0"><code>sc.loadspreadsheet()</code></a> has been updated to match current <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html#pd.read_excel" title="1"><code>pd.read_excel()</code></a> syntax.</li>
 <li><a href="./api/sc_fileio.html#sciris.sc_fileio.Spreadsheet" title="0"><code>Spreadsheet</code></a> objects no longer pickle the binary spreadsheet (in some cases reducing size by 50%).</li>
@@ -1224,20 +1522,20 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="./api/sc_versioning.html#sciris.sc_versioning.loadmetadata" title="0"><code>sc.loadmetadata()</code></a> can now read metadata from JPG files.</li>
 </ol>
 </section>
-<section id="math-1" class="level4">
-<h4 class="anchored" data-anchor-id="math-1">Math</h4>
+<section id="math-2" class="level4">
+<h4 class="anchored" data-anchor-id="math-2">Math</h4>
 <ol type="1">
 <li><a href="./api/sc_math.html#sciris.sc_math.findinds" title="0"><code>sc.findinds()</code></a> can now handle multiple inputs, e.g.&nbsp;<code>sc.findinds(data&gt;0.1, data&lt;0.5)</code>.</li>
 <li><a href="./api/sc_utils.html#sciris.sc_utils.checktype" title="0"><code>sc.checktype()</code></a> now includes boolean arrays as being <code>arraylike</code>, and has a new <code>'bool'</code> option.</li>
 <li><a href="./api/sc_math.html#sciris.sc_math.sanitize" title="0"><code>sc.sanitize()</code></a> can now handle multidimensional arrays.</li>
 </ol>
 </section>
-<section id="files-1" class="level4">
-<h4 class="anchored" data-anchor-id="files-1">Files</h4>
+<section id="files-2" class="level4">
+<h4 class="anchored" data-anchor-id="files-2">Files</h4>
 <ol type="1">
 <li><a href="./api/sc_utils.html#sciris.sc_utils.urlopen" title="0"><code>sc.urlopen()</code></a> can now save to files.</li>
 <li><a href="./api/sc_fileio.html#sciris.sc_fileio.savezip" title="0"><code>sc.savezip()</code></a> can now save data to zip files (instead of just compressing files).</li>
-<li><a href="./api/sc_fileio.html#sciris.sc_fileio.path" title="0"><code>sc.path()</code></a> is more flexible, including handling <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a> inputs.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.path" title="0"><code>sc.path()</code></a> is more flexible, including handling <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a> inputs.</li>
 <li><a href="./api/sc_fileio.html#sciris.sc_fileio.Spreadsheet" title="0"><code>sc.Spreadsheet()</code></a> now has a <code>new()</code> method that creates a blank workbook.</li>
 </ol>
 </section>
@@ -1256,7 +1554,7 @@ ul.task-list li input[type="checkbox"] {
 <ol type="1">
 <li><code>pyyaml</code> has been added as a dependency.</li>
 <li>Profiling and load balancing functions have beem moved from <a href="./api/sc_utils.html#sciris.sc_utils" title="0"><code>sc.sc_utils</code></a> and <a href="./api/sc_parallel.html#sciris.sc_parallel" title="0"><code>sc.sc_parallel</code></a> to a new submodule, <a href="./api/sc_profiling.html#sciris.sc_profiling" title="0"><code>sc.sc_profiling</code></a>.</li>
-<li>Most instances of <a href="https://docs.python.org/3/library/exceptions.html#DeprecationWarning" title="1"><code>DeprecationWarning</code></a> have been changed to <a href="https://docs.python.org/3/library/exceptions.html#FutureWarning" title="1"><code>FutureWarning</code></a>.</li>
+<li>Most instances of <a href="https://docs.python.org/3/builtins/exceptions.html#DeprecationWarning" title="1"><code>DeprecationWarning</code></a> have been changed to <a href="https://docs.python.org/3/builtins/exceptions.html#FutureWarning" title="1"><code>FutureWarning</code></a>.</li>
 <li>Python 2 compatibility functions (e.g.&nbsp;<code>sc.loadobj2or3()</code>) have been moved to a separate module, <code>sc.sc_legacy</code>, which is no longer imported by default.</li>
 <li>Added style and contributing guides.</li>
 <li>Added official support for Python 3.7-3.10.</li>
@@ -1269,7 +1567,7 @@ ul.task-list li input[type="checkbox"] {
 <ol type="1">
 <li>The default for <a href="./api/sc_utils.html#sciris.sc_utils.cp" title="0"><code>sc.cp()</code></a> and <a href="./api/sc_utils.html#sciris.sc_utils.dcp" title="0"><code>sc.dcp()</code></a> changed from <code>die=False</code> to <code>die=True</code>, which may cause previously caught exceptions to be uncaught. For previous behavior, use <code>sc.dcp(..., die=False)</code>.</li>
 <li>The argument <code>maxload</code> (in <a href="./api/sc_parallel.html#sciris.sc_parallel.loadbalancer" title="0"><code>sc.loadbalancer()</code></a>, <a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a>, etc.) has been renamed <code>maxcpu</code> (for consistency with the new <code>maxmem</code> argument).</li>
-<li>Previously <code>sc.loadbalancer(maxload=None)</code> was interpreted as a default load limit (0.8); <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a> is now interpreted as no limit.</li>
+<li>Previously <code>sc.loadbalancer(maxload=None)</code> was interpreted as a default load limit (0.8); <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a> is now interpreted as no limit.</li>
 <li>Legacy load functions have been moved to a separate module and must be used from there, e.g.&nbsp;<code>sc.sc_legacy.loadobj2or3()</code>.</li>
 </ol>
 </section>
@@ -1312,11 +1610,11 @@ ul.task-list li input[type="checkbox"] {
 <section id="changes-to-odict-and-objdict" class="level3">
 <h3 class="anchored" data-anchor-id="changes-to-odict-and-objdict">Changes to odict and objdict</h3>
 <ol type="1">
-<li>Major improvements to <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> performance: key lookup (e.g.&nbsp;<code>my_odict['key']</code>) is ~30% faster, nearly identical to native <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="1"><code>dict()</code></a>; integer lookup (<code>my_odict[3]</code>) is now 10-100x faster. This was achieved by caching the keys rather than looking them up each time.</li>
+<li>Major improvements to <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> performance: key lookup (e.g.&nbsp;<code>my_odict['key']</code>) is ~30% faster, nearly identical to native <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict()</code></a>; integer lookup (<code>my_odict[3]</code>) is now 10-100x faster. This was achieved by caching the keys rather than looking them up each time.</li>
 <li>Allow dicts with integer keys to be converted to odicts via the <code>makefrom()</code> method, e.g.&nbsp;<code>sc.odict.makefrom({0:'foo', 1:'bar'})</code>. If an odict has integer keys, then these take precedence.</li>
 <li>Added <code>force</code> option to <a href="./api/sc_odict.html#sciris.sc_odict.objdict.setattribute" title="0"><code>objdict.setattribute()</code></a> to allow attributes to be set even if they already exist. Added <a href="./api/sc_odict.html#sciris.sc_odict.objdict.delattribute" title="0"><code>objdict.delattribute()</code></a> to delete attributes.</li>
 <li>Removed the <code>to_OD()</code> method (since dicts preserve order, <code>dict(my_odict)</code> is now much more common).</li>
-<li>Made <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> a subclass of <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="1"><code>dict</code></a>, so <code>isinstance(my_dictobj, dict)</code> is now <a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a>.</li>
+<li>Made <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> a subclass of <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>, so <code>isinstance(my_dictobj, dict)</code> is now <a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a>.</li>
 <li>Added <code>sc.ddict()</code> as an alias to <a href="https://docs.python.org/3/library/collections.html#collections.defaultdict" title="1"><code>collections.defaultdict()</code></a>.</li>
 </ol>
 </section>
@@ -1326,10 +1624,10 @@ ul.task-list li input[type="checkbox"] {
 <li>Updated <a href="./api/sc_plotting.html#sciris.sc_plotting.commaticks" title="0"><code>sc.commaticks()</code></a> to use a more thoughtful number of significant figures.</li>
 </ol>
 </section>
-<section id="printing-1" class="level3">
-<h3 class="anchored" data-anchor-id="printing-1">Printing</h3>
+<section id="printing-2" class="level3">
+<h3 class="anchored" data-anchor-id="printing-2">Printing</h3>
 <ol type="1">
-<li>Fixed a bug in <a href="./api/sc_printing.html#sciris.sc_printing.heading" title="0"><code>sc.heading()</code></a> that printed an extraneous <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a>. Also allows more flexibility in spaces before/after the heading.</li>
+<li>Fixed a bug in <a href="./api/sc_printing.html#sciris.sc_printing.heading" title="0"><code>sc.heading()</code></a> that printed an extraneous <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>. Also allows more flexibility in spaces before/after the heading.</li>
 <li>Fixed a bug in <a href="./api/sc_plotting.html#sciris.sc_plotting.fonts" title="0"><code>sc.fonts()</code></a> that prevented using a <code>Path</code> object. Also added a <code>rebuild</code> argument that rebuilds the Matplotlib font cache (useful when added fonts don’t show up).</li>
 <li>Updated <a href="./api/sc_printing.html#sciris.sc_printing.colorize" title="0"><code>sc.colorize()</code></a> to wrap the <code>ansicolors</code> module, allowing more flexible inputs such as <code>sc.colorize('cat', fg='orange')</code>.</li>
 <li>Added <code>output</code> argument to <a href="./api/sc_utils.html#sciris.sc_utils.pp" title="0"><code>sc.pp()</code></a> which acts as an alias to <a href="https://docs.python.org/3/library/pprint.html#pprint.pformat" title="1"><code>pprint.pformat()</code></a>.</li>
@@ -1470,7 +1768,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="bugfixes-8" class="level3">
 <h3 class="anchored" data-anchor-id="bugfixes-8">Bugfixes</h3>
 <ol type="1">
-<li>Fixed <a href="./api/sc_profiling.html#sciris.sc_profiling.checkmem" title="0"><code>sc.checkmem()</code></a> from failing when an attribute was <a href="https://docs.python.org/3/library/constants.html#None" title="1"><code>None</code></a>.</li>
+<li>Fixed <a href="./api/sc_profiling.html#sciris.sc_profiling.checkmem" title="0"><code>sc.checkmem()</code></a> from failing when an attribute was <a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a>.</li>
 <li>Fixed a file handle that was being left open by <a href="./api/sc_versioning.html#sciris.sc_versioning.gitinfo" title="0"><code>sc.gitinfo()</code></a>.</li>
 </ol>
 </section>
@@ -1494,7 +1792,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="other-updates" class="level3">
 <h3 class="anchored" data-anchor-id="other-updates">Other updates</h3>
 <ol type="1">
-<li>Updated <a href="./api/sc_printing.html#sciris.sc_printing.heading" title="0"><code>sc.heading()</code></a> to handle arguments the same way as <a href="https://docs.python.org/3/library/functions.html#print" title="1"><code>print()</code></a>, e.g.&nbsp;<code>sc.heading([1,2,3], 'is a list')</code>.</li>
+<li>Updated <a href="./api/sc_printing.html#sciris.sc_printing.heading" title="0"><code>sc.heading()</code></a> to handle arguments the same way as <a href="https://docs.python.org/3/builtins/functions.html#print" title="1"><code>print()</code></a>, e.g.&nbsp;<code>sc.heading([1,2,3], 'is a list')</code>.</li>
 <li>Allowed more flexibility with the <code>ncpus</code> argument of <a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a>: it can now be a fraction, representing a fraction of available CPUs. Also, it will now never exceed the number of tasks to be run.</li>
 <li>Updated <a href="./api/sc_utils.html#sciris.sc_utils.suggest" title="0"><code>sc.suggest()</code></a> to modify the threshold to be based on the length of the input word.</li>
 </ol>
@@ -1531,7 +1829,7 @@ ul.task-list li input[type="checkbox"] {
 <h3 class="anchored" data-anchor-id="improvements-4">Improvements</h3>
 <ol type="1">
 <li><code>sc.loadobj()</code> now accepts a <code>remapping</code> argument, which lets the user load old pickle files even if the modules no longer exist.</li>
-<li>Most file functions (e.g.&nbsp;<a href="./api/sc_fileio.html#sciris.sc_fileio.makefilepath" title="0"><code>sc.makefilepath</code></a>, <a href="./api/sc_fileio.html#sciris.sc_fileio.getfilelist" title="0"><code>sc.getfilelist()</code></a> now accept an <code>aspath</code> argument, which, if <a href="https://docs.python.org/3/library/constants.html#True" title="1"><code>True</code></a>, will return a <a href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="1"><code>pathlib.Path</code></a> object instead of a string.</li>
+<li>Most file functions (e.g.&nbsp;<a href="./api/sc_fileio.html#sciris.sc_fileio.makefilepath" title="0"><code>sc.makefilepath</code></a>, <a href="./api/sc_fileio.html#sciris.sc_fileio.getfilelist" title="0"><code>sc.getfilelist()</code></a> now accept an <code>aspath</code> argument, which, if <a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a>, will return a <a href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="1"><code>pathlib.Path</code></a> object instead of a string.</li>
 <li>Most array-returning functions, such as <code>sc.promotetoarray()</code> and <a href="./api/sc_math.html#sciris.sc_math.cat" title="0"><code>sc.cat()</code></a>, now accept a <a href="https://docs.python.org/3/library/copy.html#module-copy" title="1"><code>copy</code></a> argument and other keywords; these keywords are passed to <a href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#np.array" title="1"><code>np.array()</code></a>, allowing e.g.&nbsp;the <code>dtype</code> to be set.</li>
 <li>A fallback option for <a href="./api/sc_math.html#sciris.sc_math.findinds" title="0"><code>sc.findinds()</code></a> has been implemented, allowing it to work even if the input array isn’t numeric.</li>
 <li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> now has a <code>defaultdict</code> argument, which lets you use it like a defaultdict as well as an ordered dict.</li>
@@ -1550,7 +1848,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="other-updates-1" class="level3">
 <h3 class="anchored" data-anchor-id="other-updates-1">Other updates</h3>
 <ol type="1">
-<li>Exceptions have been made more specific (e.g.&nbsp;<a href="https://docs.python.org/3/library/exceptions.html#TypeError" title="1"><code>TypeError</code></a> instead of <a href="https://docs.python.org/3/library/exceptions.html#Exception" title="1"><code>Exception</code></a>).</li>
+<li>Exceptions have been made more specific (e.g.&nbsp;<a href="https://docs.python.org/3/builtins/exceptions.html#TypeError" title="1"><code>TypeError</code></a> instead of <a href="https://docs.python.org/3/builtins/exceptions.html#Exception" title="1"><code>Exception</code></a>).</li>
 <li>Test code coverage has been increased significantly (from 63% to 84%).</li>
 </ol>
 </section>
@@ -1573,7 +1871,7 @@ ul.task-list li input[type="checkbox"] {
 <li>Fixed recursion issue with printing <a href="./api/sc_fileio.html#sciris.sc_fileio.Failed" title="0"><code>sc.Failed</code></a> objects.</li>
 <li>Changed <a href="./api/sc_math.html#sciris.sc_math.approx" title="0"><code>sc.approx()</code></a> to be an alias to <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#np.isclose" title="1"><code>np.isclose()</code></a>; this function may be removed in future versions.</li>
 <li>Changed <a href="./api/sc_math.html#sciris.sc_math.findinds" title="0"><code>sc.findinds()</code></a> to call <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#np.isclose" title="1"><code>np.isclose()</code></a>, allowing for greater flexibility.</li>
-<li>Changed the <a href="https://docs.python.org/3/library/functions.html#repr" title="1"><code>repr</code></a> for <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> to differ from <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>.</li>
+<li>Changed the <a href="https://docs.python.org/3/builtins/functions.html#repr" title="1"><code>repr</code></a> for <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> to differ from <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>.</li>
 <li>Improved <a href="./api/sc_plotting.html#sciris.sc_plotting.maximize" title="0"><code>sc.maximize()</code></a> to work on more platforms (but still not inline or on Macs).</li>
 <li>Improved the flexiblity of <a href="./api/sc_utils.html#sciris.sc_utils.htmlify" title="0"><code>sc.htmlify()</code></a> to handle tabs and other kinds of newlines.</li>
 <li>Added additional checks to <a href="./api/sc_printing.html#sciris.sc_printing.prepr" title="0"><code>sc.prepr()</code></a> to avoid failing on recursive objects.</li>
@@ -1692,7 +1990,7 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="./api/sc_fileio.html#sciris.sc_fileio.jsonify" title="0"><code>sc.jsonify()</code></a> checks objects for a <code>to_json()</code> method, handling e.g Pandas dataframes, and falls back to <a href="./api/sc_fileio.html#sciris.sc_fileio.jsonpickle" title="0"><code>sc.jsonpickle()</code></a> instead of raising an exception for unknown object types.</li>
 <li><a href="./api/sc_utils.html#sciris.sc_utils.suggest" title="0"><code>sc.suggest()</code></a> now uses <code>jellyfish</code> instead of <code>python-levenshtein</code> for fuzzy string matching.</li>
 <li><code>sc.saveobj()</code> now uses protocol 4 instead of the latest by default, to avoid backwards incompatibility issues caused by using protocol 5 (only compatible with Python 3.8).</li>
-<li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> and related classes now raise <a href="./api/sc_utils.html#sciris.sc_utils.KeyNotFoundError" title="0"><code>sc.KeyNotFoundError</code></a> exceptions. These are derived from <a href="https://docs.python.org/3/library/exceptions.html#KeyError" title="1"><code>KeyError</code></a>, but fix a <a href="https://stackoverflow.com/questions/34051333/strange-error-message-printed-out-for-keyerror">bug in the string representation</a> to allow multi-line error messages.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> and related classes now raise <a href="./api/sc_utils.html#sciris.sc_utils.KeyNotFoundError" title="0"><code>sc.KeyNotFoundError</code></a> exceptions. These are derived from <a href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="1"><code>KeyError</code></a>, but fix a <a href="https://stackoverflow.com/questions/34051333/strange-error-message-printed-out-for-keyerror">bug in the string representation</a> to allow multi-line error messages.</li>
 <li>Rewrote all tests to be pytest-compatible.</li>
 </ol>
 </section>
@@ -2144,7 +2442,7 @@ ul.task-list li input[type="checkbox"] {
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.3.0 (2026-08-08).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.4.0 (2026-09-28).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

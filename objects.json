@@ -1,7 +1,7 @@
 {
   "project": "sciris",
   "version": "0.0.9999",
-  "count": 486,
+  "count": 493,
   "items": [
     {
       "name": "sciris.sc_math.approx",
@@ -396,6 +396,14 @@
       "dispname": "-"
     },
     {
+      "name": "sciris.sc_odict.odict.clear",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.odict.clear",
+      "dispname": "-"
+    },
+    {
       "name": "sciris.sc_odict.odict.copy",
       "domain": "py",
       "role": "function",
@@ -628,6 +636,14 @@
       "dispname": "-"
     },
     {
+      "name": "sciris.sc_odict.odict.popitem",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.odict.popitem",
+      "dispname": "-"
+    },
+    {
       "name": "sciris.sc_odict.odict.promote",
       "domain": "py",
       "role": "function",
@@ -665,6 +681,14 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_odict.html#sciris.sc_odict.odict.reversed",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_odict.odict.setdefault",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.odict.setdefault",
       "dispname": "-"
     },
     {
@@ -897,14 +921,6 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_dataframe.html#sciris.sc_dataframe.dataframe.flexget",
-      "dispname": "-"
-    },
-    {
-      "name": "sciris.sc_dataframe.dataframe.get",
-      "domain": "py",
-      "role": "function",
-      "priority": "1",
-      "uri": "api/sc_dataframe.html#sciris.sc_dataframe.dataframe.get",
       "dispname": "-"
     },
     {
@@ -2372,6 +2388,14 @@
       "dispname": "-"
     },
     {
+      "name": "sciris.sc_parallel.Parallel.close",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.Parallel.close",
+      "dispname": "-"
+    },
+    {
       "name": "sciris.sc_parallel.Parallel.disp",
       "domain": "py",
       "role": "function",
@@ -2473,6 +2497,14 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_parallel.html#sciris.sc_parallel.Parallel.set_ncpus",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_parallel.Parallel.stop",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.Parallel.stop",
       "dispname": "-"
     },
     {
@@ -3025,6 +3057,14 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_utils.html#sciris.sc_utils.iswindows",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_utils.lazyimport",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_utils.html#sciris.sc_utils.lazyimport",
       "dispname": "-"
     },
     {
@@ -3836,11 +3876,27 @@
       "dispname": "-"
     },
     {
+      "name": "sciris.sc_settings.ScirisOptions.setdefault",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_settings.html#sciris.sc_settings.ScirisOptions.setdefault",
+      "dispname": "-"
+    },
+    {
       "name": "sciris.sc_settings.ScirisOptions.to_dict",
       "domain": "py",
       "role": "function",
       "priority": "1",
       "uri": "api/sc_settings.html#sciris.sc_settings.ScirisOptions.to_dict",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_settings.ScirisOptions.update",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_settings.html#sciris.sc_settings.ScirisOptions.update",
       "dispname": "-"
     },
     {
@@ -4268,6 +4324,14 @@
       "dispname": "-"
     },
     {
+      "name": "sciris.odict.clear",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.odict.clear",
+      "dispname": "-"
+    },
+    {
       "name": "sciris.odict.copy",
       "domain": "py",
       "role": "function",
@@ -4500,6 +4564,14 @@
       "dispname": "-"
     },
     {
+      "name": "sciris.odict.popitem",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.odict.popitem",
+      "dispname": "-"
+    },
+    {
       "name": "sciris.odict.promote",
       "domain": "py",
       "role": "function",
@@ -4537,6 +4609,14 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_odict.html#sciris.sc_odict.odict.reversed",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.odict.setdefault",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.odict.setdefault",
       "dispname": "-"
     },
     {
@@ -4761,14 +4841,6 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_dataframe.html#sciris.sc_dataframe.dataframe.flexget",
-      "dispname": "-"
-    },
-    {
-      "name": "sciris.dataframe.get",
-      "domain": "py",
-      "role": "function",
-      "priority": "1",
-      "uri": "api/sc_dataframe.html#sciris.sc_dataframe.dataframe.get",
       "dispname": "-"
     },
     {
@@ -6188,6 +6260,14 @@
       "dispname": "-"
     },
     {
+      "name": "sciris.Parallel.close",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.Parallel.close",
+      "dispname": "-"
+    },
+    {
       "name": "sciris.Parallel.disp",
       "domain": "py",
       "role": "function",
@@ -6289,6 +6369,14 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_parallel.html#sciris.sc_parallel.Parallel.set_ncpus",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.Parallel.stop",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.Parallel.stop",
       "dispname": "-"
     },
     {
@@ -6825,6 +6913,14 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_utils.html#sciris.sc_utils.iswindows",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.lazyimport",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_utils.html#sciris.sc_utils.lazyimport",
       "dispname": "-"
     },
     {
@@ -7612,11 +7708,27 @@
       "dispname": "-"
     },
     {
+      "name": "sciris.ScirisOptions.setdefault",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_settings.html#sciris.sc_settings.ScirisOptions.setdefault",
+      "dispname": "-"
+    },
+    {
       "name": "sciris.ScirisOptions.to_dict",
       "domain": "py",
       "role": "function",
       "priority": "1",
       "uri": "api/sc_settings.html#sciris.sc_settings.ScirisOptions.to_dict",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.ScirisOptions.update",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_settings.html#sciris.sc_settings.ScirisOptions.update",
       "dispname": "-"
     },
     {

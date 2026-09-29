@@ -1,4 +1,4 @@
-# Sciris v3.3.0
+# Sciris v3.4.0
 
 > Fast, flexible tools to simplify scientific Python
 
@@ -8,7 +8,7 @@
 - Aliases are alternative names for the same object; the canonical name is the one listed, and is the one to prefer when writing new code.
 - A version of this file including a usage example for each function is available at llms-full.txt.
 
-This file lists all 274 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
+This file lists all 275 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
 
 ## Links
 
@@ -18,7 +18,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
 ## Math and arrays (sc_math)
 
-- `sc.approx(val1=None, val2=None, eps=None, **kwargs)`: Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()` and may be removed in future versions.
+- `sc.approx(val1=None, val2=None, eps=None, **kwargs)`: Determine whether two scalars (or an array and a scalar) approximately match. Alias for `np.isclose()`; deprecated, use `np.isclose()` instead. [DEPRECATED]
 - `sc.cat(*args, copy=False, **kwargs)`: Like `numpy.concatenate`, but takes anything and returns an array. Useful for e.g. appending a single number onto the beginning or end of an array.
 - `sc.convolve(a, v)`: Like `numpy.convolve`, but always returns an array the size of the first array (equivalent to mode='same'), and solves the boundary problem present in `numpy.convolve` by adjusting the edges by the weight of the convolution kernel.
 - `sc.count(arr=None, val=None, eps=1e-06, **kwargs)`: Count the number of matching elements.
@@ -41,7 +41,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.normsum(arr, total=None)`: Multiply a list or array by some normalizing factor so that its sum is equal to the total. Formerly called "`scaleratio`".
 - `sc.numdigits(n, *args, count_minus=False, count_decimal=False)`: Count the number of digits in a number (or list of numbers).
 - `sc.perturb(*args, n=1, span=0.5, randseed=None, normal=False)`: Define an array of numbers uniformly perturbed with a mean of 1.
-- `sc.randround(x)`: Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.
+- `sc.randround(x, rng=None)`: Round a float, list, or array probabilistically to the nearest integer. Works for both positive and negative values.
 - `sc.rolling(data, window=7, operation='mean', replacenans=None, **kwargs)`: Alias to `pandas.Series.rolling()` (window) method to smooth a series.
 - `sc.safedivide(numerator=None, denominator=None, default=None, eps=None, warn=False)`: Handle divide-by-zero and divide-by-nan elegantly.
 - `sc.sanitize(data=None, returninds=False, replacenans=None, defaultval=None, die=True, verbose=False, label=None)`: Sanitize input to remove NaNs. (NB: `sc.sanitize()` and `sc.rmnans()` are aliases.) [aliases: sc.rmnans()]
@@ -80,8 +80,8 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.jsonunpickle(json=None, filename=None)`: Open a saved JSON pickle
 - `sc.load(filename=None, folder=None, verbose=None, die=False, remapping=None, method=None, auto_remap=True, **kwargs)`: Load a file that has been saved as a gzipped pickle file, e.g. by `sc.save()`. Accepts either a filename (standard usage) or a file object as the first argument. Note that `sc.load()`/`sc.loadobj()` are aliases of each other. [aliases: sc.loadobj()]
 - `sc.loadany(filename, folder=None, verbose=False, **kwargs)`: Load data from a file using all known load functions until one works.
-- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', **kwargs)`: Convenience function for reading a JSON file (or string).
-- `sc.loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=1, asdataframe=None, method='pandas', **kwargs)`: Load a spreadsheet as a dataframe or a list of lists.
+- `sc.loadjson(filename=None, folder=None, string=None, fromfile=True, encoding='utf-8', default=None, die=None, **kwargs)`: Convenience function for reading a JSON file (or string).
+- `sc.loadspreadsheet(filename=None, folder=None, fileobj=None, sheet=0, header=True, asdataframe=None, method='pandas', **kwargs)`: Load a spreadsheet as a dataframe or a list of lists.
 - `sc.loadstr(string, **kwargs)`: Like `sc.load()`, but for a bytes-like string (rarely used).
 - `sc.loadtext(filename=None, folder=None, splitlines=False, encoding='utf-8')`: Convenience function for reading a text file
 - `sc.loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False, loader=None, encoding='utf-8')`: Convenience function for reading a YAML file (or string).
@@ -215,7 +215,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.rgb2hsv(colors=None)`: Shortcut to Matplotlib's rgb_to_hsv method, accepts a color triplet or a list/array of color triplets.
 - `sc.sanitizecolor(color, asarray=False, alpha=None, normalize=True)`: Alias to `matplotlib.colors.to_rgb`, but also handles numeric inputs.
 - `sc.shifthue(colors=None, hueshift=0.0)`: Shift the hue of the colors being fed in.
-- `sc.turbocolormap(apply=False)`: NOTE: as of Matplotlib 3.4.0, this colormap is included by default, and will soon be removed from Sciris.
+- `sc.turbocolormap(apply=False)`: Alias to Matplotlib's turbo colormap, a map similar to Jet, but better. Set apply=True to use immediately.
 - `sc.vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxval=None, midpoint=None, nancolor=None)`: This function converts a vector (i.e., 1D array) of N values into an Nx3 matrix of color values according to the current colormap. It automatically scales the vector to provide maximum dynamic range for the color map.
 
 ## Parallelization (sc_parallel)
@@ -224,13 +224,13 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.cpuload(interval=0.1)`: Takes a snapshot of current CPU usage via `psutil` [aliases: sc.cpu_load()]
 - `sc.loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1, maxtime=36000, label=None, verbose=None, **kwargs)`: Delay execution while CPU load is too high -- a very simple load balancer.
 - `sc.memload()`: Takes a snapshot of current fraction of memory usage via `psutil` [aliases: sc.mem_load()]
-- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Parallelization manager
-- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, **func_kwargs)`: Execute a function in parallel.
+- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)`: Parallelization manager
+- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)`: Execute a function in parallel.
 
 ## Profiling and resource monitoring (sc_profiling)
 
-- `sc.benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False)`: Benchmark Python performance
-- `sc.checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)`: Checks how much memory the variable or variables in question use by dumping them to file.
+- `sc.benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, legacy=True, return_timers=False)`: Benchmark Python performance
+- `sc.checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)`: Checks how much memory the variable or variables in question use, by counting the number of bytes needed to pickle them.
 - `sc.checkram(unit='mb', fmt='0.2f', start=0, to_string=True)`: Measure actual memory usage, typically at different points throughout execution.
 - `sc.cprofile(sort='cumtime', columns='default', mintime=0.001, maxitems=100, maxfunclen=40, maxpathlen=40, use_ms=None, stripdirs=True, show=True)`: Function profiler, built off Python's built-in cProfile
 - `sc.LimitExceeded(...)`: Custom exception for use with the `sc.resourcemonitor()` monitor.
@@ -267,7 +267,8 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.isstring(obj)`: Determine whether or not the input is string-like (i.e., str or bytes).
 - `sc.iswindows(die=False)`: Alias to `sc.getplatform('windows')`
 - `sc.KeyNotFoundError(...)`: A tiny class to fix repr for KeyErrors. KeyError prints the repr of the error message, rather than the actual message, so e.g. newline characters print as the character rather than the actual newline.
-- `sc.LazyModule(module, variable, namespace=None, overwrite=True)`: Create a "lazy" module that is loaded if and only if an attribute is called.
+- `sc.lazyimport(module, variable=None, namespace=None)`: Import a module only when it is first used.
+- `sc.LazyModule(module, variable=None, namespace=None, overwrite=True)`: Create a "lazy" module that is loaded if and only if an attribute is called.
 - `sc.Link(obj=None)`: A class to differentiate between an object and a link to an object. The idea is that this object is parsed differently from other objects -- most notably, a recursive method (such as a pickle) would skip over Link objects, and then would fix them up after the other objects had been reinstated.
 - `sc.LinkException(...)`: An exception to raise when links are broken, for exclusive use with the Link class.
 - `sc.mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, _die=True, **kwargs)`: Small function to merge multiple dicts together.
@@ -309,7 +310,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.timedsleep(delay=None, start=None, verbose=False)`: Pause for the specified amount of time, taking into account how long other operations take.
 - `sc.timer(label=None, auto=False, start=True, unit='auto', verbose=None, **kwargs)`: Simple timer class. Note: `sc.timer()` and `sc.Timer()` are aliases. [aliases: sc.Timer()]
 - `sc.toc(start=None, label=None, baselabel=None, sigfigs=None, reset=False, unit='s', output=False, verbose=None, elapsed=None, **kwargs)`: With `sc.tic()`, a little pair of functions to calculate a time difference. See also `sc.timer()`.
-- `sc.toctic(returntic=False, returntoc=False, *args, **kwargs)`: A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.
+- `sc.toctic(*args, returntic=False, returntoc=False, **kwargs)`: A convenience fuction for multiple timings. Can return the default output of either `sc.tic()` or `sc.toc()` (default neither). Arguments are passed to `sc.toc()`. Equivalent to `sc.toc(reset=True)`.
 - `sc.yeartodate(year, as_date=True, **kwargs)`: Convert a decimal year to a date
 
 ## Nested objects (sc_nested)
@@ -317,14 +318,14 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.Equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, union=True, verbose=None, compare=True, die=False, **kwargs)`: Compare equality between two arbitrary objects -- see `sc.equal()` for full documentation.
 - `sc.equal(obj, obj2, *args, method=None, detailed=False, equal_nan=True, leaf=False, union=True, verbose=None, die=False, **kwargs)`: Compare equality between two arbitrary objects
 - `sc.flattendict(nesteddict, sep=None, _prefix=None)`: Flatten nested dictionary
-- `sc.getnested(nested, keylist, safe=False, default=None)`: Get the value for the given list of keys
+- `sc.getnested(nested, keylist, safe=False, default=<not given>)`: Get the value for the given list of keys
 - `sc.iternested(nesteddict, _previous=None)`: Return a list of all the twigs in the current dictionary
-- `sc.IterObj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, *args, **kwargs)`: Object iteration manager
-- `sc.iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, *args, **kwargs)`: Iterate over an object and apply a function to each node (item with or without children).
+- `sc.IterObj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, iterate=True, custom_type=None, custom_iter=None, custom_get=None, custom_set=None, aliases=False, **kwargs)`: Object iteration manager
+- `sc.iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, depthfirst=True, atomic='default', skip=None, rootkey='root', verbose=False, flatten=False, to_df=False, aliases=False, **kwargs)`: Iterate over an object and apply a function to each node (item with or without children).
 - `sc.makenested(obj=None, keylist=None, value=None, overwrite=True, generator=None, copy=False)`: Make or set a nested object (such as a dictionary).
 - `sc.mergenested(dict1, dict2, die=False, verbose=False, _path=None)`: Merge different nested dictionaries
 - `sc.nestedloop(inputs, loop_order)`: Zip list of lists in order
-- `sc.search(obj, query='<sc_nested_custom_None>', key='<sc_nested_custom_None>', value='<sc_nested_custom_None>', type='<sc_nested_custom_None>', method='exact', **kwargs)`: Find a key/attribute or value within a list, dictionary or object.
+- `sc.search(obj, query=<not given>, key=<not given>, value=<not given>, type=<not given>, method='exact', **kwargs)`: Find a key/attribute or value within a list, dictionary or object.
 - `sc.setnested(obj=None, keylist=None, value=None, **kwargs)`: Set the value for the given list of keys; alias for `sc.makenested()`.
 
 ## Settings and help (sc_settings)
@@ -338,4 +339,4 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 
 - `sc.ddict(...)`: defaultdict(default_factory=None, /, [...]) --> dict with default factory
 
-<!-- Generated by `python make_api.py` for Sciris v3.3.0: llms.txt -->
+<!-- Generated by `python make_api.py` for Sciris v3.4.0: llms.txt -->
