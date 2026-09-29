@@ -67,6 +67,20 @@ style_fancy.update({
     'lines.linewidth': 2,
 })
 
+# Environment variable corresponding to each option
+envvars = sc.objdict(
+    sep         = 'SCIRIS_SEP',
+    showtype    = 'SCIRIS_SHOW_TYPE',
+    aspath      = 'SCIRIS_ASPATH',
+    style       = 'SCIRIS_STYLE',
+    dpi         = 'SCIRIS_DPI',
+    font        = 'SCIRIS_FONT',
+    fontsize    = 'SCIRIS_FONT_SIZE',
+    interactive = 'SCIRIS_INTERACTIVE',
+    jupyter     = 'SCIRIS_JUPYTER',
+    backend     = 'SCIRIS_BACKEND',
+)
+
 
 def parse_env(var, default=None, which='str'):
     """
@@ -149,7 +163,7 @@ class ScirisOptions(sc.objdict):
     ```python
     sc.options(dpi=150) # Larger size
     sc.options(style='simple', font='Rosario') # Change to the "simple" Sciris style with a custom font
-    sc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
+    sc.options.set(fontsize=18, backend='agg') # Multiple changes
     sc.options(interactive=False) # Turn off interactive plots
     sc.options(jupyter=True) # Defaults for Jupyter
     sc.options('defaults') # Reset to default options
@@ -164,9 +178,12 @@ class ScirisOptions(sc.objdict):
     def __init__(self):
         super().__init__()
         optdesc, options = self.get_orig_options() # Get the options
-        self.update(options) # Update this object with them
+        super().update(options) # Update this object with them
         self.setattribute('optdesc', optdesc)  # Set the description as an attribute, not a dict entry
         self.setattribute('orig_options', sc.dcp(options))  # Copy the default options
+        stylekeys = set(style_default).union(*plt.style.library.values()) - {'figure.dpi', 'font.family', 'font.size'} # Keys any style can change, except those handled by options
+        self.setattribute('orig_rc', {k:plt.rcParams[k] for k in stylekeys}) # Store the original rcParams, for resetting the style
+        self.setattribute('on_entry', []) # Stack of settings to restore on exiting a with block
         self.setattribute('_locked', True) # Prevent further modifications
         return
 
@@ -194,6 +211,16 @@ class ScirisOptions(sc.objdict):
             return super().__setitem__(key, value)
 
 
+    def update(self, *args, **kwargs):
+        """ Route updates through `set()` so options are checked and applied """
+        return self.set(**dict(*args, **kwargs))
+
+
+    def setdefault(self, key, default=None):
+        """ Options always have a value, so just get it (raising an error if the option is not found) """
+        return self[key]
+
+
     def to_dict(self):
         """ Pull out only the settings from the options object """
         return {k:v for k,v in self.items()}
@@ -214,16 +241,12 @@ class ScirisOptions(sc.objdict):
 
     def __exit__(self, *args, **kwargs):
         """ Allow to be used in a with block """
-        try:
-            reset = {}
-            for k,v in self.on_entry.items():
-                if self[k] != v: # Only reset settings that have changed
-                    reset[k] = v
-            self.set(**reset)
-            self.delattribute('on_entry')
-        except AttributeError as E: # pragma: no cover
+        if not self.on_entry:
             errormsg = 'Please use sc.options.context() if using a with block'
-            raise AttributeError(errormsg) from E
+            raise AttributeError(errormsg)
+        on_entry = self.on_entry.pop() # Get the settings from the most recent context()
+        reset = {k:v for k,v in on_entry.items() if self[k] != v} # Only reset settings that have changed
+        self.set(**reset)
         return
 
 
@@ -252,36 +275,36 @@ class ScirisOptions(sc.objdict):
         options = sc.objdict() # The options
 
         optdesc.sep = 'Set thousands seperator'
-        options.sep = parse_env('SCIRIS_SEP', ',', str)
+        options.sep = parse_env(envvars.sep, ',', str)
 
         optdesc.showtype = 'Show NumPy type with printing (e.g. np.float(0.343) instead of 0.343)'
-        options.showtype = parse_env('SCIRIS_SHOW_TYPE', False, bool)
+        options.showtype = parse_env(envvars.showtype, False, bool)
 
         optdesc.aspath = 'Set whether to return Path objects instead of strings by default'
-        options.aspath = parse_env('SCIRIS_ASPATH', False, bool)
+        options.aspath = parse_env(envvars.aspath, False, bool)
 
         optdesc.style = 'Set the default plotting style -- options are "default", "simple", and "fancy", plus those in plt.style.available; see also options.rc'
-        options.style = parse_env('SCIRIS_STYLE', 'default', str)
+        options.style = parse_env(envvars.style, 'default', str)
 
         optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
-        options.dpi = parse_env('SCIRIS_DPI', plt.rcParams['figure.dpi'], int)
+        options.dpi = parse_env(envvars.dpi, plt.rcParams['figure.dpi'], int)
 
         optdesc.font = 'Set the default font family (e.g., sans-serif or Arial)'
-        options.font = parse_env('SCIRIS_FONT', plt.rcParams['font.family'], None) # Can be a string or list, so don't cast it to any object
+        options.font = parse_env(envvars.font, plt.rcParams['font.family'], None) # Can be a string or list, so don't cast it to any object
 
         optdesc.fontsize = 'Set the default font size'
-        options.fontsize = parse_env('SCIRIS_FONT_SIZE', plt.rcParams['font.size'], str)
+        options.fontsize = parse_env(envvars.fontsize, plt.rcParams['font.size'], str)
 
         optdesc.interactive = 'Convenience method to set figure backend'
-        options.interactive = parse_env('SCIRIS_INTERACTIVE', True, bool)
+        options.interactive = parse_env(envvars.interactive, True, bool)
 
         optdesc.jupyter = 'Convenience method to set common settings for Jupyter notebooks: set to "auto" (which detects if Jupyter is running), "retina", "default" (or empty, which use regular PNG output), or "widget" to set backend'
-        options.jupyter = parse_env('SCIRIS_JUPYTER', 'auto', str)
+        options.jupyter = parse_env(envvars.jupyter, 'auto', str)
 
         optdesc.backend = 'Set the Matplotlib backend (use "agg" for non-interactive)'
-        options.backend = parse_env('SCIRIS_BACKEND', '', str) # Unfortunately plt.get_backend() creates the backend if it doesn't exist, which can be extremely slow
+        options.backend = parse_env(envvars.backend, '', str) # Unfortunately plt.get_backend() creates the backend if it doesn't exist, which can be extremely slow
 
-        optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting -- usually set automatically by "style" option'
+        optdesc.rc = 'Matplotlib rc (run control) style parameters used during plotting, in addition to those set by the "style" option'
         options.rc = {}
 
         return optdesc, options
@@ -306,7 +329,7 @@ class ScirisOptions(sc.objdict):
 
         # Reset to defaults
         if key in ['default', 'defaults']:
-            kwargs = self.orig_options # Reset everything to default
+            kwargs = sc.dcp(self.orig_options) # Reset everything to default; copy so the defaults aren't modified
 
         # Handle other keys
         elif key is not None:
@@ -326,32 +349,42 @@ class ScirisOptions(sc.objdict):
                 kwargs['backend'] = 'agg'
 
         # Reset options
+        old_style = {k:self[k] for k in ['style', 'rc']} # In case the new style is invalid
         for key,value in kwargs.items():
 
             # Handle deprecations
             rename = {'font_size': 'fontsize', 'font_family':'font', 'show_type':'showtype'}
-            if key in rename.keys(): # pragma: no cover
+            if key in rename.keys():
                 oldkey = key
                 key = rename[oldkey]
 
-            if key not in self.keys(): # pragma: no cover
+            if key not in self.keys():
                 keylist = self.orig_options.keys()
                 keys = '\n'.join(keylist)
                 errormsg = f'Option "{key}" not recognized; options are "defaults" or:\n{keys}\n\nSee help(sc.options.set) for more information.'
                 raise ValueError(errormsg) from KeyError(key) # Can't use sc.KeyNotFoundError since would be a circular import
             else:
-                if value in [None, 'default']:
+                if value in [None, 'default'] or (key == 'backend' and not value): # An empty backend means the default
                     value = self.orig_options[key]
+                old = self[key]
                 super().__setitem__(key, value) # Needed since we overwrite __setitem__ to call this
 
-                matplotlib_keys = ['fontsize', 'font', 'dpi', 'backend']
-                if key in matplotlib_keys:
-                    self.set_matplotlib_global(key, value)
-                elif key == 'showtype':
-                    self.set_show_type()
+                try:
+                    matplotlib_keys = ['fontsize', 'font', 'dpi', 'backend']
+                    if key in matplotlib_keys:
+                        self.set_matplotlib_global(key, value)
+                    elif key == 'showtype':
+                        self.set_show_type()
+                except:
+                    super().__setitem__(key, old) # Restore the previous value if the new one is invalid
+                    raise
 
-        if use:
-            self.use_style(style=kwargs.get('style'))
+        if use and ('style' in kwargs or 'rc' in kwargs): # Other Matplotlib options have already been applied
+            try:
+                self.use_style(style=kwargs.get('style'))
+            except:
+                super().update(old_style) # Restore the previous style if the new one is invalid
+                raise
 
         return
 
@@ -367,17 +400,21 @@ class ScirisOptions(sc.objdict):
 
     def context(self, **kwargs):
         """
-        Alias to set() for non-plotting options, for use in a "with" block.
+        Alias to set() for use in a "with" block; the previous settings are restored on exit.
 
-        Note: for plotting options, use `sc.options.with_style()`, which is linked
-        to Matplotlib's context manager. If you set plotting options with this,
-        they won't have any effect.
+        Note: for plotting options, you can also use `sc.options.with_style()`,
+        which is linked to Matplotlib's context manager.
+
+        **Example**:
+
+        ```python
+        with sc.options.context(aspath=True):
+            sc.thisdir() # Returns a Path object
+        ```
         """
-        # Store current settings
-        self.setattribute('on_entry', {k:self[k] for k in kwargs.keys()}) # Since not a valid key
-
-        # Make changes
-        self.set(**kwargs)
+        on_entry = {k:self[k] for k in kwargs.keys()} # Store current settings
+        self.set(**kwargs) # Make changes
+        self.on_entry.append(on_entry) # Only store once the changes have succeeded
         return self
 
     def set_show_type(self):
@@ -490,11 +527,6 @@ class ScirisOptions(sc.objdict):
         ```
         """
 
-        # If not detailed, just print the docstring for sc.options
-        if not detailed:
-            print(self.__doc__)
-            return
-
         n = 15 # Size of indent
         optdict = sc.objdict()
         for key in self.orig_options.keys():
@@ -502,12 +534,14 @@ class ScirisOptions(sc.objdict):
             entry.key = key
             entry.current = sc.indent(n=n, width=None, text=sc.pp(self[key], output=True)).rstrip()
             entry.default = sc.indent(n=n, width=None, text=sc.pp(self.orig_options[key], output=True)).rstrip()
-            if not key.startswith('rc'):
-                entry.variable = f'SCIRIS_{key.upper()}' # NB, hard-coded above!
-            else:
-                entry.variable = 'No environment variable'
+            entry.variable = envvars.get(key, 'No environment variable')
             entry.desc = sc.indent(n=n, text=self.optdesc[key])
             optdict[key] = entry
+
+        # If not detailed, just print the docstring for sc.options
+        if not detailed:
+            print(self.__doc__)
+            return optdict if output else None
 
         # Convert to a dataframe for nice printing
         print('Sciris global options ("Environment" = name of corresponding environment variable):')
@@ -577,14 +611,14 @@ class ScirisOptions(sc.objdict):
             stylestr = str(style).lower()
             rc = sc.dcp(style_default)
             if stylestr in ['default', 'matplotlib', 'reset']:
-                pass
+                rc.update(self.orig_rc) # Restore everything that a style might have changed
             elif stylestr in ['simple', 'sciris']:
                 rc.update(style_simple)
             elif stylestr in ['fancy', 'covasim']:
                 rc.update(style_fancy)
             elif style in plt.style.library:
                 rc.update(plt.style.library[style])
-            else: # pragma: no cover
+            else:
                 errormsg = f'Style "{style}"; not found; options are "default", "simple", "fancy", plus:\n{sc.newlinejoin(plt.style.available)}'
                 raise ValueError(errormsg)
         if reset: # pragma: no cover
@@ -635,16 +669,18 @@ class ScirisOptions(sc.objdict):
 
         # Handle inputs
         rc = sc.dcp(self.rc) # Make a local copy of the currently used settings
-        if isinstance(style, dict): # pragma: no cover
+        if isinstance(style, dict):
             style_args = style
             style = None
         else:
-            kwargs['style'] = style # Store here to be used just below
+            if style is not None:
+                kwargs['style'] = style # Store here to be used just below
             style_args = None
         kwargs = sc.mergedicts(style_args, kwargs)
 
         # Handle style, overwiting existing
-        style = kwargs.pop('style', self.style)
+        current = None if self.style == 'default' else self.style # If no style is supplied, use the current one, unless it's the default (so other rcParams aren't reset)
+        style = kwargs.pop('style', current)
         rc = self._handle_style(style, reset=False)
 
         def pop_keywords(sourcekeys, rckey):
@@ -707,6 +743,9 @@ class ScirisOptions(sc.objdict):
 # Create the options on module load
 options = ScirisOptions()
 options.set_show_type() # Add this here since non-default behavior
+envopts = {k:options[k] for k in ['dpi', 'font', 'fontsize', 'backend', 'interactive', 'style'] if os.getenv(envvars[k])}
+if envopts: # Apply any Matplotlib options set by environment variables
+    options.set(**envopts)
 
 
 #%% Module help
@@ -721,7 +760,7 @@ def help(pattern=None, source=False, ignorecase=True, flags=None, context=False,
         ignorecase (bool): whether to ignore case (equivalent to `flags=re.I`)
         flags      (list): additional flags to pass to `re.findall()`
         context    (bool): whether to show the line(s) of matches
-        output     (bool): whether to return the dictionary of matches
+        output     (bool): whether to return the string of matches
 
     **Examples**:
 
@@ -755,9 +794,11 @@ See help(sc.help) for more information.
         import sciris as sc # Here to avoid circular import
 
         # Handle inputs
-        flags = sc.tolist(flags)
+        flagval = 0
+        for flag in sc.tolist(flags):
+            flagval |= flag # Combine flags bitwise, since re.findall() only accepts one flags argument
         if ignorecase:
-            flags.append(re.I)
+            flagval |= re.I
 
         def func_ok(f):
             """ Skip certain functions """
@@ -794,7 +835,7 @@ See help(sc.help) for more information.
         for k,docstring in docstrings.items():
             if docstring:
                 for l,line in enumerate(docstring.splitlines()):
-                    if re.findall(pattern, line, *flags):
+                    if re.findall(pattern, line, flagval):
                         linenos[k].append(str(l))
                         matches[k].append(line)
             elif debug:
@@ -802,7 +843,7 @@ See help(sc.help) for more information.
                 print(errormsg)
 
         # Assemble output
-        if not len(matches): # pragma: no cover
+        if not len(matches):
             string = f'No matches for "{pattern}" found among {len(docstrings)} available functions.'
         else:
             string = f'Found {len(matches)} matches for "{pattern}" among {len(docstrings)} available functions:\n'

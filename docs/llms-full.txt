@@ -2082,7 +2082,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   ```python
   sc.options(dpi=150) # Larger size
   sc.options(style='simple', font='Rosario') # Change to the "simple" Sciris style with a custom font
-  sc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
+  sc.options.set(fontsize=18, backend='agg') # Multiple changes
   sc.options(interactive=False) # Turn off interactive plots
   sc.options(jupyter=True) # Defaults for Jupyter
   sc.options('defaults') # Reset to default options
@@ -2099,7 +2099,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   ```python
   sc.options(dpi=150) # Larger size
   sc.options(style='simple', font='Rosario') # Change to the "simple" Sciris style with a custom font
-  sc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes
+  sc.options.set(fontsize=18, backend='agg') # Multiple changes
   sc.options(interactive=False) # Turn off interactive plots
   sc.options(jupyter=True) # Defaults for Jupyter
   sc.options('defaults') # Reset to default options

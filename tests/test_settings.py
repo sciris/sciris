@@ -3,7 +3,11 @@ Test Sciris settings/options.
 '''
 
 import os
+import re
+import sys
+import subprocess
 import numpy as np
+import matplotlib.pyplot as plt
 import sciris as sc
 import pytest
 
@@ -54,6 +58,30 @@ def test_options():
     return
 
 
+def test_options_state():
+    sc.heading('Test that options are applied and restored correctly')
+
+    # Nested contexts restore the previous values
+    with sc.options.context(dpi=111):
+        with sc.options.context(dpi=222):
+            assert plt.rcParams['figure.dpi'] == 222
+        assert plt.rcParams['figure.dpi'] == 111
+    assert not sc.options.changed('dpi')
+
+    # Invalid values are not stored
+    with pytest.raises(ValueError):
+        sc.options(dpi='invalid')
+    assert not sc.options.changed('dpi')
+
+    # Resetting restores all rcParams changed by a style
+    before = dict(plt.rcParams)
+    sc.options(style='fivethirtyeight')
+    sc.options.reset()
+    assert repr(dict(plt.rcParams)) == repr(before)
+
+    return
+
+
 def test_parse_env():
     sc.heading('Testing sc.parse_env()')
     mapping = [
@@ -67,6 +95,12 @@ def test_parse_env():
         assert sc.parse_env(e.key, which=e.to) == e.expected
         del os.environ[e.key]
         assert sc.parse_env(e.key, which=e.to) == e.nullexpected
+
+    # Matplotlib options set by environment variables are applied on import (in a separate process to avoid changing this one)
+    env = dict(os.environ, MPLBACKEND='svg', SCIRIS_BACKEND='agg') # Set a different Matplotlib default, since 'agg' may already be the default
+    code = 'import sciris as sc, matplotlib.pyplot as plt; print(plt.get_backend())'
+    out = subprocess.run([sys.executable, '-c', code], env=env, capture_output=True, text=True, check=True).stdout
+    assert out.strip() == 'agg'
 
     return
 
@@ -82,6 +116,11 @@ def test_help():
 
     assert text.count('pickle') > 10
 
+    with sc.capture() as text:
+        sc.help('^json', flags=re.M) # Combined with re.I
+        sc.help('not a sciris docstring phrase')
+    assert 'savejson' in text and 'No matches' in text
+
     return
 
 
@@ -91,6 +130,7 @@ if __name__ == '__main__':
     T = sc.timer()
 
     test_options()
+    test_options_state()
     test_parse_env()
     test_help()
 

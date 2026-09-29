@@ -1652,7 +1652,7 @@
       "module": "sc_settings",
       "signature": "(*args, **kwargs)",
       "summary": "Set options for Sciris.",
-      "example": "sc.options(dpi=150) # Larger size\nsc.options(style='simple', font='Rosario') # Change to the \"simple\" Sciris style with a custom font\nsc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes\nsc.options(interactive=False) # Turn off interactive plots\nsc.options(jupyter=True) # Defaults for Jupyter\nsc.options('defaults') # Reset to default options",
+      "example": "sc.options(dpi=150) # Larger size\nsc.options(style='simple', font='Rosario') # Change to the \"simple\" Sciris style with a custom font\nsc.options.set(fontsize=18, backend='agg') # Multiple changes\nsc.options(interactive=False) # Turn off interactive plots\nsc.options(jupyter=True) # Defaults for Jupyter\nsc.options('defaults') # Reset to default options",
       "aliases": [],
       "deprecated": false
     },
@@ -2306,7 +2306,7 @@
       "module": "sc_settings",
       "signature": "()",
       "summary": "Set options for Sciris.",
-      "example": "sc.options(dpi=150) # Larger size\nsc.options(style='simple', font='Rosario') # Change to the \"simple\" Sciris style with a custom font\nsc.options.set(fontsize=18, show=False, backend='agg', precision=64) # Multiple changes\nsc.options(interactive=False) # Turn off interactive plots\nsc.options(jupyter=True) # Defaults for Jupyter\nsc.options('defaults') # Reset to default options",
+      "example": "sc.options(dpi=150) # Larger size\nsc.options(style='simple', font='Rosario') # Change to the \"simple\" Sciris style with a custom font\nsc.options.set(fontsize=18, backend='agg') # Multiple changes\nsc.options(interactive=False) # Turn off interactive plots\nsc.options(jupyter=True) # Defaults for Jupyter\nsc.options('defaults') # Reset to default options",
       "aliases": [],
       "deprecated": false
     },
