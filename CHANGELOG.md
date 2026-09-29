@@ -6,26 +6,235 @@ By import convention, components of the Sciris library are listed beginning with
 
 ## Version 3.4.0 (2026-09-28)
 
-Various LLM-assisted small bugfixes, including:
+### Major changes
 
-1. **Math**: `sc.safedivide()`: nan denominators are now also replaced by `default`, input arrays are no longer modified, lists and tuples are accepted, array numerators with scalar denominators are handled, and `warn=True` now raises a warning. `sc.findinds()` and `sc.count()` now use only an absolute tolerance (`eps`), so e.g. 100000 no longer matches 100001. `sc.approx()` is deprecated; use `np.isclose()` instead. `sc.count()` now works for multidimensional arrays; `sc.findnearest()` ignores NaNs and handles unsigned integers; `sc.inclusiverange()` no longer drops the endpoint for some decimal steps (e.g. `sc.inclusiverange(0, 1.2, 0.2)`); `sc.sanitize()`, `sc.rolling()`, and `sc.fillnans()` now remove NaNs with `replacenans=False` (rather than replacing them with 0), accept `replacenans=0` for 2D data, and no longer crash when interpolating all-NaN data; `sc.sem()` now passes arguments (e.g. `ddof`) to `numpy.std()`; `sc.nanequal()` now handles float32 vs. float64 NaNs, and lists with `equal_nan=False`; `sc.normalize()` returns `minval` rather than NaN for constant input; and `sc.getvalidinds()` handles boolean filters. For smoothing, `sc.convolve()` and `sc.smooth()` now give correct values when the kernel is longer than the data (including arrays of length 1 or 2, and 2D arrays with few columns); `sc.convolve()`, `sc.smooth()`, `sc.gauss1d()`, and `sc.gauss2d()` no longer truncate integer input; `sc.gauss1d()` and `sc.gauss2d()` no longer return NaN due to float32 underflow, and `sc.gauss1d(use32=False)` accepts lists; and `sc.smoothinterp(growth=...)` works when all of `newx` is outside the data.
-1. **Utilities**: `sc.dcp(die=False)` no longer truncates nested containers, aliases mutable objects inside tuples, or fails on containers holding uncopyable objects (e.g. locks); `sc.sha()` no longer truncates large arrays and dataframes (so their hashes have changed); `sc.uuid()` and `sc.fast_uuid()` no longer return duplicates, and `sc.uuid(uid=...)` respects `tostring` and `length`; `sc.suggest(which='jaro')` returns the most similar option (yes really) and ignores case; `sc.importbypath()` cleans up after failed imports; `sc.tryexcept()` no longer catches `KeyboardInterrupt` or `SystemExit` by default, and respects `catch` with `die=True`; `sc.isnumber()` and `sc.toarray()` handle NumPy booleans, and `sc.toarray()` also handles strings, sets, dict views, and generators; `sc.checktype()` and `sc.tolist()` accept abstract base classes; `sc.runcommand(wait=False)` returns immediately; `sc.getplatform()` handles unrecognized platforms; `sc.strsplit()` treats a multi-character `sep` as one separator; `sc.urlopen()` returns error statuses with `response='status'`, appends `params` to existing query strings, uses the declared charset, and unquotes saved filenames; and `sc.download(save=False)` no longer merges URLs with the same filename. The new `sc.lazyimport()` function imports a module only when it's first used, e.g. `plt = sc.lazyimport('matplotlib.pyplot')` (which now assigns modules to the caller's namespace by default).
-1. **Dataframes** (`sc.dataframe`): dicts of columns and lists of records are no longer transposed when appended/concatenated; `poprow()` no longer removes other rows with the same label; value-based row selection accepts a list of values; `flexget()`, `to_odict()`, `findrow()` (including `default=None`, and `asdict=True`), `insertrow()`, `replacecol()` (with `None`/NaN), `filtercols()`, `sortrows(returninds=True)`, `sort()`, `sortcols()`, `equal()` (which now also compares the index), and `read_csv_string()` (indented strings) have been fixed. `get()` is now the standard pandas method, and the unused `cast` and `default` arguments have been removed.
-1. **Dates**: `sc.day()` now measures each date from its own year (not the first date's); `sc.datedelta()` no longer drops `days` when `years` is fractional, keeps single-element lists as lists, and respects `outformat`; `sc.daterange()` accepts an integer `interval`, no longer drifts off month-ends with month/year intervals, and respects `readformat` with `sc.datedelta()` arguments; `sc.date(to='datetime')` now works; `sc.getdate()`, `sc.datetoyear()`, and `sc.elapsedtimestr()` accept dates, datetimes, and timezone-aware input; `sc.datetoyear(dateformat=...)` now works; and `sc.readdate(verbose=True)` gives details with `'dmy'`/`'mdy'`.
-1. **Timing**: `sc.timer` laps (e.g. `T.tt()`) no longer reset the `sc.tic()` time; `sc.timer.toc()` accepts `unit` and `elapsed`, and `.string`/`.message` use the timer's unit; `indivtimings` no longer includes time outside timed blocks; `toctotal()` uses the timer's formatting options; positional arguments to `sc.toctic()` are now passed to `sc.toc()`; `sc.randsleep()` respects `low` or `high` supplied alone, and raises an error if the lower bound is negative; `sc.timedsleep(verbose=True)` warns when the delay has already passed; and "millisecond" and "msec" are now valid units.
-1. **Printing**: `sc.strip_ansi()` no longer deletes text after non-color ANSI codes (e.g. from progress bars); `sc.capture` no longer subclasses `str` (so `'%s' % txt` works, but `isinstance(txt, str)` is now `False`) and no longer duplicates text when reused; `sc.prepr()`/`sc.pr()` no longer evaluate properties, lay out columns correctly for any number of items, and report the correct number of entries not shown when `maxtime` is exceeded; `sc.sigfig()` handles string `formats`, custom `sep` characters (keeping trailing zeros), `keepints` for negative numbers, and rounding up to the next power of ten; `sc.sigfiground()` no longer overflows for large or infinite values and works on Python 3.10-3.11; `sc.arraymean()` formats each value when `axis` is supplied and no longer returns NaN for constant data; `sc.arraymedian()` accepts tuples and NumPy integers, no longer modifies the input list, and rounds the bounds when the median is 0; `sc.printarr()` handles float32, negative, and empty arrays; `sc.colorize()` with no arguments resets the color, and an unknown color no longer discards the string; `sc.heading()` accepts `fg`, `bg`, and `style`; `sc.slacknotification()` strips whitespace from the webhook and reports failed sends; `sc.percentcomplete()` prints at the correct intervals for short loops.
-1. **Files**: `sc.save()` and `sc.savejson()` no longer destroy the existing file if saving fails; `sc.save(filename=None)` and `sc.dumpstr()` work with any compression, and `sc.save(verbose=None)` works; `sc.load()` accepts any file object (and `sc.loadstr()` uncompressed or zstd bytes), can load a saved `None`, raises an error for empty files (and for non-pickles with `die=True`) rather than returning a string, and respects `die=True` with `remapping`; remapping to a module name (e.g. `'newpkg.newmod'`) now works. `sc.makefilepath()` (and hence the `folder` argument of other functions) now prepends `folder` to the filename's own folder rather than replacing it, and handles `ext` with a leading dot; `sc.unzip()` returns the correct paths; `sc.rmpath()` removes symlinks to folders and the output of `sc.getfilelist()`, and skips paths it can't remove; and `aspath=False` now works in `sc.getfilepaths()`, `sc.sanitizepath()`, and `sc.makepath()`. `sc.jsonify()` works in threads, handles `Decimal` and complex numbers (as strings), matches subclasses in `custom`, and sanitizes the output of `to_dict()` methods. `sc.loadspreadsheet()` now reads the first row (not the second) as the header by default, and accepts `sheetnum`/`sheet_name`, and `fileobj` with `method='openpyxl'`; `sc.Spreadsheet.readcells(sheetnum=...)` reads the right sheet; `sc.savespreadsheet(formats=...)` works without `formatdata`; and `sc.Blobject` saves to its own filename by default and accepts `Path` sources.
-1. **ASD** (`sc.asd()`): the objective function is now called with `x` in its original shape; `pinitial`, `sinitial`, `xmin`, and `xmax` can be scalars or have one value per parameter; objective functions can return 0-d or 2-d size-1 arrays, an an error is raised if the starting point is outside `xmin`/`xmax`.
-1. **Colors and plotting**: `sc.rgb2hsv()`, `sc.hsv2rgb()`, `sc.shifthue()`, and `sc.rgb2hex()` now handle integer colors; `sc.vectocolor()` now handles constant and empty input; `sc.sanitizecolor()` accepts integer greys, and `alpha` now overrides an existing alpha; `sc.gridcolors()` now respects `ashex` when `asarray=True`; and `apply=True` in the colormap functions now applies the customized colormap rather than the default one; `sc.manualcolorbar()`: data containing NaNs or constant values, and `ticklabels` given as an array, are now handled; `fig` is now used; and the current axes are no longer changed. `sc.fig3d(returnax=True)` now returns the figure containing the axes, rather than creating an extra blank figure. `sc.turbocolormap()` now returns Matplotlib's (identical) built-in turbo colormap. The 3D plotting functions now draw into the supplied `fig` (rather than the current figure); `sc.plot3d()` accepts an array `c`; and `sc.bar3d()` accepts `z` as a keyword. `sc.commaticks()` formats each axis according to its own range; `sc.setaxislim()` handles ragged lists of arrays; and `sc.figlayout(True)`/`sc.figlayout(False)` now work. `sc.dateformatter()` no longer treats dates from 1974-76 as years, accepts a `Formatter` object as `style`, no longer changes the x-axis when `axis='y'`, and accepts `dateformat` with `style='auto'`; `sc.datenumformatter()` gives the correct dates for a date axis without `start_date`; and both accept `start=0`. `sc.savefigs()` now works without a filename, saves the figures it is given (rather than the current figure), and saves multiple figures to separate files; `sc.savefig()` records the correct caller (as does `sc.metadata()`), and its SVG metadata can now be loaded by `sc.loadmetadata()`. `sc.orderlegend()` accepts arrays; `sc.movelegend()` preserves `ncol` and respects `invisible`, and only hides the destination axes if it's empty. `sc.animation()` now works with figures passed to `addframe()` or `fig`, uses `imagefolder` with ffmpeg, and respects `verbose`; and `sc.savemovie()` respects `interval`.
-1. **Nested objects**: `sc.equal()` no longer reports objects as equal when a comparison fails (this now counts as not equal, or raises an error with `die=True`), or when pandas objects differ only in their index (or Series name); `union` is now passed through, and a custom `rootkey`, and `leaf=True` with empty objects, now work. `sc.iterobj(leaf=True)` no longer applies the function to the root object; the new `aliases=True` argument includes further references to the same object (without descending into them again); `inplace=True` descends into the object returned by the function (so e.g. nested tuples can be converted to lists) and works with `__slots__`; `to_df=True` no longer drops a row with `leaf=True` or gives the wrong depth with `flatten=True`; and the unusable `*args` argument has been removed. `sc.getnested()` with `safe=True` or `default` (including `default=None`) now works for object attributes and for non-integer keys into lists, and a missing attribute otherwise raises an error rather than returning `None`; `sc.setnested(overwrite=False)` now works for lists and objects; integer keys into an `sc.odict` no longer replace the entry; `sc.search()` no longer raises an error for objects containing arrays; and `sc.mergenested()` handles arrays.
-1. **Profiling**: `sc.profile()` no longer leaves the profiler running if the function raises an exception (which blocked `sc.cprofile()`), and `sc.mprofile()` no longer leaves a trace hook installed (which slowed all later code); `sc.profile.plot()` no longer raises an error for durations under 1 s; `p1 + p2` returns a fully working profile; `maxentries` works with `bytime=0`; and `sc.listfuncs()` (and hence `follow=<class>`) includes inherited methods. `sc.cprofile()` no longer reports stale results when reused, `to_df(maxitems=...)` now works, and `percall` is in the same units as the other times. `sc.tracecalls.check_expected()` now works with a list of strings, and `sc.tracecalls()` no longer raises an error (hiding the original exception) when nothing matches; with `regex=True`, patterns are now searched for in the file path, qualified name (e.g. `Sim.init_sim`), and function name separately, so e.g. `exclude='^init_'` works. `sc.checkmem()` checks arrays and dataframes as single objects (rather than raising an error for large arrays), handles non-string dict keys, passes `subtotals` and `verbose` to nested levels, and no longer includes totals in the pie chart; it is also faster, since sizes are now computed in memory rather than by saving to disk, subtotals count objects shared between items once, and empty objects are now checked (rather than giving an empty result). `sc.resourcemonitor()` interrupts a busy main thread promptly, no longer raises an error with `kill_parent=True` or on Ctrl-C, prints the breach with `die=False`, and respects `start(label=...)`.
-1. **Dictionaries**: `sc.odict` integer indexing is now correct after popping or deleting by index, and after `setdefault()`, `popitem()`, `clear()`, and `|=`; `insert()` with an existing key moves and overwrites it; `insert()` and `append()` accept a value of `None`; in-place `sort()` now drops unlisted keys (as `sorted()` does) and no longer reverses the caller's list; `sort()` accepts numpy boolean masks and tuple keys; `copy()` keeps `defaultdict` behavior; `rename()` handles negative indices; `findbyval()` handles array values; `fromeach()` accepts a list of indices for list values; `disp(numformat=...)` works; `dict + odict` gives the right operand precedence; `transpose=True` works for empty odicts; and integer keys (e.g. from `makefrom()`) are respected by assignment, `pop()`, `sort()`, and `reverse()`. `sc.dictobj` now compares by contents, and supports `|` and `reversed()`. `sc.counter` arithmetic now returns an `sc.counter`. `sc.argparse()` converts `False`/`no`/`0` to `False` for boolean defaults and splits comma-separated values for list defaults, and `add()` after parsing now raises an error.
-1. **Settings** (`sc.options`): nested `sc.options.context()` blocks no longer raise an error or leave the outer setting in place, and `context(backend=...)` now restores the backend; `sc.options.reset()` no longer changes the stored defaults, and now restores all rcParams changed by a Matplotlib style (e.g. `'fivethirtyeight'`); invalid values (e.g. `sc.options(dpi='invalid')`) are no longer stored; the Matplotlib-related environment variables (e.g. `SCIRIS_BACKEND`, `SCIRIS_DPI`, `SCIRIS_STYLE`) are now applied on import; `use_style()` and `with_style()` with no style now use the current style; `update()` now checks and applies options, and `setdefault()` can no longer add them; `sc.options.help()` shows the correct environment variable names and respects `output=True`; and `sc.help(flags=...)` now works.
-1. **Parallelization**: `sc.parallelize()` now accepts `iterarg` and `iterkwargs` together (as documented), `args` as a list, `iterarg` elements of `None`, and `ncpus` as a float (e.g. `sc.cpu_count()/2`); `maxcpu`, `maxmem`, and `interval` in `lbkwargs` are no longer overwritten; with `die=False`, the exception is now returned as the result (rather than `None`), including with `capture=True` (which previously could crash the run); worker and manager processes are now shut down after a failed run, and after the run by `sc.Parallel` objects (the new `close()` method); exceptions such as `NotImplementedError` are no longer replaced by `IndexError`; `reset()` no longer makes the `sc.Parallel` object unrunnable; `globaldict` works with `-copy` parallelizers and with empty dicts for custom parallelizers, and no longer has progress keys (e.g. `_job0`) added; `serial=True` now works with async parallelizers; the deprecated `maxload` argument now works; and `capture=True` with `parallelizer='thread'` now raises an error rather than redirecting output between threads. `sc.loadbalancer()` no longer uses (or affects) NumPy's global random number generator, so the start of each process is now staggered; and `maxtime` is now measured in seconds rather than in number of checks. NumPy's global random number generator is now reseeded for each job of a process-based parallelizer, so jobs no longer give identical "random" numbers on Linux, and results are reproducible if the parent is seeded (on any platform); and the new `start_method` argument sets how worker processes are started (e.g. `'fork'`).
-1. **Random numbers**: Sciris functions no longer draw from (or change) the global random number generators: `sc.loadbalancer()` and `sc.benchmark()` leave NumPy's global stream unchanged (`sc.parallelize()` takes a single draw from it, to seed the jobs), and `sc.fast_uuid()` uses its own generator rather than Python's global one (`sc.randround()`, whose purpose is to generate random numbers, still uses NumPy's global generator by default, but has a new `rng` argument for using a separate one).
-1. **Legacy**: Removed the legacy module (`sciris._extras.legacy`), which contained `loadobj2or3()`, `parallelcmd()`, and `parallel_progress()`.
-1. **New features**: `sc.argparse()` now matches bare flags by name (e.g. `--verbose` sets a boolean argument to `True`, rather than assigning it to the first argument), accepts `--key value` and dashes in names (e.g. `--output-file`), and raises an error for unrecognized flags or too many positional arguments. `sc.parallelize()` can now be stopped early, with results returned for the jobs that ran: if the callback sets `data['stop'] = True`, or via the new `sc.Parallel.stop()` method, no further jobs are started (skipped jobs have a result of `None`; see `P.skipped`). `sc.loadjson()` has new `default` and `die` arguments, e.g. `sc.loadjson('cache.json', default={})`.
-1. **Faster import**: `import sciris` is about 30% faster, since Matplotlib's `pyplot` is now only imported when first used, and Sciris no longer imports IPython unless it's already running.
+1. `import sciris` is about 30% faster, since Matplotlib is now only imported when first used.
+1. The new `sc.lazyimport()` function imports a module only when it's first used, e.g. `plt = sc.lazyimport('matplotlib.pyplot')`.
+1. `sc.parallelize()` can now be stopped early, with results returned for the jobs that ran.
+1. `sc.loadjson()` has new `default` and `die` arguments, e.g. `sc.loadjson('cache.json', default={})`.
+1. `sc.argparse()` now matches flags by name (e.g. `--verbose` sets a boolean argument to `True`).
+1. Removed the legacy module (`sciris._extras.legacy`), which contained `sc.loadobj2or3()`, `sc.parallelcmd()`, and `sc.parallel_progress()`.
+1. Some fixes change behavior that existing code may rely on (see the sections below for details):
+    - **Math**: `sc.findinds()` and `sc.count()` now use only an absolute tolerance; `replacenans=False` now removes NaNs rather than replacing them with 0.
+    - **Dictionaries**: in-place `sc.odict.sort()` now drops unlisted keys.
+    - **Files**: `sc.loadspreadsheet()` now reads the first row as the header; `sc.makefilepath()` now prepends `folder` rather than replacing the filename's folder; and `sc.load()` raises an error for empty files.
+    - **Parallelization**: with `die=False`, `sc.parallelize()` returns the exception (rather than `None`) for failed jobs; and each job is now reseeded, so jobs no longer give identical "random" numbers.
+    - **Utilities**: `sc.sha()` now handles large arrays and dataframes; and `sc.tryexcept()` no longer catches `KeyboardInterrupt` or `SystemExit`.
+    - **Nested objects**: `sc.equal()` now treats failed comparisons as not equal; and `sc.getnested()` raises an error for missing attributes.
+    - **Random numbers**: Sciris functions (except `sc.randround()`) no longer draw from the global random number stream.
+
+The rest of the changes are a colossal number of tiny LLM-assisted bugfixes:
+
+### Math
+
+1. `sc.safedivide()`: nan denominators are now also replaced by `default`, input arrays are no longer modified, lists and tuples are accepted, array numerators with scalar denominators are handled, and `warn=True` now raises a warning.
+1. `sc.findinds()` and `sc.count()` now use only an absolute tolerance (`eps`), so e.g. 100000 no longer matches 100001.
+1. `sc.approx()` is deprecated; use `np.isclose()` instead.
+1. `sc.count()` now works for multidimensional arrays.
+1. `sc.findnearest()` ignores NaNs and handles unsigned integers.
+1. `sc.inclusiverange()` no longer drops the endpoint for some decimal steps (e.g. `sc.inclusiverange(0, 1.2, 0.2)`).
+1. `sc.sanitize()`, `sc.rolling()`, and `sc.fillnans()` now remove NaNs with `replacenans=False` (rather than replacing them with 0), accept `replacenans=0` for 2D data, and no longer crash when interpolating all-NaN data.
+1. `sc.sem()` now passes arguments (e.g. `ddof`) to `numpy.std()`.
+1. `sc.nanequal()` now handles float32 vs. float64 NaNs, and lists with `equal_nan=False`.
+1. `sc.normalize()` returns `minval` rather than NaN for constant input.
+1. `sc.getvalidinds()` handles boolean filters.
+1. `sc.convolve()` and `sc.smooth()` now give correct values when the kernel is longer than the data (including arrays of length 1 or 2, and 2D arrays with few columns).
+1. `sc.convolve()`, `sc.smooth()`, `sc.gauss1d()`, and `sc.gauss2d()` no longer truncate integer input.
+1. `sc.gauss1d()` and `sc.gauss2d()` no longer return NaN due to float32 underflow, and `sc.gauss1d(use32=False)` accepts lists.
+1. `sc.smoothinterp(growth=...)` works when all of `newx` is outside the data.
+
+### Dictionaries
+
+1. `sc.odict` integer indexing is now correct after popping or deleting by index, and after `sc.odict.setdefault()`, `sc.odict.popitem()`, `sc.odict.clear()`, and `|=`.
+1. `sc.odict.insert()` with an existing key moves and overwrites it.
+1. `sc.odict.insert()` and `sc.odict.append()` accept a value of `None`.
+1. In-place `sc.odict.sort()` now drops unlisted keys (as `sorted()` does) and no longer reverses the caller's list.
+1. `sc.odict.sort()` accepts numpy boolean masks and tuple keys.
+1. `sc.odict.copy()` keeps `defaultdict` behavior.
+1. `sc.odict.rename()` handles negative indices.
+1. `sc.odict.findbyval()` handles array values.
+1. `sc.odict.fromeach()` accepts a list of indices for list values.
+1. `sc.odict.disp(numformat=...)` works.
+1. `dict + odict` gives the right operand precedence.
+1. `transpose=True` works for empty odicts.
+1. Integer keys (e.g. from `sc.odict.makefrom()`) are respected by assignment, `sc.odict.pop()`, `sc.odict.sort()`, and `sc.odict.reverse()`.
+1. `sc.dictobj` now compares by contents, and supports `|` and `reversed()`.
+1. `sc.counter` arithmetic now returns an `sc.counter`.
+1. `sc.argparse()` converts `False`/`no`/`0` to `False` for boolean defaults and splits comma-separated values for list defaults, and `sc.argparse.add()` after parsing now raises an error.
+
+### Dataframes (`sc.dataframe`)
+
+1. Dicts of columns and lists of records are no longer transposed when appended/concatenated.
+1. `sc.dataframe.poprow()` no longer removes other rows with the same label.
+1. Value-based row selection accepts a list of values.
+1. `sc.dataframe.flexget()`, `sc.dataframe.to_odict()`, `sc.dataframe.findrow()` (including `default=None`, and `asdict=True`), `sc.dataframe.insertrow()`, `sc.dataframe.replacecol()` (with `None`/NaN), `sc.dataframe.filtercols()`, `sc.dataframe.sortrows(returninds=True)`, `sc.dataframe.sort()`, `sc.dataframe.sortcols()`, `sc.dataframe.equal()` (which now also compares the index), and `sc.dataframe.read_csv_string()` (indented strings) have been fixed.
+1. `sc.dataframe.get()` is now the standard pandas method, and the unused `cast` and `default` arguments have been removed.
+
+### Files
+
+1. `sc.save()` and `sc.savejson()` no longer destroy the existing file if saving fails.
+1. `sc.save(filename=None)` and `sc.dumpstr()` work with any compression, and `sc.save(verbose=None)` works.
+1. `sc.load()` accepts any file object (and `sc.loadstr()` uncompressed or zstd bytes), can load a saved `None`, raises an error for empty files (and for non-pickles with `die=True`) rather than returning a string, and respects `die=True` with `remapping`.
+1. Remapping to a module name (e.g. `'newpkg.newmod'`) now works.
+1. `sc.makefilepath()` (and hence the `folder` argument of other functions) now prepends `folder` to the filename's own folder rather than replacing it, and handles `ext` with a leading dot.
+1. `sc.unzip()` returns the correct paths.
+1. `sc.rmpath()` removes symlinks to folders and the output of `sc.getfilelist()`, and skips paths it can't remove.
+1. `aspath=False` now works in `sc.getfilepaths()`, `sc.sanitizepath()`, and `sc.makepath()`.
+1. `sc.jsonify()` works in threads, handles `Decimal` and complex numbers (as strings), matches subclasses in `custom`, and sanitizes the output of `to_dict()` methods.
+1. `sc.loadspreadsheet()` now reads the first row (not the second) as the header by default, and accepts `sheetnum`/`sheet_name`, and `fileobj` with `method='openpyxl'`.
+1. `sc.Spreadsheet.readcells(sheetnum=...)` reads the right sheet.
+1. `sc.savespreadsheet(formats=...)` works without `formatdata`.
+1. `sc.Blobject` saves to its own filename by default and accepts `Path` sources.
+
+### Printing
+
+1. `sc.strip_ansi()` no longer deletes text after non-color ANSI codes (e.g. from progress bars).
+1. `sc.capture` no longer subclasses `str` (so `'%s' % txt` works, but `isinstance(txt, str)` is now `False`) and no longer duplicates text when reused.
+1. `sc.prepr()`/`sc.pr()` no longer evaluate properties, lay out columns correctly for any number of items, and report the correct number of entries not shown when `maxtime` is exceeded.
+1. `sc.sigfig()` handles string `formats`, custom `sep` characters (keeping trailing zeros), `keepints` for negative numbers, and rounding up to the next power of ten.
+1. `sc.sigfiground()` no longer overflows for large or infinite values and works on Python 3.10-3.11.
+1. `sc.arraymean()` formats each value when `axis` is supplied and no longer returns NaN for constant data.
+1. `sc.arraymedian()` accepts tuples and NumPy integers, no longer modifies the input list, and rounds the bounds when the median is 0.
+1. `sc.printarr()` handles float32, negative, and empty arrays.
+1. `sc.colorize()` with no arguments resets the color, and an unknown color no longer discards the string.
+1. `sc.heading()` accepts `fg`, `bg`, and `style`.
+1. `sc.slacknotification()` strips whitespace from the webhook and reports failed sends.
+1. `sc.percentcomplete()` prints at the correct intervals for short loops.
+
+### Colors and plotting
+
+1. `sc.rgb2hsv()`, `sc.hsv2rgb()`, `sc.shifthue()`, and `sc.rgb2hex()` now handle integer colors.
+1. `sc.vectocolor()` now handles constant and empty input.
+1. `sc.sanitizecolor()` accepts integer greys, and `alpha` now overrides an existing alpha.
+1. `sc.gridcolors()` now respects `ashex` when `asarray=True`.
+1. `apply=True` in the colormap functions now applies the customized colormap rather than the default one.
+1. `sc.manualcolorbar()` now handles data containing NaNs or constant values, and `ticklabels` given as an array, uses `fig`, and no longer changes the current axes.
+1. `sc.fig3d(returnax=True)` now returns the figure containing the axes, rather than creating an extra blank figure.
+1. `sc.turbocolormap()` now returns Matplotlib's (identical) built-in turbo colormap.
+1. The 3D plotting functions now draw into the supplied `fig` (rather than the current figure).
+1. `sc.plot3d()` accepts an array `c`.
+1. `sc.bar3d()` accepts `z` as a keyword.
+1. `sc.commaticks()` formats each axis according to its own range.
+1. `sc.setaxislim()` handles ragged lists of arrays.
+1. `sc.figlayout(True)`/`sc.figlayout(False)` now work.
+1. `sc.dateformatter()` no longer treats dates from 1974-76 as years, accepts a `Formatter` object as `style`, no longer changes the x-axis when `axis='y'`, and accepts `dateformat` with `style='auto'`.
+1. `sc.datenumformatter()` gives the correct dates for a date axis without `start_date`.
+1. `sc.dateformatter()` and `sc.datenumformatter()` both accept `start=0`.
+1. `sc.savefigs()` now works without a filename, saves the figures it is given (rather than the current figure), and saves multiple figures to separate files.
+1. `sc.savefig()` records the correct caller (as does `sc.metadata()`), and its SVG metadata can now be loaded by `sc.loadmetadata()`.
+1. `sc.orderlegend()` accepts arrays.
+1. `sc.movelegend()` preserves `ncol` and respects `invisible`, and only hides the destination axes if it's empty.
+1. `sc.animation()` now works with figures passed to `sc.animation.addframe()` or `fig`, uses `imagefolder` with ffmpeg, and respects `verbose`.
+1. `sc.savemovie()` respects `interval`.
+
+### Settings (`sc.options`)
+
+1. Nested `sc.options.context()` blocks no longer raise an error or leave the outer setting in place, and `sc.options.context(backend=...)` now restores the backend.
+1. `sc.options.reset()` no longer changes the stored defaults, and now restores all rcParams changed by a Matplotlib style (e.g. `'fivethirtyeight'`).
+1. Invalid values (e.g. `sc.options(dpi='invalid')`) are no longer stored.
+1. The Matplotlib-related environment variables (e.g. `SCIRIS_BACKEND`, `SCIRIS_DPI`, `SCIRIS_STYLE`) are now applied on import.
+1. `sc.options.use_style()` and `sc.options.with_style()` with no style now use the current style.
+1. `sc.options.update()` now checks and applies options, and `sc.options.setdefault()` can no longer add them.
+1. `sc.options.help()` shows the correct environment variable names and respects `output=True`.
+1. `sc.help(flags=...)` now works.
+
+### Parallelization
+
+1. `sc.parallelize()` now accepts `iterarg` and `iterkwargs` together (as documented), `args` as a list, `iterarg` elements of `None`, and `ncpus` as a float (e.g. `sc.cpu_count()/2`).
+1. `maxcpu`, `maxmem`, and `interval` in `lbkwargs` are no longer overwritten.
+1. With `die=False`, the exception is now returned as the result (rather than `None`), including with `capture=True` (which previously could crash the run).
+1. Worker and manager processes are now shut down after a failed run, and after the run by `sc.Parallel` objects (the new `sc.Parallel.close()` method).
+1. Exceptions such as `NotImplementedError` are no longer replaced by `IndexError`.
+1. `sc.Parallel.reset()` no longer makes the `sc.Parallel` object unrunnable.
+1. `globaldict` works with `-copy` parallelizers and with empty dicts for custom parallelizers, and no longer has progress keys (e.g. `_job0`) added.
+1. `serial=True` now works with async parallelizers.
+1. The deprecated `maxload` argument now works.
+1. `capture=True` with `parallelizer='thread'` now raises an error rather than redirecting output between threads.
+1. `sc.loadbalancer()` no longer uses (or affects) NumPy's global random number generator, so the start of each process is now staggered.
+1. `sc.loadbalancer()`'s `maxtime` is now measured in seconds rather than in number of checks.
+1. NumPy's global random number generator is now reseeded for each job of a process-based parallelizer, so jobs no longer give identical "random" numbers on Linux, and results are reproducible if the parent is seeded (on any platform).
+1. The new `start_method` argument sets how worker processes are started (e.g. `'fork'`).
+
+### Profiling
+
+1. `sc.profile()` no longer leaves the profiler running if the function raises an exception (which blocked `sc.cprofile()`), and `sc.mprofile()` no longer leaves a trace hook installed (which slowed all later code).
+1. `sc.profile.plot()` no longer raises an error for durations under 1 s.
+1. `p1 + p2` returns a fully working profile.
+1. `maxentries` works with `bytime=0`.
+1. `sc.listfuncs()` (and hence `follow=<class>`) includes inherited methods.
+1. `sc.cprofile()` no longer reports stale results when reused, `sc.cprofile.to_df(maxitems=...)` now works, and `percall` is in the same units as the other times.
+1. `sc.tracecalls.check_expected()` now works with a list of strings.
+1. `sc.tracecalls()` no longer raises an error (hiding the original exception) when nothing matches.
+1. With `sc.tracecalls(regex=True)`, patterns are now searched for in the file path, qualified name (e.g. `Sim.init_sim`), and function name separately, so e.g. `exclude='^init_'` works.
+1. `sc.checkmem()` checks arrays and dataframes as single objects (rather than raising an error for large arrays), handles non-string dict keys, passes `subtotals` and `verbose` to nested levels, and no longer includes totals in the pie chart.
+1. `sc.checkmem()` is also faster, since sizes are now computed in memory rather than by saving to disk, subtotals count objects shared between items once, and empty objects are now checked (rather than giving an empty result).
+1. `sc.resourcemonitor()` interrupts a busy main thread promptly, no longer raises an error with `kill_parent=True` or on Ctrl-C, prints the breach with `die=False`, and respects `sc.resourcemonitor.start(label=...)`.
+
+### Timing
+
+1. `sc.timer` laps (e.g. `sc.timer.tt()`) no longer reset the `sc.tic()` time.
+1. `sc.timer.toc()` accepts `unit` and `elapsed`, and `sc.timer.string`/`sc.timer.message` use the timer's unit.
+1. `sc.timer.indivtimings` no longer includes time outside timed blocks.
+1. `sc.timer.toctotal()` uses the timer's formatting options.
+1. Positional arguments to `sc.toctic()` are now passed to `sc.toc()`.
+1. `sc.randsleep()` respects `low` or `high` supplied alone, and raises an error if the lower bound is negative.
+1. `sc.timedsleep(verbose=True)` warns when the delay has already passed.
+1. "millisecond" and "msec" are now valid units.
+
+### Dates
+
+1. `sc.day()` now measures each date from its own year (not the first date's).
+1. `sc.datedelta()` no longer drops `days` when `years` is fractional, keeps single-element lists as lists, and respects `outformat`.
+1. `sc.daterange()` accepts an integer `interval`, no longer drifts off month-ends with month/year intervals, and respects `readformat` with `sc.datedelta()` arguments.
+1. `sc.date(to='datetime')` now works.
+1. `sc.getdate()`, `sc.datetoyear()`, and `sc.elapsedtimestr()` accept dates, datetimes, and timezone-aware input.
+1. `sc.datetoyear(dateformat=...)` now works.
+1. `sc.readdate(verbose=True)` gives details with `'dmy'`/`'mdy'`.
+
+### Utilities
+
+1. `sc.dcp(die=False)` no longer truncates nested containers, aliases mutable objects inside tuples, or fails on containers holding uncopyable objects (e.g. locks).
+1. `sc.sha()` no longer truncates large arrays and dataframes (so their hashes have changed).
+1. `sc.uuid()` and `sc.fast_uuid()` no longer return duplicates, and `sc.uuid(uid=...)` respects `tostring` and `length`.
+1. `sc.suggest(which='jaro')` returns the most similar option (yes really) and ignores case.
+1. `sc.importbypath()` cleans up after failed imports.
+1. `sc.tryexcept()` no longer catches `KeyboardInterrupt` or `SystemExit` by default, and respects `catch` with `die=True`.
+1. `sc.isnumber()` and `sc.toarray()` handle NumPy booleans, and `sc.toarray()` also handles strings, sets, dict views, and generators.
+1. `sc.checktype()` and `sc.tolist()` accept abstract base classes.
+1. `sc.runcommand(wait=False)` returns immediately.
+1. `sc.getplatform()` handles unrecognized platforms.
+1. `sc.strsplit()` treats a multi-character `sep` as one separator.
+1. `sc.urlopen()` returns error statuses with `response='status'`, appends `params` to existing query strings, uses the declared charset, and unquotes saved filenames.
+1. `sc.download(save=False)` no longer merges URLs with the same filename.
+1. The new `sc.lazyimport()` function imports a module only when it's first used, e.g. `plt = sc.lazyimport('matplotlib.pyplot')` (which now assigns modules to the caller's namespace by default).
+
+### Nested objects
+
+1. `sc.equal()` no longer reports objects as equal when a comparison fails (this now counts as not equal, or raises an error with `die=True`), or when pandas objects differ only in their index (or Series name).
+1. `sc.equal()` now passes `union` through, and a custom `rootkey`, and `leaf=True` with empty objects, now work.
+1. `sc.iterobj(leaf=True)` no longer applies the function to the root object.
+1. The new `aliases=True` argument of `sc.iterobj()` includes further references to the same object (without descending into them again).
+1. `sc.iterobj(inplace=True)` descends into the object returned by the function (so e.g. nested tuples can be converted to lists) and works with `__slots__`.
+1. `sc.iterobj(to_df=True)` no longer drops a row with `leaf=True` or gives the wrong depth with `flatten=True`.
+1. The unusable `*args` argument of `sc.iterobj()` has been removed.
+1. `sc.getnested()` with `safe=True` or `default` (including `default=None`) now works for object attributes and for non-integer keys into lists, and a missing attribute otherwise raises an error rather than returning `None`.
+1. `sc.setnested(overwrite=False)` now works for lists and objects, and integer keys into an `sc.odict` no longer replace the entry.
+1. `sc.search()` no longer raises an error for objects containing arrays.
+1. `sc.mergenested()` handles arrays.
+
+### ASD
+
+1. The objective function is now called with `x` in its original shape.
+1. `pinitial`, `sinitial`, `xmin`, and `xmax` can be scalars or have one value per parameter.
+1. Objective functions can return 0-d or 2-d size-1 arrays.
+1. An error is raised if the starting point is outside `xmin`/`xmax`.
+
+### Random numbers
+
+1. Sciris functions no longer draw from (or change) the global random number generators.
+1. `sc.loadbalancer()` and `sc.benchmark()` leave NumPy's global stream unchanged (`sc.parallelize()` takes a single draw from it, to seed the jobs).
+1. `sc.fast_uuid()` uses its own generator rather than Python's global one.
+1. `sc.randround()`, whose purpose is to generate random numbers, still uses NumPy's global generator by default, but has a new `rng` argument for using a separate one.
 
 ## Version 3.3.0 (2026-08-08)
 
