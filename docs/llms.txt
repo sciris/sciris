@@ -230,7 +230,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 ## Profiling and resource monitoring (sc_profiling)
 
 - `sc.benchmark(repeats=5, scale=1, verbose=False, which='python, numpy', parallel=False, return_timers=False)`: Benchmark Python performance
-- `sc.checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)`: Checks how much memory the variable or variables in question use by dumping them to file.
+- `sc.checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)`: Checks how much memory the variable or variables in question use, by counting the number of bytes needed to pickle them.
 - `sc.checkram(unit='mb', fmt='0.2f', start=0, to_string=True)`: Measure actual memory usage, typically at different points throughout execution.
 - `sc.cprofile(sort='cumtime', columns='default', mintime=0.001, maxitems=100, maxfunclen=40, maxpathlen=40, use_ms=None, stripdirs=True, show=True)`: Function profiler, built off Python's built-in cProfile
 - `sc.LimitExceeded(...)`: Custom exception for use with the `sc.resourcemonitor()` monitor.

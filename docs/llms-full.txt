@@ -1309,13 +1309,13 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   sc.benchmark(parallel=True) # Use all CPUs
   ```
 
-- `sc.checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)`: Checks how much memory the variable or variables in question use by dumping them to file.
+- `sc.checkmem(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)`: Checks how much memory the variable or variables in question use, by counting the number of bytes needed to pickle them.
 
   ```python
   import numpy as np
   import sciris as sc
 
-  list_obj = ['label', np.random.rand(2483,589)])
+  list_obj = ['label', np.random.rand(2483,589)]
   sc.checkmem(list_obj)
 
   nested_dict = dict(
@@ -1401,7 +1401,7 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
       mm.big_operation()
 
   # Explicitly
-  tc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)
+  tc = sc.tracecalls('mysubmodule', exclude='^init_', regex=True, repeats=True)
   tc.start()
   mm.big_operation()
   tc.stop()

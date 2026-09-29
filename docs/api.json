@@ -257,8 +257,8 @@
       "kind": "function",
       "module": "sc_profiling",
       "signature": "(var, descend=1, order='size', compresslevel=0, maxitems=1000, subtotals=True, plot=False, verbose=False, **kwargs)",
-      "summary": "Checks how much memory the variable or variables in question use by dumping them to file.",
-      "example": "import numpy as np\nimport sciris as sc\n\nlist_obj = ['label', np.random.rand(2483,589)])\nsc.checkmem(list_obj)\n\nnested_dict = dict(\n    foo = dict(\n        a = np.random.rand(5,10),\n        b = np.random.rand(5,20),\n        c = np.random.rand(5,50),\n    ),\n# [...]",
+      "summary": "Checks how much memory the variable or variables in question use, by counting the number of bytes needed to pickle them.",
+      "example": "import numpy as np\nimport sciris as sc\n\nlist_obj = ['label', np.random.rand(2483,589)]\nsc.checkmem(list_obj)\n\nnested_dict = dict(\n    foo = dict(\n        a = np.random.rand(5,10),\n        b = np.random.rand(5,20),\n        c = np.random.rand(5,50),\n    ),\n# [...]",
       "aliases": [],
       "deprecated": false
     },
@@ -2684,7 +2684,7 @@
       "module": "sc_profiling",
       "signature": "(trace='<default>', exclude='<default>', regex=False, repeats=False, custom=None, verbose=None)",
       "summary": "Trace all function calls.",
-      "example": "import mymodule as mm\n\n# In context block\nwith sc.tracecalls('mymodule'):\n    mm.big_operation()\n\n# Explicitly\ntc = sc.tracecalls('*mysubmodule*', exclude='^init*', regex=True, repeats=True)\ntc.start()\nmm.big_operation()\ntc.stop()\ntc.df.disp()",
+      "example": "import mymodule as mm\n\n# In context block\nwith sc.tracecalls('mymodule'):\n    mm.big_operation()\n\n# Explicitly\ntc = sc.tracecalls('mysubmodule', exclude='^init_', regex=True, repeats=True)\ntc.start()\nmm.big_operation()\ntc.stop()\ntc.df.disp()",
       "aliases": [],
       "deprecated": false
     },
