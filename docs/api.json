@@ -24,7 +24,7 @@
       "description": "Sciris: Simplifying scientific software in Python (JOSS 2023)"
     }
   ],
-  "n_entries": 274,
+  "n_entries": 275,
   "aliases": {
     "Timer": "timer",
     "cpu_load": "cpuload",
@@ -1193,12 +1193,22 @@
       "deprecated": false
     },
     {
+      "name": "lazyimport",
+      "kind": "function",
+      "module": "sc_utils",
+      "signature": "(module, variable=None, namespace=None)",
+      "summary": "Import a module only when it is first used.",
+      "example": "plt = sc.lazyimport('matplotlib.pyplot') # Doesn't import pyplot yet\nplt.plot([1,3,2]) # Imports pyplot, and replaces plt with it",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
       "name": "LazyModule",
       "kind": "class",
       "module": "sc_utils",
-      "signature": "(module, variable, namespace=None, overwrite=True)",
+      "signature": "(module, variable=None, namespace=None, overwrite=True)",
       "summary": "Create a \"lazy\" module that is loaded if and only if an attribute is called.",
-      "example": "pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas\ndf = pd.DataFrame() # Not only does this work, but pd is now actually pandas",
+      "example": "pd = sc.LazyModule('pandas') # pd is a LazyModule, not actually pandas\ndf = pd.DataFrame() # Not only does this work, but pd is now actually pandas",
       "aliases": [],
       "deprecated": false
     },

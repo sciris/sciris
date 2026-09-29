@@ -2,6 +2,7 @@
 Define a suite of tests for the odict
 """
 
+import sys
 import numpy as np
 import sciris as sc
 import pytest
@@ -354,7 +355,6 @@ def test_aliases():
 
 def test_argparse():
     sc.heading('Testing argparse')
-    import sys
 
     def parse(cmd, **kwargs):
         orig = sys.argv

@@ -35,7 +35,6 @@ def test_embarrassing():
     sc.heading('Example 2 -- simple usage for "embarrassingly parallel" processing')
 
     def rnd():
-        import numpy as np
         return np.random.rand()
 
     results = sc.parallelize(rnd, 10)

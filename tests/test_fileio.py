@@ -4,7 +4,6 @@ Test Sciris file I/O functions.
 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 import openpyxl
 import sciris as sc
 import pytest

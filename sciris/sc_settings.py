@@ -21,7 +21,8 @@ import inspect
 import warnings
 import collections as co
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+import matplotlib.style as mpl_style
 import sciris as sc
 
 __all__ = ['style_simple', 'style_fancy', 'ScirisOptions', 'options', 'parse_env', 'help']
@@ -181,8 +182,8 @@ class ScirisOptions(sc.objdict):
         super().update(options) # Update this object with them
         self.setattribute('optdesc', optdesc)  # Set the description as an attribute, not a dict entry
         self.setattribute('orig_options', sc.dcp(options))  # Copy the default options
-        stylekeys = set(style_default).union(*plt.style.library.values()) - {'figure.dpi', 'font.family', 'font.size'} # Keys any style can change, except those handled by options
-        self.setattribute('orig_rc', {k:plt.rcParams[k] for k in stylekeys}) # Store the original rcParams, for resetting the style
+        stylekeys = set(style_default).union(*mpl_style.library.values()) - {'figure.dpi', 'font.family', 'font.size'} # Keys any style can change, except those handled by options
+        self.setattribute('orig_rc', {k:mpl.rcParams[k] for k in stylekeys}) # Store the original rcParams, for resetting the style
         self.setattribute('on_entry', []) # Stack of settings to restore on exiting a with block
         self.setattribute('_locked', True) # Prevent further modifications
         return
@@ -287,13 +288,13 @@ class ScirisOptions(sc.objdict):
         options.style = parse_env(envvars.style, 'default', str)
 
         optdesc.dpi = 'Set the default DPI -- the larger this is, the larger the figures will be'
-        options.dpi = parse_env(envvars.dpi, plt.rcParams['figure.dpi'], int)
+        options.dpi = parse_env(envvars.dpi, mpl.rcParams['figure.dpi'], int)
 
         optdesc.font = 'Set the default font family (e.g., sans-serif or Arial)'
-        options.font = parse_env(envvars.font, plt.rcParams['font.family'], None) # Can be a string or list, so don't cast it to any object
+        options.font = parse_env(envvars.font, mpl.rcParams['font.family'], None) # Can be a string or list, so don't cast it to any object
 
         optdesc.fontsize = 'Set the default font size'
-        options.fontsize = parse_env(envvars.fontsize, plt.rcParams['font.size'], str)
+        options.fontsize = parse_env(envvars.fontsize, mpl.rcParams['font.size'], str)
 
         optdesc.interactive = 'Convenience method to set figure backend'
         options.interactive = parse_env(envvars.interactive, True, bool)
@@ -434,14 +435,14 @@ class ScirisOptions(sc.objdict):
     def set_matplotlib_global(self, key, value):
         """ Set a global option for Matplotlib -- not for users """
         if value: # Don't try to reset any of these to a None value
-            if   key == 'fontsize': plt.rcParams['font.size']   = value
-            elif key == 'font':     plt.rcParams['font.family'] = value
-            elif key == 'dpi':      plt.rcParams['figure.dpi']  = value
+            if   key == 'fontsize': mpl.rcParams['font.size']   = value
+            elif key == 'font':     mpl.rcParams['font.family'] = value
+            elif key == 'dpi':      mpl.rcParams['figure.dpi']  = value
             elif key == 'backend':
                 # Before switching the backend, ensure the default value has been populated -- located here since slow if called on import
                 if not self.orig_options['backend']:
-                    self.orig_options['backend'] = plt.get_backend()
-                plt.switch_backend(value)
+                    self.orig_options['backend'] = mpl.get_backend()
+                mpl.use(value) # Unlike plt.switch_backend(), this does not import pyplot
             else: raise KeyError(f'Key {key} not found')
         return
 
@@ -616,10 +617,10 @@ class ScirisOptions(sc.objdict):
                 rc.update(style_simple)
             elif stylestr in ['fancy', 'covasim']:
                 rc.update(style_fancy)
-            elif style in plt.style.library:
-                rc.update(plt.style.library[style])
+            elif style in mpl_style.library:
+                rc.update(mpl_style.library[style])
             else:
-                errormsg = f'Style "{style}"; not found; options are "default", "simple", "fancy", plus:\n{sc.newlinejoin(plt.style.available)}'
+                errormsg = f'Style "{style}"; not found; options are "default", "simple", "fancy", plus:\n{sc.newlinejoin(mpl_style.available)}'
                 raise ValueError(errormsg)
         if reset: # pragma: no cover
             self.rc = rc
@@ -708,7 +709,7 @@ class ScirisOptions(sc.objdict):
 
         # Handle other keywords
         for key,value in kwargs.items():
-            if key not in plt.rcParams:
+            if key not in mpl.rcParams:
                 errormsg = f'Key "{key}" does not match any value in Sciris options or plt.rcParams'
                 raise KeyError(errormsg)
             elif value is not None:
@@ -716,9 +717,9 @@ class ScirisOptions(sc.objdict):
 
         # Tidy up
         if use:
-            return plt.style.use(sc.dcp(rc))
+            return mpl_style.use(sc.dcp(rc))
         else:
-            return plt.style.context(sc.dcp(rc))
+            return mpl_style.context(sc.dcp(rc))
 
 
     def use_style(self, style=None, **kwargs):
@@ -790,8 +791,6 @@ See help(sc.help) for more information.
         print(defaultmsg)
 
     else:
-
-        import sciris as sc # Here to avoid circular import
 
         # Handle inputs
         flagval = 0

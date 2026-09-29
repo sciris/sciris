@@ -20,10 +20,12 @@ import os
 import warnings
 import tempfile
 import datetime as dt
-import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib as mpl
+import matplotlib.dates as mpl_dates
+import matplotlib.animation as mpl_anim
 import sciris as sc
+plt = sc.lazyimport('matplotlib.pyplot') # Only import pyplot when it's first used, since it's slow to import
 
 
 ##############################################################################
@@ -175,15 +177,13 @@ def _process_2d_data(x, y, z, c, flatten=False):
 def _process_colors(c, z, cmap=None, to2d=False):
     """ Helper function to get color data in the right format -- not for the user """
 
-    from . import sc_colors as scc # To avoid circular import
-
     # Handle colors
     if c.ndim == 1: # Used by scatter3d and bar3d
         assert len(c) == len(z), 'Number of colors does not match length of data'
-        c = scc.vectocolor(c, cmap=cmap)
+        c = sc.vectocolor(c, cmap=cmap)
     elif c.ndim == 2: # Used by surf3d
         assert c.shape == z.shape, 'Shape of colors does not match shape of data'
-        c = scc.arraycolors(c, cmap=cmap)
+        c = sc.arraycolors(c, cmap=cmap)
 
     # Used by bar3d -- flatten from 3D to 2D
     if to2d and c.ndim == 3:
@@ -496,7 +496,6 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
     ```
     *New in version 2.0.4.*
     """
-    from . import sc_colors as scc # To avoid circular import
 
     # Handle inputs
     if x is not None and values is None:
@@ -539,7 +538,7 @@ def stackedbar(x=None, values=None, colors=None, labels=None, transpose=False,
             errormsg = f'Expected {nstack} colors, got {ncolors}'
             raise ValueError(errormsg)
     else:
-        colors = scc.gridcolors(nstack)
+        colors = sc.gridcolors(nstack)
 
     # Actually plot
     artists = []
@@ -1082,7 +1081,7 @@ def fonts(add=None, use=False, output='name', dryrun=False, rebuild=False, verbo
 __all__ += ['ScirisDateFormatter', 'dateformatter', 'datenumformatter']
 
 
-class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
+class ScirisDateFormatter(mpl_dates.ConciseDateFormatter):
     """
     An adaptation of Matplotlib's ConciseDateFormatter with a slightly different
     approach to formatting dates. Specifically:
@@ -1132,7 +1131,7 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         """
         Show year-month-day, not with hours and seconds
         """
-        return mpl.dates.num2date(value, tz=self._tz).strftime('%Y-%b-%d')
+        return mpl_dates.num2date(value, tz=self._tz).strftime('%Y-%b-%d')
 
     def format_ticks(self, values, min_year=1700, max_year=2300):
         """
@@ -1147,9 +1146,9 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
             pass
         elif values.min() >= min_year and values.max() <= max_year: # It looks like a year, convert
               dates = [sc.yeartodate(year) for year in values]
-              values = mpl.dates.date2num(dates)
+              values = mpl_dates.date2num(dates)
         elif values.min() == 0:
-            mpl_values = mpl.dates.date2num(values)
+            mpl_values = mpl_dates.date2num(values)
             warnmsg = f'Axes data not recognizable as dates: Matplotlib converted them to days starting in 1970, which seems wrong. Please convert to actual dates first, using e.g. sc.date().\nRaw values: {mpl_values}'
             warnings.warn(warnmsg, category=RuntimeWarning, stacklevel=2)
             as_dates = False
@@ -1164,7 +1163,7 @@ class ScirisDateFormatter(mpl.dates.ConciseDateFormatter):
         # Get the default labels and years
         if as_dates: # Default use case: it is dates or something date-like
             labels = super().format_ticks(values)
-            years = [mpl.dates.num2date(v).year for v in values]
+            years = [mpl_dates.num2date(v).year for v in values]
 
             # Add year information to any labels that require it
             if self.show_year:
@@ -1246,7 +1245,7 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
 
     # Handle locator and styles
     if locator is None:
-        locator = mpl.dates.AutoDateLocator(minticks=3)
+        locator = mpl_dates.AutoDateLocator(minticks=3)
     if isinstance(style, mpl.ticker.Formatter): # If a formatter is provided, use directly
         formatter = style
     else:
@@ -1256,11 +1255,11 @@ def dateformatter(ax=None, style='sciris', dateformat=None, start=None, end=None
         elif style in ['auto', 'matplotlib']:
             formats = kwargs.pop('formats', None) # These are only used by the concise formatters
             kwargs.pop('zero_formats', None)
-            formatter = mpl.dates.AutoDateFormatter(locator, **kwargs)
+            formatter = mpl_dates.AutoDateFormatter(locator, **kwargs)
             if formats is not None:
                 formatter.scaled = {scale:formats[0] for scale in formatter.scaled} # Use the same format for all scales
         elif style in ['concise', 'brief']:
-            formatter = mpl.dates.ConciseDateFormatter(locator, **kwargs)
+            formatter = mpl_dates.ConciseDateFormatter(locator, **kwargs)
         else:
             errormsg = f'Style "{style}" not recognized; must be one of "sciris", "auto", or "concise"'
             raise ValueError(errormsg)
@@ -1338,7 +1337,7 @@ def datenumformatter(ax=None, start_date=None, dateformat=None, interval=None, s
 
     # Convert to a date object
     if start_date is None: # Values on a date axis are days since the Matplotlib epoch
-        start_date = mpl.dates.num2date(0)
+        start_date = mpl_dates.num2date(0)
     start_date = sc.date(start_date)
 
     @mpl.ticker.FuncFormatter
@@ -2112,8 +2111,6 @@ class animation(sc.prettyobj):
             stream.run(**save_args, **kwargs)
 
         elif engine == 'matplotlib':
-            import matplotlib.animation as mpl_anim
-
             # Load and sanitize frames
             if frames is None:
                 if not self.n_frames:
@@ -2222,7 +2219,6 @@ def savemovie(frames, filename=None, fps=None, quality=None, dpi=None, writer=No
     ```
     Version: 2019aug21
     """
-    from matplotlib import animation as mpl_anim # Place here since specific only to this function
 
     if not isinstance(frames, list): # pragma: no cover
         errormsg = f'sc.savemovie(): argument "frames" must be a list, not "{type(frames)}"'

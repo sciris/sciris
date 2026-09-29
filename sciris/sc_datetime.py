@@ -16,9 +16,10 @@ import pandas as pd
 import datetime as dt
 import dateutil as du
 import matplotlib as mpl
-import matplotlib.pyplot as plt
+import matplotlib.dates as mpl_dates
 import sciris as sc
 import sciris.sc_utils as scu
+plt = sc.lazyimport('matplotlib.pyplot') # Only import pyplot when it's first used, since it's slow to import
 
 
 ###############################################################################
@@ -229,7 +230,7 @@ def readdate(datestr=None, *args, dateformat=None, return_defaults=False, verbos
             if 'posix' in format_list or None in format_list:
                 dateobj = dt.datetime.fromtimestamp(datestr)
             elif 'ordinal' in format_list or 'matplotlib' in format_list:
-                dateobj = mpl.dates.num2date(datestr)
+                dateobj = mpl_dates.num2date(datestr)
             else:
                 errormsg = f'Could not convert numeric date {datestr} using available formats {sc.strjoin(format_list)}; must be "posix" or "ordinal"'
                 raise ValueError(errormsg)

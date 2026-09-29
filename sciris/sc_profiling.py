@@ -9,6 +9,7 @@ Highlights:
 """
 
 import re
+import ast
 import os
 import sys
 import gzip
@@ -24,8 +25,8 @@ import threading
 import dill
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import sciris as sc
+plt = sc.lazyimport('matplotlib.pyplot') # Only import pyplot when it's first used, since it's slow to import
 
 
 ##############################################################################
@@ -600,7 +601,6 @@ class profile(sc.prettyobj):
     @staticmethod
     def _path_to_name(filepath, lineno):
         """ Helper function to convert a file/line number to a qualified path (via ChatGPT) """
-        import ast # Not used elsewhere
 
         try:
             with open(filepath, 'r', encoding='utf-8') as f:

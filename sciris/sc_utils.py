@@ -30,6 +30,7 @@ import string
 import numbers
 import pprint
 import hashlib
+import html
 import getpass
 import inspect
 import warnings
@@ -641,6 +642,10 @@ def isjupyter(detailed=False):
     ```
     *New in version 3.0.0.*
     """
+    # IPython is always imported if it's running, so don't import it (which is slow) if it hasn't been
+    if not detailed and 'IPython' not in sys.modules:
+        return False
+
     # First check if we can import it
     output = None
     is_jupyter = False
@@ -941,7 +946,6 @@ def htmlify(string, reverse=False, tostring=False):
     output = sc.htmlify('foo&amp;<br>bar', reverse=True) # Returns 'foo&\\nbar'
     ```
     """
-    import html
     if not reverse: # Convert to HTML
         output = html.escape(string).encode('ascii', 'xmlcharrefreplace') # Replace non-ASCII characters
         output = output.replace(b'\n', b'<br>') # Replace newlines with <br>
@@ -1770,7 +1774,7 @@ def _sanitize_output(obj, is_list, is_array, dtype=None):
 ##############################################################################
 
 __all__ += ['strjoin', 'newlinejoin', 'strsplit', 'runcommand', 'uniquename',
-            'suggest', 'importbyname', 'importbypath']
+            'suggest', 'importbyname', 'lazyimport', 'importbypath']
 
 
 def strjoin(*args, sep=', '):
@@ -2004,7 +2008,7 @@ def suggest(user_input, valid_inputs, n=1, threshold=None, fulloutput=False, die
     ```
     """
     try:
-        import jellyfish # To allow as an optional import
+        import jellyfish # Imported here since it's hard to install on some platforms
     except ModuleNotFoundError as e: # pragma: no cover
         raise ModuleNotFoundError('The "jellyfish" Python package is not available; please install via "pip install jellyfish"') from e
 
@@ -2099,8 +2103,8 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
         module (str): name of the module to import
         variable (str): the name of the variable to assign the module to (by default, the module's name)
         path (str/path): optionally load from path instead of by name
-        namespace (dict): the namespace to load the modules into (by default, globals)
-        lazy (bool): whether to create a LazyModule object instead of load the actual module
+        namespace (dict): the namespace to load the modules into (by default, the caller's global namespace)
+        lazy (bool): whether to create a LazyModule object instead of load the actual module (see also `sc.lazyimport()`)
         overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
         die (bool): whether to raise an exception if encountered
         verbose (bool): whether to print a warning if an module can't be imported
@@ -2118,10 +2122,13 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
 
     - *New in version 2.1.0:* "verbose" argument
     - *New in version 3.0.0:* "path" argument
+    - *New in version 3.4.0:* "namespace" defaults to the caller's global namespace
     """
     # Initialize
     if variable is None:
         variable = module
+    if namespace is None:
+        namespace = sys._getframe(1).f_globals # The caller's global namespace
 
     # Map modules to variables
     mapping = {}
@@ -2149,14 +2156,39 @@ def importbyname(module=None, variable=None, path=None, namespace=None, lazy=Fal
                 else:   return False
 
         _assign_to_namespace(var=variable, obj=lib, namespace=namespace, overwrite=overwrite)
-        if namespace:
-            namespace[variable] = lib
         libs.append(lib)
 
     if len(libs) == 1:
         libs = libs[0]
 
     return libs
+
+
+def lazyimport(module, variable=None, namespace=None):
+    """
+    Import a module only when it is first used.
+
+    Useful for modules that are slow to import, but aren't always needed. Once
+    an attribute is accessed, the variable is replaced by the actual module.
+
+    Args:
+        module (str): name of the module to import
+        variable (str): the name of the variable to assign the module to (not usually needed)
+        namespace (dict): the namespace to load the module into (by default, the caller's global namespace)
+
+    **Example**:
+
+    ```python
+    plt = sc.lazyimport('matplotlib.pyplot') # Doesn't import pyplot yet
+    plt.plot([1,3,2]) # Imports pyplot, and replaces plt with it
+    ```
+    See also `sc.importbyname()` and `sc.LazyModule()`.
+
+    *New in version 3.4.0.*
+    """
+    if namespace is None:
+        namespace = sys._getframe(1).f_globals # The caller's global namespace
+    return LazyModule(module, variable=variable, namespace=namespace)
 
 
 def importbypath(path, name=None, overwrite=False):
@@ -2353,24 +2385,25 @@ class LazyModule:
     """
     Create a "lazy" module that is loaded if and only if an attribute is called.
 
-    Typically not for use by the user, but is used by `sc.importbyname()`.
-
     Args:
         module (str): name of the module to (not) load
-        variable (str): variable name to assign the module to
-        namespace (dict): the namespace to use (if not supplied, globals())
+        variable (str): variable name to assign the module to (in addition to any variables in the namespace that refer to this object)
+        namespace (dict): the namespace to use (if not supplied, the caller's global namespace)
         overwrite (bool): whether to allow overwriting an existing variable (by default, yes)
 
     **Example**:
 
     ```python
-    pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas
+    pd = sc.LazyModule('pandas') # pd is a LazyModule, not actually pandas
     df = pd.DataFrame() # Not only does this work, but pd is now actually pandas
     ```
-    *New in version 2.0.0.*
+    - *New in version 2.0.0.*
+    - *New in version 3.4.0:* "variable" is optional, and "namespace" defaults to the caller's
     """
 
-    def __init__(self, module, variable, namespace=None, overwrite=True):
+    def __init__(self, module, variable=None, namespace=None, overwrite=True):
+        if namespace is None:
+            namespace = sys._getframe(1).f_globals # The caller's global namespace
         self._variable  = variable
         self._module    = module
         self._namespace = namespace
@@ -2379,7 +2412,7 @@ class LazyModule:
 
 
     def __repr__(self):
-        output = f"<sc.LazyModule({self._variable}='{self._module}') at {hex(id(self))}>"
+        output = f"<sc.LazyModule('{self._module}') at {hex(id(self))}>"
         return output
 
 
@@ -2397,7 +2430,11 @@ class LazyModule:
         """ Stop being lazy and load the module """
         var = self._variable
         lib = importlib.import_module(self._module)
-        _assign_to_namespace(var, lib, namespace=self._namespace, overwrite=self._overwrite)
+        if var is not None:
+            _assign_to_namespace(var, lib, namespace=self._namespace, overwrite=self._overwrite)
+        for key,val in list(self._namespace.items()): # Replace any other variables that refer to this object
+            if val is self:
+                self._namespace[key] = lib
         if attr:
             obj = getattr(lib, attr)
         else: # pragma: no cover

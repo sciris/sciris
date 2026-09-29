@@ -15,8 +15,8 @@ Highlights:
 import struct
 import numpy as np
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import sciris as sc
+plt = sc.lazyimport('matplotlib.pyplot') # Only import pyplot when it's first used, since it's slow to import
 
 
 ##############################################################################
@@ -247,8 +247,6 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
     - *New in version 3.0.0:* correct "midpoint" argument
     """
 
-    from numpy import array, zeros
-
     if cmap is None:
         cmap = plt.get_cmap() # Get current colormap
     elif isinstance(cmap, str):
@@ -283,7 +281,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
             norm = midpointnorm(vcenter=vcenter, vmin=0, vmax=1)
             vector = np.array(norm(vector))
         nelements = len(vector) # Count number of elements
-        colors = zeros((nelements,4))
+        colors = np.zeros((nelements,4))
         for i in range(nelements):
             point = vector[i]
             if np.isnan(point) and nancolor is not None:
@@ -291,7 +289,7 @@ def vectocolor(vector, cmap=None, asarray=True, reverse=False, minval=None, maxv
                 if len(color) == 3:
                     color = sc.cat(color, 1.0) # Add alpha if not supplied
             else:
-                color = array(cmap(point)) # Main use case
+                color = np.array(cmap(point)) # Main use case
             colors[i,:] = color
 
     # It doesn't; return an empty array
@@ -985,8 +983,8 @@ def orangebluecolormap(apply=False):
 
     - *New in version 1.0.0.*
     """
-    bottom = plt.get_cmap('Oranges', 128)
-    top    = plt.get_cmap('Blues_r', 128)
+    bottom = mpl.colormaps['Oranges'].resampled(128)
+    top    = mpl.colormaps['Blues_r'].resampled(128)
     x      = np.linspace(0, 1, 128)
     data   = np.vstack((top(x), bottom(x)))
 
@@ -1002,7 +1000,7 @@ try: # Regression support for Matplotlib
     register_func = mpl.colormaps.register # Matplotlib >=3.5
 except AttributeError:
     register_func = mpl.cm.register_cmap # Matplotlib <=3.4
-existing = plt.colormaps()
+existing = list(mpl.colormaps)
 colormap_map = dict(
     alpine     = alpinecolormap(),
     parula     = parulacolormap(),

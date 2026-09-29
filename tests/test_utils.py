@@ -2,6 +2,8 @@
 Test Sciris utility/helper functions.
 '''
 
+import uuid
+import random
 import numpy as np
 import sciris as sc
 import functools
@@ -67,7 +69,6 @@ def test_download_save(): # Split up to take advantage of parallelization
 
 def test_uuid():
     sc.heading('Test UID generation')
-    import uuid
 
     # Create them
     u = sc.objdict()
@@ -103,7 +104,6 @@ def test_uuid():
 
     print('\nTesting fast_uuid')
     u.uuids = sc.fast_uuid(n=100) # Generate 100 UUIDs
-    import random
     random.seed(1); r1 = random.random()
     random.seed(1); sc.fast_uuid(); r2 = random.random()
     assert r1 == r2 # Python's global random stream isn't affected
@@ -433,11 +433,15 @@ def test_misc():
 
     print('\nTesting importbyname and importbypath')
     global lazynp
-    sc.importbyname(lazynp='numpy', lazy=True, namespace=globals())
+    sc.importbyname(lazynp='numpy', lazy=True) # Assigned to this module's namespace
     print(lazynp)
     assert isinstance(lazynp, sc.LazyModule)
     lazynp.array(0)
     assert not isinstance(lazynp, sc.LazyModule)
+    global lazypd
+    lazypd = sc.lazyimport('pandas') # Variable name and namespace are found automatically
+    lazypd.DataFrame
+    assert not isinstance(lazypd, sc.LazyModule)
     module_path = sc.thispath() / 'test_settings.py'
     test_set = sc.importbyname(path=module_path, variable='test_set')
     assert 'test_options' in dir(test_set)

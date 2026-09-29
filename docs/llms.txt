@@ -8,7 +8,7 @@
 - Aliases are alternative names for the same object; the canonical name is the one listed, and is the one to prefer when writing new code.
 - A version of this file including a usage example for each function is available at llms-full.txt.
 
-This file lists all 274 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
+This file lists all 275 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
 
 ## Links
 
@@ -267,7 +267,8 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
 - `sc.isstring(obj)`: Determine whether or not the input is string-like (i.e., str or bytes).
 - `sc.iswindows(die=False)`: Alias to `sc.getplatform('windows')`
 - `sc.KeyNotFoundError(...)`: A tiny class to fix repr for KeyErrors. KeyError prints the repr of the error message, rather than the actual message, so e.g. newline characters print as the character rather than the actual newline.
-- `sc.LazyModule(module, variable, namespace=None, overwrite=True)`: Create a "lazy" module that is loaded if and only if an attribute is called.
+- `sc.lazyimport(module, variable=None, namespace=None)`: Import a module only when it is first used.
+- `sc.LazyModule(module, variable=None, namespace=None, overwrite=True)`: Create a "lazy" module that is loaded if and only if an attribute is called.
 - `sc.Link(obj=None)`: A class to differentiate between an object and a link to an object. The idea is that this object is parsed differently from other objects -- most notably, a recursive method (such as a pickle) would skip over Link objects, and then would fix them up after the other objects had been reinstated.
 - `sc.LinkException(...)`: An exception to raise when links are broken, for exclusive use with the Link class.
 - `sc.mergedicts(*args, _strict=False, _overwrite=True, _copy=False, _sameclass=True, _die=True, **kwargs)`: Small function to merge multiple dicts together.

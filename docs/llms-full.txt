@@ -7,7 +7,7 @@
 - Signatures are as introspected from the current version; summaries are the first paragraph of each docstring.
 - Aliases are alternative names for the same object; the canonical name is the one listed, and is the one to prefer when writing new code.
 
-This file lists all 274 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
+This file lists all 275 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
 
 ## Links
 
@@ -1567,10 +1567,17 @@ This file lists all 274 public Sciris functions and classes. It is generated fro
   raise sc.KeyNotFoundError('The key "foo" is not available, but these are: "bar", "cat"')
   ```
 
-- `sc.LazyModule(module, variable, namespace=None, overwrite=True)`: Create a "lazy" module that is loaded if and only if an attribute is called.
+- `sc.lazyimport(module, variable=None, namespace=None)`: Import a module only when it is first used.
 
   ```python
-  pd = sc.LazyModule('pandas', 'pd') # pd is a LazyModule, not actually pandas
+  plt = sc.lazyimport('matplotlib.pyplot') # Doesn't import pyplot yet
+  plt.plot([1,3,2]) # Imports pyplot, and replaces plt with it
+  ```
+
+- `sc.LazyModule(module, variable=None, namespace=None, overwrite=True)`: Create a "lazy" module that is loaded if and only if an attribute is called.
+
+  ```python
+  pd = sc.LazyModule('pandas') # pd is a LazyModule, not actually pandas
   df = pd.DataFrame() # Not only does this work, but pd is now actually pandas
   ```
 

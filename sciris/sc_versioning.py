@@ -12,17 +12,25 @@ Highlights:
 """
 
 import os
+import sys
 import re
 import html
 import time
 import zlib
 import types
+import inspect
+import platform
 import warnings
 import importlib.metadata as imd
 import packaging.version as pkgv
 import packaging.specifiers as pkgs
 import packaging.requirements as pkgr
 from zipfile import ZipFile
+import numpy as np
+import pandas as pd
+import matplotlib as mpl
+import PIL.Image # Already imported by Matplotlib
+from PIL.ExifTags import TAGS
 import sciris as sc
 
 __all__ = ['freeze', 'require', 'gitinfo', 'compareversions', 'getcaller',
@@ -372,7 +380,6 @@ def getcaller(frame=2, tostring=True, includelineno=False, includeline=False, re
     - *New in version 3.0.0:* "relframe" argument; "die" argument
     """
     try:
-        import inspect
         frame = frame + relframe
         result = inspect.getouterframes(inspect.currentframe(), 2)
         fname = str(result[frame][1])
@@ -437,14 +444,6 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
     *New in version 3.0.0.*
     """
 
-    # Additional imports
-    import sys
-    import platform
-    import numpy as np
-    import pandas as pd
-    import matplotlib as mpl
-    from .sc_version import __version__
-
     # Handle type
     dict_fn = dict if asdict else sc.objdict
 
@@ -463,7 +462,7 @@ def metadata(outfile=None, version=None, comments=None, require=None, pipfreeze=
         ),
         versions = dict_fn(
             python     = platform.python_version(),
-            sciris     = __version__,
+            sciris     = sc.__version__,
             numpy      = np.__version__,
             pandas     = pd.__version__,
             matplotlib = mpl.__version__,
@@ -528,11 +527,6 @@ def loadmetadata(filename, load_all=False, die=True):
     is_png = lcfn.endswith('png')
     is_jpg = lcfn.endswith('jpg') or lcfn.endswith('jpeg')
     if is_png or is_jpg:
-        try:
-            import PIL
-        except ImportError as E: # pragma: no cover
-            errormsg = f'Pillow import failed ({str(E)}), please install first (pip install pillow)'
-            raise ImportError(errormsg) from E
         im = PIL.Image.open(filename)
         keys = im.info.keys()
 
@@ -546,7 +540,6 @@ def loadmetadata(filename, load_all=False, die=True):
 
         # JPG -- from https://www.thepythoncode.com/article/extracting-image-metadata-in-python
         elif is_jpg: # pragma: no cover
-            from PIL.ExifTags import TAGS # Must be imported directly
             exifdata = im.getexif()
             for tag_id in exifdata:
                 tag = TAGS.get(tag_id, tag_id)

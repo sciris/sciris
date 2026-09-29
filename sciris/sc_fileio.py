@@ -1519,7 +1519,7 @@ def loadyaml(filename=None, folder=None, string=None, fromfile=True, safe=False,
     ```
     *New in version 3.3.0:* default to UTF-8 encoding
     """
-    import yaml # Optional import
+    import yaml # Imported here to speed up importing Sciris
 
     if loader is None:
         if safe: loader = yaml.loader.SafeLoader
@@ -1579,7 +1579,7 @@ def saveyaml(filename=None, obj=None, folder=None, jsonify=True, sort_keys=True,
     ```
     *New in version 3.3.0:* default to UTF-8 encoding
     """
-    import yaml # Optional import
+    import yaml # Imported here to speed up importing Sciris
 
     if dumpall: dump_func = yaml.dump_all
     else:       dump_func = yaml.dump
@@ -1644,7 +1644,7 @@ def jsonpickle(obj, filename=None, tostring=False, **kwargs):
     ```
     *New in version 3.1.0:* "filename" argument
     """
-    import jsonpickle as jp # Optional import
+    import jsonpickle as jp # Imported here to speed up importing Sciris
     import jsonpickle.ext.numpy as jsonpickle_numpy
     import jsonpickle.ext.pandas as jsonpickle_pandas
     jsonpickle_numpy.register_handlers()
@@ -2257,7 +2257,7 @@ def savespreadsheet(filename=None, data=None, folder=None, sheetnames=None, clos
     """
     workbook_args = sc.mergedicts({'nan_inf_to_errors': True}, workbook_args)
     try:
-        import xlsxwriter # Optional import
+        import xlsxwriter # Imported here to speed up importing Sciris
     except ModuleNotFoundError as e: # pragma: no cover
         raise ModuleNotFoundError('The "xlsxwriter" Python package is not available; please install manually') from e
     fullpath = makefilepath(filename=filename, folder=folder, default='default.xlsx', makedirs=True)

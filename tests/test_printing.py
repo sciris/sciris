@@ -2,6 +2,8 @@
 Test Sciris printing functions.
 '''
 
+import random
+from unittest import mock
 import numpy as np
 import pytest
 import sciris as sc
@@ -153,7 +155,6 @@ def test_printing(test_slack=False):
     assert txt2 == str2 + '\n' + str1 + '\n'
 
     print('\nTesting slacknotification without sending')
-    from unittest import mock
     import requests
     response = requests.models.Response()
     response.status_code = 404
@@ -273,7 +274,6 @@ def test_progress_bar():
 
 
 def test_progress_bars():
-    import random
 
     totalsleep = 0.5
     def run_sim(index, ndays, pbs):

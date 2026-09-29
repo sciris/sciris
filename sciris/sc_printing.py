@@ -13,11 +13,13 @@ Highlights:
 import io
 import os
 import sys
+import json
 import types
 import time
 import tqdm
 import pprint
 import inspect
+import tempfile
 import warnings
 import numpy as np
 import collections as co
@@ -942,7 +944,6 @@ def printarr(arr, fmt=None, colsep='  ', vsep='—', decimals=2, doprint=True, d
     *New in version 2.0.3:* "fmt", "colsep", "vsep", "decimals", and "dtype" arguments
     *New in version 3.0.0:* "doprint" argument
     """
-    from . import sc_math as scm # To avoid circular import
 
     string = ''
     arr = sc.toarray(arr, dtype=dtype)
@@ -1390,7 +1391,6 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
     """
     try:
         from requests import post # Simple way of posting data to a URL
-        from json import dumps # For sanitizing the message
     except Exception as E:
         errormsg = f'Cannot use Slack notification since imports failed: {str(E)}'
         if die: raise ImportError(errormsg)
@@ -1420,7 +1420,7 @@ def slacknotification(message=None, webhook=None, to=None, fromuser=None, verbos
 
     # Package and post payload
     try:
-        payload = '{"text": %s, "channel": %s, "username": %s}' % (dumps(message), dumps(to), dumps(fromuser))
+        payload = '{"text": %s, "channel": %s, "username": %s}' % (json.dumps(message), json.dumps(to), json.dumps(fromuser))
         printv(f'Full payload: {payload}', 4, verbose)
         response = post(url=slackurl, data=payload)
         printv(response, 3, verbose) # Optionally print response
@@ -1446,7 +1446,6 @@ def printtologfile(message=None, filename=None):
     if message is None: # pragma: no cover
         return # Return immediately if nothing to append
     if filename is None:
-        import tempfile
         tempdir = tempfile.gettempdir()
         filename = os.path.join(tempdir, 'logfile') # Some generic filename that should work on *nix systems
 
