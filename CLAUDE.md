@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Run tests:** `cd tests && ./run_tests`
 - **Install dev:** `pip install -e .`
 - **Build docs:** `cd docs && ./render`
-- **Regenerate API index:** `cd docs && python make_api.py` (updates `docs/api.json`, `docs/llms.txt`, `docs/llms-full.txt`; run after adding, renaming, or changing the signature of any public function, or `tests/test_api.py` will fail)
+- **Generate API index locally:** `cd docs && python make_api.py` (writes `docs/api.json`, `docs/llms.txt`, `docs/llms-full.txt`; these are gitignored, and are built automatically with the docs and published at e.g. https://docs.sciris.org/llms.txt)
 - **Standard import:** `import sciris as sc`
 
 ### Core Functions

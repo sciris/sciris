@@ -44,4 +44,4 @@ The entire Sciris API — every public function and class, with its signature, s
 - [llms-full.txt](llms-full.txt): the same, plus a usage example for each function (~90 kB)
 - [api.json](api.json): the same data as structured JSON, for programmatic use
 
-All three files are generated from the source (`cd docs && python make_api.py`) and are verified in CI, so they never drift from the current version of Sciris.
+All three files are generated from the source each time the docs are built, so they never drift from the current version of Sciris. To generate them locally, run `cd docs && python make_api.py`.
