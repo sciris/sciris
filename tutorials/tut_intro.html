@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -520,7 +520,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="simple-data-operations" class="level2">
 <h2 class="anchored" data-anchor-id="simple-data-operations">Simple data operations</h2>
 <p>While Sciris does add some new features (we’ll get to those later), its main purpose is to let you do the things you’re already doing more easily. For example, finding values in an array:</p>
-<div id="fcf8959c" class="cell" data-execution_count="1">
+<div id="40a1f93c" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -531,7 +531,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'there were </span><span class="sc">{</span><span class="bu">len</span>(inds)<span class="sc">}</span><span class="ss"> values over 0.9: '</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'these were </span><span class="sc">{</span>sc<span class="sc">.</span>strjoin(inds)<span class="sc">}</span><span class="ss">.'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>While the mean of the data was 0.51 ± 0.55, there were 6 values over 0.9: these were 2, 28, 30, 31, 41, 49.</code></pre>
+<pre><code>While the mean of the data was 0.41 ± 0.59, there were 3 values over 0.9: these were 27, 31, 42.</code></pre>
 </div>
 </div>
 <p>I’m sure you already knew how to find indices of an array, calculate the mean and standard deviation, and turn a list of values into a string. But it’s nice if those things can be made easier, right?</p>
@@ -539,7 +539,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="simple-data-containers-and-plotting" class="level2">
 <h2 class="anchored" data-anchor-id="simple-data-containers-and-plotting">Simple data containers and plotting</h2>
 <p>Matplotlib, NumPy, and pandas are all fantastic – but often they provide lower-level interfaces than what is commonly needed, meaning that some tasks can be made even simpler.</p>
-<div id="ff2fc1ba" class="cell" data-execution_count="2">
+<div id="60c4aad9" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create some data</span></span>
@@ -560,19 +560,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="tut_intro_files/figure-html/cell-3-output-1.png" width="577" height="430" class="figure-img"></p>
+<p><img src="tut_intro_files/figure-html/cell-3-output-1.png" width="586" height="434" class="figure-img"></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>The data had mean 708,000 and there were 7 outliers.</code></pre>
+<pre><code>The data had mean 946,000 and there were 8 outliers.</code></pre>
 </div>
 </div>
 </section>
 <section id="simple-containers" class="level2">
 <h2 class="anchored" data-anchor-id="simple-containers">Simple containers</h2>
 <p>Can’t decide if something should be a dict or an object? Do you want the flexibility of a dict, but the convenience and explicitness of an object? Well, why not use both?</p>
-<div id="ea61ee29" class="cell" data-execution_count="3">
+<div id="2ecdcfbf" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.objdict(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], b<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]) </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> data.a <span class="op">==</span> data[<span class="st">'a'</span>] <span class="op">==</span> data[<span class="dv">0</span>] <span class="co"># Flexible options for indexing</span></span>
@@ -588,7 +588,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <section id="loading-and-saving" class="level2">
 <h2 class="anchored" data-anchor-id="loading-and-saving">Loading and saving</h2>
 <p>Do you have a custom object that it would be nice to be able to save and pick up where you left off?</p>
-<div id="0e1f30bf" class="cell" data-execution_count="4">
+<div id="d5f55910" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Sim:</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, days, trials):</span>
@@ -623,7 +623,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <section id="parallelization" class="level2">
 <h2 class="anchored" data-anchor-id="parallelization">Parallelization</h2>
 <p>Have you ever thought “Gosh, I should really parallelize this code, but it’s going to take too long, and besides doctors say you should get up and stretch everyone once in a while, so it’s OK that I’m waiting for 9 minutes out of every 10 while my code runs”? This might be for you.</p>
-<div id="e92793e5" class="cell" data-execution_count="5">
+<div id="c41fb846" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the function to parallelize</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> func(scale, x_offset, y_offset):</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    np.random.seed(scale)</span>
@@ -643,10 +643,32 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    plt.scatter(data.x, data.y, alpha<span class="op">=</span><span class="fl">0.5</span>, label<span class="op">=</span><span class="ss">f'Scale </span><span class="sc">{</span>data<span class="sc">.</span>scale<span class="sc">}</span><span class="ss">'</span>)</span>
 <span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
 <span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>sc.boxoff()<span class="op">;</span> <span class="co"># Remove top and right spines</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Exception ignored in: &lt;_io.BytesIO object at 0x7efcfc1e17b0&gt;
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/matplotlib/transforms.py", line 107, in __init__
+    def __init__(self, shorthand_name=None):
+BufferError: Existing exports of data: object cannot be re-sized
+Exception ignored in: &lt;_io.BytesIO object at 0x7efcfc12f920&gt;
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/matplotlib/transforms.py", line 107, in __init__
+    def __init__(self, shorthand_name=None):
+BufferError: Existing exports of data: object cannot be re-sized
+Exception ignored in: &lt;_io.BytesIO object at 0x7efcfc12ee30&gt;
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/matplotlib/transforms.py", line 107, in __init__
+    def __init__(self, shorthand_name=None):
+BufferError: Existing exports of data: object cannot be re-sized
+Exception ignored in: &lt;_io.BytesIO object at 0x7efcfc12ffb0&gt;
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/matplotlib/transforms.py", line 107, in __init__
+    def __init__(self, shorthand_name=None):
+BufferError: Existing exports of data: object cannot be re-sized</code></pre>
+</div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="tut_intro_files/figure-html/cell-6-output-1.png" width="721" height="514" class="figure-img"></p>
+<p><img src="tut_intro_files/figure-html/cell-6-output-2.png" width="721" height="514" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -655,32 +677,32 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <section id="putting-it-all-together" class="level2">
 <h2 class="anchored" data-anchor-id="putting-it-all-together">Putting it all together</h2>
 <p>Here’s the “showcase” example of the wave generator from the <a href="http://docs.sciris.org/overview.html">getting started</a> page, which hopefully now makes more sense!</p>
-<div id="fe197642" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define random wave generator</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> randwave(std, xmin<span class="op">=</span><span class="dv">0</span>, xmax<span class="op">=</span><span class="dv">10</span>, npts<span class="op">=</span><span class="dv">50</span>):</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    np.random.seed(<span class="bu">int</span>(<span class="dv">100</span><span class="op">*</span>std)) <span class="co"># Ensure differences between runs</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> np.cos(np.linspace(xmin, xmax, npts))</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> np.random.randn(npts)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a <span class="op">+</span> b<span class="op">*</span>std</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Start timing</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> sc.timer()</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate output in parallel</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>waves <span class="op">=</span> sc.parallelize(randwave, np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">11</span>))</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Save to files</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>filenames <span class="op">=</span> [sc.save(<span class="ss">f'wave</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">.obj'</span>, wave) <span class="cf">for</span> i,wave <span class="kw">in</span> <span class="bu">enumerate</span>(waves)]</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Create dict from files</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.odict({fname:sc.load(fname) <span class="cf">for</span> fname <span class="kw">in</span> filenames})</span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Create 3D plot</span></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>sc.surf3d(data[:], cmap<span class="op">=</span><span class="st">'orangeblue'</span>)</span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Print elapsed time</span></span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>T.toc(<span class="st">'Congratulations, you finished the first tutorial'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="e570a4b6" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define random wave generator</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> randwave(std, xmin<span class="op">=</span><span class="dv">0</span>, xmax<span class="op">=</span><span class="dv">10</span>, npts<span class="op">=</span><span class="dv">50</span>):</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    np.random.seed(<span class="bu">int</span>(<span class="dv">100</span><span class="op">*</span>std)) <span class="co"># Ensure differences between runs</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> np.cos(np.linspace(xmin, xmax, npts))</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> np.random.randn(npts)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a <span class="op">+</span> b<span class="op">*</span>std</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Start timing</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> sc.timer()</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate output in parallel</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>waves <span class="op">=</span> sc.parallelize(randwave, np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">11</span>))</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Save to files</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>filenames <span class="op">=</span> [sc.save(<span class="ss">f'wave</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">.obj'</span>, wave) <span class="cf">for</span> i,wave <span class="kw">in</span> <span class="bu">enumerate</span>(waves)]</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Create dict from files</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.odict({fname:sc.load(fname) <span class="cf">for</span> fname <span class="kw">in</span> filenames})</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Create 3D plot</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>sc.surf3d(data[:], cmap<span class="op">=</span><span class="st">'orangeblue'</span>)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Print elapsed time</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>T.toc(<span class="st">'Congratulations, you finished the first tutorial'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -689,7 +711,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Congratulations, you finished the first tutorial: 0.318 s</code></pre>
+<pre><code>Congratulations, you finished the first tutorial: 0.195 s</code></pre>
 </div>
 </div>
 
@@ -1129,7 +1151,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.4.0 (2026-09-28).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.5.0 (2026-10-13).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

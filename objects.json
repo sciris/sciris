@@ -1,7 +1,7 @@
 {
   "project": "sciris",
   "version": "0.0.9999",
-  "count": 493,
+  "count": 492,
   "items": [
     {
       "name": "sciris.sc_math.approx",
@@ -329,14 +329,6 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_odict.html#sciris.sc_odict.dictobj.copy",
-      "dispname": "-"
-    },
-    {
-      "name": "sciris.sc_odict.dictobj.fromkeys",
-      "domain": "py",
-      "role": "function",
-      "priority": "1",
-      "uri": "api/sc_odict.html#sciris.sc_odict.dictobj.fromkeys",
       "dispname": "-"
     },
     {
@@ -4257,14 +4249,6 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_odict.html#sciris.sc_odict.dictobj.copy",
-      "dispname": "-"
-    },
-    {
-      "name": "sciris.dictobj.fromkeys",
-      "domain": "py",
-      "role": "function",
-      "priority": "1",
-      "uri": "api/sc_odict.html#sciris.sc_odict.dictobj.fromkeys",
       "dispname": "-"
     },
     {

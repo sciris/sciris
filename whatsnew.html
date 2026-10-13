@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.10.19">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -45,9 +45,9 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-5a1953863e1f72ef3b996ef827f01ca7.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -451,6 +451,7 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#whats-new" id="toc-whats-new" class="nav-link active" data-scroll-target="#whats-new">What’s new</a>
   <ul>
+  <li><a href="#version-3.5.0-2026-10-13" id="toc-version-3.5.0-2026-10-13" class="nav-link" data-scroll-target="#version-3.5.0-2026-10-13">Version 3.5.0 (2026-10-13)</a></li>
   <li><a href="#version-3.4.0-2026-09-28" id="toc-version-3.4.0-2026-09-28" class="nav-link" data-scroll-target="#version-3.4.0-2026-09-28">Version 3.4.0 (2026-09-28)</a>
   <ul>
   <li><a href="#major-changes" id="toc-major-changes" class="nav-link" data-scroll-target="#major-changes">Major changes</a></li>
@@ -639,6 +640,16 @@ ul.task-list li input[type="checkbox"] {
 <h1>What’s new</h1>
 <p>All major updates to Sciris are documented here.</p>
 <p>By import convention, components of the Sciris library are listed beginning with <code>sc.</code>, e.g.&nbsp;<a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>.</p>
+<section id="version-3.5.0-2026-10-13" class="level2">
+<h2 class="anchored" data-anchor-id="version-3.5.0-2026-10-13">Version 3.5.0 (2026-10-13)</h2>
+<ol type="1">
+<li><code>sc.obj()</code> is a new, shorter name for <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>, e.g.&nbsp;<code>pars = sc.obj(a=1, b=2)</code>. It is the preferred name for new code.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> is now much faster: reading a key as an attribute (<code>obj.a</code>) is about 10 times faster, setting one (<code>obj.a = 1</code>) is about 4 times faster, and looking up a method (<code>obj.items</code>) is about 3 times faster. Creating an <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> or <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> is about twice as fast, and <a href="./api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> and <a href="./api/sc_nested.html#sciris.sc_nested.search" title="0"><code>sc.search()</code></a> are faster too.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> now stores its keys in the dict itself, so it works with <a href="https://docs.python.org/3/library/json.html#json.dumps" title="1"><code>json.dumps()</code></a> and other functions that expect a plain dict. Item access (<code>obj['a']</code>) is about 5 times faster. Files saved with earlier versions can still be loaded.</li>
+<li>As a guide to which to use: <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> is nearly as fast as a plain <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> (about 15–20 ns to get or set a key either way, versus 10–15 ns for a <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>), while <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> takes about 40–50 ns to get a key and 200–300 ns to set one, in exchange for the extra features of <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> (such as indexing by position) and for protecting its methods from being overwritten by keys. So use <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> by default, and <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> or a <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> in loops that run millions of times.</li>
+<li>For subclasses of <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> with properties: if a property raises an exception, that exception is now always raised (previously, a key with the same name would be returned instead); and if a property fails because an attribute is missing, the error message names the property rather than the missing attribute.</li>
+</ol>
+</section>
 <section id="version-3.4.0-2026-09-28" class="level2">
 <h2 class="anchored" data-anchor-id="version-3.4.0-2026-09-28">Version 3.4.0 (2026-09-28)</h2>
 <section id="major-changes" class="level3">
@@ -1281,7 +1292,7 @@ ul.task-list li input[type="checkbox"] {
 <ol type="1">
 <li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> now inherits from <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> rather than <code>OrderedDict</code>. This makes initialization and some other operations nearly four times faster.</li>
 <li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> can now be initialized with integer keys.</li>
-<li>There is a new <a href="./api/sc_odict.html#sciris.sc_odict.dictobj.to_json" title="0"><code>sc.dictobj.to_json()</code></a> method. <a href="./api/sc_odict.html#sciris.sc_odict.dictobj.fromkeys" title="0"><code>sc.dictobj.fromkeys()</code></a> is now a static method.</li>
+<li>There is a new <a href="./api/sc_odict.html#sciris.sc_odict.dictobj.to_json" title="0"><code>sc.dictobj.to_json()</code></a> method. <code>sc.dictobj.fromkeys()</code> is now a static method.</li>
 </ol>
 </section>
 <section id="nested-objects-1" class="level4">
@@ -2442,7 +2453,7 @@ ul.task-list li input[type="checkbox"] {
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.4.0 (2026-09-28).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.5.0 (2026-10-13).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">
