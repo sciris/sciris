@@ -295,6 +295,8 @@ def test_asobj():
     with pytest.raises(AttributeError):
         myobjdict.setattribute('keys', 4)
 
+    assert sc.obj is sc.objdict # Alias
+
     print('Testing dictobj')
     obj = sc.dictobj(x=4, y=6)
     obj.a = 5
@@ -305,6 +307,11 @@ def test_asobj():
     assert 'x' in json
     assert fk.foo is None
     assert sc.dictobj(x=1) != sc.dictobj(x=2) and sc.dictobj(x=1) == {'x':1} # Compares contents
+    assert sc.loadjson(string=json) == obj == sc.dcp(obj) == sc.loadstr(sc.dumpstr(obj)) # Keys and attributes are the same thing
+    assert isinstance(obj | {'c':1}, sc.dictobj) and isinstance(obj.copy(), sc.dictobj)
+    old = sc.dictobj.__new__(sc.dictobj)
+    old.__setstate__({'x':4}) # Pickles from before 3.5.0 stored the data as attributes
+    assert old.x == old['x'] == 4
 
     return
 

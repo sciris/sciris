@@ -4,6 +4,13 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 3.5.0 (2026-10-13)
+
+1. `sc.obj()` is a new, shorter name for `sc.objdict()`, e.g. `pars = sc.obj(a=1, b=2)`.
+1. `sc.objdict()` is much faster: reading a key as an attribute (`obj.a`) is about 10 times faster, setting one (`obj.a = 1`) is about 4 times faster, and looking up a method (`obj.items`) is about 3 times faster. Creating an `sc.odict()` or `sc.objdict()` is about twice as fast, and `sc.iterobj()` and `sc.search()` are faster too.
+1. `sc.dictobj()` now stores its keys in the dict itself, so it works with `json.dumps()` and other functions that expect a plain dict. Item access (`obj['a']`) is about 5 times faster. Files saved with earlier versions can still be loaded.
+1. For subclasses of `sc.objdict()` with properties: if a property raises an exception, that exception is now always raised (previously, a key with the same name would be returned instead); and if a property fails because an attribute is missing, the error message names the property rather than the missing attribute.
+
 ## Version 3.4.0 (2026-09-28)
 
 ### Major changes
