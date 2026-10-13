@@ -8,18 +8,19 @@ Highlights:
 import re
 import sys
 import json
+import copyreg
 import numpy as np
 import collections as co
 import sciris as sc
 from .sc_utils import _not_given # Imported directly since it's needed at definition time
 
 # Restrict imports to user-facing modules
-__all__ = ['ddict', 'counter', 'odict', 'objdict', 'dictobj', 'asobj', 'argparse']
+__all__ = ['ddict', 'counter', 'odict', 'objdict', 'obj', 'dictobj', 'asobj', 'argparse']
 
 ddict = co.defaultdict # Define alias
 
 # Critical attributes that should be resolved immediately, not via any special handling
-_fundamental_attrs = ['__class__', '__reduce__', '__reduce_ex__', '__getstate__', '__setstate__', '__copy__','__deepcopy__']
+_fundamental_attrs = frozenset(['__class__', '__reduce__', '__reduce_ex__', '__getstate__', '__setstate__', '__copy__','__deepcopy__'])
 
 
 class counter(co.Counter):
@@ -140,6 +141,8 @@ class odict(dict):
     - *New in version 3.1.1:* allow steps in slices; `copy()` now behaves as a standard dict
     """
 
+    _stale = True # The keys are only cached (as a list, for integer lookup) when first needed
+
     def __init__(self, *args, defaultdict=None, **kwargs):
         """ Combine the init properties of both OrderedDict and defaultdict """
 
@@ -154,7 +157,6 @@ class odict(dict):
                 raise TypeError(errormsg)
             self._setattr('_defaultdict', defaultdict) # Use object.__setattr__() since setattr() is overridden by sc.objdict()
 
-        self._cache_keys()
         return
 
 
@@ -240,10 +242,10 @@ class odict(dict):
     def __setitem__(self, key, value):
         """ Allows setitem to support strings, integers, slices, lists, or arrays """
 
-        self._setattr('_stale', True) # Flag to refresh the cached keys
+        object.__setattr__(self, '_stale', True) # Flag to refresh the cached keys
 
         if isinstance(key, (str,tuple)):
-            self._setitem(key, value)
+            dict.__setitem__(self, key, value)
 
         elif isinstance(key, sc._numtype): # Convert automatically from float...dangerous?
             thiskey = key if dict.__contains__(self, key) else self._ikey(key) # As with getitem, an existing key takes precedence
@@ -1260,6 +1262,8 @@ class objdict(odict):
     instead act on dict keys (e.g. `obj['x'] = 3`). If you want to actually get/set
     an attribute, use `obj.getattribute()`/`obj.setattribute()`.
 
+    `sc.obj()` is an alias for `sc.objdict()`.
+
     For a lighter-weight example (an object that acts like a dict), see `sc.dictobj()`.
 
     **Examples**:
@@ -1281,6 +1285,8 @@ class objdict(odict):
 
     For a lighter-weight equivalent (based on `dict` instead of `odict`), see
     `sc.dictobj()`.
+
+    - *New in version 3.5.0:* `sc.obj()` alias; much faster attribute access
     """
 
     def __init__(self, *args, **kwargs):
@@ -1298,40 +1304,41 @@ class objdict(odict):
         return odict.__repr__(self, quote='', numsep='.', classname=self.__class__.__name__, *args, **kwargs)
 
 
-    def __getattribute__(self, attr):
-        """ Handle as attributes first, then as dict keys """
-        # Pickle/copy protocol: must resolve from class, not as dict keys
+    def __getattr__(self, attr):
+        """ Only called if not found as an attribute, so get it as a dict key """
+        if attr not in _fundamental_attrs: # Pickle/copy protocol: must resolve from class, not as dict keys
+            try: # The usual case: it's a key
+                return dict.__getitem__(self, attr)
+            except KeyError:
+                pass
+        errormsg = f"'{type(self).__name__}' object has no attribute '{attr}'"
+        exception = AttributeError(errormsg, name=attr, obj=self)
         if attr in _fundamental_attrs:
-            return object.__getattribute__(self, attr)
-        else:
-            try: # First, try to get the attribute as an attribute
-                return object.__getattribute__(self, attr)
-            except Exception as E: # If that fails, try to get it as a dict item, but pass along the original exception
-                return self.__getitem__(attr, exception=E)
+            raise exception
+        return self.__getitem__(attr, exception=exception) # Handle defaults, or else raise the exception
 
 
     def __setattr__(self, name, value):
         """ Set key in dict, not attribute! """
         if name[:2] == '__': # If it starts with a double underscore, it's almost certainly an attribute, not a key
             return object.__setattr__(self, name, value)
+        elif name in self.__dict__ or hasattr(type(self), name):
+            errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
+            raise KeyError(errormsg)
         else:
-            try:
-                object.__getattribute__(self, name) # Try retrieving this as an attribute, expect AttributeError...
-                errormsg = f'"{name}" exists as an attribute, so cannot be set as key; use setattribute() instead'
-                raise KeyError(errormsg)
-            except AttributeError:
-                return self.__setitem__(name, value) # If so, simply return
+            return self.__setitem__(name, value)
 
 
     def __getitem__(self, attr, exception=None):
         """ Handle dict keys, including nested defaultdict logic """
         try: # Try retrieving normally
+            return dict.__getitem__(self, attr)
+        except Exception:
+            pass
+        try: # Then try integers, slices, etc.
             return odict.__getitem__(self, attr, allow_default=False) # Do not allow odict to handle default
         except Exception as E2: # If that fails, raise the original exception
-            try: # Handle defaultdict behavior by first checking if it exists
-                _defaultdict = object.__getattribute__(self, '_defaultdict')
-            except:
-                _defaultdict = None
+            _defaultdict = self.__dict__.get('_defaultdict') # Handle defaultdict behavior by first checking if it exists
             if _defaultdict is not None: # If it does, use it, then get the key again
                 if _defaultdict == 'nested':
                     return self._new(defaultdict='nested', _nested_parent=self, _nested_attr=attr) # Create a recursive object with links back to the ultimate parent
@@ -1349,14 +1356,9 @@ class objdict(odict):
     def __setitem__(self, name, value):
         """ Set as a dict item """
         odict.__setitem__(self, name, value)
-        try:
-            p = object.__getattribute__(self, '_nested_parent')
-            key = object.__getattribute__(self, '_nested_attr')
-        except AttributeError:
-            p = None
-            key = None
-        if p is not None:
-            p[key] = self
+        attrs = self.__dict__
+        if '_nested_parent' in attrs:
+            attrs['_nested_parent'][attrs['_nested_attr']] = self
             object.__delattr__(self, '_nested_parent')
             object.__delattr__(self, '_nested_attr')
         return
@@ -1389,6 +1391,9 @@ class objdict(odict):
         return object.__delattr__(self, name)
 
 
+obj = objdict # Define alias
+
+
 class dictobj(dict):
     """
     Lightweight class to create an object that can also act like a dictionary.
@@ -1403,35 +1408,46 @@ class dictobj(dict):
     ```
     For a more powerful alternative, see `sc.objdict()`.
 
-    **Note**: because `dictobj` is halfway between a dict and an object, it can't
-    be automatically converted to a JSON (but will fail silently). Use `to_json()`
-    instead.
+    The keys and the attributes are the same thing (the dict is its own `__dict__`),
+    so it is as fast as a plain object for attributes and nearly as fast as a plain
+    dict for items. This also means that keys can overwrite methods (e.g. `obj.items = 5`).
 
     - *New in version 1.3.0.*
     - *New in version 1.3.1:* inherit from dict
     - *New in version 2.0.0:* allow positional arguments
     - *New in version 3.0.0:* "fromkeys" now a class method; `to_json()` method
     - *New in version 3.1.6:* "copy" returns another dictobj
+    - *New in version 3.5.0:* keys are stored in the dict itself, so e.g. `json.dumps()` works; faster
     """
 
+    def __new__(cls, *args, **kwargs):
+        self = dict.__new__(cls)
+        self.__dict__ = self # Use the dict itself to store the attributes
+        return self
+
     def __init__(self, *args, **kwargs):
-        kwargs = sc.mergedicts(*args, kwargs)
-        for k,v in kwargs.items():
-            self.__dict__[k] = v
+        for arg in args:
+            if arg is not None:
+                self.update(arg)
+        self.update(kwargs)
         return
 
     def __repr__(self):
-        output = 'dictobj(' + self.__dict__.__repr__() + ')'
+        output = 'dictobj(' + dict.__repr__(self) + ')'
         return output
 
-    def to_json(self):
-        """ Export the dictobj to JSON (NB: regular `json.dumps()` does not work) """
-        return json.dumps(self.__dict__)
+    def __reduce__(self):
+        """ Pickle and copy the contents once, rather than as both items and attributes """
+        return (copyreg.__newobj__, (self.__class__,), dict(self))
 
-    @classmethod
-    def fromkeys(cls, *args, **kwargs):
-        """ Create a new dictobj from keys """
-        return cls(dict.fromkeys(*args, **kwargs))
+    def __setstate__(self, state):
+        """ Restore from a pickle or copy, including pickles from before version 3.5.0 """
+        self.update(state)
+        return
+
+    def to_json(self):
+        """ Export the dictobj to JSON """
+        return json.dumps(self)
 
     def copy(self):
         """ Create a shallow copy """
@@ -1439,37 +1455,15 @@ class dictobj(dict):
         new.update(self)
         return new
 
-    # Copy other default dictionary methods
-    def __getitem__( self, *args, **kwargs): return self.__dict__.__getitem__( *args, **kwargs)
-    def __setitem__( self, *args, **kwargs): return self.__dict__.__setitem__( *args, **kwargs)
-    def __contains__(self, *args, **kwargs): return self.__dict__.__contains__(*args, **kwargs)
-    def __len__(     self, *args, **kwargs): return self.__dict__.__len__(     *args, **kwargs)
-    def __iter__(    self, *args, **kwargs): return self.__dict__.__iter__(    *args, **kwargs)
-    def clear(       self, *args, **kwargs): return self.__dict__.clear(       *args, **kwargs)
-    def get(         self, *args, **kwargs): return self.__dict__.get(         *args, **kwargs)
-    def items(       self, *args, **kwargs): return self.__dict__.items(       *args, **kwargs)
-    def keys(        self, *args, **kwargs): return self.__dict__.keys(        *args, **kwargs)
-    def pop(         self, *args, **kwargs): return self.__dict__.pop(         *args, **kwargs)
-    def popitem(     self, *args, **kwargs): return self.__dict__.popitem(     *args, **kwargs)
-    def setdefault(  self, *args, **kwargs): return self.__dict__.setdefault(  *args, **kwargs)
-    def update(      self, *args, **kwargs): return self.__dict__.update(      *args, **kwargs)
-    def values(      self, *args, **kwargs): return self.__dict__.values(      *args, **kwargs)
-    def __reversed__(self, *args, **kwargs): return self.__dict__.__reversed__(*args, **kwargs)
-
-    # The dict storage itself is empty, so comparisons and merges must also use __dict__
-    def __eq__(self, other): return self.__dict__ == (other.__dict__ if isinstance(other, dictobj) else other)
-    def __ne__(self, other): return not self.__eq__(other)
     def __or__(self, other):
         new = self.copy()
         new.update(other)
         return new
+
     def __ror__(self, other):
         new = self.__class__(other)
         new.update(self)
         return new
-    def __ior__(self, other):
-        self.update(other)
-        return self
 
 
 def asobj(obj, strict=True):

@@ -402,7 +402,7 @@ class IterObj:
         # Attributes with initialization required
         self._trace     = []
         self._memo      = co.defaultdict(int)
-        self.output     = sc.objdict()
+        self.output     = {} # Converted to an objdict once the iteration is complete, since it's much faster to populate a dict
         if self.func is None: # If no function provided, define a function that just returns the contents of the current node
             self.func = lambda obj: obj
 
@@ -620,6 +620,7 @@ class IterObj:
                 return self.func(self.obj, **self.func_kw) # Set at the root level
             return self.obj
         else:
+            self.output = sc.objdict(self.output)
             return self.output
 
     def flatten_traces(self, sep='_', inplace=True):

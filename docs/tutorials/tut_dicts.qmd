@@ -101,7 +101,19 @@ print(f'Checking {ob.key1 = }')
 print(f'Checking {ob["key1"] = }') # We need to use double-quotes inside since single quotes are taken!
 ```
 
-In most cases, you probably want to use `objdict`s rather than `odict`s just to have the extra flexibility. Why would you ever use an `odict` over an `objdict`? Mostly just because there's small but nonzero overhead in doing the extra attribute checking: `odict` is faster (faster than even `collections.OrderedDict`, though slower than a plain `dict`). The differences are tiny (literally nanoseconds) so won't matter unless you're doing millions of operations. But if you're reading this, chances are high that you _do_ sometimes need to do millions of dict operations.
+In most cases, you probably want to use `objdict`s rather than `odict`s just to have the extra flexibility. Since they're so common, `sc.obj()` is a shorter name for `sc.objdict()`.
+
+### Performance
+
+All this flexibility has a cost, although a small one. If you only need attribute access and not the other `odict` features (such as indexing by position), `sc.dictobj()` is a lighter-weight alternative that is nearly as fast as a plain `dict`. Approximate times per operation, in nanoseconds:
+
+| | `obj['a']` | `obj.a` | `obj['a'] = 1` | `obj.a = 1` | Create |
+|---|---|---|---|---|---|
+| `dict` | 10 | n/a | 15 | n/a | 50 |
+| `sc.dictobj()` | 20 | 15 | 15 | 20 | 450 |
+| `sc.objdict()` | 40 | 50 | 190 | 330 | 600 |
+
+These differences won't matter unless you're doing millions of operations. But if you're reading this, chances are high that you _do_ sometimes need to do millions of dict operations, in which case use `sc.dictobj()` or a plain `dict` inside the loop. The other difference is that an `sc.objdict()` protects its methods (`obj.keys = 3` raises an error, and `obj['keys'] = 3` leaves `obj.keys()` working), whereas in an `sc.dictobj()` a key replaces a method of the same name.
 
 ## Dataframes
 
