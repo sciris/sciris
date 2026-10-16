@@ -91,6 +91,9 @@ def test_urlopen_local():
     print('\nTesting urlopen with a local server')
 
     class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass # Don't print each request
+
         def do_GET(self):
             if self.path == '/missing':
                 self.send_response(404)
@@ -98,6 +101,7 @@ def test_urlopen_local():
                 return
             if self.path == '/slow':
                 sc.timedsleep(1)
+                return # The client has timed out by now, so don't reply
             self.send_response(200)
             if self.path == '/latin1':
                 self.send_header('Content-Type', 'text/plain; charset=iso-8859-1')
