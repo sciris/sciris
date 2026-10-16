@@ -91,11 +91,17 @@ def test_urlopen_local():
     print('\nTesting urlopen with a local server')
 
     class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass # Don't print each request
+
         def do_GET(self):
             if self.path == '/missing':
                 self.send_response(404)
                 self.end_headers()
                 return
+            if self.path == '/slow':
+                sc.timedsleep(1)
+                return # The client has timed out by now, so don't reply
             self.send_response(200)
             if self.path == '/latin1':
                 self.send_header('Content-Type', 'text/plain; charset=iso-8859-1')
@@ -103,6 +109,14 @@ def test_urlopen_local():
             else:
                 self.send_header('Content-Disposition', 'attachment; filename="temp_report.csv"')
                 body = self.path.encode()
+            if self.path == '/sized':
+                self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_POST(self):
+            body = self.rfile.read(int(self.headers['Content-Length']))
+            self.send_response(200)
             self.end_headers()
             self.wfile.write(body)
 
@@ -113,8 +127,14 @@ def test_urlopen_local():
         assert sc.urlopen(url + '/missing', response='status') == 404
         assert sc.urlopen(url + '/api?a=1', params=dict(b=2)) == '/api?a=1&b=2'
         assert sc.urlopen(url + '/latin1') == 'café'
-        data = sc.download(f'http://{url}/v1/data', f'http://{url}/v2/data', save=False)
-        assert list(data.values()) == ['/v1/data', '/v2/data'] # Duplicate filenames are not merged
+        assert sc.urlopen(url + '/post', data=b'raw') == 'raw'
+        assert sc.urlopen(url + '/sized', progress=True) == '/sized' # With Content-Length
+        assert sc.urlopen(url + '/unsized', progress=True) == '/unsized' # Without
+        with pytest.raises(TimeoutError):
+            sc.urlopen(url + '/slow', timeout=0.1)
+        data = sc.download(f'http://{url}/v1/data', f'http://{url}/v2/data?a=1', save=False, progress=True)
+        assert list(data.keys()) == ['data', 'data1'] # Query strings are not part of the filename
+        assert list(data.values()) == ['/v1/data', '/v2/data?a=1'] # Duplicate filenames are not merged
         filename = sc.urlopen(url + '/report', save=True) # Filename from the Content-Disposition header
         assert sc.path(filename).name == 'temp_report.csv'
         sc.rmpath(filename)

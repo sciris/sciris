@@ -4,6 +4,12 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 3.5.2 (2026-10-16)
+
+1. `sc.urlopen()` and `sc.download()` have a new `timeout` argument (default 30 seconds; `None` waits forever, as before), and a new `progress` argument to show a progress bar.
+1. `sc.urlopen()` now adds the `prefix` to any URL without a scheme (previously, e.g. `httpbin.org` was left alone because it starts with "http"), accepts a string or bytes for `data`, and closes the connection after reading.
+1. `sc.urlopen()` and `sc.download()` no longer include query strings in default filenames (e.g. `data?a=1` is now saved as `data`).
+
 ## Version 3.5.1 (2026-10-15)
 
 1. `sc.iterobj()` and `sc.search()` are about twice as fast; `sc.iterobj()` no longer descends into classes or NumPy dtypes stored as attributes (e.g. `self.dtype = np.int64`), since their attributes belong to the class rather than the object. To restore the previous behavior, pass `atomic=sc.sc_nested.atomic_with_tuple`.
