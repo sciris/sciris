@@ -238,6 +238,7 @@ def test_search():
     assert len(valmatches) == 1
     assert sc.getnested(nested, valmatches[0]) == val # Get from the original nested object
     assert sc.search(dict(a=np.arange(5), b=3), value=3).keys() == [('b',)] # Arrays are skipped rather than raising an error
+    assert not len(sc.search(dict(a=1), key='t')) # The root has no key, so doesn't match
 
     return o
 
@@ -297,6 +298,7 @@ def test_iterobj():
     d = dict(t=(1,(2,3)))
     sc.iterobj(d, lambda x: list(x) if isinstance(x, tuple) else x, atomic='default-tuple', inplace=True)
     assert d == dict(t=[1,[2,3]]) # Nested tuples are converted too, since it descends into the new object
+    assert len(sc.iterobj(dict(a=np.int64, b=np.dtype(float)))) == 3 # Classes and dtypes aren't descended into
 
     return out1
 

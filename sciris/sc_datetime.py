@@ -662,29 +662,41 @@ def yeartodate(year, as_date=True, **kwargs):
     Convert a decimal year to a date
 
     Args:
-        year (int, float):  The numerical year to convert to a DateTime
-        as_date (bool): If True (default), return an `sc.date` object, otherwise return a string
+        year (int, float, list, array):  The numerical year (or years) to convert to a date
+        as_date (bool): If True (default), return a `datetime.date` object, otherwise return a string
 
     Returns:
-        An `sc.date` object (default) or string, depending on the `as_date` argument
+        A `datetime.date` object (default) or string, depending on the `as_date` argument; a list of these if a list or array of years is supplied
 
-    **Example**:
+    **Examples**:
 
     ```python
     sc.yeartodate(2010.5) # Returns datetime.date(2010, 7, 2)
+    sc.yeartodate(np.arange(2020, 2021, 1/52)) # Returns a list of weekly dates
     ```
 
     - *New in version 3.2.1.*
+    - *New in version 3.5.1:* faster; list and array inputs
     """
     as_date = kwargs.pop('asdate', as_date) # Handle with or without underscore
-    full_years = int(year)
-    remainder = year - full_years
-    year_days = _get_year_length(full_years).days
-    days = int(np.round(remainder*year_days))
-    base = dt.date(year=full_years, month=1, day=1)
-    out = datedelta(base, days=days)
-    if not as_date:
-        out = str(out)
+
+    if isinstance(year, (list, tuple, np.ndarray)): # Handle multiple years
+        years = np.asarray(year, dtype=float)
+        full_years = years.astype(int) # Truncate, like int()
+        starts = (full_years - 1970).astype('datetime64[Y]') # Start of each year
+        year_days = ((starts + 1).astype('datetime64[D]') - starts.astype('datetime64[D]')).astype(int)
+        days = np.round((years - full_years)*year_days).astype(int)
+        out = (starts.astype('datetime64[D]') + days).tolist() # Convert to a list of datetime.date objects
+        if not as_date:
+            out = [str(d) for d in out]
+    else:
+        full_years = int(year)
+        remainder = year - full_years
+        year_days = _get_year_length(full_years).days
+        days = int(np.round(remainder*year_days))
+        out = dt.date(year=full_years, month=1, day=1) + dt.timedelta(days=days)
+        if not as_date:
+            out = str(out)
     return out
 
 
