@@ -520,7 +520,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="simple-data-operations" class="level2">
 <h2 class="anchored" data-anchor-id="simple-data-operations">Simple data operations</h2>
 <p>While Sciris does add some new features (we’ll get to those later), its main purpose is to let you do the things you’re already doing more easily. For example, finding values in an array:</p>
-<div id="9aa51962" class="cell" data-execution_count="1">
+<div id="0705d631" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -531,7 +531,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'there were </span><span class="sc">{</span><span class="bu">len</span>(inds)<span class="sc">}</span><span class="ss"> values over 0.9: '</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'these were </span><span class="sc">{</span>sc<span class="sc">.</span>strjoin(inds)<span class="sc">}</span><span class="ss">.'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>While the mean of the data was 0.52 ± 0.53, there were 5 values over 0.9: these were 8, 26, 36, 45, 47.</code></pre>
+<pre><code>While the mean of the data was 0.43 ± 0.61, there were 6 values over 0.9: these were 5, 6, 7, 10, 13, 25.</code></pre>
 </div>
 </div>
 <p>I’m sure you already knew how to find indices of an array, calculate the mean and standard deviation, and turn a list of values into a string. But it’s nice if those things can be made easier, right?</p>
@@ -539,7 +539,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="simple-data-containers-and-plotting" class="level2">
 <h2 class="anchored" data-anchor-id="simple-data-containers-and-plotting">Simple data containers and plotting</h2>
 <p>Matplotlib, NumPy, and pandas are all fantastic – but often they provide lower-level interfaces than what is commonly needed, meaning that some tasks can be made even simpler.</p>
-<div id="6f5ede6f" class="cell" data-execution_count="2">
+<div id="a0428ca4" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create some data</span></span>
@@ -560,19 +560,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="tut_intro_files/figure-html/cell-3-output-1.png" width="577" height="430" class="figure-img"></p>
+<p><img src="tut_intro_files/figure-html/cell-3-output-1.png" width="592" height="430" class="figure-img"></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>The data had mean 1,100,000 and there were 11 outliers.</code></pre>
+<pre><code>The data had mean 644,000 and there were 10 outliers.</code></pre>
 </div>
 </div>
 </section>
 <section id="simple-containers" class="level2">
 <h2 class="anchored" data-anchor-id="simple-containers">Simple containers</h2>
 <p>Can’t decide if something should be a dict or an object? Do you want the flexibility of a dict, but the convenience and explicitness of an object? Well, why not use both?</p>
-<div id="c3a1edd4" class="cell" data-execution_count="3">
+<div id="95fd8881" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.objdict(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], b<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]) </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> data.a <span class="op">==</span> data[<span class="st">'a'</span>] <span class="op">==</span> data[<span class="dv">0</span>] <span class="co"># Flexible options for indexing</span></span>
@@ -588,7 +588,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <section id="loading-and-saving" class="level2">
 <h2 class="anchored" data-anchor-id="loading-and-saving">Loading and saving</h2>
 <p>Do you have a custom object that it would be nice to be able to save and pick up where you left off?</p>
-<div id="4a12fbf0" class="cell" data-execution_count="4">
+<div id="47d4a115" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Sim:</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, days, trials):</span>
@@ -623,7 +623,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <section id="parallelization" class="level2">
 <h2 class="anchored" data-anchor-id="parallelization">Parallelization</h2>
 <p>Have you ever thought “Gosh, I should really parallelize this code, but it’s going to take too long, and besides doctors say you should get up and stretch everyone once in a while, so it’s OK that I’m waiting for 9 minutes out of every 10 while my code runs”? This might be for you.</p>
-<div id="ed609eb8" class="cell" data-execution_count="5">
+<div id="ea1d8ab5" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the function to parallelize</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> func(scale, x_offset, y_offset):</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    np.random.seed(scale)</span>
@@ -644,21 +644,25 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
 <span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>sc.boxoff()<span class="op">;</span> <span class="co"># Remove top and right spines</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Exception ignored in: &lt;_io.BytesIO object at 0x7f6bb43ff240&gt;
+<pre><code>Exception ignored in: &lt;_io.BytesIO object at 0x7f15681f6020&gt;
 Traceback (most recent call last):
-  File "&lt;frozen importlib._bootstrap&gt;", line 170, in __enter__
+  File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/matplotlib/transforms.py", line 193, in set_children
+    ref = weakref.ref(
 BufferError: Existing exports of data: object cannot be re-sized
-Exception ignored in: &lt;_io.BytesIO object at 0x7f6bb4311a30&gt;
+Exception ignored in: &lt;_io.BytesIO object at 0x7f15681000e0&gt;
 Traceback (most recent call last):
-  File "&lt;frozen importlib._bootstrap&gt;", line 170, in __enter__
+  File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/matplotlib/transforms.py", line 193, in set_children
+    ref = weakref.ref(
 BufferError: Existing exports of data: object cannot be re-sized
-Exception ignored in: &lt;_io.BytesIO object at 0x7f6bb4311490&gt;
+Exception ignored in: &lt;_io.BytesIO object at 0x7f15304bbf10&gt;
 Traceback (most recent call last):
-  File "&lt;frozen importlib._bootstrap&gt;", line 170, in __enter__
+  File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/matplotlib/transforms.py", line 193, in set_children
+    ref = weakref.ref(
 BufferError: Existing exports of data: object cannot be re-sized
-Exception ignored in: &lt;_io.BytesIO object at 0x7f6bb43111c0&gt;
+Exception ignored in: &lt;_io.BytesIO object at 0x7f152af2f510&gt;
 Traceback (most recent call last):
-  File "&lt;frozen importlib._bootstrap&gt;", line 170, in __enter__
+  File "/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/matplotlib/transforms.py", line 193, in set_children
+    ref = weakref.ref(
 BufferError: Existing exports of data: object cannot be re-sized</code></pre>
 </div>
 <div class="cell-output cell-output-display">
@@ -673,7 +677,7 @@ BufferError: Existing exports of data: object cannot be re-sized</code></pre>
 <section id="putting-it-all-together" class="level2">
 <h2 class="anchored" data-anchor-id="putting-it-all-together">Putting it all together</h2>
 <p>Here’s the “showcase” example of the wave generator from the <a href="http://docs.sciris.org/overview.html">getting started</a> page, which hopefully now makes more sense!</p>
-<div id="d4b77fb4" class="cell" data-execution_count="6">
+<div id="0704ed9d" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define random wave generator</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> randwave(std, xmin<span class="op">=</span><span class="dv">0</span>, xmax<span class="op">=</span><span class="dv">10</span>, npts<span class="op">=</span><span class="dv">50</span>):</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    np.random.seed(<span class="bu">int</span>(<span class="dv">100</span><span class="op">*</span>std)) <span class="co"># Ensure differences between runs</span></span>
@@ -707,7 +711,7 @@ BufferError: Existing exports of data: object cannot be re-sized</code></pre>
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Congratulations, you finished the first tutorial: 0.306 s</code></pre>
+<pre><code>Congratulations, you finished the first tutorial: 0.301 s</code></pre>
 </div>
 </div>
 
@@ -1147,7 +1151,7 @@ BufferError: Existing exports of data: object cannot be re-sized</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.5.1 (2026-10-15).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.5.2 (2026-10-16).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

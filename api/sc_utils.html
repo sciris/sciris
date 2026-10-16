@@ -1356,9 +1356,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    save<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    parallel<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    progress<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Download one or more URLs in parallel and return output or save them to disk.</p>
 <p>A parallelized wrapper for <a href="../api/sc_utils.html#sciris.sc_utils.urlopen" title="0"><code>sc.urlopen()</code></a>, except with <code>save=True</code> by default.</p>
 <section id="parameters-6" class="level4 doc-section doc-section-parameters">
@@ -1410,15 +1411,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 <tr class="odd">
+<td>progress</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to show a progress bar (of bytes for a single URL, or of URLs completed for several)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="even">
 <td>verbose</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to print progress (if verbose=2, print extra detail on each downloaded URL)</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>**kwargs</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a></td>
-<td>passed to <a href="../api/sc_utils.html#sciris.sc_utils.urlopen" title="0"><code>sc.urlopen()</code></a></td>
+<td>passed to <a href="../api/sc_utils.html#sciris.sc_utils.urlopen" title="0"><code>sc.urlopen()</code></a> (e.g.&nbsp;<code>timeout</code>)</td>
 <td><code>{}</code></td>
 </tr>
 </tbody>
@@ -1428,12 +1435,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.download(<span class="st">'http://sciris.org'</span>, <span class="st">'http://covasim.org'</span>, save<span class="op">=</span><span class="va">False</span>) <span class="co"># Download two in parallel</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>sc.download({<span class="st">'sciris.html'</span>:<span class="st">'http://sciris.org'</span>, <span class="st">'covasim.html'</span>:<span class="st">'http://covasim.org'</span>}) <span class="co"># Download two and save to disk</span></span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>sc.download([<span class="st">'http://sciris.org'</span>, <span class="st">'http://covasim.org'</span>], filename<span class="op">=</span>[<span class="st">'sciris.html'</span>, <span class="st">'covasim.html'</span>]) <span class="co"># Ditto</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.download(<span class="bu">dict</span>(sciris<span class="op">=</span><span class="st">'http://sciris.org'</span>, covasim<span class="op">=</span><span class="st">'http://covasim.org'</span>), save<span class="op">=</span><span class="va">False</span>) <span class="co"># Download and store in memory</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.download(<span class="bu">dict</span>(sciris<span class="op">=</span><span class="st">'http://sciris.org'</span>, covasim<span class="op">=</span><span class="st">'http://covasim.org'</span>), save<span class="op">=</span><span class="va">False</span>) <span class="co"># Download and store in memory</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>sc.download(<span class="st">'https://example.com/bigfile.zip'</span>, progress<span class="op">=</span><span class="va">True</span>, timeout<span class="op">=</span><span class="dv">10</span>) <span class="co"># Show a progress bar, and give up if the server stops responding for 10 seconds</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><em>New in version 2.0.0.</em></li>
 <li><em>New in version 3.0.0:</em> “die” argument</li>
 <li><em>New in version 3.1.1:</em> default order switched from URL:filename to filename:URL pairs</li>
 <li><em>New in version 3.1.3:</em> output as objdict instead of odict</li>
+<li><em>New in version 3.5.2:</em> “progress” argument</li>
 </ul>
 </section>
 </section>
@@ -3086,8 +3095,10 @@ print(f'Tracebacks were:</code></pre>
 <span id="cb88-9"><a href="#cb88-9" aria-hidden="true" tabindex="-1"></a>    convert<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb88-10"><a href="#cb88-10" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">False</span>,</span>
 <span id="cb88-11"><a href="#cb88-11" aria-hidden="true" tabindex="-1"></a>    response<span class="op">=</span><span class="st">'text'</span>,</span>
-<span id="cb88-12"><a href="#cb88-12" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb88-13"><a href="#cb88-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb88-12"><a href="#cb88-12" aria-hidden="true" tabindex="-1"></a>    timeout<span class="op">=</span><span class="dv">30</span>,</span>
+<span id="cb88-13"><a href="#cb88-13" aria-hidden="true" tabindex="-1"></a>    progress<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb88-14"><a href="#cb88-14" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb88-15"><a href="#cb88-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Download a single URL.</p>
 <p>Alias to <code>urllib.request.urlopen(url).read()</code>. See also <a href="../api/sc_utils.html#sciris.sc_utils.download" title="0"><code>sc.download()</code></a> for downloading multiple URLs. Note: <a href="../api/sc_utils.html#sciris.sc_utils.urlopen" title="0"><code>sc.urlopen()</code></a>/<code>sc.wget()</code> are aliases.</p>
 <section id="parameters-31" class="level4 doc-section doc-section-parameters">
@@ -3133,30 +3144,48 @@ print(f'Tracebacks were:</code></pre>
 <td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="even">
-<td>prefix</td>
-<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
-<td>the string to ensure the URL starts with (else, add it)</td>
-<td><code>'http'</code></td>
+<td>data</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#dict">dict</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a> / <a href="https://docs.python.org/3/builtins/stdtypes.html#bytes">bytes</a></td>
+<td>a dictionary of parameters to pass to a POST request (or the already-encoded body)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#None" title="1"><code>None</code></a></td>
 </tr>
 <tr class="odd">
+<td>prefix</td>
+<td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
+<td>the scheme to add if the URL doesn’t have one (e.g.&nbsp;‘http’ turns ‘wikipedia.org’ into ‘http://wikipedia.org’)</td>
+<td><code>'http'</code></td>
+</tr>
+<tr class="even">
 <td>convert</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to convert from bytes to string</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>die</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to raise an exception if converting to text failed</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>response</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#str">str</a></td>
 <td>what to return: ‘text’ (default), ‘json’ (dictionary version of the data), ‘status’ (the HTTP status), or ‘full’ (the full response object)</td>
 <td><code>'text'</code></td>
 </tr>
+<tr class="odd">
+<td>timeout</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#float">float</a></td>
+<td>how many seconds to wait for the server to respond before raising an error (None to wait forever); this limits each connection or read attempt, not the whole download</td>
+<td><code>30</code></td>
+</tr>
 <tr class="even">
+<td>progress</td>
+<td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
+<td>whether to show a progress bar while downloading (a running total if the server doesn’t give the size)</td>
+<td><a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a></td>
+</tr>
+<tr class="odd">
 <td>verbose</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
 <td>whether to print progress</td>
@@ -3168,12 +3197,15 @@ print(f'Tracebacks were:</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb89"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a>html <span class="op">=</span> sc.urlopen(<span class="st">'wikipedia.org'</span>) <span class="co"># Retrieve into variable html</span></span>
 <span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>sc.urlopen(<span class="st">'http://wikipedia.org'</span>, filename<span class="op">=</span><span class="st">'wikipedia.html'</span>) <span class="co"># Save to file wikipedia.html</span></span>
 <span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>sc.urlopen(<span class="st">'https://wikipedia.org'</span>, save<span class="op">=</span><span class="va">True</span>, headers<span class="op">=</span>{<span class="st">'User-Agent'</span>:<span class="st">'Custom agent'</span>}) <span class="co"># Save to the default filename (here, wikipedia.org), with headers</span></span>
-<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>sc.urlopen(<span class="st">'wikipedia.org'</span>, response<span class="op">=</span><span class="st">'status'</span>) <span class="co"># Only return the HTTP status of the site</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>sc.urlopen(<span class="st">'wikipedia.org'</span>, response<span class="op">=</span><span class="st">'status'</span>) <span class="co"># Only return the HTTP status of the site</span></span>
+<span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a>sc.urlopen(<span class="st">'wikipedia.org'</span>, timeout<span class="op">=</span><span class="dv">5</span>) <span class="co"># Give up if the server doesn't respond within 5 seconds</span></span>
+<span id="cb89-6"><a href="#cb89-6" aria-hidden="true" tabindex="-1"></a>sc.urlopen(<span class="st">'https://example.com/bigfile.zip'</span>, save<span class="op">=</span><span class="va">True</span>, progress<span class="op">=</span><span class="va">True</span>) <span class="co"># Show a progress bar</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><em>New in version 2.0.0:</em> renamed from <code>wget</code> to <a href="../api/sc_utils.html#sciris.sc_utils.urlopen" title="0"><code>urlopen</code></a>; new arguments</li>
 <li><em>New in version 2.0.1:</em> creates folders by default if they do not exist</li>
 <li><em>New in version 2.0.4:</em> “prefix” argument, e.g.&nbsp;prepend “http://” if not present</li>
 <li><em>New in version 3.1.4:</em> renamed “return_response” to “response”; additional options</li>
+<li><em>New in version 3.5.2:</em> “timeout” and “progress” arguments; “data” can be a string or bytes; the prefix is added to any URL without a scheme (e.g.&nbsp;“httpbin.org”)</li>
 </ul>
 </section>
 </section>
@@ -3702,7 +3734,7 @@ print(f'Tracebacks were:</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.5.1 (2026-10-15).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.5.2 (2026-10-16).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

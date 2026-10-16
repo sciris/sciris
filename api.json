@@ -1,5 +1,5 @@
 {
-  "version": "3.5.1",
+  "version": "3.5.2",
   "description": "Fast, flexible tools to simplify scientific Python",
   "notes": [
     "Sciris is a library of utilities for scientific computing: containers, file I/O, dates, arrays, plotting, parallelization, and profiling.",
@@ -551,9 +551,9 @@
       "name": "download",
       "kind": "function",
       "module": "sc_utils",
-      "signature": "(url, *args, filename=None, save=True, parallel=True, die=True, verbose=True, **kwargs)",
+      "signature": "(url, *args, filename=None, save=True, parallel=True, die=True, progress=False, verbose=True, **kwargs)",
       "summary": "Download one or more URLs in parallel and return output or save them to disk.",
-      "example": "html = sc.download('http://sciris.org') # Download a single URL\ndata = sc.download('http://sciris.org', 'http://covasim.org', save=False) # Download two in parallel\nsc.download({'sciris.html':'http://sciris.org', 'covasim.html':'http://covasim.org'}) # Download two and save to disk\nsc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto\ndata = sc.download(dict(sciris='http://sciris.org', covasim='http://covasim.org'), save=False) # Download and store in memory",
+      "example": "html = sc.download('http://sciris.org') # Download a single URL\ndata = sc.download('http://sciris.org', 'http://covasim.org', save=False) # Download two in parallel\nsc.download({'sciris.html':'http://sciris.org', 'covasim.html':'http://covasim.org'}) # Download two and save to disk\nsc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto\ndata = sc.download(dict(sciris='http://sciris.org', covasim='http://covasim.org'), save=False) # Download and store in memory\nsc.download('https://example.com/bigfile.zip', progress=True, timeout=10) # Show a progress bar, and give up if the server stops responding for 10 seconds",
       "aliases": [],
       "deprecated": false
     },
@@ -2775,9 +2775,9 @@
       "name": "urlopen",
       "kind": "function",
       "module": "sc_utils",
-      "signature": "(url, filename=None, save=None, headers=None, params=None, data=None, prefix='http', convert=True, die=False, response='text', verbose=False)",
+      "signature": "(url, filename=None, save=None, headers=None, params=None, data=None, prefix='http', convert=True, die=False, response='text', timeout=30, progress=False, verbose=False)",
       "summary": "Download a single URL.",
-      "example": "html = sc.urlopen('wikipedia.org') # Retrieve into variable html\nsc.urlopen('http://wikipedia.org', filename='wikipedia.html') # Save to file wikipedia.html\nsc.urlopen('https://wikipedia.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, wikipedia.org), with headers\nsc.urlopen('wikipedia.org', response='status') # Only return the HTTP status of the site",
+      "example": "html = sc.urlopen('wikipedia.org') # Retrieve into variable html\nsc.urlopen('http://wikipedia.org', filename='wikipedia.html') # Save to file wikipedia.html\nsc.urlopen('https://wikipedia.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, wikipedia.org), with headers\nsc.urlopen('wikipedia.org', response='status') # Only return the HTTP status of the site\nsc.urlopen('wikipedia.org', timeout=5) # Give up if the server doesn't respond within 5 seconds\nsc.urlopen('https://example.com/bigfile.zip', save=True, progress=True) # Show a progress bar",
       "aliases": [
         "wget"
       ],
