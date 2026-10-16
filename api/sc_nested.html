@@ -769,7 +769,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sciris.sc_nested.IterObj.check_proceed" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_nested.IterObj.check_proceed">check_proceed</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sc_nested.IterObj.check_proceed(key, subobj, newid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sc_nested.IterObj.check_proceed(key, subobj, newid, itertype<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Check if we should process the object, and if so, whether to descend into it</p>
 </section>
 <section id="sciris.sc_nested.IterObj.disp" class="level5">
@@ -799,12 +799,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sciris.sc_nested.IterObj.iteritems" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_nested.IterObj.iteritems">iteritems</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sc_nested.IterObj.iteritems(parent, trace)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sc_nested.IterObj.iteritems(parent, trace, itertype<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return an iterator over items in this object</p>
 </section>
 <section id="sciris.sc_nested.IterObj.process_obj" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_nested.IterObj.process_obj">process_obj</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sc_nested.IterObj.process_obj(parent, trace, key, subobj, newid)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sc_nested.IterObj.process_obj(parent, trace, key, subobj, newid, itertype<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Process a single object, returning its trace and its new value</p>
 </section>
 <section id="sciris.sc_nested.IterObj.setitem" class="level5">
@@ -1245,7 +1245,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="even">
 <td>atomic</td>
 <td><a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a></td>
-<td>a list of known classes to treat as atomic (do not descend into); if ‘default’, use defaults (e.g.&nbsp;tuple, <a href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#np.array" title="1"><code>np.array</code></a>, <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pd.DataFrame" title="1"><code>pd.DataFrame</code></a>); if ‘default-tuple’, use defaults except for tuples</td>
+<td>a list of known classes to treat as atomic (do not descend into); if ‘default’, use defaults (e.g.&nbsp;tuple, <a href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#np.array" title="1"><code>np.array</code></a>, <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pd.DataFrame" title="1"><code>pd.DataFrame</code></a>, classes, and NumPy dtypes); if ‘default-tuple’, use defaults except for tuples</td>
 <td><code>'default'</code></td>
 </tr>
 <tr class="odd">
@@ -1321,6 +1321,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><em>New in version 3.1.5:</em> “recursion” argument; better handling of atomic classes</li>
 <li><em>New in version 3.1.6:</em> “skip”, “depthfirst”, “to_df”, and “flatten” arguments</li>
 <li><em>New in version 3.4.0:</em> “aliases” argument</li>
+<li><em>New in version 3.5.1:</em> classes and NumPy dtypes are atomic by default</li>
 </ul>
 </section>
 </section>
@@ -2137,7 +2138,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.5.0 (2026-10-13).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.5.1 (2026-10-15).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

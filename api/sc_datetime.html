@@ -2003,14 +2003,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>year</td>
-<td>(<a href="https://docs.python.org/3/builtins/functions.html#int">int</a>, <a href="https://docs.python.org/3/builtins/functions.html#float">float</a>)</td>
-<td>The numerical year to convert to a DateTime</td>
+<td>(<a href="https://docs.python.org/3/builtins/functions.html#int">int</a>, <a href="https://docs.python.org/3/builtins/functions.html#float">float</a>, <a href="https://docs.python.org/3/builtins/stdtypes.html#list">list</a>, <a href="https://docs.python.org/3/library/array.html#module-array">array</a>)</td>
+<td>The numerical year (or years) to convert to a date</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>as_date</td>
 <td><a href="https://docs.python.org/3/builtins/functions.html#bool">bool</a></td>
-<td>If True (default), return an <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date</code></a> object, otherwise return a string</td>
+<td>If True (default), return a <a href="https://docs.python.org/3/library/datetime.html#datetime.date" title="1"><code>datetime.date</code></a> object, otherwise return a string</td>
 <td><a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a></td>
 </tr>
 </tbody>
@@ -2030,14 +2030,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td></td>
 <td></td>
-<td>An <a href="../api/sc_datetime.html#sciris.sc_datetime.date" title="0"><code>sc.date</code></a> object (default) or string, depending on the <code>as_date</code> argument</td>
+<td>A <a href="https://docs.python.org/3/library/datetime.html#datetime.date" title="1"><code>datetime.date</code></a> object (default) or string, depending on the <code>as_date</code> argument; a list of these if a list or array of years is supplied</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>sc.yeartodate(<span class="fl">2010.5</span>) <span class="co"># Returns datetime.date(2010, 7, 2)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>sc.yeartodate(<span class="fl">2010.5</span>) <span class="co"># Returns datetime.date(2010, 7, 2)</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>sc.yeartodate(np.arange(<span class="dv">2020</span>, <span class="dv">2021</span>, <span class="dv">1</span><span class="op">/</span><span class="dv">52</span>)) <span class="co"># Returns a list of weekly dates</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><em>New in version 3.2.1.</em></li>
+<li><em>New in version 3.5.1:</em> faster; list and array inputs</li>
 </ul>
 
 
@@ -2479,7 +2481,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.5.0 (2026-10-13).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.5.1 (2026-10-15).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

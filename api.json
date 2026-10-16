@@ -1,5 +1,5 @@
 {
-  "version": "3.5.0",
+  "version": "3.5.1",
   "description": "Fast, flexible tools to simplify scientific Python",
   "notes": [
     "Sciris is a library of utilities for scientific computing: containers, file I/O, dates, arrays, plotting, parallelization, and profiling.",
@@ -2809,7 +2809,7 @@
       "module": "sc_datetime",
       "signature": "(year, as_date=True, **kwargs)",
       "summary": "Convert a decimal year to a date",
-      "example": "sc.yeartodate(2010.5) # Returns datetime.date(2010, 7, 2)",
+      "example": "sc.yeartodate(2010.5) # Returns datetime.date(2010, 7, 2)\nsc.yeartodate(np.arange(2020, 2021, 1/52)) # Returns a list of weekly dates",
       "aliases": [],
       "deprecated": false
     },

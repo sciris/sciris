@@ -522,7 +522,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="nested-dictionaries" class="level2">
 <h2 class="anchored" data-anchor-id="nested-dictionaries">Nested dictionaries</h2>
 <p>Nested dictionaries are a useful way of storing complex data (and in fact are more or less the basis of JSON), but can be a pain to interact with if you don’t know the structure in advance. Sciris has several functions for working with nested dictionaries. For example:</p>
-<div id="615046de" class="cell" data-execution_count="1">
+<div id="d1ebec76" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the structure</span></span>
@@ -567,7 +567,7 @@ values = [1, 2, 3, 4, 5]</code></pre>
 </div>
 </div>
 <p>Sciris also has a <a href="../api/sc_nested.html#sciris.sc_nested.search" title="0"><code>sc.search()</code></a> function, which can find either keys or values that match a certain pattern:</p>
-<div id="a933ff1a" class="cell" data-execution_count="2">
+<div id="6c1f21f7" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sc.search(nest, <span class="st">'key2.1.1'</span>))</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sc.search(nest, value<span class="op">=</span><span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -576,7 +576,7 @@ values = [1, 2, 3, 4, 5]</code></pre>
 </div>
 </div>
 <p>There’s even an <a href="../api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> function that can make arbitrary changes to an object:</p>
-<div id="a028663f" class="cell" data-execution_count="3">
+<div id="70be3924" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> increment(obj):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> obj <span class="op">+</span> <span class="dv">1000</span> <span class="cf">if</span> <span class="bu">isinstance</span>(obj, <span class="bu">int</span>) <span class="kw">and</span> obj <span class="op">!=</span><span class="dv">3</span> <span class="cf">else</span> obj</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -605,7 +605,7 @@ values = [1, 2, 3, 4, 5]</code></pre>
 <h2 class="anchored" data-anchor-id="context-blocks">Context blocks</h2>
 <p>Sciris contains two context block (i.e.&nbsp;“<code>with ... as</code>”) classes for catching what happens inside them.</p>
 <p><a href="../api/sc_printing.html#sciris.sc_printing.capture" title="0"><code>sc.capture()</code></a> captures all text output to a variable:</p>
-<div id="7eae59a7" class="cell" data-execution_count="4">
+<div id="4f1229ee" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -622,17 +622,12 @@ values = [1, 2, 3, 4, 5]</code></pre>
 <span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> target <span class="kw">in</span> line:</span>
 <span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'Found target </span><span class="sc">{</span>target<span class="sc">}</span><span class="ss"> on line </span><span class="sc">{</span>l<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>line<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Found target 777 on line 39: Here are 5 random numbers: [0.54009711 0.32734666 0.17833201 0.39133897 0.77768424]
-Found target 777 on line 88: Here are 5 random numbers: [0.65229777 0.03485789 0.52600408 0.59862053 0.47422481]
-Found target 777 on line 132: Here are 5 random numbers: [0.03809471 0.5815576  0.14690934 0.16674016 0.77707343]
-Found target 777 on line 140: Here are 5 random numbers: [0.51744796 0.40070203 0.81213927 0.53847342 0.72577777]
-Found target 777 on line 141: Here are 5 random numbers: [0.12701777 0.27137084 0.12524517 0.14439377 0.76398238]
-Found target 777 on line 183: Here are 5 random numbers: [0.50449846 0.15454836 0.77784343 0.90495393 0.28994978]
-Found target 777 on line 188: Here are 5 random numbers: [0.46423813 0.50968154 0.35199678 0.67772265 0.19637494]</code></pre>
+<pre><code>Found target 777 on line 5: Here are 5 random numbers: [0.54378603 0.42918728 0.58777928 0.55928286 0.03263919]
+Found target 777 on line 169: Here are 5 random numbers: [0.27450328 0.38818617 0.05483666 0.89777181 0.26787342]</code></pre>
 </div>
 </div>
 <p>The other function, <a href="../api/sc_utils.html#sciris.sc_utils.tryexcept" title="0"><code>sc.tryexcept()</code></a>, is a more compact way of writing <code>try ... except</code> blocks, and gives detailed control of error handling:</p>
-<div id="fff5881b" class="cell" data-execution_count="5">
+<div id="100d3dc6" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fickle_func(n<span class="op">=</span><span class="dv">1</span>):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        rnd <span class="op">=</span> np.random.rand()</span>
@@ -665,7 +660,7 @@ Simple usage, exit gracefully at first exception
 
 </span>
 
-&lt;class 'RuntimeError'&gt; Value 0.990376 too big
+&lt;class 'ValueError'&gt; Value 0.0019568 too small
 
 <span class="ansi-cyan-fg">
 
@@ -679,7 +674,7 @@ Store all history
 
 </span>
 
-&lt;sciris.sc_utils.tryexcept at 0x7fd0ec2f5950&gt;
+&lt;sciris.sc_utils.tryexcept at 0x7f55b0bcd9d0&gt;
 
 [&lt;class 'sciris.sc_utils.tryexcept'&gt;, &lt;class 'contextlib.suppress'&gt;, &lt;class 'contextlib.AbstractContextManager'&gt;, &lt;class 'abc.ABC'&gt;]
 
@@ -699,9 +694,9 @@ Properties:
 
 catchtypes: ()
 
-      data: [[&lt;class 'RuntimeError'&gt;, RuntimeError('Value 0.995129 too
+      data: [[&lt;class 'ValueError'&gt;, ValueError('Value 0.00462896 too
 
-            big'), &lt;tra [...]
+            small'), &lt;tra [...]
 
 defaultdie: False
 
@@ -713,7 +708,7 @@ defaultdie: False
 
    verbose: 0
 
- _abc_impl: &lt;_abc._abc_data object at 0x7fd124d23b40&gt;
+ _abc_impl: &lt;_abc._abc_data object at 0x7f55f05c3500&gt;
 
 ————————————————————————————————————————————————————————————————————————
 
@@ -729,7 +724,7 @@ defaultdie: False
 <section id="interpolation" class="level3">
 <h3 class="anchored" data-anchor-id="interpolation">Interpolation</h3>
 <p>The function <a href="../api/sc_math.html#sciris.sc_math.smoothinterp" title="0"><code>sc.smoothinterp()</code></a> smoothly interpolates between points but does <em>not</em> use spline interpolation; this makes it somewhat of a balance between <a href="https://numpy.org/doc/stable/reference/generated/numpy.interp.html#numpy.interp" title="1"><code>numpy.interp()</code></a> (which only interpolates linearly) and <code>scipy.interpolate.interp1d(..., method='cubic')</code>, which takes considerable liberties between data points:</p>
-<div id="7b31b085" class="cell" data-execution_count="6">
+<div id="376f4b39" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -765,7 +760,7 @@ defaultdie: False
 <section id="optimization" class="level3">
 <h3 class="anchored" data-anchor-id="optimization">Optimization</h3>
 <p>Sciris includes a gradient descent optimization method, <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0192944">adaptive stochastic descent</a> (ASD), that can outperform SciPy’s built-in <a href="https://docs.scipy.org/doc/scipy/reference/optimize.html">optimization methods</a> (such as simplex) for certain types of optimization problem. For example:</p>
-<div id="157282cd" class="cell" data-execution_count="7">
+<div id="0017b876" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Basic usage</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
@@ -784,10 +779,10 @@ defaultdie: False
 <span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Scipy result:  </span><span class="sc">{</span>func(opt_scipy.x)<span class="sc">}</span><span class="ss">'</span>)</span>
 <span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Sciris result: </span><span class="sc">{</span>func(opt_sciris.x)<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>scipy.optimize(): 7.81 ms
-sciris.asd(): 1.57 ms
-Scipy result:  4.829290232718364e-08
-Sciris result: 2.897767167584095e-16</code></pre>
+<pre><code>scipy.optimize(): 24.7 ms
+sciris.asd(): 4.48 ms
+Scipy result:  4.826351964229613e-08
+Sciris result: 2.9796874070320123e-16</code></pre>
 </div>
 </div>
 <p>Compared to SciPy’s simplex algorithm, Sciris’ ASD algorithm was ≈3 times faster and found a result ≈8 orders of magnitude smaller.</p>
@@ -796,7 +791,7 @@ Sciris result: 2.897767167584095e-16</code></pre>
 <section id="animation" class="level2">
 <h2 class="anchored" data-anchor-id="animation">Animation</h2>
 <p>And finally, let’s end on something fun. Sciris has an <a href="../api/sc_plotting.html#sciris.sc_plotting.animation" title="0"><code>sc.animation()</code></a> class with lots of options, but you can also just make a quick movie from a series of plots. For example, let’s make some lines dance:</p>
-<div id="63edd449" class="cell" data-execution_count="8">
+<div id="fb260f40" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>plt.figure()</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>frames <span class="op">=</span> [plt.plot(np.cumsum(np.random.randn(<span class="dv">100</span>))) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">20</span>)] <span class="co"># Create frames</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>sc.savemovie(frames, <span class="st">'dancing_lines.gif'</span>)<span class="op">;</span> <span class="co"># Save movie as a gif</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -806,8 +801,8 @@ Sciris result: 2.897767167584095e-16</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>Saving 20 frames at 10 fps and 150 dpi to "dancing_lines.gif" using imagemagick...
 Done; movie saved to "dancing_lines.gif"
-File size: 249 KB
-Elapsed time: 1.31 s</code></pre>
+File size: 240 KB
+Elapsed time: 2.23 s</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -1257,7 +1252,7 @@ Elapsed time: 1.31 s</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.5.0 (2026-10-13).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.5.1 (2026-10-15).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">
