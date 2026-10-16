@@ -20,6 +20,7 @@ from .sc_utils import _not_given, _is_given # Allows searching for actual None v
 # Define objects for which it doesn't make sense to descend further -- used here and sc.equal()
 atomic_classes = [np.ndarray, pd.Series, pd.DataFrame, pd.core.indexes.base.Index]
 atomic_with_tuple = atomic_classes + [tuple]
+atomic_types = [type, np.dtype] # Classes and dtypes are also not descended into by sc.iterobj(), but are compared normally by sc.equal()
 
 
 ##############################################################################
@@ -411,15 +412,15 @@ class IterObj:
         atomic_list = sc.tolist(self.atomic)
         if 'default' in atomic_list: # Handle objects to not descend into
             atomic_list.remove('default')
-            base_atomic = atomic_with_tuple
+            base_atomic = atomic_with_tuple + atomic_types
         if 'default-tuple' in atomic_list:
             atomic_list.remove('default-tuple')
-            base_atomic = atomic_classes
+            base_atomic = atomic_classes + atomic_types
         self.atomic = tuple(base_atomic + atomic_list)
 
         # Handle objects to skip
         if isinstance(skip, dict):
-            skip = sc.dcp(skip)
+            skip = dict(skip) # Shallow copy since the values are only read
             skip_keys       = sc.tolist(skip.pop('keys', None))
             skip_ids        = sc.tolist(skip.pop('ids', None))
             skip_subclasses = sc.tolist(skip.pop('subclasses', None))
@@ -481,9 +482,10 @@ class IterObj:
             print(space*len(self._trace) + string)
         return
 
-    def iteritems(self, parent, trace):
+    def iteritems(self, parent, trace, itertype=None):
         """ Return an iterator over items in this object """
-        itertype = self.check_iter_type(parent)
+        if itertype is None:
+            itertype = self.check_iter_type(parent)
         out = None
         if self.custom_iter:
             out = self.custom_iter(parent)
@@ -505,9 +507,7 @@ class IterObj:
                         out = [] # Return nothing if doesn't have __dict__.items() or __slots__, e.g. a weird wrapped function
             else:
                 out = [] # Return nothing if not recognized
-        out = list(out)
-        for i in range(len(out)):
-            out[i] = [parent, trace, *list(out[i])] # Prepend parent and trace to the arguments
+        out = [(parent, trace, k, v) for k,v in out] # Prepend parent and trace to the arguments
         return out
 
     def getitem(self, key, parent):
@@ -542,12 +542,14 @@ class IterObj:
         """ Shortcut to check_iter_type() """
         return check_iter_type(obj, known=self.atomic, custom=self.custom_type)
 
-    def check_proceed(self, key, subobj, newid):
+    def check_proceed(self, key, subobj, newid, itertype=None):
         """ Check if we should process the object, and if so, whether to descend into it """
 
         # If we've already parsed this (iterable) object, skip it, or if aliases=True, process it but don't descend into it again
         in_memo = (newid in self._memo) and (self._memo[newid] > self.recursion)
-        repeat = in_memo and self.check_iter_type(subobj)
+        if in_memo and itertype is None:
+            itertype = self.check_iter_type(subobj)
+        repeat = in_memo and bool(itertype)
         memo_skip = repeat and not self.aliases
         descend = not repeat
         if repeat and self.aliases:
@@ -560,22 +562,23 @@ class IterObj:
         instance_skip = isinstance(subobj, self._skip_instances)
 
         # Finalize
-        skips = [memo_skip, key_skip, id_skip, subclass_skip, instance_skip]
-        proceed = not any(skips)
+        proceed = not (memo_skip or key_skip or id_skip or subclass_skip or instance_skip)
 
         if not proceed and self.verbose: # Just for debugging
+            skips = [memo_skip, key_skip, id_skip, subclass_skip, instance_skip]
             labels = ['memo', 'key', 'id', 'subclass', 'instance']
             pairs = [f'{label}_skip=True' for label,skip in zip(labels, skips) if skip]
             self.indent(f'Skipping "{key}" because {sc.strjoin(pairs)}')
 
         return proceed, descend
 
-    def process_obj(self, parent, trace, key, subobj, newid):
+    def process_obj(self, parent, trace, key, subobj, newid, itertype=None):
         """ Process a single object, returning its trace and its new value """
         self._memo[newid] += 1
         trace = trace + [key]
-        subitertype = self.check_iter_type(subobj)
-        self.indent(f'{len(self)} Trace {trace} | Type "{str(subitertype)}" | {type(subobj)}')
+        subitertype = self.check_iter_type(subobj) if itertype is None else itertype
+        if self.verbose: # Check here to avoid formatting the string
+            self.indent(f'{len(self)} Trace {trace} | Type "{str(subitertype)}" | {type(subobj)}')
         newobj = subobj
         if not (self.leaf and subitertype):
             newobj = self.func(subobj, **self.func_kw)
@@ -604,11 +607,15 @@ class IterObj:
         while queue:
             parent,trace,key,subobj = queue.popleft()
             newid = id(subobj)
-            proceed, descend = self.check_proceed(key, subobj, newid)
+            itertype = self.check_iter_type(subobj) # Calculate once, since it's needed several times
+            proceed, descend = self.check_proceed(key, subobj, newid, itertype=itertype)
             if proceed:
-                newtrace, newobj = self.process_obj(parent, trace, key, subobj, newid) # Process the object
+                newtrace, newobj = self.process_obj(parent, trace, key, subobj, newid, itertype=itertype) # Process the object
                 if descend: # If modifying in place, descend into the new object, since that's what's in the parent now
-                    newitems = self.iteritems(newobj if self.inplace else subobj, newtrace)
+                    if newobj is subobj or not self.inplace:
+                        newitems = self.iteritems(subobj, newtrace, itertype=itertype)
+                    else:
+                        newitems = self.iteritems(newobj, newtrace)
                     if self.depthfirst:
                         queue.extendleft(reversed(newitems)) # extendleft() swaps order, so swap back
                     else:
@@ -676,7 +683,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
         leaf (bool): whether to apply the function only to leaf nodes of the object
         recursion (int): number of recursive steps to allow, i.e. parsing the same objects multiple times (default 0)
         depthfirst (bool): whether to parse the object depth-first (default) or breadth-first
-        atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. tuple, `np.array`, `pd.DataFrame`); if 'default-tuple', use defaults except for tuples
+        atomic (list): a list of known classes to treat as atomic (do not descend into); if 'default', use defaults (e.g. tuple, `np.array`, `pd.DataFrame`, classes, and NumPy dtypes); if 'default-tuple', use defaults except for tuples
         skip (list/dict): a list of objects to skip over entirely; can also be a dict with "keys", "ids", "subclasses", and/or "instances", which skip each of those
         rootkey (str): the key to list as the root of the object (default `'root'`)
         verbose (bool): whether to print progress
@@ -717,6 +724,7 @@ def iterobj(obj, func=None, inplace=False, copy=False, leaf=False, recursion=0, 
     - *New in version 3.1.5:* "recursion" argument; better handling of atomic classes
     - *New in version 3.1.6:* "skip", "depthfirst", "to_df", and "flatten" arguments
     - *New in version 3.4.0:* "aliases" argument
+    - *New in version 3.5.1:* classes and NumPy dtypes are atomic by default
     """
     # Create the object
     io = IterObj(obj=obj, func=func, inplace=inplace, copy=copy, leaf=leaf, recursion=recursion, aliases=aliases, depthfirst=depthfirst,
@@ -963,23 +971,15 @@ def search(obj, query=_not_given, key=_not_given, value=_not_given, type=_not_gi
     flatten = kwargs.pop('flatten', False) # Don't flatten because that will disrupt the matching
     tree = iterobj(obj, **kwargs) # For key matching
 
-    # Do the matching
-    matches = []
-
-    # Match keys
-    if _is_given(key):
-        for k in tree.keys():
-            if check_match(k[-1], key): # Only want the last key of the trace
-                matches.append(k)
-
-    # Match values (including types)
-    if _is_given(value):
-        for k,v in tree.items():
-            if check_match(v, value):
-                matches.append(k)
-
-    # Reassemble dict to maintain order
-    out = sc.objdict({k:v for k,v in tree.items() if k in matches})
+    # Do the matching, keeping the order of the tree
+    match_key = _is_given(key)
+    match_value = _is_given(value)
+    out = {}
+    for k,v in tree.items():
+        is_root = not isinstance(k, tuple) # The root has no key to match
+        if (match_key and not is_root and check_match(k[-1], key)) or (match_value and check_match(v, value)): # Only want the last key of the trace
+            out[k] = v
+    out = sc.objdict(out)
 
     if flatten:
         out = flatten_traces(out)

@@ -4,6 +4,12 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 3.5.1 (2026-10-15)
+
+1. `sc.iterobj()` and `sc.search()` are about twice as fast; `sc.iterobj()` no longer descends into classes or NumPy dtypes stored as attributes (e.g. `self.dtype = np.int64`), since their attributes belong to the class rather than the object. To restore the previous behavior, pass `atomic=sc.sc_nested.atomic_with_tuple`.
+1. `sc.search()` no longer matches the root object when searching by key.
+1. `sc.yeartodate()` is about 6 times faster, and now accepts a list or array of years, returning a list of dates (about 40 ns per date).
+
 ## Version 3.5.0 (2026-10-13)
 
 1. `sc.obj()` is a new, shorter name for `sc.objdict()`, e.g. `pars = sc.obj(a=1, b=2)`. It is the preferred name for new code.

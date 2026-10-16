@@ -126,6 +126,13 @@ def test_dates():
     o.year = sc.datetoyear('2010-07-01')
     assert sc.datetoyear(dt.datetime(2010, 7, 1, 12)) > o.year # Keeps the time of day
 
+    print('\nTesting yeartodate')
+    o.date = sc.yeartodate(2010.5)
+    assert o.date == dt.date(2010, 7, 2)
+    assert sc.yeartodate(2010.5, as_date=False) == '2010-07-02'
+    years = [2010.5, 2012.999, 2024.2]
+    assert sc.yeartodate(np.array(years)) == [sc.yeartodate(y) for y in years] # Arrays give the same dates
+
     print('\nTesting datedelta')
     o.dd = sc.datedelta('2021-07-07', 3) # Add 3 days
     assert o.dd == '2021-07-10'
