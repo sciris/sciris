@@ -756,7 +756,7 @@ def asciify(string, form='NFKD', encoding='ascii', errors='ignore', **kwargs):
 __all__ += ['urlopen', 'wget', 'download', 'htmlify']
 
 def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
-            prefix='http', convert=True, die=False, response='text', verbose=False):
+            prefix='http', convert=True, die=False, response='text', timeout=30, progress=False, verbose=False):
     """
     Download a single URL.
 
@@ -769,11 +769,13 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
         save (bool): if supplied instead of `filename`, then use the default filename
         headers (dict): a dictionary of headers to pass
         params (dict): a dictionary of parameters to pass to the GET request
-        data (dict) a dictionary of parameters to pass to a POST request
-        prefix (str): the string to ensure the URL starts with (else, add it)
+        data (dict/str/bytes): a dictionary of parameters to pass to a POST request (or the already-encoded body)
+        prefix (str): the scheme to add if the URL doesn't have one (e.g. 'http' turns 'wikipedia.org' into 'http://wikipedia.org')
         convert (bool): whether to convert from bytes to string
         die (bool): whether to raise an exception if converting to text failed
         response (str): what to return: 'text' (default), 'json' (dictionary version of the data), 'status' (the HTTP status), or 'full' (the full response object)
+        timeout (float): how many seconds to wait for the server to respond before raising an error (None to wait forever); this limits each connection or read attempt, not the whole download
+        progress (bool): whether to show a progress bar while downloading (a running total if the server doesn't give the size)
         verbose (bool): whether to print progress
 
     **Examples**:
@@ -783,12 +785,15 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
     sc.urlopen('http://wikipedia.org', filename='wikipedia.html') # Save to file wikipedia.html
     sc.urlopen('https://wikipedia.org', save=True, headers={'User-Agent':'Custom agent'}) # Save to the default filename (here, wikipedia.org), with headers
     sc.urlopen('wikipedia.org', response='status') # Only return the HTTP status of the site
+    sc.urlopen('wikipedia.org', timeout=5) # Give up if the server doesn't respond within 5 seconds
+    sc.urlopen('https://example.com/bigfile.zip', save=True, progress=True) # Show a progress bar
     ```
 
     - *New in version 2.0.0:* renamed from `wget` to `urlopen`; new arguments
     - *New in version 2.0.1:* creates folders by default if they do not exist
     - *New in version 2.0.4:* "prefix" argument, e.g. prepend "http://" if not present
     - *New in version 3.1.4:* renamed "return_response" to "response"; additional options
+    - *New in version 3.5.2:* "timeout" and "progress" arguments; "data" can be a string or bytes; the prefix is added to any URL without a scheme (e.g. "httpbin.org")
     """
     from urllib import request as ur # Need to import these directly, not via urllib
     from urllib import parse as up
@@ -805,24 +810,29 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
 
     # Handle parameters and data
     full_url = url
-    if prefix is not None:
-        if not full_url.startswith(prefix):
-            full_url = prefix + '://' + full_url # Leaves https alone, but adds http:// otherwise
+    if prefix is not None and '://' not in full_url:
+        full_url = prefix + '://' + full_url # Leaves e.g. https:// alone, but adds http:// otherwise
     if params is not None:
         full_url += ('&' if '?' in full_url else '?') + up.urlencode(params) # Append to an existing query string if present
-    if data is not None:
+    if isinstance(data, str):
+        data = data.encode('utf-8')
+    elif data is not None and not isinstance(data, bytes):
         data = up.urlencode(data).encode(encoding='utf-8', errors='ignore')
 
     if verbose: print(f'Downloading {url}...')
     request = ur.Request(full_url, headers=headers, data=data)
     try:
-        resp = ur.urlopen(request) # Actually open the URL
+        resp = ur.urlopen(request, timeout=timeout) # Actually open the URL
     except ue.HTTPError as E: # e.g. 404
         if response == 'status':
+            E.close()
             return E.code # Return the error status rather than raising
         raise
+    if response != 'full': # Read what we need now, then close the connection
+        with resp:
+            body = _readurl(resp, progress) if response in ['text', 'json'] else None
     if response in ['text', 'json']:
-        output = resp.read()
+        output = body
         if response == 'json':
             try:
                 output = sc.loadjson(string=output)
@@ -851,7 +861,7 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
     if filename is None and save:
         filename = resp.headers.get_filename() # From the "Content-Disposition" header, if present
         if not filename:
-            filename = url.rstrip('/').split('/')[-1] # Remove trailing /, then pull out the last chunk
+            filename = _url_filename(url)
 
     if filename is not None and save is not False:
         if verbose: print(f'Saving to {filename}...')
@@ -875,7 +885,32 @@ def urlopen(url, filename=None, save=None, headers=None, params=None, data=None,
 wget = urlopen
 
 
-def download(url, *args, filename=None, save=True, parallel=True, die=True, verbose=True, **kwargs):
+def _readurl(resp, progress=False, chunksize=2**16):
+    """ Read an HTTP response, optionally with a progress bar """
+    if not progress:
+        return resp.read()
+    total = resp.length # From the Content-Length header; None if the server doesn't give it
+    chunks = []
+    done = 0
+    while chunk := resp.read(chunksize):
+        chunks.append(chunk)
+        done += len(chunk)
+        label = f'Downloaded {sc.humanize_bytes(done):>10}' # Fixed width, so the line is fully overwritten
+        if total:
+            sc.progressbar(done, total, label=label, flush=True) # Ends the line when done == total
+        else:
+            print(f'\r{label}', end='', flush=True)
+    if done != total:
+        print() # End the line
+    return b''.join(chunks)
+
+
+def _url_filename(url):
+    """ Turn e.g. 'http://mysite.com/tree/index.html?a=1' into 'index.html' """
+    return url.split('?')[0].split('#')[0].rstrip('/').split('/')[-1]
+
+
+def download(url, *args, filename=None, save=True, parallel=True, die=True, progress=False, verbose=True, **kwargs):
     """
     Download one or more URLs in parallel and return output or save them to disk.
 
@@ -888,8 +923,9 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
         save (bool): if supplied instead of `filename`, then use the default filename
         parallel (bool): whether to download multiple URLs in parallel
         die (bool): whether to raise an exception if a URL can't be retrieved (default true)
+        progress (bool): whether to show a progress bar (of bytes for a single URL, or of URLs completed for several)
         verbose (bool): whether to print progress (if verbose=2, print extra detail on each downloaded URL)
-        **kwargs (dict): passed to `sc.urlopen()`
+        **kwargs (dict): passed to `sc.urlopen()` (e.g. `timeout`)
 
     **Examples**:
 
@@ -899,12 +935,14 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     sc.download({'sciris.html':'http://sciris.org', 'covasim.html':'http://covasim.org'}) # Download two and save to disk
     sc.download(['http://sciris.org', 'http://covasim.org'], filename=['sciris.html', 'covasim.html']) # Ditto
     data = sc.download(dict(sciris='http://sciris.org', covasim='http://covasim.org'), save=False) # Download and store in memory
+    sc.download('https://example.com/bigfile.zip', progress=True, timeout=10) # Show a progress bar, and give up if the server stops responding for 10 seconds
     ```
 
     - *New in version 2.0.0.*
     - *New in version 3.0.0:* "die" argument
     - *New in version 3.1.1:* default order switched from URL:filename to filename:URL pairs
     - *New in version 3.1.3:* output as objdict instead of odict
+    - *New in version 3.5.2:* "progress" argument
     """
     T = sc.timer()
 
@@ -927,7 +965,7 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
         else: # Otherwise, turn the URL into a filename
             keys = []
             for url in urls: # Turn e.g. 'http://mysite.com/tree/index.html' into 'index.html', or 'index.html1' if it's a duplicate
-                keys.append(uniquename(url.split('/')[-1], keys))
+                keys.append(uniquename(_url_filename(url), keys))
     elif n_keys != n_urls: # pragma: no cover
         errormsg = f'Cannot process {n_urls} URLs and {n_keys} filenames'
         raise ValueError(errormsg)
@@ -938,12 +976,12 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
     # Get results in parallel
     wget_verbose = (verbose>1) or (verbose and n_urls == 1) # By default, don't print progress on each download
     iterkwargs = dict(url=urls, filename=keys)
-    func_kwargs = mergedicts(dict(save=save, verbose=wget_verbose), kwargs)
+    func_kwargs = mergedicts(dict(save=save, verbose=wget_verbose, progress=progress and n_urls == 1), kwargs) # For several URLs, show progress by URL instead of by byte
     if n_urls > 1 and parallel:
-        outputs = sc.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread', die=die)
+        outputs = sc.parallelize(urlopen, iterkwargs=iterkwargs, kwargs=func_kwargs, parallelizer='thread', progress=progress, die=die)
     else:
         outputs = []
-        for key,url in zip(keys, urls):
+        for i,(key,url) in enumerate(zip(keys, urls)):
             try:
                 output = urlopen(url=url, filename=key, **func_kwargs)
             except Exception as E:
@@ -955,6 +993,8 @@ def download(url, *args, filename=None, save=True, parallel=True, die=True, verb
                     output = E
 
             outputs.append(output)
+            if progress and n_urls > 1:
+                sc.progressbar(i+1, n_urls, label=f'URL {i+1}/{n_urls}', flush=True)
 
     # If we're returning the data rather than saving the files, convert to an odict
     if not save:
