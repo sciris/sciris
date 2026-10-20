@@ -521,7 +521,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="array-indexing" class="level2">
 <h2 class="anchored" data-anchor-id="array-indexing">Array indexing</h2>
 <p>Let’s create some data.</p>
-<div id="6ea66313" class="cell" data-execution_count="2">
+<div id="9185600c" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> np.random.rand(<span class="dv">100</span>)</span>
@@ -551,7 +551,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>What if we want to do something super simple, like find the indices of the values above 0.9? In NumPy, it’s not super straightforward:</p>
-<div id="ec0308e0" class="cell" data-execution_count="3">
+<div id="6633be8a" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>inds <span class="op">=</span> (data<span class="op">&gt;</span><span class="fl">0.9</span>).nonzero()[<span class="dv">0</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>inds <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -560,7 +560,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>In Sciris, there’s a function for doing exactly this:</p>
-<div id="f98ca2ab" class="cell" data-execution_count="4">
+<div id="08be7dbc" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>inds <span class="op">=</span> sc.findinds(data<span class="op">&gt;</span><span class="fl">0.9</span>)</span>
@@ -571,7 +571,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Likewise, what if we want to find the value closest to, say, 0.5? In NumPy, that would be</p>
-<div id="6e4d01de" class="cell" data-execution_count="5">
+<div id="79f29229" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>target <span class="op">=</span> <span class="fl">0.5</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>nearest <span class="op">=</span> np.argmin(<span class="bu">abs</span>(data<span class="op">-</span>target))</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -581,7 +581,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Which is not <em>too</em> long, but it’s a little harder to remember than the Sciris equivalent:</p>
-<div id="2e7a9d26" class="cell" data-execution_count="6">
+<div id="68080895" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>nearest <span class="op">=</span> sc.findnearest(data, target)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>nearest <span class="op">=</span> <span class="sc">}</span><span class="ss">, </span><span class="sc">{</span>data[nearest] <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -590,7 +590,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>The Sciris functions also work on anything “data like”: for example,</p>
-<div id="c4a13ea3" class="cell" data-execution_count="7">
+<div id="c3402cf5" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>target <span class="op">=</span> <span class="dv">50</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> [<span class="dv">81</span>, <span class="dv">78</span>, <span class="dv">66</span>, <span class="dv">25</span>,  <span class="dv">6</span>,  <span class="dv">8</span>, <span class="dv">53</span>, <span class="dv">96</span>, <span class="dv">64</span>, <span class="dv">23</span>]</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -609,14 +609,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="interlude-on-creating-arrays" class="level3">
 <h3 class="anchored" data-anchor-id="interlude-on-creating-arrays">Interlude on creating arrays</h3>
 <p>Speaking of which, here’s a pretty fast way to create an array:</p>
-<div id="7c9a02f8" class="cell" data-execution_count="8">
+<div id="77cc110a" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc.cat(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
 <pre><code>array([1, 2, 3])</code></pre>
 </div>
 </div>
 <p><a href="../api/sc_math.html#sciris.sc_math.cat" title="0"><code>sc.cat()</code></a> will take anything array-like and turn it into an actual array. For example:</p>
-<div id="58e9d9fe" class="cell" data-execution_count="9">
+<div id="78d0e9b4" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a 2x2 matrix</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> np.random.rand(<span class="dv">2</span>,<span class="dv">2</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -641,7 +641,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="missing-values">Missing values</h2>
 <p>Now that we know some tools for indexing arrays, let’s look at ways to actually change them.</p>
 <p>We all know that missing data is one of humanity’s greatest scourges. Luckily, it can be swiftly eradicated with Sciris: either removed entirely or replaced:</p>
-<div id="236a3f19" class="cell" data-execution_count="10">
+<div id="f45a8dcc" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>d0 <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>, np.nan, <span class="dv">4</span>, np.nan, <span class="dv">6</span>, np.nan, np.nan, np.nan, <span class="dv">10</span>]</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> sc.rmnans(d0) <span class="co"># Remove nans</span></span>
@@ -663,7 +663,7 @@ d3 = array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.])</code></pre>
 <section id="data-smoothing" class="level2">
 <h2 class="anchored" data-anchor-id="data-smoothing">Data smoothing</h2>
 <p>What if we have some seriously lumpy data we want to smooth out? We have a few options for doing that:</p>
-<div id="8520bd2b" class="cell" data-execution_count="11">
+<div id="a06a13d7" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Make data</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">50</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.arange(n)</span>
@@ -692,7 +692,7 @@ d3 = array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.])</code></pre>
 </div>
 </div>
 <p>We can also smooth 2D data:</p>
-<div id="e4e6dd3f" class="cell" data-execution_count="12">
+<div id="81d9f489" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the data</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> np.random.rand(<span class="dv">20</span>,<span class="dv">20</span>)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -721,7 +721,7 @@ d3 = array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.])</code></pre>
 <section id="finding-a-line-of-best-fit" class="level2">
 <h2 class="anchored" data-anchor-id="finding-a-line-of-best-fit">Finding a line of best fit</h2>
 <p>It’s also easy to do a very simple linear regression in Sciris:</p>
-<div id="bbee606c" class="cell" data-execution_count="13">
+<div id="e5317372" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate the data</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">100</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.arange(n)</span>
@@ -1181,7 +1181,7 @@ d3 = array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.])</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.5.2 (2026-10-16).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.6.0 (2026-10-19).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

@@ -1,5 +1,5 @@
 {
-  "version": "3.5.2",
+  "version": "3.6.0",
   "description": "Fast, flexible tools to simplify scientific Python",
   "notes": [
     "Sciris is a library of utilities for scientific computing: containers, file I/O, dates, arrays, plotting, parallelization, and profiling.",
@@ -33,7 +33,7 @@
     "glob": "getfilelist",
     "loadobj": "load",
     "mem_load": "memload",
-    "obj": "objdict",
+    "objdict": "obj",
     "promotetoarray": "toarray",
     "promotetolist": "tolist",
     "rmnans": "sanitize",
@@ -1588,6 +1588,18 @@
       "deprecated": false
     },
     {
+      "name": "obj",
+      "kind": "class",
+      "module": "sc_odict",
+      "signature": "(*args, **kwargs)",
+      "summary": "An `odict` that acts like an object -- allow keys to be set/retrieved by object notation.",
+      "example": "import sciris as sc\n\nobj = sc.obj(foo=3, bar=2)\nobj.foo + obj.bar # Gives 5\nfor key in obj.keys(): # It's still a dict\n    obj[key] = 10\n\nod = sc.obj({'height':1.65, 'mass':59})\nod.bmi = od.mass/od.height**2\nod['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works\nod.keys = 3 # This raises an exception (you can't overwrite the keys() method)",
+      "aliases": [
+        "objdict"
+      ],
+      "deprecated": false
+    },
+    {
       "name": "objatt",
       "kind": "function",
       "module": "sc_printing",
@@ -1595,18 +1607,6 @@
       "summary": "Return a sorted string of object attributes for the Python __repr__ method; see `sc.prepr()` for options",
       "example": "",
       "aliases": [],
-      "deprecated": false
-    },
-    {
-      "name": "objdict",
-      "kind": "class",
-      "module": "sc_odict",
-      "signature": "(*args, **kwargs)",
-      "summary": "An `odict` that acts like an object -- allow keys to be set/retrieved by object notation.",
-      "example": "import sciris as sc\n\nobj = sc.objdict(foo=3, bar=2)\nobj.foo + obj.bar # Gives 5\nfor key in obj.keys(): # It's still a dict\n    obj[key] = 10\n\nod = sc.objdict({'height':1.65, 'mass':59})\nod.bmi = od.mass/od.height**2\nod['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works\nod.keys = 3 # This raises an exception (you can't overwrite the keys() method)",
-      "aliases": [
-        "obj"
-      ],
       "deprecated": false
     },
     {

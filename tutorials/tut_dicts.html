@@ -521,11 +521,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Needing a better way of ordering dictionaries was one of the original inspirations for Sciris back in 2014. In those dark days of Python &lt;=3.6, dictionaries were unordered, which meant that <a href="https://docs.python.org/3/builtins/stdtypes.html#dict.keys" title="1"><code>dict.keys()</code></a> could give you anything. (And you still can’t do <code>dict.keys()[0]</code>, much less <code>dict[0]</code>). This tutorial describes Sciris’ ordered dict, the <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>, its close cousin the <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>objdict</code></a>, and its pandas-powered pseudorelative, the <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe" title="0"><code>dataframe</code></a>.</p>
+<p>Needing a better way of ordering dictionaries was one of the original inspirations for Sciris back in 2014. In those dark days of Python &lt;=3.6, dictionaries were unordered, which meant that <a href="https://docs.python.org/3/builtins/stdtypes.html#dict.keys" title="1"><code>dict.keys()</code></a> could give you anything. (And you still can’t do <code>dict.keys()[0]</code>, much less <code>dict[0]</code>). This tutorial describes Sciris’ ordered dict, the <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>, its close cousin the <code>objdict</code>, and its pandas-powered pseudorelative, the <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe" title="0"><code>dataframe</code></a>.</p>
 <section id="the-odict" class="level2">
 <h2 class="anchored" data-anchor-id="the-odict">The <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a></h2>
 <p>In basically every situation except one, an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> can be used like a <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>. (Since this is a tutorial, see if you can intuit what that one situation is!) For example, creating an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>works just like creating a regular dict:</p>
-<div id="25e9d204" class="cell" data-execution_count="1">
+<div id="b80a515c" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>od <span class="op">=</span> sc.odict(a<span class="op">=</span>[<span class="st">'some'</span>, <span class="st">'strings'</span>], b<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>])</span>
@@ -536,7 +536,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Okay, it doesn’t exactly <em>look</em> like a dict, but it is one:</p>
-<div id="9e2d29da" class="cell" data-execution_count="2">
+<div id="c7243f43" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Keys:   </span><span class="sc">{</span>od<span class="sc">.</span>keys()<span class="sc">}</span><span class="ss">'</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Values: </span><span class="sc">{</span>od<span class="sc">.</span>values()<span class="sc">}</span><span class="ss">'</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Items:  </span><span class="sc">{</span>od<span class="sc">.</span>items()<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -547,7 +547,7 @@ Items:  [('a', ['some', 'strings']), ('b', [1, 2, 3])]</code></pre>
 </div>
 </div>
 <p>Looks pretty much the same as a regular dict, except that <code>od.keys()</code> returns a regular list (so, yes, you can do <code>od.keys()[0]</code>). But, you can do things you can’t do with a regular dict, such as:</p>
-<div id="f2720e2f" class="cell" data-execution_count="3">
+<div id="08e38131" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,k,v <span class="kw">in</span> od.enumitems():</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Item </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss"> is called </span><span class="sc">{</span>k<span class="sc">}</span><span class="ss"> and has value </span><span class="sc">{</span>v<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -556,7 +556,7 @@ Item 1 is called b and has value [1, 2, 3]</code></pre>
 </div>
 </div>
 <p>We can, as you probably guessed, also retrieve items by <em>index</em> as well:</p>
-<div id="ae34c39e" class="cell" data-execution_count="4">
+<div id="40ba457d" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(od[<span class="st">'a'</span>])</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(od[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -567,7 +567,7 @@ Item 1 is called b and has value [1, 2, 3]</code></pre>
 <p>Remember the question about the situation where you wouldn’t use an odict? The answer is if your dict has integer keys, then although you still <em>could</em> use an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>, it’s probably best to use a regular <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>. But even float keys are fine to use (if somewhat strange).</p>
 <p>You might’ve noticed that the <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> has more verbose output than a regular dict. This is because its primary purpose is as a high-level container for storing large(ish) objects.</p>
 <p>For example, let’s say we want to store a number of named simulation results. Look at how we’re able to leverage the <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> in the loop that creates the plots</p>
-<div id="428e39e1" class="cell" data-execution_count="5">
+<div id="aa4c04a4" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -605,7 +605,7 @@ Item 1 is called b and has value [1, 2, 3]</code></pre>
 </div>
 </div>
 <p>We can quickly access these results for exploratory data analysis without having to remember and type the labels explicitly:</p>
-<div id="0d220964" class="cell" data-execution_count="6">
+<div id="6aaa7d8b" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Sim results are'</span>)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sim.results)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -617,54 +617,54 @@ Item 1 is called b and has value [1, 2, 3]</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>Sim results are
 #0: 'y = N^1':
-array([-0.83669763,  1.2740859 ,  0.05318372,  1.37083744, -1.17973519,
-        0.72038955,  0.79015267,  2.42828877, -0.98318838, -2.53658543,
-        0.24797403,  0.64363845,  1.33522749,  0.32607076, -0.28716962,
-       -2.80121813,  1.8155219 , -0.88936474, -0.01137999, -2.19001825])
+array([ 0.89966631,  0.88723396, -0.81662795, -1.36788219,  0.63572093,
+       -0.40217206,  1.03347293,  0.28732367,  2.10560364, -2.3184205 ,
+       -0.51893504,  0.322462  ,  0.0573396 ,  0.90403696,  0.09214903,
+       -2.16722049, -0.23647502, -0.68530318,  0.02738283,  1.29582392])
 #1: 'y = N^2':
-array([0.03402677, 0.4688983 , 2.91626545, 0.04514409, 1.00955832,
-       0.50786673, 0.05670373, 0.4949864 , 1.02138392, 1.3811223 ,
-       1.06621436, 0.20728391, 0.0609535 , 5.69053516, 2.02760659,
-       2.52751574, 1.91828699, 0.15266246, 3.52779003, 0.65800272])
+array([0.25495102, 0.09539056, 0.49681419, 2.53921405, 3.27360044,
+       0.26067762, 0.01222362, 0.08026402, 0.14993977, 0.13720447,
+       0.10478094, 0.12487071, 2.70740194, 0.20412048, 0.40601421,
+       1.18966907, 1.08871759, 0.36578408, 0.11850362, 0.06904601])
 #2: 'y = N^3':
-array([-4.34365649e-03, -1.63703362e+00,  8.15878397e-02,  4.49686014e-02,
-       -2.00776772e-01,  1.15110088e-01,  7.29114727e-02, -5.99317078e-04,
-        1.02137939e+00,  1.42504328e+00,  3.70873911e+00,  3.78029748e+00,
-        1.79866744e+00, -1.53553803e-01,  7.57690904e-02,  4.09039535e-01,
-        7.72821380e-01, -7.92063135e-01,  2.00659171e+00, -9.45235634e-02])
+array([-6.60899136e-04,  1.25465455e+00, -2.03412095e-03,  6.14116531e+00,
+        2.60812836e+00,  6.68326522e-01, -2.24177880e-04, -7.22185978e-02,
+       -2.38149706e-01, -1.03924771e-01,  3.70536436e-02,  6.19665413e-04,
+       -2.82509076e-01, -3.00646236e-01, -1.70382978e-04,  8.25997669e+00,
+       -4.63513739e-07,  5.64729238e-02,  1.09656946e-01, -4.15671131e-01])
 #3: 'y = N^4':
-array([7.46003730e+01, 2.25446813e-01, 1.23286934e-01, 5.10625958e-01,
-       7.11744127e-02, 5.77988910e-01, 1.06755118e+02, 2.17451464e+01,
-       8.09593907e-04, 4.26626772e-01, 4.91129594e+00, 5.48297125e-01,
-       4.26095989e+00, 5.70027113e+00, 1.11465395e-01, 8.03365815e-02,
-       8.29092044e-03, 8.33255711e-02, 1.14720750e-03, 7.25573331e-03])
+array([7.01183976e-10, 2.55406031e+00, 3.23998878e-01, 3.60324154e-01,
+       4.76568849e-01, 2.34234752e-01, 5.58329307e+00, 2.14390797e-02,
+       3.19090846e+00, 2.17628447e-02, 1.24152585e+00, 7.04459773e+00,
+       3.18448033e-01, 2.37104305e-01, 3.40506467e-01, 4.61141173e-01,
+       2.53958068e+01, 4.70150397e-03, 2.41430852e+01, 3.40561157e-01])
 #4: 'y = N^5':
-array([ 8.68651977e-01, -1.76341610e+01,  1.74216318e+01,  6.62807807e+01,
-       -9.98351097e-04, -1.06481039e+01, -1.00466734e-03,  1.38953641e-04,
-        3.11822190e-01,  9.96689005e-03, -2.05128342e+00, -9.12711172e+00,
-       -7.42795862e-06, -2.71353260e+00, -1.72877429e+01,  1.67397866e+00,
-        4.20500658e-01,  5.18039484e-01, -7.23310489e-04, -2.35084529e-04])
+array([-1.05159518e+02, -9.59305609e-02,  1.51071033e-02, -3.47421421e+00,
+        2.35259003e-05, -1.57058488e-02,  8.40974129e-01, -2.98546601e-02,
+        1.60957680e-02,  2.06736155e+01, -9.42395670e-01, -8.96649766e-03,
+       -4.24490465e-01, -4.01516444e-01, -1.52161380e-05, -1.39554640e-01,
+       -1.46213387e-02, -1.13442919e-06, -1.49123125e+00, -3.69041615e-06])
 #5: 'y = N^6':
-array([4.47188364e+00, 8.18371301e-10, 1.84183327e-02, 6.73418082e+00,
-       2.00252425e+01, 3.03109286e+00, 1.75762597e-03, 5.55551202e-02,
-       6.26205436e-04, 1.46946248e+00, 2.44814422e+01, 5.92164701e-03,
-       8.66210704e-03, 1.18107853e-02, 3.09616296e-09, 1.59183512e+02,
-       1.01397797e-02, 5.59169611e-01, 3.45237600e+01, 2.16991030e-06])
+array([4.71920472e-02, 3.01864587e-04, 3.95410602e-03, 5.66847732e-01,
+       2.19985680e-05, 4.40859423e-01, 1.62279775e-03, 7.73683647e-01,
+       5.54546610e-06, 1.90862419e-03, 1.65664658e-01, 1.47883464e+01,
+       9.12467742e-03, 1.34056617e-01, 8.37132106e-02, 2.92932939e-02,
+       1.91010881e+00, 5.91607870e-03, 7.11927745e-03, 9.42991733e-01])
 The first set of results is
-[-0.83669763  1.2740859   0.05318372  1.37083744 -1.17973519  0.72038955
-  0.79015267  2.42828877 -0.98318838 -2.53658543  0.24797403  0.64363845
-  1.33522749  0.32607076 -0.28716962 -2.80121813  1.8155219  -0.88936474
- -0.01137999 -2.19001825]
+[ 0.89966631  0.88723396 -0.81662795 -1.36788219  0.63572093 -0.40217206
+  1.03347293  0.28732367  2.10560364 -2.3184205  -0.51893504  0.322462
+  0.0573396   0.90403696  0.09214903 -2.16722049 -0.23647502 -0.68530318
+  0.02738283  1.29582392]
 The first set of results has median
-0.151 (95% CI: -2.676, 2.137)</code></pre>
+0.0747 (95% CI: -2.2466, 1.7210)</code></pre>
 </div>
 </div>
 <p>This is a have-your-cake-and-eat-it-too situation: the first set of results is correctly labeled (<code>sim.results['y = N^1']</code>), but you can easily access it without having to type all that (<code>sim.results[0]</code>).</p>
 </section>
 <section id="the-objdict" class="level2">
-<h2 class="anchored" data-anchor-id="the-objdict">The <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>objdict</code></a></h2>
-<p>When you’re just writing throwaway analysis code, it can be a pain to type <code>mydict['key1']['key2']</code> over and over. (Right-pinky overuse is a <a href="https://www.math.ucdavis.edu/~greg/pinky-rsi.html">real medical issue</a>.) Wouldn’t it be nice if you could just type <code>mydict.key1.key2</code>, but otherwise have everything work exactly like a dict? This is where the <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>objdict</code></a> comes in: it’s identical to an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> (and hence like a regular <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>), except you can use “object syntax” (<code>a.b</code>) instead of “dict syntax” (<code>a['b']</code>). This is especially handy for using f-strings, since you don’t have to worry about nested quotes:</p>
-<div id="e6b283cb" class="cell" data-execution_count="7">
+<h2 class="anchored" data-anchor-id="the-objdict">The <code>objdict</code></h2>
+<p>When you’re just writing throwaway analysis code, it can be a pain to type <code>mydict['key1']['key2']</code> over and over. (Right-pinky overuse is a <a href="https://www.math.ucdavis.edu/~greg/pinky-rsi.html">real medical issue</a>.) Wouldn’t it be nice if you could just type <code>mydict.key1.key2</code>, but otherwise have everything work exactly like a dict? This is where the <code>objdict</code> comes in: it’s identical to an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> (and hence like a regular <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>), except you can use “object syntax” (<code>a.b</code>) instead of “dict syntax” (<code>a['b']</code>). This is especially handy for using f-strings, since you don’t have to worry about nested quotes:</p>
+<div id="fabf193e" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ob <span class="op">=</span> sc.objdict(key1<span class="op">=</span>[<span class="st">'some'</span>, <span class="st">'strings'</span>], key2<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>])</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Checking </span><span class="sc">{</span>ob[<span class="dv">0</span>] <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Checking </span><span class="sc">{</span>ob<span class="sc">.</span>key1 <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span>
@@ -675,7 +675,7 @@ Checking ob.key1 = ['some', 'strings']
 Checking ob["key1"] = ['some', 'strings']</code></pre>
 </div>
 </div>
-<p>In most cases, you probably want to use <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>objdict</code></a>s rather than <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>s just to have the extra flexibility. Since they’re so common, <code>sc.obj()</code> is a shorter name for <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>.</p>
+<p>In most cases, you probably want to use <code>objdict</code>s rather than <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>s just to have the extra flexibility. Since they’re so common, <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> is a shorter name for <code>sc.objdict()</code>.</p>
 <section id="performance" class="level3">
 <h3 class="anchored" data-anchor-id="performance">Performance</h3>
 <p>All this flexibility has a cost, although a small one. If you only need attribute access and not the other <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> features (such as indexing by position), <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> is a lighter-weight alternative that is nearly as fast as a plain <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>. Approximate times per operation, in nanoseconds:</p>
@@ -708,7 +708,7 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 <td>450</td>
 </tr>
 <tr class="odd">
-<td><a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a></td>
+<td><code>sc.objdict()</code></td>
 <td>40</td>
 <td>50</td>
 <td>190</td>
@@ -717,7 +717,7 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 </tr>
 </tbody>
 </table>
-<p>These differences won’t matter unless you’re doing millions of operations. But if you’re reading this, chances are high that you <em>do</em> sometimes need to do millions of dict operations, in which case use <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> or a plain <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> inside the loop. The other difference is that an <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> protects its methods (<code>obj.keys = 3</code> raises an error, and <code>obj['keys'] = 3</code> leaves <code>obj.keys()</code> working), whereas in an <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> a key replaces a method of the same name.</p>
+<p>These differences won’t matter unless you’re doing millions of operations. But if you’re reading this, chances are high that you <em>do</em> sometimes need to do millions of dict operations, in which case use <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> or a plain <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> inside the loop. The other difference is that an <code>sc.objdict()</code> protects its methods (<code>obj.keys = 3</code> raises an error, and <code>obj['keys'] = 3</code> leaves <code>obj.keys()</code> working), whereas in an <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> a key replaces a method of the same name.</p>
 </section>
 </section>
 <section id="dataframes" class="level2">
@@ -726,7 +726,7 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 <section id="dataframe-creation" class="level3">
 <h3 class="anchored" data-anchor-id="dataframe-creation">Dataframe creation</h3>
 <p>Any valid <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> dataframe initialization works exactly the same in Sciris. However, Sciris is a bit more flexible about how you can create the dataframe, again optimized for letting you make them quickly with minimal code. For example:</p>
-<div id="610cb7a7" class="cell" data-execution_count="8">
+<div id="de40df60" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> [<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>]</span>
@@ -737,7 +737,7 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z) <span class="co"># Sciris</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>It’s not a huge difference, but the Sciris one is shorter. Sciris also makes it easier to define types on dataframe creation:</p>
-<div id="9c8b4db6" class="cell" data-execution_count="9">
+<div id="dd0890f6" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z, dtypes<span class="op">=</span>[<span class="bu">str</span>, <span class="bu">float</span>, <span class="bu">bool</span>])</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -748,7 +748,7 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 </div>
 </div>
 <p>You can also define data types along with the columns:</p>
-<div id="cb4792f2" class="cell" data-execution_count="10">
+<div id="ec63ef18" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>columns <span class="op">=</span> <span class="bu">dict</span>(x<span class="op">=</span><span class="bu">str</span>, y<span class="op">=</span><span class="bu">float</span>, z<span class="op">=</span><span class="bu">bool</span>)</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> [</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    [<span class="st">'a'</span>, <span class="dv">1</span>, <span class="dv">1</span>],</span>
@@ -765,132 +765,132 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 </div>
 </div>
 <p>The <code>df.disp()</code> command will do its best to show the full dataframe. By default, Sciris dataframes (just like pandas) are shown in abbreviated form:</p>
-<div id="88433b1f" class="cell" data-execution_count="11">
+<div id="145dd887" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(data<span class="op">=</span>np.random.rand(<span class="dv">70</span>,<span class="dv">10</span>))</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>           0         1         2         3         4         5         6  \
-0   0.142550  0.194880  0.861390  0.390995  0.671847  0.386140  0.236713   
-1   0.996087  0.879365  0.454104  0.781245  0.337383  0.842346  0.771908   
-2   0.141682  0.322196  0.121370  0.963031  0.871345  0.250557  0.561811   
-3   0.682165  0.575014  0.255374  0.342119  0.207083  0.556767  0.344395   
-4   0.892196  0.207041  0.410315  0.758441  0.612778  0.326348  0.447642   
+0   0.901453  0.294503  0.804696  0.598164  0.587877  0.371850  0.805474   
+1   0.701433  0.604411  0.434840  0.495537  0.382995  0.756940  0.040200   
+2   0.763790  0.008944  0.168553  0.970130  0.390002  0.298443  0.228579   
+3   0.466993  0.118241  0.342027  0.639311  0.677593  0.540751  0.387566   
+4   0.019282  0.707996  0.604393  0.661970  0.830728  0.983221  0.263150   
 ..       ...       ...       ...       ...       ...       ...       ...   
-65  0.406181  0.069643  0.564184  0.436816  0.657257  0.718257  0.457521   
-66  0.583937  0.942649  0.214098  0.564424  0.235081  0.003647  0.361271   
-67  0.501898  0.058594  0.094407  0.273519  0.172353  0.010388  0.101668   
-68  0.239598  0.109425  0.391523  0.153878  0.732492  0.473340  0.224248   
-69  0.993883  0.329115  0.458042  0.556496  0.203964  0.246732  0.964772   
+65  0.386203  0.535491  0.165229  0.998598  0.258052  0.598454  0.935857   
+66  0.876568  0.120575  0.950600  0.112412  0.045830  0.366564  0.488284   
+67  0.833840  0.772638  0.089712  0.095826  0.124965  0.281233  0.729687   
+68  0.726658  0.892072  0.286203  0.638376  0.110133  0.120588  0.764679   
+69  0.988711  0.861716  0.439212  0.742913  0.194742  0.027616  0.634438   
 
            7         8         9  
-0   0.994161  0.715106  0.123487  
-1   0.033994  0.885319  0.043628  
-2   0.353306  0.408999  0.261006  
-3   0.804604  0.868349  0.909396  
-4   0.219801  0.257362  0.127179  
+0   0.954735  0.265535  0.562591  
+1   0.293143  0.494528  0.373685  
+2   0.170678  0.726558  0.118821  
+3   0.671626  0.646413  0.690834  
+4   0.553938  0.983475  0.368674  
 ..       ...       ...       ...  
-65  0.200646  0.737311  0.637240  
-66  0.297105  0.757992  0.323637  
-67  0.830306  0.874987  0.695526  
-68  0.761307  0.751311  0.000465  
-69  0.144669  0.561352  0.481347  
+65  0.497378  0.198460  0.936244  
+66  0.836015  0.258626  0.688661  
+67  0.404195  0.563142  0.033001  
+68  0.519308  0.762818  0.824421  
+69  0.421248  0.096015  0.216149  
 
 [70 rows x 10 columns]</code></pre>
 </div>
 </div>
 <p>But sometimes you just want to see the whole thing. The official way to do it in pandas is with <code>pd.options_context</code>, but this is a lot of effort if you’re just poking around in a script or terminal (which, if you’re printing a dataframe, you probably are). By default, <code>df.disp()</code> shows the whole damn thing:</p>
-<div id="09090196" class="cell" data-execution_count="12">
+<div id="a9bce877" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>         0       1       2       3       4       5       6       7       8       9
-0   0.1425  0.1949  0.8614  0.3910  0.6718  0.3861  0.2367  0.9942  0.7151  0.1235
-1   0.9961  0.8794  0.4541  0.7812  0.3374  0.8423  0.7719  0.0340  0.8853  0.0436
-2   0.1417  0.3222  0.1214  0.9630  0.8713  0.2506  0.5618  0.3533  0.4090  0.2610
-3   0.6822  0.5750  0.2554  0.3421  0.2071  0.5568  0.3444  0.8046  0.8683  0.9094
-4   0.8922  0.2070  0.4103  0.7584  0.6128  0.3263  0.4476  0.2198  0.2574  0.1272
-5   0.0748  0.1861  0.2830  0.3723  0.4076  0.1044  0.9084  0.0095  0.8493  0.1932
-6   0.5621  0.5541  0.2364  0.3966  0.5935  0.8118  0.1528  0.7608  0.6529  0.0134
-7   0.0398  0.8510  0.8367  0.4328  0.6955  0.7944  0.0582  0.3175  0.3421  0.2049
-8   0.3095  0.3781  0.5415  0.5991  0.4948  0.4532  0.5540  0.5891  0.0886  0.9159
-9   0.2472  0.6379  0.0501  0.3350  0.0185  0.6495  0.7766  0.8969  0.6164  0.7182
-10  0.3461  0.8312  0.6940  0.7946  0.3425  0.3697  0.4080  0.9359  0.1920  0.2552
-11  0.7451  0.7410  0.6640  0.6793  0.5222  0.0715  0.1155  0.8405  0.8169  0.0700
-12  0.2060  0.8805  0.4945  0.1799  0.6750  0.1396  0.4553  0.7486  0.5531  0.6539
-13  0.8694  0.6883  0.0920  0.1887  0.5601  0.3443  0.3330  0.7132  0.7993  0.1591
-14  0.6636  0.1528  0.8136  0.4277  0.1191  0.3079  0.3304  0.8026  0.4219  0.8861
-15  0.4499  0.7804  0.5691  0.1635  0.4356  0.7996  0.0499  0.7281  0.0096  0.2484
-16  0.2540  0.0161  0.3254  0.1282  0.7421  0.7951  0.9238  0.3483  0.9714  0.6775
-17  0.3628  0.4457  0.4598  0.7042  0.6861  0.5424  0.1910  0.3106  0.3294  0.5605
-18  0.1352  0.2951  0.2877  0.0686  0.5469  0.3544  0.6491  0.8054  0.3895  0.8506
-19  0.3702  0.8369  0.8620  0.8459  0.3290  0.7690  0.8382  0.0839  0.5488  0.2985
-20  0.8086  0.7331  0.6320  0.0687  0.0975  0.3337  0.3379  0.9607  0.0742  0.7966
-21  0.7050  0.8724  0.9229  0.2172  0.3535  0.0594  0.2050  0.8275  0.7181  0.1853
-22  0.7405  0.0267  0.3893  0.9838  0.5992  0.4208  0.3825  0.0730  0.6721  0.6787
-23  0.4406  0.4353  0.6850  0.9240  0.9309  0.9968  0.1660  0.5707  0.7540  0.9889
-24  0.2243  0.6592  0.7353  0.3620  0.5828  0.5410  0.7168  0.6982  0.4292  0.8365
-25  0.0801  0.3792  0.2364  0.9719  0.0417  0.1509  0.0334  0.6008  0.2449  0.8728
-26  0.7973  0.2003  0.1936  0.0494  0.0418  0.8541  0.0837  0.0510  0.1482  0.3157
-27  0.0322  0.3608  0.2606  0.3356  0.9177  0.3968  0.2268  0.8326  0.4230  0.8969
-28  0.4058  0.1600  0.7250  0.7283  0.0866  0.9771  0.3079  0.7708  0.6416  0.4213
-29  0.9642  0.3861  0.9541  0.8781  0.7321  0.6530  0.0343  0.4361  0.1456  0.6186
-30  0.5292  0.0783  0.8156  0.1888  0.2068  0.6622  0.2490  0.6165  0.8185  0.9742
-31  0.1707  0.2256  0.0104  0.0334  0.1524  0.1807  0.9157  0.4153  0.0198  0.1342
-32  0.3942  0.2786  0.2379  0.0299  0.7752  0.3480  0.1877  0.4541  0.0423  0.4746
-33  0.6822  0.9967  0.8959  0.5647  0.3157  0.7017  0.4337  0.2564  0.3881  0.9116
-34  0.2491  0.7706  0.6584  0.2932  0.5456  0.1771  0.0713  0.1541  0.8866  0.6747
-35  0.0146  0.2129  0.5716  0.4639  0.7412  0.0321  0.8746  0.7459  0.8550  0.3572
-36  0.4069  0.9996  0.4826  0.8957  0.2276  0.5109  0.1802  0.2516  0.8766  0.0419
-37  0.5325  0.3737  0.2822  0.4896  0.4527  0.0869  0.0126  0.2766  0.5742  0.0712
-38  0.7002  0.9821  0.8341  0.2551  0.9510  0.6213  0.5846  0.3579  0.5426  0.2104
-39  0.4852  0.9798  0.6706  0.0131  0.1688  0.9897  0.6426  0.7184  0.9687  0.4572
-40  0.0840  0.3599  0.6632  0.0520  0.1537  0.5307  0.6701  0.6701  0.7441  0.5688
-41  0.9863  0.6819  0.3525  0.1476  0.1654  0.2543  0.4462  0.1730  0.1075  0.3504
-42  0.7526  0.6027  0.4302  0.4079  0.9262  0.3375  0.8082  0.3432  0.7699  0.2885
-43  0.3152  0.9089  0.4833  0.6292  0.0504  0.9909  0.2744  0.1919  0.6838  0.9546
-44  0.9733  0.8105  0.2231  0.4587  0.4144  0.3400  0.0542  0.7979  0.7681  0.1537
-45  0.3413  0.1854  0.4414  0.3263  0.5140  0.6447  0.1529  0.2428  0.6599  0.0095
-46  0.7859  0.7350  0.5084  0.2039  0.8601  0.0398  0.3455  0.1589  0.2320  0.9010
-47  0.9318  0.7298  0.1214  0.5351  0.3908  0.0988  0.2046  0.9591  0.8634  0.9107
-48  0.5583  0.6953  0.5943  0.3769  0.1724  0.8647  0.0534  0.1435  0.8858  0.9787
-49  0.4391  0.4958  0.1239  0.1072  0.6004  0.9667  0.0091  0.4168  0.8003  0.3796
-50  0.8345  0.5343  0.4998  0.6322  0.7584  0.9474  0.2262  0.1400  0.5532  0.9908
-51  0.3334  0.7767  0.3817  0.3934  0.2617  0.1770  0.2002  0.9160  0.9873  0.4406
-52  0.5298  0.5603  0.2040  0.5867  0.7080  0.5032  0.3629  0.7087  0.1196  0.8014
-53  0.0349  0.0144  0.0769  0.8393  0.0498  0.9001  0.1683  0.7551  0.5765  0.9302
-54  0.1034  0.8026  0.5156  0.2046  0.5022  0.8959  0.5421  0.1702  0.0415  0.3531
-55  0.7496  0.5027  0.4799  0.7196  0.9079  0.5204  0.3794  0.2289  0.0390  0.5191
-56  0.3951  0.4657  0.5109  0.8281  0.5005  0.1163  0.4501  0.3796  0.1581  0.5078
-57  0.4807  0.8877  0.7021  0.5643  0.4436  0.4451  0.0044  0.6607  0.4286  0.5048
-58  0.6788  0.1825  0.5086  0.2829  0.6427  0.1728  0.1630  0.2195  0.2817  0.9369
-59  0.3678  0.0018  0.9548  0.9756  0.2857  0.9211  0.2573  0.0536  0.7782  0.9858
-60  0.6005  0.7867  0.3094  0.1847  0.2235  0.4310  0.5440  0.7208  0.0144  0.6283
-61  0.0103  0.2399  0.6701  0.1885  0.7102  0.1818  0.1146  0.7085  0.4519  0.1755
-62  0.7431  0.9667  0.7538  0.0957  0.1177  0.4661  0.7872  0.4559  0.2973  0.3317
-63  0.5625  0.3897  0.4512  0.9842  0.1771  0.6105  0.0058  0.4819  0.4169  0.1463
-64  0.9783  0.8257  0.0785  0.1756  0.3634  0.3787  0.1080  0.7407  0.3689  0.9278
-65  0.4062  0.0696  0.5642  0.4368  0.6573  0.7183  0.4575  0.2006  0.7373  0.6372
-66  0.5839  0.9426  0.2141  0.5644  0.2351  0.0036  0.3613  0.2971  0.7580  0.3236
-67  0.5019  0.0586  0.0944  0.2735  0.1724  0.0104  0.1017  0.8303  0.8750  0.6955
-68  0.2396  0.1094  0.3915  0.1539  0.7325  0.4733  0.2242  0.7613  0.7513  0.0005
-69  0.9939  0.3291  0.4580  0.5565  0.2040  0.2467  0.9648  0.1447  0.5614  0.4813</code></pre>
+0   0.9015  0.2945  0.8047  0.5982  0.5879  0.3718  0.8055  0.9547  0.2655  0.5626
+1   0.7014  0.6044  0.4348  0.4955  0.3830  0.7569  0.0402  0.2931  0.4945  0.3737
+2   0.7638  0.0089  0.1686  0.9701  0.3900  0.2984  0.2286  0.1707  0.7266  0.1188
+3   0.4670  0.1182  0.3420  0.6393  0.6776  0.5408  0.3876  0.6716  0.6464  0.6908
+4   0.0193  0.7080  0.6044  0.6620  0.8307  0.9832  0.2631  0.5539  0.9835  0.3687
+5   0.6151  0.4443  0.2066  0.6356  0.4384  0.0890  0.0172  0.8343  0.3897  0.3455
+6   0.6053  0.4830  0.5008  0.3702  0.4807  0.7210  0.6491  0.6583  0.0906  0.3364
+7   0.9822  0.2288  0.9656  0.7583  0.3392  0.6131  0.8679  0.6086  0.2164  0.6351
+8   0.2728  0.9148  0.2993  0.8752  0.1205  0.4220  0.4594  0.1737  0.4142  0.7167
+9   0.5581  0.0070  0.5626  0.9374  0.4624  0.1241  0.3464  0.1697  0.5569  0.7005
+10  0.2808  0.3591  0.8925  0.1286  0.4264  0.5494  0.3358  0.4442  0.9646  0.5944
+11  0.4333  0.2294  0.9730  0.2287  0.8538  0.0134  0.4341  0.8251  0.8786  0.0404
+12  0.2274  0.2078  0.5341  0.7747  0.0819  0.7675  0.4962  0.0413  0.0010  0.1625
+13  0.0748  0.4945  0.4505  0.1540  0.7967  0.5515  0.9329  0.3546  0.8576  0.2615
+14  0.6340  0.9994  0.7788  0.8217  0.3684  0.8930  0.9625  0.9621  0.2380  0.6702
+15  0.1348  0.7710  0.2614  0.3472  0.2153  0.8766  0.5053  0.8955  0.9548  0.2542
+16  0.7435  0.7798  0.4053  0.6664  0.7466  0.7411  0.7467  0.5809  0.9370  0.9966
+17  0.4718  0.9718  0.8977  0.0185  0.8366  0.1472  0.5990  0.2659  0.6661  0.9839
+18  0.9727  0.0897  0.3527  0.9889  0.8140  0.4534  0.6776  0.0234  0.9833  0.8514
+19  0.0859  0.4013  0.2606  0.8256  0.4898  0.8769  0.2884  0.4178  0.2113  0.7685
+20  0.3330  0.2685  0.6887  0.7591  0.7076  0.8413  0.5017  0.0744  0.6189  0.3797
+21  0.1923  0.9647  0.1208  0.8058  0.6075  0.3118  0.9662  0.5124  0.7242  0.3002
+22  0.8862  0.3253  0.9166  0.2698  0.7584  0.5932  0.0161  0.0312  0.8047  0.8697
+23  0.2426  0.4914  0.3637  0.7358  0.0514  0.1295  0.4562  0.0380  0.0012  0.7101
+24  0.6259  0.9388  0.1054  0.9528  0.5995  0.0190  0.6199  0.4936  0.9586  0.5366
+25  0.7256  0.0746  0.7452  0.5024  0.2217  0.5055  0.1167  0.7096  0.1981  0.0118
+26  0.8328  0.5378  0.8324  0.5437  0.5333  0.1153  0.6191  0.1667  0.7659  0.1527
+27  0.9445  0.0187  0.1591  0.1073  0.0271  0.9406  0.1591  0.8126  0.9574  0.8132
+28  0.1998  0.0726  0.7186  0.7219  0.4767  0.0944  0.1649  0.6197  0.1286  0.9771
+29  0.6434  0.1648  0.2544  0.0126  0.3903  0.8530  0.2458  0.6363  0.7361  0.4500
+30  0.8367  0.1832  0.9985  0.0098  0.3639  0.8895  0.8635  0.1613  0.2436  0.2271
+31  0.7936  0.8877  0.4630  0.4341  0.9397  0.6603  0.5850  0.9061  0.2422  0.8053
+32  0.8255  0.2782  0.5907  0.9215  0.4239  0.4498  0.5186  0.6076  0.4505  0.6409
+33  0.8993  0.7921  0.4680  0.8679  0.1982  0.0193  0.1481  0.5266  0.9175  0.7473
+34  0.9978  0.0953  0.6720  0.2346  0.8329  0.9508  0.2541  0.6482  0.1899  0.0160
+35  0.7044  0.4718  0.5991  0.4383  0.7599  0.6658  0.4361  0.8219  0.3391  0.8383
+36  0.8403  0.1796  0.9473  0.8951  0.2249  0.1633  0.1022  0.1989  0.0587  0.2572
+37  0.0573  0.5154  0.6179  0.1073  0.4220  0.7360  0.9311  0.6513  0.8852  0.8999
+38  0.3937  0.0617  0.3143  0.9003  0.7339  0.5874  0.3652  0.7994  0.5693  0.0747
+39  0.7749  0.8305  0.1975  0.0496  0.4983  0.9108  0.4387  0.4208  0.9576  0.9458
+40  0.3933  0.7656  0.3783  0.1823  0.8412  0.7599  0.8925  0.2779  0.8216  0.3237
+41  0.5615  0.4551  0.9157  0.6903  0.7076  0.5338  0.7746  0.7400  0.1543  0.3771
+42  0.8665  0.4761  0.3801  0.6865  0.4698  0.8068  0.4778  0.3342  0.0285  0.5164
+43  0.5314  0.3003  0.4838  0.3984  0.8910  0.5418  0.1174  0.8220  0.5290  0.4455
+44  0.5525  0.0676  0.7697  0.6832  0.9534  0.6937  0.9037  0.9623  0.5842  0.5947
+45  0.5705  0.3918  0.9857  0.8972  0.4857  0.6351  0.3113  0.7321  0.8406  0.2702
+46  0.7395  0.4093  0.9157  0.7209  0.5059  0.5339  0.2226  0.6196  0.4951  0.3331
+47  0.2686  0.4280  0.2262  0.9392  0.7544  0.1711  0.5068  0.3320  0.8747  0.6161
+48  0.3052  0.5284  0.1304  0.6356  0.9820  0.5071  0.9616  0.6917  0.5938  0.7386
+49  0.4896  0.3489  0.8356  0.6805  0.7931  0.1537  0.4600  0.8484  0.7272  0.0814
+50  0.8277  0.8933  0.3699  0.9190  0.6853  0.2031  0.4761  0.9918  0.5451  0.0250
+51  0.7895  0.2717  0.5463  0.0420  0.6778  0.0102  0.5911  0.6778  0.3480  0.5323
+52  0.0305  0.1336  0.1552  0.4385  0.1557  0.6469  0.8608  0.7863  0.6505  0.5862
+53  0.2863  0.1396  0.3376  0.2687  0.0685  0.5791  0.5636  0.7284  0.7193  0.3899
+54  0.8754  0.7562  0.3476  0.5770  0.3661  0.2976  0.5210  0.6664  0.2228  0.7120
+55  0.9023  0.8556  0.1334  0.9619  0.6401  0.3416  0.3671  0.4411  0.4777  0.2426
+56  0.5845  0.9251  0.8122  0.1712  0.1710  0.1290  0.1828  0.6910  0.4730  0.5299
+57  0.5885  0.7958  0.1921  0.8880  0.3356  0.3476  0.1595  0.1657  0.5140  0.9900
+58  0.6026  0.3832  0.8635  0.9643  0.3112  0.1230  0.6545  0.1091  0.8428  0.3027
+59  0.1169  0.6400  0.7864  0.0371  0.7635  0.4919  0.6770  0.5759  0.0020  0.2183
+60  0.9548  0.9907  0.0827  0.1899  0.1093  0.5602  0.5469  0.1497  0.6192  0.3500
+61  0.9208  0.0928  0.6502  0.3160  0.3374  0.6060  0.3728  0.2135  0.3043  0.9874
+62  0.3432  0.2132  0.8112  0.2143  0.7191  0.1581  0.5102  0.4724  0.5672  0.8078
+63  0.1762  0.6338  0.4097  0.6682  0.9973  0.2659  0.4186  0.5962  0.7826  0.3600
+64  0.3014  0.9594  0.3673  0.7464  0.0240  0.4796  0.9850  0.3555  0.0146  0.5500
+65  0.3862  0.5355  0.1652  0.9986  0.2581  0.5985  0.9359  0.4974  0.1985  0.9362
+66  0.8766  0.1206  0.9506  0.1124  0.0458  0.3666  0.4883  0.8360  0.2586  0.6887
+67  0.8338  0.7726  0.0897  0.0958  0.1250  0.2812  0.7297  0.4042  0.5631  0.0330
+68  0.7267  0.8921  0.2862  0.6384  0.1101  0.1206  0.7647  0.5193  0.7628  0.8244
+69  0.9887  0.8617  0.4392  0.7429  0.1947  0.0276  0.6344  0.4212  0.0960  0.2161</code></pre>
 </div>
 </div>
 <p>You can also pass other options if you want to customize it further:</p>
-<div id="ed6c13a9" class="cell" data-execution_count="13">
+<div id="cf22f0ec" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>df.disp(precision<span class="op">=</span><span class="dv">1</span>, ncols<span class="op">=</span><span class="dv">5</span>, nrows<span class="op">=</span><span class="dv">10</span>, colheader_justify<span class="op">=</span><span class="st">'left'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>    0    1        ...  8    9      
-0   0.1  1.9e-01  ...  0.7  1.2e-01
-1   1.0  8.8e-01  ...  0.9  4.4e-02
-2   0.1  3.2e-01  ...  0.4  2.6e-01
-3   0.7  5.8e-01  ...  0.9  9.1e-01
-4   0.9  2.1e-01  ...  0.3  1.3e-01
-..  ...      ...  ...  ...      ...
-65  0.4  7.0e-02  ...  0.7  6.4e-01
-66  0.6  9.4e-01  ...  0.8  3.2e-01
-67  0.5  5.9e-02  ...  0.9  7.0e-01
-68  0.2  1.1e-01  ...  0.8  4.7e-04
-69  1.0  3.3e-01  ...  0.6  4.8e-01
+<pre><code>    0        1        ...  8        9      
+0   9.0e-01  2.9e-01  ...  2.7e-01  5.6e-01
+1   7.0e-01  6.0e-01  ...  4.9e-01  3.7e-01
+2   7.6e-01  8.9e-03  ...  7.3e-01  1.2e-01
+3   4.7e-01  1.2e-01  ...  6.5e-01  6.9e-01
+4   1.9e-02  7.1e-01  ...  9.8e-01  3.7e-01
+..      ...      ...  ...      ...      ...
+65  3.9e-01  5.4e-01  ...  2.0e-01  9.4e-01
+66  8.8e-01  1.2e-01  ...  2.6e-01  6.9e-01
+67  8.3e-01  7.7e-01  ...  5.6e-01  3.3e-02
+68  7.3e-01  8.9e-01  ...  7.6e-01  8.2e-01
+69  9.9e-01  8.6e-01  ...  9.6e-02  2.2e-01
 
 [70 rows x 10 columns]</code></pre>
 </div>
@@ -899,7 +899,7 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 <section id="dataframe-indexing" class="level3">
 <h3 class="anchored" data-anchor-id="dataframe-indexing">Dataframe indexing</h3>
 <p>All the regular <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> methods (<code>df['mycol']</code>, <code>df.mycol</code>, <code>df.loc</code>, <code>df.iloc</code>, etc.) work exactly the same. But Sciris gives additional options for indexing. Specifically, <code>getitem</code> commands (what happens under the hood when you call <code>df[thing]</code>) will first try the standard pandas <code>getitem</code>, but then fall back to <code>iloc</code> if that fails. For example:</p>
-<div id="a5b33d1e" class="cell" data-execution_count="14">
+<div id="b3f51eb3" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    x      <span class="op">=</span> [<span class="dv">1</span>,   <span class="dv">2</span>,  <span class="dv">3</span>], </span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> [<span class="dv">45</span>, <span class="dv">23</span>, <span class="dv">37</span>], </span>
@@ -977,7 +977,7 @@ Name: 1, dtype: int64
 <section id="dataframe-manipulation" class="level3">
 <h3 class="anchored" data-anchor-id="dataframe-manipulation">Dataframe manipulation</h3>
 <p>One quirk of <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> dataframes is that almost every operation creates a copy rather than modifies the original dataframe in-place (leading to the infamous <a href="https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas">SettingWithCopyWarning</a>.) This is extremely helpful, and yet, sometimes you <em>do</em> want to modify a dataframe in place. For example, to append a row:</p>
-<div id="a48db1b4" class="cell" data-execution_count="15">
+<div id="160dadf7" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the dataframe</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> [<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>],</span>
@@ -1002,7 +1002,7 @@ Name: 1, dtype: int64
 </div>
 </div>
 <p>That was easy! For reference, here’s the <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> equivalent (since <code>append</code> was <a href="https://github.com/pandas-dev/pandas/issues/35407">deprecated</a>):</p>
-<div id="4f542802" class="cell" data-execution_count="16">
+<div id="fd0f875f" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to a vanilla dataframe</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> df.to_pandas() </span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1014,7 +1014,7 @@ Name: 1, dtype: int64
 </div>
 <p>That’s rather a pain to type, and if you mess up (e.g.&nbsp;type <code>newrow</code> instead of <code>[newrow]</code>), in some cases it won’t even fail, just give you the wrong result! Crikey.</p>
 <p>Just like how <a href="../api/sc_math.html#sciris.sc_math.cat" title="0"><code>sc.cat()</code></a> will take anything vaguely arrayish and turn it into an actual array, <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe.cat" title="0"><code>sc.dataframe.cat()</code></a> will do the same thing:</p>
-<div id="c63a6a13" class="cell" data-execution_count="17">
+<div id="54fc0ef9" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe.cat(</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    sc.dataframe(x<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>], y<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>]), <span class="co"># Actual dataframe</span></span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">dict</span>(x<span class="op">=</span>[<span class="st">'c'</span>,<span class="st">'d'</span>], y<span class="op">=</span>[<span class="dv">3</span>,<span class="dv">4</span>]),         <span class="co"># Dict of data</span></span>
@@ -1469,7 +1469,7 @@ Name: 1, dtype: int64
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.5.2 (2026-10-16).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.6.0 (2026-10-19).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

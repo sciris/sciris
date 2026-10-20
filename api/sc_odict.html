@@ -555,13 +555,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#sciris.sc_odict.dictobj.to_json" id="toc-sciris.sc_odict.dictobj.to_json" class="nav-link" data-scroll-target="#sciris.sc_odict.dictobj.to_json">to_json</a></li>
   </ul></li>
   </ul></li>
-  <li><a href="#sciris.sc_odict.objdict" id="toc-sciris.sc_odict.objdict" class="nav-link" data-scroll-target="#sciris.sc_odict.objdict">objdict</a>
+  <li><a href="#sciris.sc_odict.obj" id="toc-sciris.sc_odict.obj" class="nav-link" data-scroll-target="#sciris.sc_odict.obj">obj</a>
   <ul class="collapse">
   <li><a href="#methods-2" id="toc-methods-2" class="nav-link" data-scroll-target="#methods-2">Methods</a>
   <ul class="collapse">
-  <li><a href="#sciris.sc_odict.objdict.delattribute" id="toc-sciris.sc_odict.objdict.delattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.objdict.delattribute">delattribute</a></li>
-  <li><a href="#sciris.sc_odict.objdict.getattribute" id="toc-sciris.sc_odict.objdict.getattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.objdict.getattribute">getattribute</a></li>
-  <li><a href="#sciris.sc_odict.objdict.setattribute" id="toc-sciris.sc_odict.objdict.setattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.objdict.setattribute">setattribute</a></li>
+  <li><a href="#sciris.sc_odict.obj.delattribute" id="toc-sciris.sc_odict.obj.delattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.obj.delattribute">delattribute</a></li>
+  <li><a href="#sciris.sc_odict.obj.getattribute" id="toc-sciris.sc_odict.obj.getattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.obj.getattribute">getattribute</a></li>
+  <li><a href="#sciris.sc_odict.obj.setattribute" id="toc-sciris.sc_odict.obj.setattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.obj.setattribute">setattribute</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#sciris.sc_odict.odict" id="toc-sciris.sc_odict.odict" class="nav-link" data-scroll-target="#sciris.sc_odict.odict">odict</a>
@@ -644,7 +644,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="doc-section doc-section-highlights anchored" data-anchor-id="highlights">Highlights</h2>
 <ul>
 <li><a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>: flexible container representing the best-of-all-worlds across dicts, lists, and arrays</li>
-<li><a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>objdict</code></a>: like an odict, but allows get/set via e.g.&nbsp;<code>foo.bar</code> instead of <code>foo['bar']</code></li>
+<li><a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a>: like an odict, but allows get/set via e.g.&nbsp;<code>foo.bar</code> instead of <code>foo['bar']</code></li>
 </ul>
 </section>
 <section id="classes" class="level2">
@@ -670,7 +670,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Lightweight class to create an object that can also act like a dictionary.</td>
 </tr>
 <tr class="even">
-<td><a href="#sciris.sc_odict.objdict">objdict</a></td>
+<td><a href="#sciris.sc_odict.obj">obj</a></td>
 <td>An <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> that acts like an object – allow keys to be set/retrieved by object</td>
 </tr>
 <tr class="odd">
@@ -724,7 +724,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>args</td>
-<td><a href="../api/sc_odict.html#sciris.sc_odict.objdict">objdict</a></td>
+<td><code>sc</code>.<a href="../api/sc_odict.html#sciris.sc_odict.obj">obj</a></td>
 <td>a dictionary-like object with the arguments</td>
 </tr>
 </tbody>
@@ -828,7 +828,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>obj.a <span class="op">=</span> <span class="dv">5</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>obj[<span class="st">'b'</span>] <span class="op">=</span> <span class="dv">10</span></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(obj.items())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>For a more powerful alternative, see <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>.</p>
+<p>For a more powerful alternative, see <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a>.</p>
 <p>The keys and the attributes are the same thing (the dict is its own <code>__dict__</code>), so it is as fast as a plain object for attributes and nearly as fast as a plain dict for items. This also means that keys can overwrite methods (e.g.&nbsp;<code>obj.items = 5</code>).</p>
 <ul>
 <li><em>New in version 1.3.0.</em></li>
@@ -870,29 +870,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 </section>
 </section>
-<section id="sciris.sc_odict.objdict" class="level3">
-<h3 class="anchored" data-anchor-id="sciris.sc_odict.objdict">objdict</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sc_odict.objdict(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="sciris.sc_odict.obj" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_odict.obj">obj</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sc_odict.obj(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>An <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> that acts like an object – allow keys to be set/retrieved by object notation.</p>
-<p>In general, operations that would normally act on attributes (e.g.&nbsp;<code>obj.x = 3</code>) instead act on dict keys (e.g.&nbsp;<code>obj['x'] = 3</code>). If you want to actually get/set an attribute, use <code>obj.getattribute()</code>/<code>obj.setattribute()</code>.</p>
-<p><code>sc.obj()</code> is an alias for <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>.</p>
+<p>In general, operations that would normally act on attributes (e.g.&nbsp;<code>obj.x = 3</code>) instead act on dict keys (e.g.&nbsp;<code>obj['x'] = 3</code>). If you want to actually get/set an attribute, use <a href="../api/sc_odict.html#sciris.sc_odict.obj.getattribute" title="0"><code>obj.getattribute()</code></a>/<a href="../api/sc_odict.html#sciris.sc_odict.obj.setattribute" title="0"><code>obj.setattribute()</code></a>.</p>
+<p><code>sc.objdict()</code> is an alias for <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a>.</p>
 <p>For a lighter-weight example (an object that acts like a dict), see <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a>.</p>
 <p><strong>Examples</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>obj <span class="op">=</span> sc.objdict(foo<span class="op">=</span><span class="dv">3</span>, bar<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>obj <span class="op">=</span> sc.obj(foo<span class="op">=</span><span class="dv">3</span>, bar<span class="op">=</span><span class="dv">2</span>)</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>obj.foo <span class="op">+</span> obj.bar <span class="co"># Gives 5</span></span>
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key <span class="kw">in</span> obj.keys(): <span class="co"># It's still a dict</span></span>
 <span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    obj[key] <span class="op">=</span> <span class="dv">10</span></span>
 <span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>od <span class="op">=</span> sc.objdict({<span class="st">'height'</span>:<span class="fl">1.65</span>, <span class="st">'mass'</span>:<span class="dv">59</span>})</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>od <span class="op">=</span> sc.obj({<span class="st">'height'</span>:<span class="fl">1.65</span>, <span class="st">'mass'</span>:<span class="dv">59</span>})</span>
 <span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>od.bmi <span class="op">=</span> od.mass<span class="op">/</span>od.height<span class="op">**</span><span class="dv">2</span></span>
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>od[<span class="st">'bmi'</span>] <span class="op">=</span> od[<span class="st">'mass'</span>]<span class="op">/</span>od[<span class="st">'height'</span>]<span class="op">**</span><span class="dv">2</span> <span class="co"># Vanilla syntax still works</span></span>
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>od.keys <span class="op">=</span> <span class="dv">3</span> <span class="co"># This raises an exception (you can't overwrite the keys() method)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Nested logic based in part on addict: https://github.com/mewwts/addict</p>
 <p>For a lighter-weight equivalent (based on <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> instead of <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>), see <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a>.</p>
 <ul>
-<li><em>New in version 3.5.0:</em> <code>sc.obj()</code> alias; much faster attribute access</li>
+<li><em>New in version 3.5.0:</em> <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> alias; much faster attribute access</li>
+<li><em>New in version 3.6.0:</em> <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> is the class and <code>sc.objdict</code> the alias; faster creation, integer indexing, and failed attribute lookups</li>
 </ul>
 <section id="methods-2" class="level4">
 <h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
@@ -905,32 +906,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#sciris.sc_odict.objdict.delattribute">delattribute</a></td>
+<td><a href="#sciris.sc_odict.obj.delattribute">delattribute</a></td>
 <td>Delete attribute if truly desired</td>
 </tr>
 <tr class="even">
-<td><a href="#sciris.sc_odict.objdict.getattribute">getattribute</a></td>
+<td><a href="#sciris.sc_odict.obj.getattribute">getattribute</a></td>
 <td>Get attribute if truly desired</td>
 </tr>
 <tr class="odd">
-<td><a href="#sciris.sc_odict.objdict.setattribute">setattribute</a></td>
+<td><a href="#sciris.sc_odict.obj.setattribute">setattribute</a></td>
 <td>Set attribute if truly desired</td>
 </tr>
 </tbody>
 </table>
-<section id="sciris.sc_odict.objdict.delattribute" class="level5">
-<h5 class="anchored" data-anchor-id="sciris.sc_odict.objdict.delattribute">delattribute</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc_odict.objdict.delattribute(name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="sciris.sc_odict.obj.delattribute" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_odict.obj.delattribute">delattribute</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc_odict.obj.delattribute(name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Delete attribute if truly desired</p>
 </section>
-<section id="sciris.sc_odict.objdict.getattribute" class="level5">
-<h5 class="anchored" data-anchor-id="sciris.sc_odict.objdict.getattribute">getattribute</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sc_odict.objdict.getattribute(name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="sciris.sc_odict.obj.getattribute" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_odict.obj.getattribute">getattribute</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sc_odict.obj.getattribute(name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Get attribute if truly desired</p>
 </section>
-<section id="sciris.sc_odict.objdict.setattribute" class="level5">
-<h5 class="anchored" data-anchor-id="sciris.sc_odict.objdict.setattribute">setattribute</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sc_odict.objdict.setattribute(name, value, force<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="sciris.sc_odict.obj.setattribute" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_odict.obj.setattribute">setattribute</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sc_odict.obj.setattribute(name, value, force<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Set attribute if truly desired</p>
 </section>
 </section>
@@ -2233,7 +2234,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.5.2 (2026-10-16).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.6.0 (2026-10-19).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

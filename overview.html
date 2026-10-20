@@ -518,7 +518,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="where-did-sciris-come-from" class="level3">
 <h3 class="anchored" data-anchor-id="where-did-sciris-come-from">Where did Sciris come from?</h3>
 <p>Development of Sciris began in 2014 to support development of the <a href="http://optimamodel.com">Optima</a> suite of models. We kept encountering the same issues and inconveniences over and over while building scientific webapps, and began collecting the tools we used to overcome these issues into a shared library. This library evolved into Sciris. (Note: while “Sciris” doesn’t mean anything, “iris” means “rainbow” in Greek, and the name was loosely inspired by the wide spectrum of scientific computing features included in Sciris.)</p>
-<p>To give a based-on-a-true-story example, let’s say you have a dictionary of results for multiple runs of your model, called <code>results</code>. The output of each model run is itself a dictionary, with keys such as <code>name</code> and <code>data</code>. Now let’s say you want to access the data from the first model run. Using plain Python dictionaries, this would be <code>results[list(results.keys())[0]]['data']</code>. Using a Sciris <a href="./api/sc_odict.html#sciris.sc_odict.objdict"><span><code>sc.objdict</code></span></a>, this is <code>results[0].data</code> – almost 3x shorter.</p>
+<p>To give a based-on-a-true-story example, let’s say you have a dictionary of results for multiple runs of your model, called <code>results</code>. The output of each model run is itself a dictionary, with keys such as <code>name</code> and <code>data</code>. Now let’s say you want to access the data from the first model run. Using plain Python dictionaries, this would be <code>results[list(results.keys())[0]]['data']</code>. Using a Sciris <code>sc.objdict</code>, this is <code>results[0].data</code> – almost 3x shorter.</p>
 </section>
 <section id="where-has-sciris-been-used" class="level3">
 <h3 class="anchored" data-anchor-id="where-has-sciris-been-used">Where has Sciris been used?</h3>
@@ -532,7 +532,7 @@ ul.task-list li input[type="checkbox"] {
 <h3 class="anchored" data-anchor-id="containers">Containers</h3>
 <ul>
 <li><a href="./api/sc_odict.html#sciris.sc_odict.odict"><span><code>sc.odict()</code></span></a>: flexible container representing the best-of-all-worlds across lists, dicts, and arrays</li>
-<li><a href="./api/sc_odict.html#sciris.sc_odict.objdict"><span><code>sc.objdict()</code></span></a>: like an odict, but allows get/set via e.g.&nbsp;<code>foo.bar</code> instead of <code>foo['bar']</code></li>
+<li><code>sc.objdict()</code>: like an odict, but allows get/set via e.g.&nbsp;<code>foo.bar</code> instead of <code>foo['bar']</code></li>
 </ul>
 </section>
 <section id="array-operations" class="level3">
@@ -1049,7 +1049,7 @@ ul.task-list li input[type="checkbox"] {
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.5.2 (2026-10-16).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.6.0 (2026-10-19).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">
