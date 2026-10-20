@@ -147,6 +147,16 @@ def test_repr():
     qq.disp(maxitems=15)
     qq[:] = 4
     assert all([v==4 for v in qq.values()])
+
+    # Test obj repr: short on one line, long with one key per line
+    assert repr(sc.obj(a=3, b=sc.obj(c=5))) == 'sc.obj(a=3, b=sc.obj(c=5))'
+    assert repr(sc.obj({'my key':1})) == "sc.obj({'my key': 1})"
+    long = sc.obj(x=np.arange(20).reshape(2,10), y=sc.obj(z='a string long enough to go over the line width'))
+    print(long)
+    assert repr(long).splitlines()[0] == 'sc.obj('
+    selfref = sc.obj(a=1)
+    selfref.b = selfref
+    assert repr(selfref) == 'sc.obj(a=1, b=sc.obj(...))'
     return
 
 
@@ -296,6 +306,10 @@ def test_asobj():
         myobjdict.setattribute('keys', 4)
 
     assert sc.obj is sc.objdict # Alias
+    assert 'x' in dir(sc.obj(x=1)) # For tab completion
+    assert isinstance(sc.obj(a=1) | {'b':2}, sc.obj) and isinstance({'b':2} | sc.obj(a=1), sc.obj)
+    with pytest.warns(UserWarning):
+        sc.obj(index=3) # Key can't be accessed as an attribute
 
     print('Testing dictobj')
     obj = sc.dictobj(x=4, y=6)
