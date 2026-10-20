@@ -3,12 +3,13 @@ The "odict" class, combining features from an OrderedDict and a list/array.
 
 Highlights:
     - `sc.odict()`: flexible container representing the best-of-all-worlds across dicts, lists, and arrays
-    - `objdict`: like an odict, but allows get/set via e.g. `foo.bar` instead of `foo['bar']`
+    - `sc.obj()`: like an odict, but allows get/set via e.g. `foo.bar` instead of `foo['bar']`
 """
 import re
 import sys
 import json
 import copyreg
+import warnings
 import numpy as np
 import collections as co
 import sciris as sc
@@ -21,6 +22,9 @@ ddict = co.defaultdict # Define alias
 
 # Critical attributes that should be resolved immediately, not via any special handling
 _fundamental_attrs = frozenset(['__class__', '__reduce__', '__reduce_ex__', '__getstate__', '__setstate__', '__copy__','__deepcopy__'])
+
+# Attribute names of each sc.obj class, cached so keys can be checked against them quickly
+_class_attrs = {}
 
 
 class counter(co.Counter):
@@ -147,15 +151,14 @@ class odict(dict):
         """ Combine the init properties of both OrderedDict and defaultdict """
 
         # Standard init
-        mapping = dict(*args, **kwargs)
-        dict.update(self, mapping)
+        dict.__init__(self, *args, **kwargs)
 
         # Handle defaultdict
         if defaultdict is not None:
             if defaultdict != 'nested' and not callable(defaultdict): # pragma: no cover
                 errormsg = f'The defaultdict argument must be either "nested" or callable, not {type(defaultdict)}'
                 raise TypeError(errormsg)
-            self._setattr('_defaultdict', defaultdict) # Use object.__setattr__() since setattr() is overridden by sc.objdict()
+            self._setattr('_defaultdict', defaultdict) # Use object.__setattr__() since setattr() is overridden by sc.obj()
 
         return
 
@@ -164,6 +167,14 @@ class odict(dict):
     def _new(cls, *args, **kwargs):
         """ Constructor for a new instance -- used in place of self.__class__() """
         return cls(*args, **kwargs)
+
+
+    def __getstate__(self):
+        """ Don't pickle or copy the cached keys """
+        state = self.__dict__.copy()
+        state.pop('_cached_keys', None)
+        state.pop('_stale', None)
+        return state
 
 
     def _cache_keys(self):
@@ -439,8 +450,26 @@ class odict(dict):
 
     def _repr_pretty_(self, p, cycle, *args, **kwargs): # pragma: no cover
         """ Function to fix __repr__ in IPython"""
-        print(self.__repr__(*args, **kwargs))
+        p.text(self.__repr__(*args, **kwargs))
         return
+
+
+    def __or__(self, other):
+        """ Merge with `|`, returning the same type as this dict """
+        if not isinstance(other, dict):
+            return NotImplemented
+        new = self.copy()
+        new.update(other)
+        return new
+
+
+    def __ror__(self, other):
+        """ Merge with `|` when this dict is on the right, e.g. `{'a':1} | sc.odict(b=2)` """
+        if not isinstance(other, dict):
+            return NotImplemented
+        new = self._new(other)
+        new.update(self)
+        return new
 
 
     def __add__(self, dict2):
@@ -1253,7 +1282,7 @@ class odict(dict):
 #%% Other classes
 ##############################################################################
 
-class objdict(odict):
+class obj(odict):
     """
     An `odict` that acts like an object -- allow keys to be set/retrieved by object
     notation.
@@ -1262,7 +1291,7 @@ class objdict(odict):
     instead act on dict keys (e.g. `obj['x'] = 3`). If you want to actually get/set
     an attribute, use `obj.getattribute()`/`obj.setattribute()`.
 
-    `sc.obj()` is an alias for `sc.objdict()`.
+    `sc.objdict()` is an alias for `sc.obj()`.
 
     For a lighter-weight example (an object that acts like a dict), see `sc.dictobj()`.
 
@@ -1271,12 +1300,12 @@ class objdict(odict):
     ```python
     import sciris as sc
 
-    obj = sc.objdict(foo=3, bar=2)
+    obj = sc.obj(foo=3, bar=2)
     obj.foo + obj.bar # Gives 5
     for key in obj.keys(): # It's still a dict
         obj[key] = 10
 
-    od = sc.objdict({'height':1.65, 'mass':59})
+    od = sc.obj({'height':1.65, 'mass':59})
     od.bmi = od.mass/od.height**2
     od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
     od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
@@ -1287,21 +1316,93 @@ class objdict(odict):
     `sc.dictobj()`.
 
     - *New in version 3.5.0:* `sc.obj()` alias; much faster attribute access
+    - *New in version 3.6.0:* `sc.obj` is the class and `sc.objdict` the alias; faster creation, integer indexing, and failed attribute lookups
     """
 
     def __init__(self, *args, **kwargs):
-        nested_parent = kwargs.pop('_nested_parent', None)
-        nested_attr  = kwargs.pop('_nested_attr', None)
-        if nested_parent is not None:
-            object.__setattr__(self, '_nested_parent', nested_parent)
-            object.__setattr__(self, '_nested_attr', nested_attr)
-        odict.__init__(self, *args, **kwargs) # Standard init
+        odict.__init__(self, *args, **kwargs)
+        if kwargs: # Warn if a keyword argument, e.g. sc.obj(index=3), can't be accessed as an attribute
+            attrs = _class_attrs.get(type(self))
+            if attrs is None:
+                attrs = _class_attrs[type(self)] = frozenset(dir(type(self)))
+            for key in attrs.intersection(kwargs):
+                warnmsg = f'Key "{key}" has the same name as an attribute of {type(self).__name__}, so obj.{key} will not return it; use obj["{key}"] instead'
+                warnings.warn(warnmsg, category=UserWarning, stacklevel=2)
         return
 
 
     def __repr__(self, *args, **kwargs):
-        """ Use odict repr, but with a custom class name and no quotes """
-        return odict.__repr__(self, quote='', numsep='.', classname=self.__class__.__name__, *args, **kwargs)
+        """
+        Show e.g. `sc.obj(a=1, b=2)`, or one key per line if that's too long
+
+        If arguments are supplied (e.g. `sigfigs`), use the `sc.odict()` format instead.
+        """
+        if args or kwargs:
+            return odict.__repr__(self, *args, quote='', numsep='.', classname=type(self).__name__, **kwargs)
+        return self._repr()
+
+
+    def _repr(self, width=80, maxitems=200, _seen=None):
+        """ Create the repr, recursing into child objs """
+        name = 'sc.obj' if type(self) is obj else type(self).__name__
+        if not len(self):
+            return f'{name}()'
+        if _seen is None:
+            _seen = set()
+        if id(self) in _seen: # Handle an obj that contains itself
+            return f'{name}(...)'
+        _seen = _seen | {id(self)}
+
+        # Get the keys and values to show
+        keys = self.keys()
+        nkeys = len(keys)
+        if nkeys > maxitems:
+            half = maxitems//2
+            keys = keys[:half] + keys[-half:]
+        kwstyle = all(isinstance(k, str) and k.isidentifier() for k in keys) # Use keyword style, e.g. a=1, if possible
+        keystrs = keys if kwstyle else [repr(k) for k in keys]
+        keylen = max(len(k) for k in keystrs)
+        valwidth = width - keylen - 7 # Room left on the line after the indent and key
+        valstrs = []
+        for key in keys:
+            val = dict.__getitem__(self, key)
+            try:
+                if isinstance(val, obj):
+                    valstr = val._repr(width=valwidth, maxitems=maxitems, _seen=_seen)
+                elif sc.isnumber(val):
+                    valstr = str(val) # Avoid e.g. "np.float64(0.5)"
+                else:
+                    valstr = repr(val)
+            except Exception as E: # pragma: no cover
+                valstr = f'<{type(val).__name__} repr failed: {E}>'
+            valstrs.append(valstr)
+
+        # Try the short form, e.g. sc.obj(a=1, b=2)
+        if kwstyle:
+            short = f'{name}(' + ', '.join(f'{k}={v}' for k,v in zip(keystrs, valstrs)) + ')'
+        else:
+            short = f'{name}({{' + ', '.join(f'{k}: {v}' for k,v in zip(keystrs, valstrs)) + '})'
+        if nkeys <= maxitems and len(short) <= width and '\n' not in short:
+            return short
+
+        # Otherwise, show one key per line
+        lines = [f'{name}(' if kwstyle else f'{name}({{']
+        for i,(keystr,valstr) in enumerate(zip(keystrs, valstrs)):
+            if nkeys > maxitems and i == half:
+                lines.append(f'    # [{nkeys - maxitems} additional items not shown]')
+            prefix = f'    {keystr:<{keylen}} = ' if kwstyle else f'    {keystr+":":<{keylen+1}} '
+            if isinstance(dict.__getitem__(self, keys[i]), obj):
+                valstr = valstr.replace('\n', '\n    ') # Indent child objs by one level
+            else:
+                valstr = valstr.replace('\n', '\n' + ' '*len(prefix)) # Align e.g. arrays with the start of the value
+            lines.append(f'{prefix}{valstr},')
+        lines.append(')' if kwstyle else '})')
+        return '\n'.join(lines)
+
+
+    def __dir__(self):
+        """ Include keys, for tab completion """
+        return object.__dir__(self) + [k for k in dict.keys(self) if isinstance(k, str) and k.isidentifier()]
 
 
     def __getattr__(self, attr):
@@ -1311,11 +1412,10 @@ class objdict(odict):
                 return dict.__getitem__(self, attr)
             except KeyError:
                 pass
+            if self.__dict__.get('_defaultdict') is not None:
+                return self.__getitem__(attr)
         errormsg = f"'{type(self).__name__}' object has no attribute '{attr}'"
-        exception = AttributeError(errormsg, name=attr, obj=self)
-        if attr in _fundamental_attrs:
-            raise exception
-        return self.__getitem__(attr, exception=exception) # Handle defaults, or else raise the exception
+        raise AttributeError(errormsg, name=attr, obj=self)
 
 
     def __setattr__(self, name, value):
@@ -1329,33 +1429,36 @@ class objdict(odict):
             return self.__setitem__(name, value)
 
 
-    def __getitem__(self, attr, exception=None):
+    def __getitem__(self, attr):
         """ Handle dict keys, including nested defaultdict logic """
         try: # Try retrieving normally
             return dict.__getitem__(self, attr)
         except Exception:
             pass
-        try: # Then try integers, slices, etc.
-            return odict.__getitem__(self, attr, allow_default=False) # Do not allow odict to handle default
-        except Exception as E2: # If that fails, raise the original exception
-            _defaultdict = self.__dict__.get('_defaultdict') # Handle defaultdict behavior by first checking if it exists
-            if _defaultdict is not None: # If it does, use it, then get the key again
-                if _defaultdict == 'nested':
-                    return self._new(defaultdict='nested', _nested_parent=self, _nested_attr=attr) # Create a recursive object with links back to the ultimate parent
-                else:
-                    dd = _defaultdict() # Create the new object
-                    self[attr] = dd # Since we don't know what this object is, we can't be clever about recursion
-                    return dd
-            else:
-                if exception:
-                    raise exception
-                else:
-                    raise E2
+        if isinstance(attr, sc._numtype): # Integer index
+            return dict.__getitem__(self, self._ikey(attr))
+        _defaultdict = self.__dict__.get('_defaultdict') # Handle defaultdict behavior by first checking if it exists
+        if _defaultdict is None or not isinstance(attr, (str, tuple)):
+            return odict.__getitem__(self, attr, allow_default=False) # Slices, lists, etc., or raise the KeyError
+        elif _defaultdict == 'nested': # Create a recursive object with links back to the ultimate parent
+            dd = self._new(defaultdict='nested')
+            object.__setattr__(dd, '_nested_parent', self)
+            object.__setattr__(dd, '_nested_attr', attr)
+            return dd
+        else:
+            dd = _defaultdict() # Create the new object
+            self[attr] = dd # Since we don't know what this object is, we can't be clever about recursion
+            return dd
 
 
     def __setitem__(self, name, value):
         """ Set as a dict item """
-        odict.__setitem__(self, name, value)
+        if isinstance(name, str): # Fast path for the usual case
+            if not dict.__contains__(self, name):
+                object.__setattr__(self, '_stale', True) # Flag to refresh the cached keys
+            dict.__setitem__(self, name, value)
+        else:
+            odict.__setitem__(self, name, value)
         attrs = self.__dict__
         if '_nested_parent' in attrs:
             attrs['_nested_parent'][attrs['_nested_attr']] = self
@@ -1381,7 +1484,7 @@ class objdict(odict):
     def setattribute(self, name, value, force=False):
         """ Set attribute if truly desired """
         if hasattr(self.__class__, name) and not force:
-            errormsg = f'objdict attribute "{name}" is read-only'
+            errormsg = f'{type(self).__name__} attribute "{name}" is read-only'
             raise AttributeError(errormsg)
         return object.__setattr__(self, name, value)
 
@@ -1391,7 +1494,7 @@ class objdict(odict):
         return object.__delattr__(self, name)
 
 
-obj = objdict # Define alias
+objdict = obj # Define alias
 
 
 class dictobj(dict):
@@ -1406,7 +1509,7 @@ class dictobj(dict):
     obj['b'] = 10
     print(obj.items())
     ```
-    For a more powerful alternative, see `sc.objdict()`.
+    For a more powerful alternative, see `sc.obj()`.
 
     The keys and the attributes are the same thing (the dict is its own `__dict__`),
     so it is as fast as a plain object for attributes and nearly as fast as a plain
@@ -1530,7 +1633,7 @@ def asobj(obj, strict=True):
     return objobj(obj)
 
 
-class argparse(objdict):
+class argparse(obj):
     """ Ultra-simple argument parser
 
     Accepts positional or keyword arguments, and converts them to the correct type.
@@ -1542,7 +1645,7 @@ class argparse(objdict):
         **kwargs (dict): keyword arguments to add to the parser
 
     Returns:
-        args (objdict): a dictionary-like object with the arguments
+        args (sc.obj): a dictionary-like object with the arguments
 
     **Examples**:
 

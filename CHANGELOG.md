@@ -4,6 +4,15 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 3.6.0 (2026-10-19)
+
+1. `sc.obj` is now the class name, and `sc.objdict` an alias for it (previously the reverse). Files saved with earlier versions of Sciris still load, but files saved with this version need Sciris 3.5.0 or later to load. New code should use `sc.obj()` rather than `sc.objdict()`.
+1. `sc.obj()` has a new repr: short ones are shown on one line, e.g. `sc.obj(a=3, b=5)`, and longer ones with one key per line, in the same keyword style. `sc.obj.disp()` still shows the previous numbered format. Subclasses (e.g. `Pars` in Starsim) show their own class name.
+1. `sc.obj()` is faster: creating one is about twice as fast, setting a key about 40% faster, indexing by position (`obj[0]`) about twice as fast, and failed attribute lookups (e.g. `hasattr(obj, 'x')`) about 6 times faster. Pickles and copies no longer include the cached list of keys.
+1. Keys of `sc.obj()` now tab-complete in IPython and Jupyter.
+1. `sc.obj(index=3)` and other keyword arguments with the same name as a method now raise a warning, since e.g. `obj.index` returns the method rather than the key.
+1. Merging an `sc.odict()` or `sc.obj()` with a dict using `|` now returns the same type, rather than a plain `dict`.
+
 ## Version 3.5.2 (2026-10-16)
 
 1. `sc.urlopen()` and `sc.download()` have a new `timeout` argument (default 30 seconds; `None` waits forever, as before), and a new `progress` argument to show a progress bar.
