@@ -4,6 +4,10 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 3.6.1 (2026-10-22)
+
+1. `sc.iterobj()` and `sc.search()` are faster when skipping many objects by ID (e.g. `skip=dict(ids=[...])`), since the IDs are now checked in constant time.
+
 ## Version 3.6.0 (2026-10-19)
 
 1. `sc.obj` is now the class name, and `sc.objdict` an alias for it (previously the reverse). Files saved with earlier versions of Sciris still load, but files saved with this version need Sciris 3.5.0 or later to load. New code should use `sc.obj()` rather than `sc.objdict()`.

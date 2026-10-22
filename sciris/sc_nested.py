@@ -446,7 +446,7 @@ class IterObj:
                     raise TypeError(errormsg)
 
         self._skip_keys       = tuple(skip_keys)
-        self._skip_ids        = tuple(skip_ids)
+        self._skip_ids        = set(skip_ids) # Set for fast lookup, since there may be many
         self._skip_subclasses = tuple(skip_subclasses)
         self._skip_instances  = tuple(skip_instances)
 
