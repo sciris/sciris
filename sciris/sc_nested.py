@@ -445,7 +445,10 @@ class IterObj:
                     errormsg = f'Expecting skip entries to be keys, classes or object IDs, not {entry}'
                     raise TypeError(errormsg)
 
-        self._skip_keys       = tuple(skip_keys)
+        try:
+            self._skip_keys   = set(skip_keys) # Set so that keys are compared by hash first, rather than calling == on every key
+        except TypeError: # Unhashable skip keys
+            self._skip_keys   = tuple(skip_keys)
         self._skip_ids        = set(skip_ids) # Set for fast lookup, since there may be many
         self._skip_subclasses = tuple(skip_subclasses)
         self._skip_instances  = tuple(skip_instances)
@@ -556,7 +559,10 @@ class IterObj:
             self.indent(f'Not descending into "{key}" since it has already been parsed')
 
         # Skip this object if we've been asked to
-        key_skip = key in self._skip_keys
+        try:
+            key_skip = key in self._skip_keys
+        except Exception: # Unhashable key, or an __eq__ that raises (e.g. on comparison with a string)
+            key_skip = False
         id_skip = (newid in self._skip_ids)
         subclass_skip = issubclass(type(subobj), self._skip_subclasses)
         instance_skip = isinstance(subobj, self._skip_instances)
