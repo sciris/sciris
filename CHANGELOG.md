@@ -4,7 +4,7 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
-## Version 3.6.1 (2026-10-22)
+## Version 3.6.1 (2026-10-26)
 
 1. `sc.iterobj()` and `sc.search()` are faster when skipping many objects by ID (e.g. `skip=dict(ids=[...])`), since the IDs are now checked in constant time. They also no longer call `==`, which is faster and avoids errors.
 
