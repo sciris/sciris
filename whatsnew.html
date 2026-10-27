@@ -451,6 +451,7 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#whats-new" id="toc-whats-new" class="nav-link active" data-scroll-target="#whats-new">What’s new</a>
   <ul>
+  <li><a href="#version-3.6.1-2026-10-26" id="toc-version-3.6.1-2026-10-26" class="nav-link" data-scroll-target="#version-3.6.1-2026-10-26">Version 3.6.1 (2026-10-26)</a></li>
   <li><a href="#version-3.6.0-2026-10-19" id="toc-version-3.6.0-2026-10-19" class="nav-link" data-scroll-target="#version-3.6.0-2026-10-19">Version 3.6.0 (2026-10-19)</a></li>
   <li><a href="#version-3.5.2-2026-10-16" id="toc-version-3.5.2-2026-10-16" class="nav-link" data-scroll-target="#version-3.5.2-2026-10-16">Version 3.5.2 (2026-10-16)</a></li>
   <li><a href="#version-3.5.1-2026-10-15" id="toc-version-3.5.1-2026-10-15" class="nav-link" data-scroll-target="#version-3.5.1-2026-10-15">Version 3.5.1 (2026-10-15)</a></li>
@@ -643,6 +644,12 @@ ul.task-list li input[type="checkbox"] {
 <h1>What’s new</h1>
 <p>All major updates to Sciris are documented here.</p>
 <p>By import convention, components of the Sciris library are listed beginning with <code>sc.</code>, e.g.&nbsp;<a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>.</p>
+<section id="version-3.6.1-2026-10-26" class="level2">
+<h2 class="anchored" data-anchor-id="version-3.6.1-2026-10-26">Version 3.6.1 (2026-10-26)</h2>
+<ol type="1">
+<li><a href="./api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> and <a href="./api/sc_nested.html#sciris.sc_nested.search" title="0"><code>sc.search()</code></a> are faster when skipping many objects by ID (e.g.&nbsp;<code>skip=dict(ids=[...])</code>), since the IDs are now checked in constant time. They also no longer call <code>==</code>, which is faster and avoids errors.</li>
+</ol>
+</section>
 <section id="version-3.6.0-2026-10-19" class="level2">
 <h2 class="anchored" data-anchor-id="version-3.6.0-2026-10-19">Version 3.6.0 (2026-10-19)</h2>
 <ol type="1">
@@ -2483,7 +2490,7 @@ ul.task-list li input[type="checkbox"] {
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.6.0 (2026-10-19).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.6.1 (2026-10-26).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

@@ -546,7 +546,7 @@ Warning
 <h3 class="anchored" data-anchor-id="saving-and-loading-literally-anything">Saving and loading literally anything</h3>
 <p>Let’s assume you’re mostly just saving and loading files you’ve created yourself or from trusted colleagues, not opening email attachments from the branch of the local mafia. Then everything here is absolutely fine.</p>
 <p>Let’s revisit our sim from the first tutorial:</p>
-<div id="743f43e9" class="cell" data-execution_count="1">
+<div id="8f2dcd1e" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -567,7 +567,7 @@ Warning
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>            plt.plot(<span class="va">self</span>.x, <span class="va">self</span>.y, alpha<span class="op">=</span><span class="fl">0.6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Now let’s run it, save it, reload it, and keep working with the reloaded version:</p>
-<div id="dcb1e88a" class="cell" data-execution_count="2">
+<div id="ff136d4b" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run and save</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> Sim(days<span class="op">=</span><span class="dv">30</span>, trials<span class="op">=</span><span class="dv">5</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>sim.run()</span>
@@ -592,7 +592,7 @@ Warning
 <p>While <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a> and <a href="../api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a> are great for many things, they <em>aren’t</em> great for just sharing data. First, they’re not compatible with anything other than Sciris, so if you try to share one of those files with, say, an R user, they won’t be able to open them.</p>
 <p>If you just have data and don’t need to save custom objects, you should save just the data. If you want to save to CSV or Excel (i.e., data that looks like a spreadsheet), you should convert it to a dataframe (<code>df = sc.dataframe(data)</code>), then save it from there (<code>df.to_excel()</code> and <code>df.to_csv()</code>, respectively).</p>
 <p>But if you want to save data that’s a little more complex, you should consider JSON: it’s fast, it’s easy for humans to read, and absolutely everything loads it. While typically a JSON maps onto a Python <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>, Sciris will take pretty much any object and save out the JSONifiable parts of it:</p>
-<div id="c900a658" class="cell" data-execution_count="3">
+<div id="f4d966d9" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Try saving our sim as a JSON</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>sc.savejson(<span class="st">'my-sim.json'</span>, sim)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -600,16 +600,16 @@ Warning
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>sim_json <span class="op">=</span> sc.loadjson(<span class="st">'my-sim.json'</span>)</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sim_json)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>{'python_class': "&lt;class '__main__.Sim'&gt;", 'days': 30, 'trials': 5, 'x': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 'y': [[-1.7513368010226409, 0.01045532080309933, 1.7844945518915725, -0.005733647153763144, 1.2099969145502403e-05], [3.352188117137278, 2.5269779152334446, 6.737183055226463, 0.34367627323335853, 0.005146701354661796], [-0.006129359009971136, 2.4086145646493784, 6.707397155240087, 0.34312539347956383, 0.6913333454086569], [-0.0035948419874588795, 2.4202675164871548, -1.2309835326428473, 0.00733490524909286, 3.398927274193923], [-0.0035956276022412227, 6.015556740293515, -0.7236122789279226, 3.9591771827198583, 3.342198000318115], [-0.003009535699523819, 1.8709637528839096, -0.6986520643546227, 2.7833992959846086, 2.5582364517305103], [-0.023903528986596374, 1.8709612111812024, 0.0068778247535600245, 2.7833981824401475, 2.0403236044617934], [0.024144917567880668, -1.0131215785360712, -0.21767544941538808, 3.4445050530394994, 2.0403078450512147], [1.131367826527958, -1.481616538380561, -0.3534097186140979, 3.893722357587298, 1.9524653784038122], [1.1313875880176512, -2.692345694277413, -0.5888406184924772, 3.795217439040119, 2.039195711125374], [-5.825238052484279, -2.60143405888565, -0.5364372924043526, 3.783770054130459, 2.2664461237104074], [-14.397408816843733, -2.6014743066665753, -0.19764842831355084, 3.258038280458554, -12.615561784687142], [-15.475502788939398, -1.939333563164227, -0.438456261737996, 5.96969914107137, -12.590748753938582], [-14.535668918384765, -1.6315237317554794, -0.36183831350849366, -1.1518594568997553, -12.617012582429734], [-14.160775560399491, -1.6309860414131012, -0.7975854685773693, -1.0016386475275842, -12.572163671560784], [-14.291164726050015, -4.970331288634404, -0.8021908706717673, -4.781001781079026, -14.765837444435832], [-15.827293420346981, -3.701572801633234, 0.13439509983315923, -4.781007661084028, -14.767019870042228], [-15.296519746406489, -0.42984679103605794, 0.12526106382948524, -4.5200225818150725, -13.652841816152508], [-14.941362134128278, -0.43778116525624183, 2.4996450864756397, -3.2581418041201866, -13.451749537112747], [-14.939887907087712, -0.455669660444279, 2.1101534932184056, -3.4757887405886367, -13.448145394391668], [-15.023823973474926, 0.455835272790373, 2.098524644990678, -2.852678441113553, -14.296228210434343], [-18.770613482841583, 2.708964632371916, 2.0566809848758116, -1.0999638974562258, -10.585211249547589], [-18.77701245854451, 2.614403459762066, 2.056759897263517, -4.143203910687733, -14.816181442712399], [-18.87564288689351, 2.6187343484196823, 1.6965958868682356, -4.136136286131363, -14.826064859953027], [-19.342673356169573, 2.3737921943880504, 1.6965890128288517, -4.136136430832387, -15.240919615268657], [-19.642285547237975, 4.713195329285494, -0.3748521052461702, -7.203667872588065, -9.974970074908544], [-19.62159283633997, 4.694683666372718, -13.955972716211036, -7.408368736867648, -13.189287084923055], [-17.616566577836686, 4.942614148618614, -14.071402261325332, -7.6937868970907966, -7.3129539144556395], [-17.558086062165135, 4.944945471976128, -14.069519720887252, -7.69180922286161, -7.254402416615959], [-17.561249691949662, 10.685617476538443, -14.24612026962435, -6.845317447078477, -7.255426175228304]]}</code></pre>
+<pre><code>{'python_class': "&lt;class '__main__.Sim'&gt;", 'days': 30, 'trials': 5, 'x': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 'y': [[-0.02526830425044987, -0.006278051371344135, 0.12468744406079596, 3.280413048864983, 0.26786263755822565], [-4.75413431789195, -1.52847467453612, -2.026748989384997, 3.872112867369452, 0.25518829405144144], [-6.3275162138064465, 3.6117657419122398, -2.0258373762817863, 3.8303296980030352, -0.18317239504905447], [-15.446391998568814, 3.6115624838866935, -8.341187533706648, -0.4297625762130566, -0.008515450309405204], [-15.216812937617567, 4.203909623134406, -19.301083943231976, -0.491770121712696, 8.821994340674646], [-14.147324358072638, 3.82462300501075, -19.04824339932494, -0.49641902158503054, 45.73602046260086], [-14.155609570602765, 3.8482027422061083, -19.797192255974295, -0.39397868394039615, 45.56405699485011], [-14.153206953564808, 3.848123890321813, -19.45010510051086, -0.40929435231900246, 45.66363968151246], [-12.116916586680762, 3.9729539918100794, -19.26485415305519, -1.0032454719910926, 44.503075203922336], [-11.28583442570795, 3.9729555274525934, -21.168791168675995, -4.065864432863538, 44.54177825555145], [-11.285806561799262, 3.411461070474709, -21.067053095676055, -1.129741217177438, 44.53913229068338], [-13.889417919263652, 4.52752952541711, -23.709198688467165, -1.2110898991649897, 45.02259448546087], [-20.93410348779501, 4.3585444298117455, -23.705894028921648, -1.3104072123167672, 47.12072100721755], [-20.94596748716636, 5.972065189299382, -24.161497919612994, -0.8997639134032236, 48.06765559260347], [-19.839603846534583, 3.8276140247803982, -26.993688970943364, -0.9119339590134755, 48.3521122718564], [-18.37191928093578, 3.773775063753817, -15.066397179851, -0.614770082002577, 49.44891943138044], [-19.14120186696204, 3.6424165427869464, -10.503628908490091, 2.7787586706877336, 49.87448827986557], [-17.63429116971039, 3.384296647299428, -11.17521901879076, 1.9884249142666879, 49.86519468547776], [-17.63235618867344, 5.584983024389434, -11.21140881027099, -11.435861124666369, 49.91482094860882], [-16.15804539824381, 6.538231568054177, -10.847176382983108, -11.437478036473404, 50.10657177286596], [-20.41298202987174, 6.60486109581331, -7.7399026639118, -14.58224018217765, 48.24887662311366], [-19.494563648265647, 6.807603289090601, -7.73877901125157, -14.531600138576628, 47.706981959809696], [-19.446923855873443, 2.286181846746617, -7.726663984754427, -14.067641248205772, 47.686512749758606], [-19.966539999038115, 6.342933442988991, -7.846790449686156, -14.071196385758832, 48.257354718218544], [-19.370728780768086, 6.290332840868708, -8.68111078523608, -19.927492632660833, 48.454933617462], [-19.37346493930024, 4.977918795184744, -7.539650056398448, -17.458418583285383, 48.45085045224868], [-20.42545189013731, 5.138259549477486, -5.643846704091225, -17.35221895961306, 48.459821078229794], [-22.03227977771723, 5.138325307627243, -5.661566271699622, -16.90796292653906, 50.42920823747629], [-22.257984986363432, 4.56327317275801, -5.64991272994083, -16.502494223674923, 49.32960377374889], [-22.259814570284934, -11.67865804806545, -3.6733836802179693, -14.986192981901889, 48.04696546183067]]}</code></pre>
 </div>
 </div>
 <p>It’s not exactly beautiful, and it’s not as powerful as <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a> (for example, <code>sim_json.plot()</code> doesn’t exist), but it has all the <em>data</em>, exactly as it was laid out in the original object:</p>
-<div id="96d7df0f" class="cell" data-execution_count="4">
+<div id="3b72b269" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>sim_json[<span class="st">'x'</span>] <span class="op">=</span> <span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>sim_json[<span class="st">'y'</span>][<span class="dv">0</span>] <span class="op">=</span> <span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>sim_json['x'] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
-sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725, -0.005733647153763144, 1.2099969145502403e-05]</code></pre>
+sim_json['y'][0] = [-0.02526830425044987, -0.006278051371344135, 0.12468744406079596, 3.280413048864983, 0.26786263755822565]</code></pre>
 </div>
 </div>
 <p>(Note that when exported to JSON and loaded back again, everything is in default Python types – so the data is now a list of lists rather than a 2D NumPy array.) If the file might not exist, you can supply a default instead of getting an error, e.g.&nbsp;<code>sc.loadjson('cache.json', default={})</code>.</p>
@@ -617,7 +617,7 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
 <section id="saving-and-loading-yaml" class="level3">
 <h3 class="anchored" data-anchor-id="saving-and-loading-yaml">Saving and loading YAML</h3>
 <p>If you’re not super familiar with <a href="https://yaml.org/">YAML</a>, you might think of it as that quirky format for configuration files with lots of colons and indents. It <em>is</em> that, but it’s also a powerful extension to JSON – every JSON file is also a valid YAML file, but the reverse is not true (i.e., JSON is a subset of YAML). Of most interest to you, dear scientist, is that you can add comments to YAML files. Consider this (relatively) common situation:</p>
-<div id="76a951c2" class="cell" data-execution_count="5">
+<div id="433952e7" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>raw_json <span class="op">=</span> <span class="st">'''</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="st">{"variables": {</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="st">    "timepoints": [0,1,2,3,4,5],</span></span>
@@ -632,7 +632,7 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
 </div>
 </div>
 <p>Now you’re tearing your hair out. Where did 12.566370614359172 come from? It looks vaguely familiar, or at least it did when you wrote it 6 months ago. But with YAML, you can have your data and comment it too:</p>
-<div id="6c371866" class="cell" data-execution_count="6">
+<div id="33c101b9" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>raw_yaml <span class="op">=</span> <span class="st">'''</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="st">{"variables": {</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="st">    "timepoints": [0,1,2,3,4,5],</span></span>
@@ -651,7 +651,7 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
 <section id="other-file-functions" class="level3">
 <h3 class="anchored" data-anchor-id="other-file-functions">Other file functions</h3>
 <p>Sciris includes a number of other file utilities. For example, to get a list of files, you can use <a href="../api/sc_fileio.html#sciris.sc_fileio.getfilelist" title="0"><code>sc.getfilelist()</code></a>:</p>
-<div id="6c3d4056" class="cell" data-execution_count="7">
+<div id="ee3b11fc" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sc.getfilelist(<span class="st">'*.qmd'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
 <pre><code>['tut_advanced.qmd',
@@ -667,7 +667,7 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
 </div>
 </div>
 <p>Sometimes it’s useful to get the folder for the current file, since sometimes you’re calling it from a different place, and want the relative paths to remain the same (for example, to load something from a subfolder):</p>
-<div id="5e4da235" class="cell" data-execution_count="8">
+<div id="960e80ef" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc.thispath()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
 <pre><code>PosixPath('/home/runner/work/sciris/sciris/docs/tutorials')</code></pre>
@@ -675,7 +675,7 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
 </div>
 <p>(This looks wonky here because this notebook is run on some random cloud server, but it should look more normal if you do it at home!)</p>
 <p>Most Sciris file functions can return either strings or <a href="https://docs.python.org/3/library/pathlib.html">Paths</a>. If you’ve never used <a href="https://docs.python.org/3/library/pathlib.html#module-pathlib" title="1"><code>pathlib</code></a>, it’s a really powerful way of handling paths. It’s also quite intuitive. For example, to create a <code>data</code> subfolder that’s always relative to this notebook regardless of where it’s run from, you can do</p>
-<div id="39835202" class="cell" data-execution_count="9">
+<div id="247398cd" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>datafolder <span class="op">=</span> sc.thispath() <span class="op">/</span> <span class="st">'data'</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(datafolder)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -683,7 +683,7 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
 </div>
 </div>
 <p>Sciris also makes it easy to ensure that a path exists:</p>
-<div id="8c842b16" class="cell" data-execution_count="10">
+<div id="de8b0e09" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>datafile <span class="op">=</span> sc.makefilepath(datafolder <span class="op">/</span> <span class="st">'my-data.csv'</span>, makedirs<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(datafile)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -691,11 +691,11 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
 </div>
 </div>
 <p>Sciris usually handles all this internally, but this can be useful for using with non-Sciris functions, e.g.</p>
-<div id="f654f470" class="cell" data-execution_count="11">
+<div id="e4f0a52a" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>np.savetxt(<span class="st">'data/my-data.csv'</span>, np.random.rand(<span class="dv">2</span>,<span class="dv">2</span>)) <span class="co"># Would give an error without sc.makefilepath() above</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Lastly, you can clean up with yourself with <a href="../api/sc_fileio.html#sciris.sc_fileio.rmpath" title="0"><code>sc.rmpath()</code></a>, which will automatically figure out whether to use <a href="https://docs.python.org/3/library/os.html#os.remove">os.remove()</a> (which works for files but not folders) or <a href="https://docs.python.org/3/library/shutil.html#shutil.rmtree">shutil.rmtree()</a> (which, frustratingly, works for folders but not files):</p>
-<div id="30965c54" class="cell" data-execution_count="12">
+<div id="c70e22d8" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sc.rmpath(<span class="st">'data/my-data.csv'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Removed "data/my-data.csv"</code></pre>
@@ -708,13 +708,13 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
 <section id="getting-version-information" class="level3">
 <h3 class="anchored" data-anchor-id="getting-version-information">Getting version information</h3>
 <p>You’ve probably heard people talk about reproducibility. Quite likely you yourself have talked about reproducibility. Central to computational reproducibility is knowing what version everything is. Sciris provides several tools for this. To collect all the metadata available – including the current Python environment, system version, and so on – use <a href="../api/sc_versioning.html#sciris.sc_versioning.metadata" title="0"><code>sc.metadata()</code></a>:</p>
-<div id="f896162c" class="cell" data-execution_count="13">
+<div id="87376774" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>md <span class="op">=</span> sc.metadata(pipfreeze<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(md)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>sc.obj(
     version      = None,
-    timestamp    = '2026-Oct-20 03:50:42',
+    timestamp    = '2026-Oct-27 03:44:54',
     user         = 'runner',
     system       = sc.obj(
         platform   = 'Linux-6.17.0-1022-azure-x86_64-with-glibc2.39',
@@ -723,13 +723,13 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
     ),
     versions     = sc.obj(
         python     = '3.13.16',
-        sciris     = '3.6.0',
+        sciris     = '3.6.1',
         numpy      = '2.5.4',
-        pandas     = '3.0.6',
+        pandas     = '3.1.0',
         matplotlib = '3.11.2',
     ),
     calling_info = sc.obj(
-        filename = '/tmp/ipykernel_2782/4146168352.py',
+        filename = '/tmp/ipykernel_2576/4146168352.py',
         lineno   = 1,
     ),
     git_info     = sc.obj(branch='Branch N/A', hash='Hash N/A', date='Date N/A'),
@@ -741,7 +741,7 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
 </div>
 <p>(We turned off <code>pipfreeze</code> above because this stores the entire output of <code>pip freeze</code>, i.e.&nbsp;every version of every Python library installed. This is a lot to display in a notebook, but typically you’d leave it enabled.)</p>
 <p>If you want specific versions of things, there are two functions for that: <a href="../api/sc_versioning.html#sciris.sc_versioning.compareversions" title="0"><code>sc.compareversions()</code></a>. This does explicit version checks:</p>
-<div id="d8191c49" class="cell" data-execution_count="14">
+<div id="dd69575d" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> sc.compareversions(np, <span class="st">'&gt;1.0'</span>):</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">'You do not have an ancient version of NumPy'</span>)</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
@@ -751,10 +751,10 @@ sim_json['y'][0] = [-1.7513368010226409, 0.01045532080309933, 1.7844945518915725
 </div>
 </div>
 <p>In contrast, <a href="../api/sc_versioning.html#sciris.sc_versioning.require" title="0"><code>sc.require()</code></a> will raise a warning (or exception) if the requirement isn’t met. For example:</p>
-<div id="3116b762" class="cell" data-execution_count="15">
+<div id="134365b3" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>sc.require(<span class="st">'numpy&gt;99.9.9'</span>, die<span class="op">=</span><span class="va">False</span>) <span class="co"># We don't want to die, we're in the middle of a tutorial!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_2782/3631962975.py:1: UserWarning: 
+<pre><code>/tmp/ipykernel_2576/3631962975.py:1: UserWarning: 
 The following requirement(s) were not met:
 • numpy&gt;99.9.9 (error: No package metadata was found for numpy&gt;99.9.9 (available: 2.5.4))
 Try "pip install numpy&gt;99.9.9".
@@ -771,7 +771,7 @@ Try "pip install numpy&gt;99.9.9".
 <section id="metadata-enhanced-figures" class="level4">
 <h4 class="anchored" data-anchor-id="metadata-enhanced-figures">Metadata-enhanced figures</h4>
 <p>Sciris includes a copy of <code>plt.savefig()</code> named <a href="../api/sc_plotting.html#sciris.sc_plotting.savefig" title="0"><code>sc.savefig()</code></a>. Aside from saving with publication-quality resolution by default, the other difference is that it automatically saves metadata along with the figure (including optional comments, if we want). For example:</p>
-<div id="116e9588" class="cell" data-execution_count="16">
+<div id="9d89ea81" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>plt.pcolor(sc.smooth(np.random.rand(<span class="dv">10</span>,<span class="dv">10</span>)), cmap<span class="op">=</span><span class="st">'turbo'</span>)</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>sc.savefig(<span class="st">'my-fig.png'</span>, comments<span class="op">=</span><span class="st">'This is a pretty plot'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
@@ -786,13 +786,13 @@ Try "pip install numpy&gt;99.9.9".
 </div>
 </div>
 <p>We can load metadata from the saved file using <a href="../api/sc_versioning.html#sciris.sc_versioning.loadmetadata" title="0"><code>sc.loadmetadata()</code></a>:</p>
-<div id="6bcdf040" class="cell" data-execution_count="17">
+<div id="cde6ddf9" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>md <span class="op">=</span> sc.loadmetadata(<span class="st">'my-fig.png'</span>)</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>sc.printjson(md) <span class="co"># Can just use print(), but sc.printjson() is prettier</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>{
   "version": null,
-  "timestamp": "2026-Oct-20 03:50:42",
+  "timestamp": "2026-Oct-27 03:44:54",
   "user": "runner",
   "system": {
     "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
@@ -801,13 +801,13 @@ Try "pip install numpy&gt;99.9.9".
   },
   "versions": {
     "python": "3.13.16",
-    "sciris": "3.6.0",
+    "sciris": "3.6.1",
     "numpy": "2.5.4",
-    "pandas": "3.0.6",
+    "pandas": "3.1.0",
     "matplotlib": "3.11.2"
   },
   "calling_info": {
-    "filename": "/tmp/ipykernel_2782/3577221139.py",
+    "filename": "/tmp/ipykernel_2576/3577221139.py",
     "lineno": 2
   },
   "git_info": {
@@ -825,14 +825,14 @@ Try "pip install numpy&gt;99.9.9".
 <section id="metadata-enhanced-files" class="level4">
 <h4 class="anchored" data-anchor-id="metadata-enhanced-files">Metadata-enhanced files</h4>
 <p>Remember <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a> and <a href="../api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a> from the previous tutorial? The metadata-enhanced versions of these are <a href="../api/sc_versioning.html#sciris.sc_versioning.savearchive" title="0"><code>sc.savearchive()</code></a> and <a href="../api/sc_versioning.html#sciris.sc_versioning.loadarchive" title="0"><code>sc.loadarchive()</code></a>. These will save an arbitrary object to a zip file, but also include a file called <code>sciris_metadata.json</code> along with it. You can even include other files or even whole folders in with it too – for example, if you want to save a big set of sim results and figure you might as well throw in the whole source code along with it. For example, re-using our sim from before, let’s save it along with this notebook:</p>
-<div id="b10281e8" class="cell" data-execution_count="18">
+<div id="515862d4" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sim_archive <span class="op">=</span> sc.savearchive(<span class="st">'my-sim.zip'</span>, sim, files<span class="op">=</span><span class="st">'tut_files.qmd'</span>, comments<span class="op">=</span><span class="st">'Sim plus notebook'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Zip file saved to "/home/runner/work/sciris/sciris/docs/tutorials/my-sim.zip"</code></pre>
 </div>
 </div>
 <p>This is just an ordinary zip file, so we can open it with any application. But we can also load the metadata automatically with <a href="../api/sc_versioning.html#sciris.sc_versioning.loadmetadata" title="0"><code>sc.loadmetadata()</code></a>:</p>
-<div id="2e92bf5d" class="cell" data-execution_count="19">
+<div id="7c83c5ef" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>md <span class="op">=</span> sc.loadmetadata(sim_archive)</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(md[<span class="st">'comments'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -840,7 +840,7 @@ Try "pip install numpy&gt;99.9.9".
 </div>
 </div>
 <p>And, of course, we can load the whole thing as a brand new, fully-functional object:</p>
-<div id="cff2698b" class="cell" data-execution_count="20">
+<div id="cb525174" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> sc.loadarchive(sim_archive)</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>sim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
@@ -1290,7 +1290,7 @@ Try "pip install numpy&gt;99.9.9".
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.6.0 (2026-10-19).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.6.1 (2026-10-26).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">
