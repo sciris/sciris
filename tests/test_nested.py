@@ -240,6 +240,18 @@ def test_search():
     assert sc.search(dict(a=np.arange(5), b=3), value=3).keys() == [('b',)] # Arrays are skipped rather than raising an error
     assert not len(sc.search(dict(a=1), key='t')) # The root has no key, so doesn't match
 
+    print('\nTesting skip keys with a key whose __eq__ raises')
+    class StrictKey:
+        def __eq__(self, other):
+            if isinstance(other, str):
+                raise ValueError(f'Cannot compare with "{other}"')
+            return self is other
+        def __hash__(self):
+            return 0
+    key = StrictKey()
+    strict = dict(a=1, sim=dict(b=3), res={key:3})
+    assert sc.search(strict, value=3, skip=['sim']).keys() == [('res', key)] # Previously raised, since 'sim' was compared with every key
+
     return o
 
 
