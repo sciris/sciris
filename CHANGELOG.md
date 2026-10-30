@@ -4,6 +4,12 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 3.6.2 (2026-10-29)
+
+1. New `sc.limit_threads()` limits the number of threads NumPy's linear algebra libraries (BLAS) use, at runtime: as a context manager (e.g. `with sc.limit_threads(1):`), or until `restore()` is called. Unlike `SCIRIS_NUM_THREADS`, it also works once NumPy has been imported, by limiting the OpenBLAS or MKL libraries that are already loaded (on Linux; elsewhere, only the environment variables are set). It never raises a thread count that is already lower.
+1. `sc.parallelize()` now limits the BLAS threads of its worker processes, so that N workers don't each use every core: by default, the CPUs are divided among the workers (e.g. 2 workers on 20 CPUs get 10 threads each). Use the new `worker_threads` argument to set a different number, or `worker_threads=False` for the previous behavior.
+1. `SCIRIS_NUM_THREADS` now also limits the BLAS libraries already loaded if NumPy was imported before Sciris (on Linux).
+
 ## Version 3.6.1 (2026-10-26)
 
 1. `sc.iterobj()` and `sc.search()` are faster when skipping many objects by ID (e.g. `skip=dict(ids=[...])`), since the IDs are now checked in constant time. They also no longer call `==`, which is faster and avoids errors.
