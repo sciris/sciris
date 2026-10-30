@@ -8,6 +8,7 @@ By import convention, components of the Sciris library are listed beginning with
 
 1. New `sc.limit_threads()` limits the number of threads NumPy's linear algebra libraries (BLAS) use. `sc.parallelize()` also now has a `worker_threads` argument. (Note: you can also still use `SCIRIS_NUM_THREADS`, but you no longer need to.)
 1. Dataframes indexed with invalid columns now raise the original exception.
+1. `sc.save()` now uses `zstandard` compression (level 1) by default instead of `gzip` (level 5). Saving is much faster (e.g. 7 times faster for a 100,000-agent Starsim sim) and loading about twice as fast, with similar file sizes. `sc.load()` loads either format, and files saved with this version can be loaded with Sciris 2.1.0 or later.
 
 ## Version 3.6.1 (2026-10-26)
 
