@@ -4,17 +4,12 @@ Sciris root module
 Typically just handles imports, but also sets number of threads for Numpy if SCIRIS_NUM_THREADS is set (see `sc.options`).
 """
 
-# Handle threadcount -- may require Sciris to be imported before Numpy; see https://stackoverflow.com/questions/17053671/how-do-you-stop-numpy-from-multithreading
+# Handle threadcount -- the environment variables need to be set before Numpy is imported; see also sc.limit_threads()
 import os as _os
+_threadvars = ['OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'MKL_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS'] # Used by sc.limit_threads()
 _threads = _os.getenv('SCIRIS_NUM_THREADS', '')
 if _threads: # pragma: no cover
-  _os.environ.update(
-      OMP_NUM_THREADS        = _threads,
-      OPENBLAS_NUM_THREADS   = _threads,
-      NUMEXPR_NUM_THREADS    = _threads,
-      MKL_NUM_THREADS        = _threads,
-      VECLIB_MAXIMUM_THREADS = _threads,
-)
+    _os.environ.update({key:_threads for key in _threadvars})
 
 # Optionally allow lazy loading
 _lazy = _os.getenv('SCIRIS_LAZY', False)
@@ -37,5 +32,9 @@ if not _lazy:
     from .sc_asd        import *
     from .sc_plotting   import *
     from .sc_colors     import *
+
+    # Also limit any BLAS libraries already loaded, in case Numpy was imported before Sciris
+    if _threads: # pragma: no cover
+        limit_threads(int(_threads))
 
 del _os, _lazy, _threads

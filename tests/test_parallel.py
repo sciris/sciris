@@ -19,6 +19,11 @@ def f(i):
     ''' Test function for parallelization -- here to avoid pickling errors '''
     return i**2
 
+def nthreads(i=None):
+    ''' The thread limits in a worker: the environment variable, and the BLAS libraries (on Linux) '''
+    import os
+    return os.environ.get('OPENBLAS_NUM_THREADS'), [getter() for setter,getter in sc.limit_threads.find_libs()]
+
 
 def test_simple():
     sc.heading('Example 1 -- simple usage as a shortcut to multiprocessing.map()')
@@ -271,6 +276,37 @@ def test_components():
     return task
 
 
+def test_limit_threads():
+    sc.heading('Testing thread limits')
+    import os
+
+    print('Testing the context manager')
+    env, blas = nthreads()
+    with sc.limit_threads(1) as limit:
+        print(limit)
+        assert nthreads() == ('1', [1]*len(blas))
+        with sc.limit_threads(3): # A limit never raises the number of threads
+            assert nthreads() == ('1', [1]*len(blas))
+    assert nthreads() == (env, blas) # Restored, including removing variables that weren't set
+
+    print('Testing a limit without a with block')
+    limit = sc.limit_threads(2)
+    assert os.environ['OMP_NUM_THREADS'] in ['1', '2']
+    limit.restore()
+    assert nthreads() == (env, blas)
+    with pytest.raises(ValueError):
+        sc.limit_threads(0)
+
+    print('Testing the limit in worker processes')
+    expected = max(1, sc.cpu_count()//2)
+    for out in sc.parallelize(nthreads, iterarg=range(2), ncpus=2):
+        assert int(out[0]) <= expected
+        assert all(n <= expected for n in out[1])
+    out = sc.parallelize(nthreads, iterarg=range(2), ncpus=2, worker_threads=1)
+    assert all(o[0] == '1' for o in out)
+    assert nthreads() == (env, blas)
+    return out
+
 
 #%% Run as a script
 if __name__ == '__main__':
@@ -285,6 +321,7 @@ if __name__ == '__main__':
     test_exceptions()
     P = test_class()
     test_components()
+    test_limit_threads()
 
     sc.toc()
     print('Done.')

@@ -256,10 +256,16 @@ class dataframe(pd.DataFrame):
         """ Simple method for returning; see self.flexget() for a version based on col and row """
         try: # Default to the pandas version
             output = super().__getitem__(key)
-        except: # ...but handle a wider variety of keys
+        except Exception: # ...but handle a wider variety of keys
+            if isinstance(key, (list, np.ndarray)) and len(key) and all(sc.isstring(k) for k in key): # e.g. df[['a','c']] -- column names, so not positional
+                missing = [k for k in key if k not in self.columns]
+                if missing:
+                    errormsg = f'Keys {missing} are not valid columns; choices are: {sc.strjoin(self.cols)}'
+                    raise sc.KeyNotFoundError(errormsg)
+                raise
             try:
                 output = super().iloc[key]
-            except:
+            except Exception:
                 if sc.isstring(key): # e.g. df['a'] -- usually handled by pandas # pragma: no cover
                     rowindex = slice(None)
                     try:

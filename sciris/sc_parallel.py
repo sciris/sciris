@@ -9,7 +9,10 @@ Highlights:
     - `sc.loadbalancer()`: very simple load balancer
 """
 
+import os
 import time
+import ctypes
+import contextlib
 import psutil
 import warnings
 import numpy as np
@@ -151,11 +154,12 @@ class Parallel:
     - *New in version 3.0.0.*
     - *New in version 3.1.0:* "globaldict" argument
     - *New in version 3.4.0:* `close()` and `stop()` methods
+    - *New in version 3.6.2:* "worker_threads" argument
     """
     def __init__(self, func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                  maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
                  progress=False, callback=None, globaldict=None, label=None, capture=False, die=True,
-                 lbkwargs=None, start_method=None, **func_kwargs):
+                 lbkwargs=None, start_method=None, worker_threads=None, **func_kwargs):
 
         # Store input arguments
         self.func         = func # The function to call
@@ -176,6 +180,7 @@ class Parallel:
         self.capture      = capture # Whether to capture output from the function as text
         self.die          = die # Whether to raise exceptions
         self.start_method = start_method # How to start worker processes, e.g. "fork" (if None, use the default)
+        self.worker_threads = worker_threads # Maximum number of BLAS threads for each worker process (if None, divide the CPUs among the workers)
 
         # Additional initialization
         self.init()
@@ -388,6 +393,16 @@ class Parallel:
         return
 
 
+    def get_worker_threads(self):
+        """ The maximum number of BLAS threads for each worker process, or None if not limited (see `sc.limit_threads()`) """
+        threads = self.worker_threads
+        if threads is None:
+            threads = max(1, sc.cpu_count() // self.ncpus) # Divide the CPUs among the workers
+        if not threads or self.method not in ['multiprocess', 'multiprocessing', 'concurrent.futures']: # Threads share the process, and serial runs in it
+            threads = None
+        return threads
+
+
     def make_pool(self):
         """ Make the pool and map function """
 
@@ -406,21 +421,25 @@ class Parallel:
         # Get the context for the start method (only used by process-based parallelizers)
         context = mp.get_context(self.start_method) if method == 'multiprocess' else mpi.get_context(self.start_method) # Can't mix multiprocess and multiprocessing
 
+        # Workers not forked from this process (e.g. by a forkserver started earlier) may not see the thread limit, so also set it in each; forked ones already have it
+        threads = self.get_worker_threads()
+        init = dict(initializer=limit_threads, initargs=(threads,)) if threads and context.get_start_method() != 'fork' else {}
+
         # Choose parallelizer and map function
         if method == 'serial':
             pool = None
             map_func = lambda task,argslist: list(map(task, argslist))
 
         elif method == 'multiprocess': # Main use case
-            pool = context.Pool(processes=ncpus)
+            pool = context.Pool(processes=ncpus, **init)
             map_func = make_async_func(pool)
 
         elif method == 'multiprocessing':
-            pool = context.Pool(processes=ncpus)
+            pool = context.Pool(processes=ncpus, **init)
             map_func = make_async_func(pool)
 
         elif method == 'concurrent.futures':
-            pool = cf.ProcessPoolExecutor(max_workers=ncpus, mp_context=context)
+            pool = cf.ProcessPoolExecutor(max_workers=ncpus, mp_context=context, **init)
             map_func = pool.map
 
         elif method == 'thread':
@@ -526,23 +545,27 @@ class Parallel:
         method = self.method
         needs_copy = ['serial', 'thread', 'custom']
 
-        # Make the pool
-        self.make_pool()
+        # Limit the BLAS threads of worker processes while they're started (by the pool, or on the first jobs)
+        threads = self.get_worker_threads()
+        with limit_threads(threads) if threads else contextlib.nullcontext():
 
-        # Construct the argument list (has to be after the pool is made)
-        self.times.started = sc.now()
-        self.make_argslist()
+            # Make the pool
+            self.make_pool()
 
-        # Handle optional deepcopy
-        if sc.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
-            argslist = [sc.dcp(arg, die=self.die) for arg in self.argslist]
-            for arg in argslist:
-                arg.globaldict = self.globaldict # Don't copy the globaldict, since it's shared between jobs
-        else:
-            argslist = self.argslist
+            # Construct the argument list (has to be after the pool is made)
+            self.times.started = sc.now()
+            self.make_argslist()
 
-        # Run it!
-        output = self.map_func(_task, argslist)
+            # Handle optional deepcopy
+            if sc.isstring(self.parallelizer) and '-copy' in self.parallelizer and method in needs_copy: # Don't deepcopy if we're going to pickle anyway
+                argslist = [sc.dcp(arg, die=self.die) for arg in self.argslist]
+                for arg in argslist:
+                    arg.globaldict = self.globaldict # Don't copy the globaldict, since it's shared between jobs
+            else:
+                argslist = self.argslist
+
+            # Run it!
+            output = self.map_func(_task, argslist)
 
         # Store the pool; do not store the output list here
         if self.is_async:
@@ -707,7 +730,7 @@ class Parallel:
 def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None,
                 maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False,
                 progress=False, callback=None, globaldict=None, capture=False, die=True,
-                lbkwargs=None, start_method=None, **func_kwargs):
+                lbkwargs=None, start_method=None, worker_threads=None, **func_kwargs):
     """
     Execute a function in parallel.
 
@@ -747,6 +770,7 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
         die          (bool)      : whether to stop immediately if an exception is encountered (otherwise, store the exception as the result)
         lbkwargs     (dict)      : if provided, passed to `sc.loadbalancer()`
         start_method (str)       : how to start worker processes for process-based parallelizers, e.g. "fork", "spawn", or "forkserver" (default: the system default; see Note 4)
+        worker_threads (int)     : maximum number of threads NumPy's linear algebra (BLAS) can use in each worker process (default: the number of CPUs divided by the number of workers; `False` to leave unchanged; see Note 6)
         func_kwargs  (dict)      : merged with kwargs (see above)
 
     Returns:
@@ -894,6 +918,12 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     method, or number of CPUs. The results differ from `serial=True`, where jobs draw from the parent's
     generator in turn. Functions that set their own seed are unaffected.
 
+    **Note 6**: with process-based parallelizers, the worker processes are started under `sc.limit_threads()`,
+    so that NumPy's linear algebra (e.g. matrix products) in each worker uses at most `worker_threads` threads.
+    Otherwise, each worker would use every core, and N workers would oversubscribe the machine N times over.
+    By default, the CPUs are divided among the workers, so a single worker can still use them all. The limit
+    is lifted in the parent process once the jobs have been started (or, if not async, once they are finished).
+
     - *New in version 1.1.1:* "serial" argument
     - *New in version 2.0.0:* changed default parallelizer from `multiprocess.Pool` to `concurrent.futures.ProcessPoolExecutor`; replaced `maxload` with `maxcpu`/`maxmem`; added `returnpool` argument
     - *New in version 2.0.4:* added "die" argument; changed exception handling
@@ -901,13 +931,14 @@ def parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncp
     - *New in version 3.1.0:* new "globaldict" argument
     - *New in version 3.2.5:* "capture" and "lbkwargs" arguments
     - *New in version 3.4.0:* "iterarg" and "iterkwargs" can be used together; with `die=False`, the exception is returned as the result; "start_method" argument; NumPy's global random number generator is reseeded for each job; the callback can stop the run early
+    - *New in version 3.6.2:* "worker_threads" argument; the BLAS threads of worker processes are limited by default
     """
     # Create the parallel instance
     P = Parallel(func, iterarg=iterarg, iterkwargs=iterkwargs, args=args, kwargs=kwargs,
                  ncpus=ncpus, maxcpu=maxcpu, maxmem=maxmem, interval=interval,
                  parallelizer=parallelizer, serial=serial, progress=progress,
                  callback=callback, globaldict=globaldict, capture=capture, die=die,
-                 lbkwargs=lbkwargs, start_method=start_method, **func_kwargs)
+                 lbkwargs=lbkwargs, start_method=start_method, worker_threads=worker_threads, **func_kwargs)
 
     # Run it
     P.run()
@@ -1049,12 +1080,122 @@ def _task(taskargs):
 #%% Load balancing functions
 ##############################################################################
 
-__all__ += ['cpu_count', 'cpucount', 'cpuload', 'cpu_load', 'memload', 'mem_load', 'loadbalancer']
+__all__ += ['cpu_count', 'cpucount', 'limit_threads', 'cpuload', 'cpu_load', 'memload', 'mem_load', 'loadbalancer']
 
 
 def cpu_count():
     """ Alias to `multiprocessing.cpu_count()` """
     return mp.cpu_count()
+
+
+class limit_threads:
+    """
+    Limit the number of threads used by NumPy's linear algebra libraries (BLAS)
+
+    This does at runtime what the `SCIRIS_NUM_THREADS` environment variable does at
+    import. It sets the environment variables that BLAS and OpenMP libraries read
+    (`OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, etc.), and also limits the BLAS
+    libraries that are already loaded (OpenBLAS or MKL). These are found among the
+    libraries loaded by the process, on Linux only; elsewhere (e.g. Accelerate on a
+    Mac), only the environment variables are set, which affects only libraries that
+    have not yet been loaded (e.g. in new worker processes).
+
+    It is a limit: thread counts that are already lower are left as they are.
+
+    Used as a context manager, the previous thread counts and environment variables
+    are restored afterwards; otherwise, the limit stays in place until `restore()`
+    is called.
+
+    The main use is starting worker processes: N workers that each use every core for
+    BLAS will oversubscribe the machine N times over. Forked workers keep the limit of
+    the process that forked them, and workers started afresh ("spawn" or "forkserver")
+    read it from the environment. `sc.parallelize()` does this automatically (see its
+    `worker_threads` argument).
+
+    Args:
+        n (int): the maximum number of threads
+
+    **Examples**:
+
+    ```python
+    import numpy as np
+    import sciris as sc
+
+    # Run matrix products on a single thread
+    a = np.random.rand(1000, 1000)
+    with sc.limit_threads(1):
+        b = a @ a
+
+    # Limit for the rest of the session
+    sc.limit_threads(4)
+    ```
+
+    *New in version 3.6.2.*
+    """
+    # How each BLAS library sets and gets its number of threads (as in threadpoolctl)
+    blas_funcs = [
+        ('openblas_set_num_threads',          'openblas_get_num_threads'),
+        ('openblas_set_num_threads64_',       'openblas_get_num_threads64_'),
+        ('scipy_openblas_set_num_threads',    'scipy_openblas_get_num_threads'), # The OpenBLAS in NumPy's own wheels
+        ('scipy_openblas_set_num_threads64_', 'scipy_openblas_get_num_threads64_'),
+        ('MKL_Set_Num_Threads',               'MKL_Get_Max_Threads'),
+    ]
+
+    def __init__(self, n=1):
+        n = int(n)
+        if n < 1:
+            errormsg = f'The number of threads must be at least 1, not {n}'
+            raise ValueError(errormsg)
+        self.n = n
+        self.libs = self.find_libs()
+        self.env = {key:os.environ.get(key) for key in sc._threadvars}
+        self.before = [getter() for setter,getter in self.libs]
+        self.restored = False
+
+        # Apply the limit, leaving lower ones as they are
+        for key,val in self.env.items():
+            os.environ[key] = str(min(n, int(val))) if val and val.isdigit() and int(val) > 0 else str(n)
+        for (setter,getter),before in zip(self.libs, self.before):
+            setter(min(n, before))
+        return
+
+    @classmethod
+    def find_libs(cls):
+        """ Find the setter and getter functions of the BLAS libraries loaded by this process (Linux only) """
+        libs = []
+        if os.path.exists('/proc/self/maps'):
+            with open('/proc/self/maps') as f:
+                paths = {line.split()[-1] for line in f if 'blas' in line.lower() or 'libmkl_rt' in line.lower()}
+            for path in sorted(paths):
+                try:
+                    lib = ctypes.CDLL(path)
+                except OSError: # pragma: no cover
+                    continue
+                libs += [(getattr(lib, setter), getattr(lib, getter)) for setter,getter in cls.blas_funcs if hasattr(lib, setter) and hasattr(lib, getter)]
+        return libs
+
+    def restore(self):
+        """ Restore the thread counts and environment variables from before the limit """
+        if not self.restored:
+            for (setter,getter),before in zip(self.libs, self.before):
+                setter(before)
+            for key,val in self.env.items():
+                if val is None:
+                    os.environ.pop(key, None) # It wasn't set before, so remove it
+                else:
+                    os.environ[key] = val
+            self.restored = True
+        return
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.restore()
+        return
+
+    def __repr__(self):
+        return f'sc.limit_threads(n={self.n}; libraries={len(self.libs)}; restored={self.restored})'
 
 
 def cpuload(interval=0.1):
