@@ -1,4 +1,4 @@
-# Sciris v3.6.1
+# Sciris v3.6.2
 
 > Fast, flexible tools to simplify scientific Python
 
@@ -7,7 +7,7 @@
 - Signatures are as introspected from the current version; summaries are the first paragraph of each docstring.
 - Aliases are alternative names for the same object; the canonical name is the one listed, and is the one to prefer when writing new code.
 
-This file lists all 275 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
+This file lists all 276 public Sciris functions and classes. It is generated from the source by `python make_api.py`; do not edit it by hand.
 
 ## Links
 
@@ -444,7 +444,7 @@ This file lists all 275 public Sciris functions and classes. It is generated fro
   ```
 
 - `sc.jsonunpickle(json=None, filename=None)`: Open a saved JSON pickle
-- `sc.load(filename=None, folder=None, verbose=None, die=False, remapping=None, method=None, auto_remap=True, **kwargs)`: Load a file that has been saved as a gzipped pickle file, e.g. by `sc.save()`. Accepts either a filename (standard usage) or a file object as the first argument. Note that `sc.load()`/`sc.loadobj()` are aliases of each other. [aliases: sc.loadobj()]
+- `sc.load(filename=None, folder=None, verbose=None, die=False, remapping=None, method=None, auto_remap=True, **kwargs)`: Load a file that has been saved as a compressed (zstandard or gzip) or uncompressed pickle file, e.g. by `sc.save()`. Accepts either a filename (standard usage) or a file object as the first argument. Note that `sc.load()`/`sc.loadobj()` are aliases of each other. [aliases: sc.loadobj()]
 
   ```python
   obj = sc.load('myfile.obj') # Standard usage
@@ -571,7 +571,7 @@ This file lists all 275 public Sciris functions and classes. It is generated fro
   good = sc.sanitizefilename(bad)
   ```
 
-- `sc.save(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip', compresslevel=5, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs)`: Save any object to disk [aliases: sc.saveobj()]
+- `sc.save(filename='default.obj', obj=None, folder=None, method='pickle', compression='zstd', compresslevel=None, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs)`: Save any object to disk [aliases: sc.saveobj()]
 
   ```python
   # Standard usage
@@ -677,7 +677,7 @@ This file lists all 275 public Sciris functions and classes. It is generated fro
   sc.unzip('my-files.zip', outfolder='my_data') # extracts all files
   ```
 
-- `sc.zsave(*args, compression='zstd', **kwargs)`: Save a file using zstandard (instead of gzip) compression. This is an alias for `sc.save(..., compression='zstd')`; see `sc.save()` for details.
+- `sc.zsave(*args, compression='zstd', **kwargs)`: Save a file using zstandard compression. This is an alias for `sc.save(..., compression='zstd')`; see `sc.save()` for details. (Since `sc.save()` now uses zstandard by default, it is identical to `sc.save()`.)
 
 ## Versioning and metadata (sc_versioning)
 
@@ -1252,6 +1252,21 @@ This file lists all 275 public Sciris functions and classes. It is generated fro
 
 - `sc.cpu_count()`: Alias to `multiprocessing.cpu_count()` [aliases: sc.cpucount()]
 - `sc.cpuload(interval=0.1)`: Takes a snapshot of current CPU usage via `psutil` [aliases: sc.cpu_load()]
+- `sc.limit_threads(n=1)`: Limit the number of threads used by NumPy's linear algebra libraries (BLAS)
+
+  ```python
+  import numpy as np
+  import sciris as sc
+
+  # Run matrix products on a single thread
+  a = np.random.rand(1000, 1000)
+  with sc.limit_threads(1):
+      b = a @ a
+
+  # Limit for the rest of the session
+  sc.limit_threads(4)
+  ```
+
 - `sc.loadbalancer(maxcpu=0.9, maxmem=0.9, index=None, interval=None, cpu_interval=0.1, maxtime=36000, label=None, verbose=None, **kwargs)`: Delay execution while CPU load is too high -- a very simple load balancer.
 
   ```python
@@ -1264,7 +1279,7 @@ This file lists all 275 public Sciris functions and classes. It is generated fro
   ```
 
 - `sc.memload()`: Takes a snapshot of current fraction of memory usage via `psutil` [aliases: sc.mem_load()]
-- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)`: Parallelization manager
+- `sc.Parallel(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, start_method=None, worker_threads=None, **func_kwargs)`: Parallelization manager
 
   ```python
   import sciris as sc
@@ -1281,7 +1296,7 @@ This file lists all 275 public Sciris functions and classes. It is generated fro
   print(P.times)
   ```
 
-- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)`: Execute a function in parallel.
+- `sc.parallelize(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, start_method=None, worker_threads=None, **func_kwargs)`: Execute a function in parallel.
 
   ```python
   def f(x):
@@ -2121,4 +2136,4 @@ This file lists all 275 public Sciris functions and classes. It is generated fro
 
 - `sc.ddict(...)`: defaultdict(default_factory=None, /, [...]) --> dict with default factory
 
-<!-- Generated by `python make_api.py` for Sciris v3.6.1: llms-full.txt -->
+<!-- Generated by `python make_api.py` for Sciris v3.6.2: llms-full.txt -->

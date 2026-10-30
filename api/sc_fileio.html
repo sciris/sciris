@@ -85,9 +85,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-bfd64266a099ba3d9a6cb1a21780adaa.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9515c658929261994fd416d49db48cca.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -1010,7 +1010,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#sciris.sc_fileio.load">load</a></td>
-<td>Load a file that has been saved as a gzipped pickle file, e.g.&nbsp;by <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a>.</td>
+<td>Load a file that has been saved as a compressed (zstandard or gzip) or uncompressed pickle file, e.g.&nbsp;by <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a>.</td>
 </tr>
 <tr class="odd">
 <td><a href="#sciris.sc_fileio.loadany">loadany</a></td>
@@ -1118,7 +1118,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="odd">
 <td><a href="#sciris.sc_fileio.zsave">zsave</a></td>
-<td>Save a file using zstandard (instead of gzip) compression. This is an alias</td>
+<td>Save a file using zstandard compression. This is an alias for</td>
 </tr>
 </tbody>
 </table>
@@ -1508,7 +1508,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    auto_remap<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
 <span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Load a file that has been saved as a gzipped pickle file, e.g.&nbsp;by <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a>. Accepts either a filename (standard usage) or a file object as the first argument. Note that <a href="../api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a>/<code>sc.loadobj()</code> are aliases of each other.</p>
+<p>Load a file that has been saved as a compressed (zstandard or gzip) or uncompressed pickle file, e.g.&nbsp;by <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a>. Accepts either a filename (standard usage) or a file object as the first argument. Note that <a href="../api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a>/<code>sc.loadobj()</code> are aliases of each other.</p>
 <p><strong>Note 1</strong>: Since this function relies on pickle, it can potentially execute arbitrary code, so you should only use it with sources you trust. For more information, see: https://docs.python.org/3/library/pickle.html</p>
 <p><strong>Note 2</strong>: When a pickle file is loaded, Python imports any modules that are referenced in it. This is a problem if module has been renamed. In this case, you can use the <code>remapping</code> argument to point to the new modules or classes. For more robustness, use the <a href="../api/sc_versioning.html#sciris.sc_versioning.savearchive" title="0"><code>sc.savearchive()</code></a>/ <a href="../api/sc_versioning.html#sciris.sc_versioning.loadarchive" title="0"><code>sc.loadarchive()</code></a> functions.</p>
 <section id="parameters-5" class="level4 doc-section doc-section-parameters">
@@ -2529,8 +2529,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>    obj<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>    folder<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span><span class="st">'pickle'</span>,</span>
-<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>    compression<span class="op">=</span><span class="st">'gzip'</span>,</span>
-<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>    compresslevel<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>    compression<span class="op">=</span><span class="st">'zstd'</span>,</span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>    compresslevel<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="dv">0</span>,</span>
 <span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>    sanitizepath<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>    die<span class="op">=</span><span class="va">False</span>,</span>
@@ -2585,13 +2585,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td>compression (str)</td>
 <td></td>
-<td>type of compression to use: ‘gzip’ (default), ‘zstd’ (zstandard), or ‘none’ (no compression)</td>
+<td>type of compression to use: ‘zstd’ (zstandard; default), ‘gzip’, or ‘none’ (no compression)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
 <td>compresslevel (int)</td>
 <td></td>
-<td>the level of gzip/zstd compression (1 to 9 for gzip, -7 to 22 for zstandard, default 5)</td>
+<td>the level of zstd/gzip compression (-7 to 22 for zstandard, default 1; 1 to 9 for gzip, default 5)</td>
 <td><em>required</em></td>
 </tr>
 <tr class="odd">
@@ -2644,13 +2644,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb67-15"><a href="#cb67-15" aria-hidden="true" tabindex="-1"></a>sc.save(<span class="st">'my_class.obj'</span>, my_class, method<span class="op">=</span><span class="st">'dill'</span>, compression<span class="op">=</span><span class="st">'zstd'</span>)</span>
 <span id="cb67-16"><a href="#cb67-16" aria-hidden="true" tabindex="-1"></a>loaded <span class="op">=</span> sc.load(<span class="st">'my_class.obj'</span>) <span class="co"># With dill, can be loaded anywhere, not just in the same script</span></span>
 <span id="cb67-17"><a href="#cb67-17" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> loaded.<span class="bu">sum</span>() <span class="op">==</span> my_class.<span class="bu">sum</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>See also <a href="../api/sc_fileio.html#sciris.sc_fileio.zsave" title="0"><code>sc.zsave()</code></a> (identical except defaults to zstandard compression).</p>
 <ul>
 <li><em>New in version 1.1.1:</em> removed Python 2 support.</li>
 <li><em>New in version 1.2.2:</em> automatic swapping of arguments if order is incorrect; correct passing of arguments</li>
 <li><em>New in version 2.0.4:</em> “die” argument for saving as dill</li>
 <li><em>New in version 2.1.0:</em> “zstandard” compression method</li>
 <li><em>New in version 3.0.0:</em> “allow_empty” argument; removed “args”</li>
+<li><em>New in version 3.6.2:</em> zstandard (level 1) compression by default instead of gzip (level 5), which is several times faster</li>
 </ul>
 </section>
 </section>
@@ -3374,7 +3374,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="sciris.sc_fileio.zsave" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_fileio.zsave">zsave</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb85"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>sc_fileio.zsave(<span class="op">*</span>args, compression<span class="op">=</span><span class="st">'zstd'</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Save a file using zstandard (instead of gzip) compression. This is an alias for <code>sc.save(..., compression='zstd')</code>; see <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a> for details.</p>
+<p>Save a file using zstandard compression. This is an alias for <code>sc.save(..., compression='zstd')</code>; see <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a> for details. (Since <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a> now uses zstandard by default, it is identical to <a href="../api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a>.)</p>
 <p>Note: there is no matching function “<code>zload()</code>” since <a href="../api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a> will automatically try loading zstandard.</p>
 <p><em>New in version 2.1.0.</em></p>
 
@@ -3816,7 +3816,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.6.1 (2026-10-26).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.6.2 (2026-10-29).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

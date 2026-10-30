@@ -1,5 +1,5 @@
 {
-  "version": "3.6.1",
+  "version": "3.6.2",
   "description": "Fast, flexible tools to simplify scientific Python",
   "notes": [
     "Sciris is a library of utilities for scientific computing: containers, file I/O, dates, arrays, plotting, parallelization, and profiling.",
@@ -24,7 +24,7 @@
       "description": "Sciris: Simplifying scientific software in Python (JOSS 2023)"
     }
   ],
-  "n_entries": 275,
+  "n_entries": 276,
   "aliases": {
     "Timer": "timer",
     "cpu_load": "cpuload",
@@ -1214,6 +1214,16 @@
       "deprecated": false
     },
     {
+      "name": "limit_threads",
+      "kind": "class",
+      "module": "sc_parallel",
+      "signature": "(n=1)",
+      "summary": "Limit the number of threads used by NumPy's linear algebra libraries (BLAS)",
+      "example": "import numpy as np\nimport sciris as sc\n\n# Run matrix products on a single thread\na = np.random.rand(1000, 1000)\nwith sc.limit_threads(1):\n    b = a @ a\n\n# Limit for the rest of the session\nsc.limit_threads(4)",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
       "name": "LimitExceeded",
       "kind": "class",
       "module": "sc_profiling",
@@ -1268,7 +1278,7 @@
       "kind": "function",
       "module": "sc_fileio",
       "signature": "(filename=None, folder=None, verbose=None, die=False, remapping=None, method=None, auto_remap=True, **kwargs)",
-      "summary": "Load a file that has been saved as a gzipped pickle file, e.g. by `sc.save()`. Accepts either a filename (standard usage) or a file object as the first argument. Note that `sc.load()`/`sc.loadobj()` are aliases of each other.",
+      "summary": "Load a file that has been saved as a compressed (zstandard or gzip) or uncompressed pickle file, e.g. by `sc.save()`. Accepts either a filename (standard usage) or a file object as the first argument. Note that `sc.load()`/`sc.loadobj()` are aliases of each other.",
       "example": "obj = sc.load('myfile.obj') # Standard usage\nold = sc.load('my-old-file.obj', method='dill', ignore=True) # Load classes from saved files\nold = sc.load('my-old-file.obj', remapping={'foo.Bar': cat.Mat}) # If loading a saved object containing a reference to foo.Bar that is now cat.Mat\nold = sc.load('my-old-file.obj', remapping={('foo', 'Bar'): ('cat', 'Mat')}, method='robust') # Equivalent to the above but force remapping and don't fail\nold = sc.load('my-old-file.obj', remapping={'foo.Bar': None}) # Skip mapping foo.Bar and don't fail",
       "aliases": [
         "loadobj"
@@ -1693,7 +1703,7 @@
       "name": "Parallel",
       "kind": "class",
       "module": "sc_parallel",
-      "signature": "(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)",
+      "signature": "(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, label=None, capture=False, die=True, lbkwargs=None, start_method=None, worker_threads=None, **func_kwargs)",
       "summary": "Parallelization manager",
       "example": "import sciris as sc\n\ndef slowfunc(i):\n    sc.randsleep(seed=i)\n    return i**2\n\n# Standard usage\nP = sc.Parallel(slowfunc, iterarg=range(10), parallelizer='multiprocess-async')\nP.run_async()\nP.monitor()\nP.finalize()\nprint(P.times)",
       "aliases": [],
@@ -1703,7 +1713,7 @@
       "name": "parallelize",
       "kind": "function",
       "module": "sc_parallel",
-      "signature": "(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, start_method=None, **func_kwargs)",
+      "signature": "(func, iterarg=None, iterkwargs=None, args=None, kwargs=None, ncpus=None, maxcpu=None, maxmem=None, interval=None, parallelizer=None, serial=False, progress=False, callback=None, globaldict=None, capture=False, die=True, lbkwargs=None, start_method=None, worker_threads=None, **func_kwargs)",
       "summary": "Execute a function in parallel.",
       "example": "def f(x):\n    return x*x\n\nresults = sc.parallelize(f, [1,2,3])",
       "aliases": [],
@@ -2195,7 +2205,7 @@
       "name": "save",
       "kind": "function",
       "module": "sc_fileio",
-      "signature": "(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip', compresslevel=5, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs)",
+      "signature": "(filename='default.obj', obj=None, folder=None, method='pickle', compression='zstd', compresslevel=None, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs)",
       "summary": "Save any object to disk",
       "example": "# Standard usage\nmy_obj = ['this', 'is', 'my', 'custom', {'object':44}]\nsc.save('myfile.obj', my_obj)\nloaded = sc.load('myfile.obj')\nassert loaded == my_obj\n\n# Use dill instead, to save custom classes as well\nclass MyClass:\n    def __init__(self, x):\n        self.data = np.random.rand(100) + x\n    def sum(self):\n        return self.data.sum()\n# [...]",
       "aliases": [
@@ -2818,7 +2828,7 @@
       "kind": "function",
       "module": "sc_fileio",
       "signature": "(*args, compression='zstd', **kwargs)",
-      "summary": "Save a file using zstandard (instead of gzip) compression. This is an alias for `sc.save(..., compression='zstd')`; see `sc.save()` for details.",
+      "summary": "Save a file using zstandard compression. This is an alias for `sc.save(..., compression='zstd')`; see `sc.save()` for details. (Since `sc.save()` now uses zstandard by default, it is identical to `sc.save()`.)",
       "example": "",
       "aliases": [],
       "deprecated": false

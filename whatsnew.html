@@ -50,9 +50,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-bfd64266a099ba3d9a6cb1a21780adaa.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-9515c658929261994fd416d49db48cca.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -451,6 +451,7 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#whats-new" id="toc-whats-new" class="nav-link active" data-scroll-target="#whats-new">What’s new</a>
   <ul>
+  <li><a href="#version-3.6.2-2026-10-29" id="toc-version-3.6.2-2026-10-29" class="nav-link" data-scroll-target="#version-3.6.2-2026-10-29">Version 3.6.2 (2026-10-29)</a></li>
   <li><a href="#version-3.6.1-2026-10-26" id="toc-version-3.6.1-2026-10-26" class="nav-link" data-scroll-target="#version-3.6.1-2026-10-26">Version 3.6.1 (2026-10-26)</a></li>
   <li><a href="#version-3.6.0-2026-10-19" id="toc-version-3.6.0-2026-10-19" class="nav-link" data-scroll-target="#version-3.6.0-2026-10-19">Version 3.6.0 (2026-10-19)</a></li>
   <li><a href="#version-3.5.2-2026-10-16" id="toc-version-3.5.2-2026-10-16" class="nav-link" data-scroll-target="#version-3.5.2-2026-10-16">Version 3.5.2 (2026-10-16)</a></li>
@@ -644,6 +645,14 @@ ul.task-list li input[type="checkbox"] {
 <h1>What’s new</h1>
 <p>All major updates to Sciris are documented here.</p>
 <p>By import convention, components of the Sciris library are listed beginning with <code>sc.</code>, e.g.&nbsp;<a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>.</p>
+<section id="version-3.6.2-2026-10-29" class="level2">
+<h2 class="anchored" data-anchor-id="version-3.6.2-2026-10-29">Version 3.6.2 (2026-10-29)</h2>
+<ol type="1">
+<li>New <a href="./api/sc_parallel.html#sciris.sc_parallel.limit_threads" title="0"><code>sc.limit_threads()</code></a> limits the number of threads NumPy’s linear algebra libraries (BLAS) use. <a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> also now has a <code>worker_threads</code> argument. (Note: you can also still use <code>SCIRIS_NUM_THREADS</code>, but you no longer need to.)</li>
+<li>Dataframes indexed with invalid columns now raise the original exception.</li>
+<li><a href="./api/sc_fileio.html#sciris.sc_fileio.save" title="0"><code>sc.save()</code></a> now uses <code>zstandard</code> compression (level 1) by default instead of <a href="https://docs.python.org/3/library/gzip.html#module-gzip" title="1"><code>gzip</code></a> (level 5). Saving is much faster (e.g.&nbsp;7 times faster for a 100,000-agent Starsim sim) and loading about twice as fast, with similar file sizes. <a href="./api/sc_fileio.html#sciris.sc_fileio.load" title="0"><code>sc.load()</code></a> loads either format, and files saved with this version can be loaded with Sciris 2.1.0 or later.</li>
+</ol>
+</section>
 <section id="version-3.6.1-2026-10-26" class="level2">
 <h2 class="anchored" data-anchor-id="version-3.6.1-2026-10-26">Version 3.6.1 (2026-10-26)</h2>
 <ol type="1">
@@ -2490,7 +2499,7 @@ ul.task-list li input[type="checkbox"] {
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.6.1 (2026-10-26).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.6.2 (2026-10-29).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

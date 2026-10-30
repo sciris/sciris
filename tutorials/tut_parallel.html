@@ -85,9 +85,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-bfd64266a099ba3d9a6cb1a21780adaa.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="../site_libs/bootstrap/bootstrap-2f5edc86326bdec7f7b448ba0a454166.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9515c658929261994fd416d49db48cca.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -527,7 +527,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="parallelization-in-python" class="level3">
 <h3 class="anchored" data-anchor-id="parallelization-in-python">Parallelization in Python</h3>
 <p>Scary stories of Python’s <a href="https://granulate.io/blog/introduction-to-the-infamous-python-gil/">“global interpreter lock”</a> aside, parallelization is actually fairly simple in Python. However, it’s not particularly intuitive or flexible. We can do vanilla parallelization in Python via something like this:</p>
-<div id="76077f0a" class="cell" data-execution_count="1">
+<div id="6f44c207" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> multiprocessing <span class="im">as</span> mp</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a function</span></span>
@@ -544,7 +544,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>So far so good. But what if we have something more complicated? What if we want to run our function with a different keyword argument, for example? It starts getting kind of crazy:</p>
-<div id="6b217fa4" class="cell" data-execution_count="2">
+<div id="b251b757" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> partial</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a (slightly) more complex function</span></span>
@@ -568,7 +568,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="parallelization-in-sciris" class="level3">
 <h3 class="anchored" data-anchor-id="parallelization-in-sciris">Parallelization in Sciris</h3>
 <p>With Sciris, you can do it all with one line:</p>
-<div id="bffd6895" class="cell" data-execution_count="3">
+<div id="56d6f786" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(complex_func, [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], arg2<span class="op">=</span><span class="dv">10</span>)</span>
@@ -579,7 +579,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>What’s happening here? <a href="../api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> lets you pass keyword arguments directly to the function you’re calling. You can also iterate over multiple arguments rather than just one:</p>
-<div id="73ebcab0" class="cell" data-execution_count="4">
+<div id="5bec0918" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>args <span class="op">=</span> <span class="bu">dict</span>(x<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], arg2<span class="op">=</span>[<span class="dv">10</span>,<span class="dv">20</span>,<span class="dv">30</span>])</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> sc.parallelize(complex_func, iterkwargs<span class="op">=</span>args)</span>
@@ -591,7 +591,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>(Of course you can do this with vanilla Python too, but you’ll need to define a list of tuples, and you can only assign by position, not by keyword.)</p>
 <p>Depending on what you might want to run, your inputs might be in one of several different forms. You can supply a list of values, a list of dicts, or a dict of lists. An example will probably help:</p>
-<div id="53ae4014" class="cell" data-execution_count="5">
+<div id="c0c24d85" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mult(x,y):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">*</span>y</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -612,7 +612,7 @@ r3 = [2, 6, 12]</code></pre>
 <section id="advanced-usage" class="level3">
 <h3 class="anchored" data-anchor-id="advanced-usage">Advanced usage</h3>
 <p>There are lots and lots of options with parallelization, but we’ll only cover a couple here. For example, if you want to start 200 jobs on your laptop with 8 cores, you probably don’t want them to eat up all your CPU or memory and make your computer unusable. You can set <code>maxcpu</code> and <code>maxmem</code> limits to handle that:</p>
-<div id="6ff81dc5" class="cell" data-execution_count="6">
+<div id="f391ae37" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -647,7 +647,7 @@ r3 = [2, 6, 12]</code></pre>
 </div>
 <p>(Each job gets its own random seed, so the jobs don’t all draw the same “random” numbers, but the results are reproducible if you set the seed with <a href="https://numpy.org/doc/stable/reference/random/generated/numpy.random.seed.html#np.random.seed" title="1"><code>np.random.seed()</code></a> before calling <a href="../api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a>.)</p>
 <p>So far, we’ve used <a href="../api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> as a function. But you can also use it as a class, which gives you more flexibility and control over which jobs are run, and will give you more information if any of them failed:</p>
-<div id="25df03ec" class="cell" data-execution_count="7">
+<div id="9c0f5365" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> slow_func(i<span class="op">=</span><span class="dv">1</span>):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    sc.randsleep(seed<span class="op">=</span>i)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> i <span class="op">==</span> <span class="dv">4</span>:</span>
@@ -714,11 +714,11 @@ Job 4/10 (1.7 s) ••••••••••••—————————
 Job 4/10 (1.8 s) ••••••••••••—————————————————— 40%</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.13.16/x64/lib/python3.13/site-packages/multiprocess/pool.py:48: RuntimeWarning: sc.parallelize(): Task 4 failed, but die=False so continuing.
+<pre><code>/opt/hostedtoolcache/Python/3.13.17/x64/lib/python3.13/site-packages/multiprocess/pool.py:48: RuntimeWarning: sc.parallelize(): Task 4 failed, but die=False so continuing.
 Traceback (most recent call last):
-  File "/home/runner/work/sciris/sciris/sciris/sc_parallel.py", line 1004, in _task
+  File "/home/runner/work/sciris/sciris/sciris/sc_parallel.py", line 1035, in _task
     result = func(*args, **kwargs) # Call the function!
-  File "/tmp/ipykernel_2986/2785706684.py", line 4, in slow_func
+  File "/tmp/ipykernel_2916/2785706684.py", line 4, in slow_func
     raise Exception("I don't like seed 4")
 Exception: I don't like seed 4
 
@@ -730,7 +730,7 @@ Job 4/10 (1.9 s) ••••••••••••—————————
 
 Job 4/10 (2.0 s) ••••••••••••—————————————————— 40%
 
-Job 6/10 (2.1 s) ••••••••••••••••••———————————— 60%
+Job 5/10 (2.1 s) •••••••••••••••——————————————— 50%
 
 Job 7/10 (2.2 s) •••••••••••••••••••••————————— 70%
 
@@ -768,19 +768,19 @@ Job 9/10 (3.8 s) •••••••••••••••••••••
 
 Job 10/10 (3.9 s) •••••••••••••••••••••••••••••• 100%
 sc.obj(
-    started  = datetime.datetime(2026, 10, 27, 3, 45, 47, 19788),
-    finished = datetime.datetime(2026, 10, 27, 3, 45, 50, 880780),
-    elapsed  = 3.860992,
-    jobs     = [1.274979591369629, 1.0246503353118896, 0.5240392684936523, 0.17211532592773438, 1.8907129764556885, 1.6102497577667236, 1.0766096115112305, 1.2504611015319824, 0.6542115211486816, 1.7407329082489014],
+    started  = datetime.datetime(2026, 10, 30, 2, 27, 56, 640642),
+    finished = datetime.datetime(2026, 10, 30, 2, 28, 0, 515514),
+    elapsed  = 3.874872,
+    jobs     = [1.2748041152954102, 1.0243892669677734, 0.5240068435668945, 0.1719038486480713, 1.8897037506103516, 1.6101629734039307, 1.0764985084533691, 1.250389814376831, 0.6541399955749512, 1.740670919418335],
 )</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/home/runner/work/sciris/sciris/sciris/sc_parallel.py:622: RuntimeWarning: Only 9 of 10 jobs succeeded; see exceptions attribute for details
+<pre><code>/home/runner/work/sciris/sciris/sciris/sc_parallel.py:645: RuntimeWarning: Only 9 of 10 jobs succeeded; see exceptions attribute for details
   self.process_results()</code></pre>
 </div>
 </div>
 <p>You can see it raised some warnings. These are stored in the <a href="../api/sc_parallel.html#sciris.sc_parallel.Parallel" title="0"><code>Parallel</code></a> object so we can check back and see what happened:</p>
-<div id="c6d8d352" class="cell" data-execution_count="8">
+<div id="eba60850" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>P<span class="sc">.</span>success <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>P<span class="sc">.</span>exceptions <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>P<span class="sc">.</span>results <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -799,7 +799,7 @@ P.results = [0, 1, 4, 9, Exception("I don't like seed 4"), 25, 36, 49, 64, 81]</
 <section id="benchmarking" class="level3">
 <h3 class="anchored" data-anchor-id="benchmarking">Benchmarking</h3>
 <p>First off, we can check if our computer is performing as we expect, or if we want to compare across computers:</p>
-<div id="cb805afc" class="cell" data-execution_count="9">
+<div id="6a5d882d" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>bm <span class="op">=</span> sc.benchmark() <span class="co"># Check CPU performance, in units of MOPS (million operations per second)</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>ml <span class="op">=</span> sc.memload() <span class="co"># Check total memory load</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>ram <span class="op">=</span> sc.checkram() <span class="co"># Check RAM used by this Python instance</span></span>
@@ -808,9 +808,9 @@ P.results = [0, 1, 4, 9, Exception("I don't like seed 4"), 25, 36, 49, 64, 81]</
 <span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'System memory load'</span>, ml)</span>
 <span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Python RAM usage'</span>, ram)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>CPU performance:  {'python': 12.750625223776742, 'numpy': 223.74454215443868}
-System memory load 0.091
-Python RAM usage 151.31 MB</code></pre>
+<pre><code>CPU performance:  {'python': 18.771686872805752, 'numpy': 292.75623911579225}
+System memory load 0.08900000000000001
+Python RAM usage 154.89 MB</code></pre>
 </div>
 </div>
 <p>We can see that NumPy performance is much higher than Python – hundreds of MOPS† instead of single-digits. This makes sense, this is why we use it for array operations!</p>
@@ -819,13 +819,13 @@ Python RAM usage 151.31 MB</code></pre>
 <section id="line-profiling" class="level3">
 <h3 class="anchored" data-anchor-id="line-profiling">Line profiling</h3>
 <p>If you want to do a serious profiling of your code, take a look at <a href="https://github.com/P403n1x87/austin">Austin</a>. But if you just want to get a quick sense of where things might be slow, you can use <a href="../api/sc_profiling.html#sciris.sc_profiling.profile" title="0"><code>sc.profile()</code></a>. Applying it to our lousy <code>slow_func()</code> from before:</p>
-<div id="91439271" class="cell" data-execution_count="10">
+<div id="7a773e62" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>sc.profile(slow_func)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <div class="ansi-escaped-output">
 <pre>Profiling 1 function(s):
 
- &lt;function slow_func at 0x7f0e9a1e6840&gt; 
+ &lt;function slow_func at 0x7f1d891df7e0&gt; 
 
 
 
@@ -835,17 +835,17 @@ Elapsed time: 1.02 s
 
 
 
-————————————————————————————————————————————————
+———————————————————————————————————————————————
 
-Profile of 2785706684.py:1: 1.02399 s (99.9721%)
+Profile of 2785706684.py:1: 1.0239 s (99.9821%)
 
-————————————————————————————————————————————————
+———————————————————————————————————————————————
 
 </span>
 
-Total time: 1.02399 s
+Total time: 1.0239 s
 
-File: /tmp/ipykernel_2986/2785706684.py
+File: /tmp/ipykernel_2916/2785706684.py
 
 Function: slow_func at line 1
 
@@ -857,18 +857,18 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 
      1                                           def slow_func(i=1):
 
-     2         1 1023986851.0 1.02e+09    100.0      sc.randsleep(seed=i)
+     2         1 1023900615.0 1.02e+09    100.0      sc.randsleep(seed=i)
 
-     3         1       2854.0   2854.0      0.0      if i == 4:
+     3         1        691.0    691.0      0.0      if i == 4:
 
      4                                                   raise Exception("I don't like seed 4")
 
-     5         1       2053.0   2053.0      0.0      return i**2
+     5         1        591.0    591.0      0.0      return i**2
 </pre>
 </div>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="10">
-<pre><code>&lt;sciris.sc_profiling.profile at 0x7f0e9a79bcb0&gt;
+<pre><code>&lt;sciris.sc_profiling.profile at 0x7f1d89797e00&gt;
 [&lt;class 'sciris.sc_profiling.profile'&gt;, &lt;class 'sciris.sc_printing.prettyobj'&gt;]
 ————————————————————————————————————————————————————————————————————————
 Methods:
@@ -878,11 +878,11 @@ Methods:
   disp()                  run()                   
 ————————————————————————————————————————————————————————————————————————
          args: ()
-           df:               name     time    percent   function  \
-               0  2785706684. [...]
+           df:               name    time   percent   function  \
+               0  2785706684.py [...]
       exclude: None
        follow: None
- follow_funcs: [&lt;function slow_func at 0x7f0e9a1e6840&gt;]
+ follow_funcs: [&lt;function slow_func at 0x7f1d891df7e0&gt;]
       include: None
        kwargs: {}
        output: sc.obj({
@@ -890,11 +890,11 @@ Methods:
                        name     = '2785706 [...]
       private: '__init__'
          prof: &lt;line_profiler.line_profiler.LineProfiler object at
-               0x7f0ecc2b7ee0&gt;
-     run_func: &lt;function slow_func at 0x7f0e9a1e6840&gt;
+               0x7f1da43b3d40&gt;
+     run_func: &lt;function slow_func at 0x7f1d891df7e0&gt;
 run_func_name: '2785706684.py:1'
      skipzero: False
-        total: 1.024275541305542
+        total: 1.024082899093628
        unwrap: True
       verbose: True
 ————————————————————————————————————————————————————————————————————————</code></pre>
@@ -902,7 +902,7 @@ run_func_name: '2785706684.py:1'
 </div>
 <p>We can see that 100% (well, 99.9997%) of the time was taken by the sleep function. This is not surprising, but seems correct!</p>
 <p>For a slightly more realistic example:</p>
-<div id="4370d86f" class="cell" data-execution_count="11">
+<div id="5a09cbd2" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> func():</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="dv">1000</span></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    </span>
@@ -921,11 +921,11 @@ run_func_name: '2785706684.py:1'
 <div class="ansi-escaped-output">
 <pre>Profiling 1 function(s):
 
- &lt;function func at 0x7f0e9a158180&gt; 
+ &lt;function func at 0x7f1d7427d800&gt; 
 
 
 
-Elapsed time: 73.2 ms
+Elapsed time: 55.2 ms
 
 <span class="ansi-cyan-fg">
 
@@ -933,15 +933,15 @@ Elapsed time: 73.2 ms
 
 —————————————————————————————————————————————————
 
-Profile of 701805461.py:1: 0.0723539 s (98.7653%)
+Profile of 701805461.py:1: 0.0540347 s (97.7811%)
 
 —————————————————————————————————————————————————
 
 </span>
 
-Total time: 0.0723539 s
+Total time: 0.0540347 s
 
-File: /tmp/ipykernel_2986/701805461.py
+File: /tmp/ipykernel_2916/701805461.py
 
 Function: func at line 1
 
@@ -953,32 +953,32 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 
      1                                           def func():
 
-     2         1        661.0    661.0      0.0      n = 1000
+     2         1        431.0    431.0      0.0      n = 1000
 
      3                                           
 
      4                                               # Do some NumPy
 
-     5         1    4969369.0 4.97e+06      6.9      v1 = np.random.rand(n,n)
+     5         1    3717946.0 3.72e+06      6.9      v1 = np.random.rand(n,n)
 
-     6         1    4933125.0 4.93e+06      6.8      v2 = np.random.rand(n,n)
+     6         1    3657034.0 3.66e+06      6.8      v2 = np.random.rand(n,n)
 
-     7         1    1309459.0 1.31e+06      1.8      v3 = v1*v2
+     7         1    1613162.0 1.61e+06      3.0      v3 = v1*v2
 
      8                                           
 
      9                                               # Do some Python
 
-    10         1        992.0    992.0      0.0      means = []
+    10         1        521.0    521.0      0.0      means = []
 
-    11      1001     270048.0    269.8      0.4      for i in range(n):
+    11      1001     205343.0    205.1      0.4      for i in range(n):
 
-    12      1000   60870278.0  60870.3     84.1          means.append(sum(v3[i])/n)
+    12      1000   44840312.0  44840.3     83.0          means.append(sum(v3[i])/n)
 </pre>
 </div>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="11">
-<pre><code>&lt;sciris.sc_profiling.profile at 0x7f0e9a2016d0&gt;
+<pre><code>&lt;sciris.sc_profiling.profile at 0x7f1d891f9a90&gt;
 [&lt;class 'sciris.sc_profiling.profile'&gt;, &lt;class 'sciris.sc_printing.prettyobj'&gt;]
 ————————————————————————————————————————————————————————————————————————
 Methods:
@@ -992,7 +992,7 @@ Methods:
                0  701805461.py: [...]
       exclude: None
        follow: None
- follow_funcs: [&lt;function func at 0x7f0e9a158180&gt;]
+ follow_funcs: [&lt;function func at 0x7f1d7427d800&gt;]
       include: None
        kwargs: {}
        output: sc.obj({
@@ -1000,11 +1000,11 @@ Methods:
                        name     = '70180546 [...]
       private: '__init__'
          prof: &lt;line_profiler.line_profiler.LineProfiler object at
-               0x7f0e9a0fe8f0&gt;
-     run_func: &lt;function func at 0x7f0e9a158180&gt;
+               0x7f1d8913a8f0&gt;
+     run_func: &lt;function func at 0x7f1d7427d800&gt;
 run_func_name: '701805461.py:1'
      skipzero: False
-        total: 0.0732583999633789
+        total: 0.05526089668273926
        unwrap: True
       verbose: True
 ————————————————————————————————————————————————————————————————————————</code></pre>
@@ -1449,7 +1449,7 @@ run_func_name: '701805461.py:1'
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.6.1 (2026-10-26).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.6.2 (2026-10-29).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

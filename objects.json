@@ -1,7 +1,7 @@
 {
   "project": "sciris",
   "version": "0.0.9999",
-  "count": 492,
+  "count": 496,
   "items": [
     {
       "name": "sciris.sc_math.approx",
@@ -2404,6 +2404,14 @@
       "dispname": "-"
     },
     {
+      "name": "sciris.sc_parallel.Parallel.get_worker_threads",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.Parallel.get_worker_threads",
+      "dispname": "-"
+    },
+    {
       "name": "sciris.sc_parallel.Parallel.init",
       "domain": "py",
       "role": "function",
@@ -2529,6 +2537,30 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_parallel.html#sciris.sc_parallel.cpuload",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_parallel.limit_threads.find_libs",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.limit_threads.find_libs",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_parallel.limit_threads.restore",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.limit_threads.restore",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_parallel.limit_threads",
+      "domain": "py",
+      "role": "class",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.limit_threads",
       "dispname": "-"
     },
     {
@@ -6268,6 +6300,14 @@
       "dispname": "-"
     },
     {
+      "name": "sciris.Parallel.get_worker_threads",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.Parallel.get_worker_threads",
+      "dispname": "-"
+    },
+    {
       "name": "sciris.Parallel.init",
       "domain": "py",
       "role": "function",
@@ -6393,6 +6433,30 @@
       "role": "function",
       "priority": "1",
       "uri": "api/sc_parallel.html#sciris.sc_parallel.cpuload",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.limit_threads.find_libs",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.limit_threads.find_libs",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.limit_threads.restore",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.limit_threads.restore",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.limit_threads",
+      "domain": "py",
+      "role": "class",
+      "priority": "1",
+      "uri": "api/sc_parallel.html#sciris.sc_parallel.limit_threads",
       "dispname": "-"
     },
     {
