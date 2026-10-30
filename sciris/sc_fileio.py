@@ -62,7 +62,7 @@ def _unpicklingerror(filename):
     """ Base error message when a file couldn't be loaded """
     return f'''
 Unable to load file: "{filename}"
-as a gzipped pickle file. Loading pickles can fail if Python modules have changed
+as a pickle file. Loading pickles can fail if Python modules have changed
 since the object was saved. If you are loading a custom class that has failed,
 you can use the remapping argument; see the sc.load() docstring for details.
 Otherwise, you might need to revert to the previous version of that module (e.g.
@@ -115,7 +115,7 @@ def _load_filestr(filename, folder=None, verbose=False):
 def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
          method=None, auto_remap=True, **kwargs):
     """
-    Load a file that has been saved as a gzipped pickle file, e.g. by `sc.save()`.
+    Load a file that has been saved as a compressed (zstandard or gzip) or uncompressed pickle file, e.g. by `sc.save()`.
     Accepts either a filename (standard usage) or a file object as the first argument.
     Note that `sc.load()`/`sc.loadobj()` are aliases of each other.
 
@@ -176,8 +176,8 @@ def load(filename=None, folder=None, verbose=None, die=False, remapping=None,
     return obj
 
 
-def save(filename='default.obj', obj=None, folder=None, method='pickle', compression='gzip',
-         compresslevel=5, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs):
+def save(filename='default.obj', obj=None, folder=None, method='pickle', compression='zstd',
+         compresslevel=None, verbose=0, sanitizepath=True, die=False, allow_empty=False, **kwargs):
     """
     Save any object to disk
 
@@ -210,8 +210,8 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
         obj           (anything) : the object to save
         folder        (str)      : optional additional folder, passed to `sc.makepath()`
         method        (str)      : whether to use 'pickle' (default) or 'dill'
-        compression   (str)      : type of compression to use: 'gzip' (default), 'zstd' (zstandard), or 'none' (no compression)
-        compresslevel (int)      : the level of gzip/zstd compression (1 to 9 for gzip, -7 to 22 for zstandard, default 5)
+        compression   (str)      : type of compression to use: 'zstd' (zstandard; default), 'gzip', or 'none' (no compression)
+        compresslevel (int)      : the level of zstd/gzip compression (-7 to 22 for zstandard, default 1; 1 to 9 for gzip, default 5)
         verbose       (int)      : level of detail to print
         sanitizepath  (bool)     : whether to sanitize the path prior to saving
         die           (bool)     : whether to fail if the object can't be pickled (else, try dill); if die is 'never'
@@ -239,13 +239,13 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     loaded = sc.load('my_class.obj') # With dill, can be loaded anywhere, not just in the same script
     assert loaded.sum() == my_class.sum()
     ```
-    See also `sc.zsave()` (identical except defaults to zstandard compression).
 
     - *New in version 1.1.1:* removed Python 2 support.
     - *New in version 1.2.2:* automatic swapping of arguments if order is incorrect; correct passing of arguments
     - *New in version 2.0.4:* "die" argument for saving as dill
     - *New in version 2.1.0:* "zstandard" compression method
     - *New in version 3.0.0:* "allow_empty" argument; removed "args"
+    - *New in version 3.6.2:* zstandard (level 1) compression by default instead of gzip (level 5), which is several times faster
     """
 
     def serialize(fileobj, obj, **kwargs):
@@ -304,10 +304,10 @@ def save(filename='default.obj', obj=None, folder=None, method='pickle', compres
     with io.BytesIO() as fileobj:
         serialize(fileobj, obj, **kwargs)
         filestr = fileobj.getvalue()
-    if compression in ['gz', 'gzip']: # Main use case
-        filestr = gz.compress(filestr, compresslevel=compresslevel)
-    elif compression in ['zst', 'zstd', 'zstandard']:
-        filestr = zstd.ZstdCompressor(level=compresslevel).compress(filestr)
+    if compression in ['zst', 'zstd', 'zstandard']: # Main use case
+        filestr = zstd.ZstdCompressor(level=sc.ifelse(compresslevel, 1)).compress(filestr)
+    elif compression in ['gz', 'gzip']:
+        filestr = gz.compress(filestr, compresslevel=sc.ifelse(compresslevel, 5))
 
     # Actually save
     if tobytes:
@@ -326,8 +326,9 @@ saveobj = save
 
 def zsave(*args, compression='zstd', **kwargs):
     """
-    Save a file using zstandard (instead of gzip) compression. This is an alias
-    for `sc.save(..., compression='zstd')`; see `sc.save()` for details.
+    Save a file using zstandard compression. This is an alias for
+    `sc.save(..., compression='zstd')`; see `sc.save()` for details. (Since
+    `sc.save()` now uses zstandard by default, it is identical to `sc.save()`.)
 
     Note: there is no matching function "`zload()`" since `sc.load()` will
     automatically try loading zstandard.
