@@ -245,7 +245,7 @@ def execute_notebooks(*args, folders=None, tidy=True, debug=False):
     """ Execute notebooks in parallel and print which succeeded / failed """
     T = sc.timer()
     cwd = sc.thispath(__file__)
-    results = sc.objdict()
+    results = sc.obj()
     string = ''
 
     # Determine which notebooks to run

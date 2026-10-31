@@ -1,14 +1,16 @@
 """
-The "odict" class, combining features from an OrderedDict and a list/array.
+Dictionaries such as `sc.obj`, combining features from dicts, objects, lists, and arrays.
 
 Highlights:
-    - `sc.odict()`: flexible container representing the best-of-all-worlds across dicts, lists, and arrays
-    - `sc.obj()`: like an odict, but allows get/set via e.g. `foo.bar` instead of `foo['bar']`
+    - `sc.obj()`: fast and flexible container representing the best-of-all-worlds across objects, dicts, lists, and arrays
+    - `sc.objdict()`: a slower `sc.obj()` with more features, such as setting items by position
+    - `sc.odict()`: like `sc.objdict()`, but with dict syntax only, e.g. `foo['bar']` instead of `foo.bar`
 """
 import re
 import sys
 import json
 import copyreg
+import types
 import warnings
 import numpy as np
 import collections as co
@@ -1282,7 +1284,7 @@ class odict(dict):
 #%% Other classes
 ##############################################################################
 
-class obj(odict):
+class objdict(odict):
     """
     An `odict` that acts like an object -- allow keys to be set/retrieved by object
     notation.
@@ -1291,32 +1293,28 @@ class obj(odict):
     instead act on dict keys (e.g. `obj['x'] = 3`). If you want to actually get/set
     an attribute, use `obj.getattribute()`/`obj.setattribute()`.
 
-    `sc.objdict()` is an alias for `sc.obj()`.
-
-    For a lighter-weight example (an object that acts like a dict), see `sc.dictobj()`.
+    For a much faster alternative with fewer features, see `sc.obj()`.
 
     **Examples**:
 
     ```python
     import sciris as sc
 
-    obj = sc.obj(foo=3, bar=2)
+    obj = sc.objdict(foo=3, bar=2)
     obj.foo + obj.bar # Gives 5
     for key in obj.keys(): # It's still a dict
         obj[key] = 10
 
-    od = sc.obj({'height':1.65, 'mass':59})
+    od = sc.objdict({'height':1.65, 'mass':59})
     od.bmi = od.mass/od.height**2
     od['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works
     od.keys = 3 # This raises an exception (you can't overwrite the keys() method)
     ```
     Nested logic based in part on addict: https://github.com/mewwts/addict
 
-    For a lighter-weight equivalent (based on `dict` instead of `odict`), see
-    `sc.dictobj()`.
-
-    - *New in version 3.5.0:* `sc.obj()` alias; much faster attribute access
-    - *New in version 3.6.0:* `sc.obj` is the class and `sc.objdict` the alias; faster creation, integer indexing, and failed attribute lookups
+    - *New in version 3.5.0:* much faster attribute access
+    - *New in version 3.6.0:* faster creation, integer indexing, and failed attribute lookups
+    - *New in version 3.7.0:* `sc.obj` is a separate, faster class, rather than an alias
     """
 
     def __init__(self, *args, **kwargs):
@@ -1344,7 +1342,7 @@ class obj(odict):
 
     def _repr(self, width=80, maxitems=200, _seen=None):
         """ Create the repr, recursing into child objs """
-        name = 'sc.obj' if type(self) is obj else type(self).__name__
+        name = f'sc.{type(self).__name__}' if type(self) in (objdict, obj) else type(self).__name__
         if not len(self):
             return f'{name}()'
         if _seen is None:
@@ -1367,7 +1365,7 @@ class obj(odict):
         for key in keys:
             val = dict.__getitem__(self, key)
             try:
-                if isinstance(val, obj):
+                if isinstance(val, (objdict, obj)):
                     valstr = val._repr(width=valwidth, maxitems=maxitems, _seen=_seen)
                 elif sc.isnumber(val):
                     valstr = str(val) # Avoid e.g. "np.float64(0.5)"
@@ -1391,7 +1389,7 @@ class obj(odict):
             if nkeys > maxitems and i == half:
                 lines.append(f'    # [{nkeys - maxitems} additional items not shown]')
             prefix = f'    {keystr:<{keylen}} = ' if kwstyle else f'    {keystr+":":<{keylen+1}} '
-            if isinstance(dict.__getitem__(self, keys[i]), obj):
+            if isinstance(dict.__getitem__(self, keys[i]), (objdict, obj)):
                 valstr = valstr.replace('\n', '\n    ') # Indent child objs by one level
             else:
                 valstr = valstr.replace('\n', '\n' + ' '*len(prefix)) # Align e.g. arrays with the start of the value
@@ -1494,7 +1492,187 @@ class obj(odict):
         return object.__delattr__(self, name)
 
 
-objdict = obj # Define alias
+class _objclassmethod:
+    """ A read-only classmethod or staticmethod of `sc.obj` (see `_protect_methods()`) """
+
+    def __init__(self, method, fset):
+        self.method = method
+        self.fset = fset
+
+    def __get__(self, obj, objtype=None):
+        return self.method.__get__(obj, objtype)
+
+    def __set__(self, obj, value):
+        self.fset(obj, value)
+
+
+def _protect_methods(cls, attrs):
+    """
+    Make the methods of a `sc.obj` class read-only, so a key with the same name can't
+    replace them. Instance attributes are keys, and the only class attributes that
+    take priority over these are ones that define `__set__()`. Using `property()` and
+    `__get__()` keeps it all in C, and adds nothing to the lookup of other attributes.
+    """
+    def readonly(name):
+        def fset(self, value):
+            errormsg = f'"{name}" is a method of {type(self).__name__}, so cannot be set as an attribute; use obj["{name}"] instead'
+            raise AttributeError(errormsg)
+        return fset
+
+    for name,attr in attrs.items():
+        if name[:2] != '__':
+            if isinstance(attr, (classmethod, staticmethod, types.ClassMethodDescriptorType)):
+                setattr(cls, name, _objclassmethod(attr, readonly(name)))
+            elif callable(attr) and hasattr(attr, '__get__') and not isinstance(attr, type):
+                setattr(cls, name, property(attr.__get__, readonly(name), doc=attr.__doc__))
+    return
+
+
+class obj(odict):
+    """
+    An object that is also a dict, as fast as a plain object and a plain dict.
+
+    The keys and the attributes are the same thing: `obj.x` is `obj['x']`. It is an
+    `sc.odict()`, so it has the same methods (e.g. `obj.sort()`, `obj.enumitems()`,
+    `obj.filter()`) and can read values by position (e.g. `obj[0]`).
+
+    **Examples**:
+
+    ```python
+    import sciris as sc
+
+    obj = sc.obj(foo=3, bar=2)
+    obj.foo + obj.bar # Gives 5
+    obj.baz = 7
+    obj[0] # Gives 3
+    for key in obj.keys(): # It's still a dict
+        obj[key] = 10
+    ```
+
+    As with `sc.objdict()`, methods are read-only: `obj.keys = 3` raises an exception,
+    and a key with the name of a method can only be used as an item, e.g. `obj['keys']`.
+
+    To be this fast, it has no code that runs when an attribute or item is set, so
+    it differs from `sc.objdict()` as follows:
+
+    - There are no attributes other than keys, unless a subclass declares them with `__slots__` (see below).
+    - Position only works for reading: `obj[0] = 3` makes a new key `0`, and `del obj[0]` raises a `KeyError`.
+    - Lists of keys (e.g. `obj[['a','b']]`) aren't supported, and nor are slices (e.g. `obj[:2]`) before Python 3.12.
+    - There is no `defaultdict` argument.
+
+    For these, use `sc.objdict()`, which is 2 to 13 times slower per operation.
+
+    Subclasses are as fast as `sc.obj()`. A subclass can define methods, which are
+    read-only too, and can keep attributes that aren't keys by declaring them in
+    `__slots__`. If it overrides `__setitem__()`, `obj.x = 3` calls it, at the cost
+    of that subclass's attributes being slower to set:
+
+    ```python
+    class Locked(sc.obj):
+        __slots__ = ('locked',) # An attribute, not a key
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.locked = True
+
+        def __setitem__(self, key, value):
+            if self.locked:
+                raise KeyError(key)
+            super().__setitem__(key, value)
+    ```
+
+    - *New in version 3.5.0:* `sc.obj()` alias of `sc.objdict()`
+    - *New in version 3.7.0:* a separate class, as fast as `sc.dictobj()`
+    """
+
+    # Use the dict methods directly, since there are no cached keys to update
+    __getitem__ = dict.__getitem__
+    __setitem__ = dict.__setitem__
+    __delitem__ = dict.__delitem__
+    update = dict.update
+    setdefault = dict.setdefault
+    popitem = dict.popitem
+    clear = dict.clear
+    __repr__ = objdict.__repr__
+    _repr = objdict._repr
+    _stale = property(lambda self: True, lambda self, value: None) # Always stale; ignored when odict methods set it
+
+    def __init__(self, *args, **kwargs):
+        """ Create the obj, with the same arguments as `dict()`; replaced by `dict.__init__` below """
+        dict.__init__(self, *args, **kwargs)
+
+    def __new__(cls, *args, **kwargs):
+        if 'defaultdict' in kwargs:
+            errormsg = 'sc.obj() does not support "defaultdict"; use sc.objdict() instead'
+            raise TypeError(errormsg)
+        self = dict.__new__(cls)
+        self.__dict__ = self # Use the dict itself to store the attributes
+        return self
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        _protect_methods(cls, dict(vars(cls)))
+        if '__setitem__' in vars(cls): # Only these classes need code to run on setting an attribute
+            cls.__setattr__ = cls._setattr_item
+        return
+
+    def _setattr_item(self, name, value):
+        """ Replaces `__setattr__()` in subclasses that override `__setitem__()` """
+        if hasattr(type(self), name): # A slot, or raises an exception for a method
+            return object.__setattr__(self, name, value)
+        self[name] = value
+        return
+
+    def __missing__(self, key):
+        """ Handle what isn't a key: integer indices, and slices as of Python 3.12 (before that they're unhashable) """
+        if isinstance(key, sc._numtype):
+            return dict.__getitem__(self, self._ikey(key))
+        elif isinstance(key, slice):
+            return self._sanitize_items([dict.__getitem__(self, k) for k in self._slicetokeys(key)])
+        keys = list(dict.keys(self))
+        if len(keys): errormsg = f'obj key "{key}" not found; available keys are:\n{sc.newlinejoin(keys)}'
+        else:         errormsg = f'Key {key} not found since obj is empty'
+        raise sc.KeyNotFoundError(errormsg)
+
+    def __reduce__(self):
+        """ Pickle and copy the contents once, rather than as both items and attributes """
+        slots = {k:getattr(self, k) for k in copyreg._slotnames(type(self)) if hasattr(self, k)}
+        return (copyreg.__newobj__, (self.__class__,), (dict(self), slots))
+
+    def __setstate__(self, state):
+        """ Restore from a pickle or copy, including pickles from before version 3.7.0 """
+        items, slots = state if isinstance(state, tuple) else (state, {})
+        dict.update(self, items)
+        for k,v in slots.items():
+            object.__setattr__(self, k, v)
+        return
+
+    def setattribute(self, name, value):
+        """ Set an attribute declared in `__slots__` """
+        if not hasattr(type(self), name):
+            errormsg = f'To set "{name}" as an attribute of {type(self).__name__}, add it to __slots__'
+            raise AttributeError(errormsg)
+        return object.__setattr__(self, name, value)
+
+    def getattribute(self, name):
+        """ Get an attribute, not a key """
+        return object.__getattribute__(self, name)
+
+    def __dir__(self):
+        """ Include keys, for tab completion """
+        return [k for k in object.__dir__(self) if isinstance(k, str)]
+
+    def _ikey(self, key):
+        """ Handle an integer key; the keys can't be cached since nothing runs when one is added """
+        try:
+            return list(dict.keys(self))[key]
+        except IndexError: # pragma: no cover
+            errormsg = f'index {key} out of range for dict of length {len(self)}'
+            raise IndexError(errormsg) from None # Don't show the traceback
+
+
+obj.__init__ = dict.__init__ # Set here since quartodoc can't read __init__ from an assignment in the class
+_protect_methods(obj, {**vars(dict), **vars(odict), **vars(obj)})
 
 
 class dictobj(dict):
@@ -1509,7 +1687,7 @@ class dictobj(dict):
     obj['b'] = 10
     print(obj.items())
     ```
-    For a more powerful alternative, see `sc.obj()`.
+    For the same speed with more features, see `sc.obj()`.
 
     The keys and the attributes are the same thing (the dict is its own `__dict__`),
     so it is as fast as a plain object for attributes and nearly as fast as a plain
@@ -1633,7 +1811,7 @@ def asobj(obj, strict=True):
     return objobj(obj)
 
 
-class argparse(obj):
+class argparse(objdict):
     """ Ultra-simple argument parser
 
     Accepts positional or keyword arguments, and converts them to the correct type.

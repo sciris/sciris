@@ -1,6 +1,6 @@
 ---
 name: sciris-intro
-description: Use when the user needs to implement a basic Sciris features — finding array values, plotting with date formatting, objdict containers, saving/loading objects, or parallelization.
+description: Use when the user needs to implement a basic Sciris features — finding array values, plotting with date formatting, sc.obj containers, saving/loading objects, or parallelization.
 ---
 
 # Sciris introduction
@@ -38,7 +38,7 @@ sc.SIticks()                             # SI notation on y-axis
 ### Flexible containers
 Use the `sciris-dicts` skill for more details.
 ```python
-data = sc.objdict(a=[1,2,3], b=[4,5,6])
+data = sc.obj(a=[1,2,3], b=[4,5,6])
 assert data.a == data['a'] == data[0]    # Three ways to access
 assert data[:].sum() == 21              # Slice and sum
 for i, key, value in data.enumitems():   # Enumerate with keys

@@ -256,6 +256,19 @@ def test_other():
     return o
 
 
+class Locked(sc.obj): # At the top level so it can be pickled
+    __slots__ = ('locked',)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.locked = False
+    def __setitem__(self, key, value):
+        if self.locked:
+            raise KeyError(key)
+        super().__setitem__(key, value)
+class ChildLocked(Locked):
+    pass
+
+
 def test_asobj():
     sc.heading('Testing objdict/asobj')
 
@@ -305,11 +318,80 @@ def test_asobj():
     with pytest.raises(AttributeError):
         myobjdict.setattribute('keys', 4)
 
-    assert sc.obj is sc.objdict # Alias
-    assert 'x' in dir(sc.obj(x=1)) # For tab completion
-    assert isinstance(sc.obj(a=1) | {'b':2}, sc.obj) and isinstance({'b':2} | sc.obj(a=1), sc.obj)
+    assert 'x' in dir(sc.objdict(x=1)) # For tab completion
     with pytest.warns(UserWarning):
-        sc.obj(index=3) # Key can't be accessed as an attribute
+        sc.objdict(index=3) # Key can't be accessed as an attribute
+
+    print('Testing obj')
+    o = sc.obj(a=1, b=2)
+    o.c = 3
+    o['d'] = 4
+    assert isinstance(o, dict) and isinstance(o, sc.odict)
+    assert o.d == o['d'] == o[3] == o[-1] == 4
+    assert vars(o) is o
+    assert 'a' in dir(o) and 'sort' in dir(o)
+    assert o.keys() == ['a', 'b', 'c', 'd']
+    assert repr(o) == 'sc.obj(a=1, b=2, c=3, d=4)'
+    del o.d
+    del o['c']
+    o.e = 5
+    assert o[2] == 5 # Added and deleted keys are seen by position
+    assert not hasattr(o, 'nope')
+    with pytest.raises(sc.KeyNotFoundError):
+        o['nope']
+    with pytest.raises(IndexError):
+        o[3]
+    with pytest.raises(TypeError):
+        sc.obj(defaultdict=list)
+    assert isinstance(o | {'f':6}, sc.obj) and isinstance({'f':6} | o, sc.obj)
+    assert 'a' in dir(sc.obj({1:2, 'a':3})) # Non-string keys are skipped
+    if sys.version_info >= (3, 12):
+        assert list(o[:2]) == [1, 2]
+    s = o.sorted(reverse=True)
+    assert isinstance(s, sc.obj) and s.keys() == ['e', 'b', 'a']
+    for copied in [sc.dcp(o), sc.cp(o), o.copy(), sc.loadstr(sc.dumpstr(o))]:
+        assert type(copied) is sc.obj and copied == o and copied is not o
+        copied.a = 100 # Attributes and items are still the same thing
+        assert copied['a'] == 100 and o.a == 1
+    assert sc.jsonify(o) == dict(o)
+    assert repr(sc.objdict(a=sc.obj(b=1))) == 'sc.objdict(a=sc.obj(b=1))'
+    p = sc.obj(clear=1, _repr=2, fromkeys=3) # Keys can't replace methods
+    p.a = 4
+    assert p['clear'] == 1 and p.keys() == ['clear', '_repr', 'fromkeys', 'a']
+    assert repr(p) == 'sc.obj(clear=1, _repr=2, fromkeys=3, a=4)' and dict(p)['clear'] == 1
+    assert sc.obj.fromkeys(['x']).keys() == ['x'] and sc.dcp(p) == p
+    p.clear()
+    assert not len(p)
+    with pytest.raises(AttributeError):
+        p.keys = 3
+    with pytest.raises(AttributeError):
+        p.fromkeys = 3
+
+    class MyObj(sc.obj):
+        def double(self):
+            return self.a*2
+        def keys(self):
+            return super().keys() + ['extra']
+    m = MyObj(a=2, double=5)
+    m.b = 3
+    assert m.double() == 4 and m['double'] == 5 and m[2] == 3
+    assert m.keys() == ['a', 'double', 'b', 'extra']
+    assert type(sc.dcp(m)) is MyObj
+    with pytest.raises(AttributeError):
+        m.double = 3
+
+    for cls in [Locked, ChildLocked]:
+        l = cls(a=1)
+        l.b = 2
+        assert l.locked is False and l.keys() == ['a', 'b']
+        l.setattribute('locked', True)
+        for func in [lambda: l.__setitem__('c', 3), lambda: setattr(l, 'c', 3)]:
+            with pytest.raises(KeyError):
+                func()
+        for copied in [sc.dcp(l), sc.loadstr(sc.dumpstr(l))]:
+            assert type(copied) is cls and copied.locked is True and copied == l
+    with pytest.raises(AttributeError):
+        sc.obj().setattribute('x', 1) # No slot for it
 
     print('Testing dictobj')
     obj = sc.dictobj(x=4, y=6)

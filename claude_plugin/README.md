@@ -24,14 +24,14 @@ Or manually add `https://github.com/sciris/sciris` as a marketplace in your Clau
 |-------|-------------|
 | **sciris-intro** | Basic Sciris features and quick reference |
 | **sciris-arrays** | Array operations (`sc.findinds`, `sc.findnearest`, `sc.toarray`, etc.) |
-| **sciris-dicts** | Containers (`sc.odict`, `sc.objdict`, `sc.counter`, etc.) |
+| **sciris-dicts** | Containers (`sc.obj`, `sc.objdict`, `sc.counter`, etc.) |
 | **sciris-files** | File I/O (`sc.save`, `sc.load`, `sc.savejson`, etc.) |
 | **sciris-plotting** | Matplotlib extensions (`sc.boxoff`, `sc.dateformatter`, etc.) |
 | **sciris-parallel** | Parallelization (`sc.parallelize`, `sc.loadbalancer`) |
 | **sciris-dates** | Date/time handling (`sc.date`, `sc.daterange`, `sc.timer`) |
 | **sciris-printing** | Printing and formatting (`sc.heading`, `sc.sigfig`, `sc.progressbar`) |
 | **sciris-utils** | Utilities (`sc.mergedicts`, `sc.tryexcept`, `sc.checkmem`, etc.) |
-| **sciris-advanced** | Advanced features (`sc.odict` subclassing, nested operations, versioning) |
+| **sciris-advanced** | Advanced features (`sc.obj` subclassing, nested operations, versioning) |
 
 ## Organization
 

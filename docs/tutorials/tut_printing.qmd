@@ -49,7 +49,7 @@ class Sim:
     def __init__(self, n=10, n_factors=5):
         self.n = n
         self.n_factors = n_factors
-        self.results = sc.objdict()
+        self.results = sc.obj()
         self.ready = False
     
     def run(self):
@@ -87,7 +87,7 @@ class PrettySim(sc.prettyobj): # This line is key, everything else is the same a
     def __init__(self, n=10, n_factors=5):
         self.n = n
         self.n_factors = n_factors
-        self.results = sc.objdict()
+        self.results = sc.obj()
         self.ready = False
     
     def run(self):

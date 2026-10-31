@@ -85,7 +85,7 @@ class Squiggles(sc.prettyobj):
         self.length = length
 
     def make(self):
-        self.d = sc.objdict() # Create objdict to store the data
+        self.d = sc.obj() # Create sc.obj to store the data
         for k in ['x', 'y', 'z']:
             self.d[k] = np.cumsum(np.random.randn(self.n, self.length), axis=1)
         self.c = sc.vectocolor(np.arange(self.length), cmap='parula') # Make colors

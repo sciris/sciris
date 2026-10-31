@@ -160,7 +160,7 @@ old = sc.importbypath('sim1/sim.py')
 new = sc.importbypath('sim2/sim.py')
 
 # Run both versions
-sims = sc.odict()
+sims = sc.obj()
 sims['Old sim'] = old.Sim().run()
 sims['New sim'] = new.Sim().run()
 

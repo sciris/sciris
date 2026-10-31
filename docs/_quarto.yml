@@ -144,7 +144,7 @@ quartodoc:
         - sc_math
         - sc_asd
     - title: Containers
-      desc: "Dictionaries are great, right? `sc.odict()` is a drop-in replacement for a dictionary that has lots of extra features (such as retrieving items by index). Pandas DataFrames are great, right? `sc.dataframe()` is a drop-in replacement for a DataFrame that has some additional features for ease of use (such as being able to concatenate in place)."
+      desc: "Dictionaries are great, right? `sc.obj()` is a drop-in replacement for a dictionary that has lots of extra features (such as retrieving items by attribute or index). Pandas DataFrames are great, right? `sc.dataframe()` is a drop-in replacement for a DataFrame that has some additional features for ease of use (such as being able to concatenate in place)."
       contents:
         - sc_odict
         - sc_dataframe

@@ -3,46 +3,57 @@ title: Dictionaries and dataframes
 jupyter: python3
 ---
 
-Needing a better way of ordering dictionaries was one of the original inspirations for Sciris back in 2014. In those dark days of Python <=3.6, dictionaries were unordered, which meant that `dict.keys()` could give you anything. (And you still can't do `dict.keys()[0]`, much less `dict[0]`). This tutorial describes Sciris' ordered dict, the `odict`, its close cousin the `objdict`, and its pandas-powered pseudorelative, the `dataframe`.
+Needing a better way of ordering dictionaries was one of the original inspirations for Sciris back in 2014. In those dark days of Python <=3.6, dictionaries were unordered, which meant that `dict.keys()` could give you anything. (And you still can't do `dict.keys()[0]`, much less `dict[0]`). This tutorial describes `sc.obj`, Sciris' dict that is also an object, and its pandas-powered pseudorelative, `sc.dataframe`.
 
-## The `odict`
+## `sc.obj`
 
-In basically every situation except one, an `odict` can be used like a `dict`. (Since this is a tutorial, see if you can intuit what that one situation is!) For example, creating an `odict`works just like creating a regular dict:
+In basically every situation except one, an `sc.obj` can be used like a `dict`. (Since this is a tutorial, see if you can intuit what that one situation is!) For example, creating an `sc.obj` works just like creating a regular dict:
 
 ```{python}
 import sciris as sc
 
-od = sc.odict(a=['some', 'strings'], b=[1,2,3])
-print(od)
+ob = sc.obj(a=['some', 'strings'], b=[1,2,3])
+print(ob)
 ```
 
-Okay, it doesn't exactly _look_ like a dict, but it is one:
+And it is one:
 
 ```{python}
-print(f'Keys:   {od.keys()}')
-print(f'Values: {od.values()}')
-print(f'Items:  {od.items()}')
+print(isinstance(ob, dict))
+print(f'Keys:   {ob.keys()}')
+print(f'Values: {ob.values()}')
+print(f'Items:  {ob.items()}')
 ```
 
-Looks pretty much the same as a regular dict, except that `od.keys()` returns a regular list (so, yes, you can do `od.keys()[0]`). But, you can do things you can't do with a regular dict, such as:
+Looks pretty much the same as a regular dict, except that `ob.keys()` returns a regular list (so, yes, you can do `ob.keys()[0]`).
+
+When you're just writing throwaway analysis code, it can be a pain to type `mydict['key1']['key2']` over and over. (Right-pinky overuse is a [real medical issue](https://www.math.ucdavis.edu/~greg/pinky-rsi.html).) With an `sc.obj`, keys and attributes are the same thing, so you can use "object syntax" (`a.b`) instead of "dict syntax" (`a['b']`). This is especially handy for using f-strings, since you don't have to worry about nested quotes:
 
 ```{python}
-for i,k,v in od.enumitems():
+print(f'Checking {ob.a = }')
+print(f'Checking {ob["a"] = }') # We need to use double-quotes inside since single quotes are taken!
+
+ob.c = 'a new key'
+print(ob.keys())
+```
+
+You can also do things you can't do with a regular dict, such as:
+
+```{python}
+for i,k,v in ob.enumitems():
     print(f'Item {i} is called {k} and has value {v}')
 ```
 
 We can, as you probably guessed, also retrieve items by _index_ as well:
 
 ```{python}
-print(od['a'])
-print(od[0])
+print(ob['a'])
+print(ob[0])
 ```
 
-Remember the question about the situation where you wouldn't use an odict? The answer is if your dict has integer keys, then although you still _could_ use an `odict`, it's probably best to use a regular `dict`. But even float keys are fine to use (if somewhat strange).
+Remember the question about the situation where you wouldn't use an `sc.obj`? The answer is if your dict has integer keys, then although you still _could_ use an `sc.obj`, it's probably best to use a regular `dict`. But even float keys are fine to use (if somewhat strange).
 
-You might've noticed that the `odict` has more verbose output than a regular dict. This is because its primary purpose is as a high-level container for storing large(ish) objects. 
-
-For example, let's say we want to store a number of named simulation results. Look at how we're able to leverage the `odict` in the loop that creates the plots
+For example, let's say we want to store a number of named simulation results. Look at how we're able to leverage `sc.obj` in the loop that creates the plots:
 
 ```{python}
 import numpy as np
@@ -50,7 +61,7 @@ import matplotlib.pyplot as plt
 
 class Sim:
     def __init__(self, n=20, n_factors=6):
-        self.results = sc.odict()
+        self.results = sc.obj()
         self.n = n
         self.n_factors = n_factors
     
@@ -64,7 +75,7 @@ class Sim:
         with sc.options.context(jupyter=True): # Jupyter-optimized plotting
             plt.figure()
             rows,cols = sc.getrowscols(len(self.results))
-            for i,label,result in self.results.enumitems(): # odict magic!
+            for i,label,result in self.results.enumitems(): # sc.obj magic!
                 plt.subplot(rows, cols, i+1)
                 plt.scatter(np.arange(self.n), result, c=result, cmap='parula')
                 plt.title(label)
@@ -90,30 +101,40 @@ sc.printmedian(sim.results[0])
 
 This is a have-your-cake-and-eat-it-too situation: the first set of results is correctly labeled (`sim.results['y = N^1']`), but you can easily access it without having to type all that (`sim.results[0]`). 
 
-## The `objdict`
+### Keys and methods
 
-When you're just writing throwaway analysis code, it can be a pain to type `mydict['key1']['key2']` over and over. (Right-pinky overuse is a [real medical issue](https://www.math.ucdavis.edu/~greg/pinky-rsi.html).) Wouldn't it be nice if you could just type `mydict.key1.key2`, but otherwise have everything work exactly like a dict? This is where the `objdict` comes in: it's identical to an `odict` (and hence like a regular `dict`), except you can use "object syntax" (`a.b`) instead of "dict syntax" (`a['b']`). This is especially handy for using f-strings, since you don't have to worry about nested quotes:
+What if a key has the same name as a method? Methods are protected, so the method keeps working, and you get the key using dict syntax:
 
 ```{python}
-ob = sc.objdict(key1=['some', 'strings'], key2=[1,2,3])
-print(f'Checking {ob[0] = }')
-print(f'Checking {ob.key1 = }')
-print(f'Checking {ob["key1"] = }') # We need to use double-quotes inside since single quotes are taken!
+rates = sc.obj(infect=0.3, clear=0.1)
+print(rates['clear'])
+rates.clear()
+print(rates)
 ```
 
-In most cases, you probably want to use `objdict`s rather than `odict`s just to have the extra flexibility. Since they're so common, `sc.obj()` is a shorter name for `sc.objdict()`.
+This matters if your keys come from somewhere else, such as a data file, since you don't have to worry about one of them being called `clear` or `pop`. Trying to set `rates.clear = 0.1` raises an error; `rates['clear'] = 0.1` is fine.
 
 ### Performance
 
-All this flexibility has a cost, although a small one. If you only need attribute access and not the other `odict` features (such as indexing by position), `sc.dictobj()` is a lighter-weight alternative that is nearly as fast as a plain `dict`. Approximate times per operation, in nanoseconds:
+`sc.obj` is about as fast as a plain Python object, and nearly as fast as a plain `dict`. Approximate times per operation, in nanoseconds:
 
-| | `obj['a']` | `obj.a` | `obj['a'] = 1` | `obj.a = 1` | Create |
+| | `ob['a']` | `ob.a` | `ob['a'] = 1` | `ob.a = 1` | Create |
 |---|---|---|---|---|---|
 | `dict` | 10 | n/a | 15 | n/a | 50 |
-| `sc.dictobj()` | 20 | 15 | 15 | 20 | 450 |
-| `sc.objdict()` | 40 | 50 | 190 | 330 | 600 |
+| `sc.obj` | 20 | 15 | 15 | 20 | 300 |
+| `sc.objdict` | 40 | 50 | 120 | 240 | 650 |
 
-These differences won't matter unless you're doing millions of operations. But if you're reading this, chances are high that you _do_ sometimes need to do millions of dict operations, in which case use `sc.dictobj()` or a plain `dict` inside the loop. The other difference is that an `sc.objdict()` protects its methods (`obj.keys = 3` raises an error, and `obj['keys'] = 3` leaves `obj.keys()` working), whereas in an `sc.dictobj()` a key replaces a method of the same name.
+These differences won't matter unless you're doing millions of operations. But if you're reading this, chances are high that you _do_ sometimes need to do millions of dict operations, so it's nice not to have to choose between speed and convenience.
+
+### Other dicts
+
+Sciris has three other dicts, for less common needs:
+
+- `sc.objdict` is a slower version of `sc.obj` with a few more features: setting items by position (`ob[0] = 3`), getting them with a list of keys (`ob[['a','b']]`), and default values (`defaultdict`).
+- `sc.odict` is like `sc.objdict`, but with dict syntax only, and more verbose output for storing large(ish) objects.
+- `sc.dictobj` is a simpler dict with object syntax, without the methods or indexing of `sc.obj`, and a key can replace a method of the same name.
+
+You can also subclass `sc.obj`; see its documentation for how to add attributes that aren't keys.
 
 ## Dataframes
 

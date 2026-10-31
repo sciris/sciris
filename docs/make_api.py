@@ -52,7 +52,7 @@ module_order = ['sc_math', 'sc_asd', 'sc_odict', 'sc_dataframe', 'sc_fileio', 's
                 'sc_printing', 'sc_plotting', 'sc_colors', 'sc_parallel', 'sc_profiling',
                 'sc_utils', 'sc_datetime', 'sc_nested', 'sc_settings']
 
-module_titles = sc.objdict(
+module_titles = sc.obj(
     sc_math       = 'Math and arrays',
     sc_asd        = 'Optimization',
     sc_odict      = 'Dictionaries',

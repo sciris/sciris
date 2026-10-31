@@ -4,6 +4,10 @@ All major updates to Sciris are documented here.
 
 By import convention, components of the Sciris library are listed beginning with `sc.`, e.g. `sc.odict()`.
 
+## Version 3.7.0 (2026-10-31)
+
+1. `sc.obj` and `sc.objdict` are separate classes again (their union was brief, and forgettable!). `sc.objdict` keeps all of its features; `sc.obj` is now as fast as `sc.dictobj` or `SimpleNamespace` (attribute reads 3 times faster, attribute sets 13 times faster), and has the same methods and integer indexing, but it does not support setting items by position, lists of keys, or `defaultdict`, and subclasses need `__slots__` for attributes that aren't keys. Code that relies on these should use `sc.objdict`. Otherwise, code should use `sc.obj` for performance. In virtually all cases, `sc.obj` can be used instead of `sc.dictobj` as well.
+
 ## Version 3.6.2 (2026-10-29)
 
 1. New `sc.limit_threads()` limits the number of threads NumPy's linear algebra libraries (BLAS) use. `sc.parallelize()` also now has a `worker_threads` argument. (Note: you can also still use `SCIRIS_NUM_THREADS`, but you no longer need to.)
