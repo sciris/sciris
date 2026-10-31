@@ -16,7 +16,7 @@ Sciris is available on [PyPI](https://pypi.org/project/sciris/) (`pip install sc
 
 Some highlights of Sciris (`import sciris as sc`):
 
-- **Powerful containers** – The [`sc.odict`](`sciris.sc_odict.odict`) class is what `OrderedDict` (almost) could have been, allowing reference by position or key, casting to a NumPy array, sorting and enumeration functions, etc.
+- **Powerful containers** – The [`sc.obj`](`sciris.sc_odict.obj`) class is what `dict` (almost) could have been, allowing reference by key, attribute, or position, casting to a NumPy array, sorting and enumeration functions, etc.
 - **Array operations** – Want to find the indices of an array that match a certain value or condition? [`sc.findinds()`](`sciris.sc_math.findinds`) will do that. How about just the nearest value, regardless of exact match? [`sc.findnearest()`](`sciris.sc_math.findnearest`). What about the last matching value? [`sc.findlast()`](`sciris.sc_math.findlast`). Yes, you could do [`np.nonzero()[0][-1]`](`numpy.nonzero`) instead, but [`sc.findlast()`](`sciris.sc_math.findlast`) is easier to read, type, and remember, and handles edge cases more elegantly.
 - **File I/O** – One-liner functions for saving and loading text, JSON, spreadsheets, or even arbitrary Python objects.
 - **Plotting recipes** – Simple functions for mapping sequential or qualitative data onto colors, manipulating color data, and updating axis limits and tick labels, plus several new colormaps.
@@ -35,7 +35,7 @@ Both of these do the same thing, but the plain Python version (left) requires 50
 
 Development of Sciris began in 2014 to support development of the [Optima](http://optimamodel.com) suite of models. We kept encountering the same issues and inconveniences over and over while building scientific webapps, and began collecting the tools we used to overcome these issues into a shared library. This library evolved into Sciris. (Note: while "Sciris" doesn't mean anything, "iris" means "rainbow" in Greek, and the name was loosely inspired by the wide spectrum of scientific computing features included in Sciris.)
 
-To give a based-on-a-true-story example, let's say you have a dictionary of results for multiple runs of your model, called `results`. The output of each model run is itself a dictionary, with keys such as `name` and `data`. Now let's say you want to access the data from the first model run. Using plain Python dictionaries, this would be `results[list(results.keys())[0]]['data']`. Using a Sciris [`sc.objdict`](`sciris.sc_odict.objdict`), this is `results[0].data` – almost 3x shorter.
+To give a based-on-a-true-story example, let's say you have a dictionary of results for multiple runs of your model, called `results`. The output of each model run is itself a dictionary, with keys such as `name` and `data`. Now let's say you want to access the data from the first model run. Using plain Python dictionaries, this would be `results[list(results.keys())[0]]['data']`. Using a Sciris [`sc.obj`](`sciris.sc_odict.obj`), this is `results[0].data` – almost 3x shorter.
 
 ### Where has Sciris been used?
 
@@ -47,8 +47,8 @@ Here are a few more of the most commonly used features.
 
 ### Containers
 
-- [`sc.odict()`](`sciris.sc_odict.odict`): flexible container representing the best-of-all-worlds across lists, dicts, and arrays
-- [`sc.objdict()`](`sciris.sc_odict.objdict`): like an odict, but allows get/set via e.g. `foo.bar` instead of `foo['bar']`
+- [`sc.obj()`](`sciris.sc_odict.obj`): fast and flexible container representing the best-of-all-worlds across objects, lists, dicts, and arrays
+- [`sc.dictobj()`](`sciris.sc_odict.dictobj`): like `SimpleNamespace`, but allows dict-like access as well
 
 ### Array operations
 

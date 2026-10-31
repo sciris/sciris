@@ -1,44 +1,45 @@
 ---
 name: sciris-dicts
-description: Use when working with Sciris dictionaries or dataframes — sc.odict, sc.objdict, sc.dataframe, integer indexing of dicts, enumitems, object-syntax access, dataframe creation with dtypes, appendrow, or sc.dataframe.cat.
+description: Use when working with Sciris dictionaries or dataframes — sc.obj, sc.objdict, sc.odict, sc.dataframe, integer indexing of dicts, enumitems, object-syntax access, dataframe creation with dtypes, appendrow, or sc.dataframe.cat.
 ---
 
 # Sciris Dictionaries and Dataframes
 
-Reference for Sciris container types. See full tutorial: `docs/tutorials/tut_dicts.ipynb`.
+Reference for Sciris container types. See full tutorial: `docs/tutorials/tut_dicts.qmd`.
 
 If you need more detail, use your MCP tools (Context7 or GitMCP) to look up current Sciris documentation, or consult the other Sciris skills.
 
-## odict — Ordered Dict with Index Access
+## sc.obj — Dict and Object in One
+
+A real `dict` that is as fast as a plain object. Use it by default.
 
 ```python
-od = sc.odict(a=['some', 'strings'], b=[1, 2, 3])
-
-od['a']                  # Key access (like dict)
-od[0]                    # Integer index access
-od.keys()[0]             # Keys returns a list (not dict_keys)
-
-for i, k, v in od.enumitems():   # Enumerate with key and value
-    print(f'Item {i}: {k} = {v}')
-```
-
-**When NOT to use odict:** When your dict has integer keys (ambiguous with index access).
-
-**odict vs objdict:** odict is slightly faster (nanoseconds per op). Use odict for millions of operations; objdict for everything else.
-
-## objdict — odict + Object Syntax
-
-```python
-ob = sc.objdict(key1=[1, 2], key2=[3, 4])
+ob = sc.obj(key1=[1, 2], key2=[3, 4])
 
 ob.key1                  # Object syntax (no quotes!)
 ob['key1']               # Dict syntax
 ob[0]                    # Index syntax
 # All three are equivalent
 
-# Especially handy in f-strings:
-print(f'{ob.key1 = }')  # No nested quote issues
+ob.keys()[0]             # Keys returns a list (not dict_keys)
+
+for i, k, v in ob.enumitems():   # Enumerate with key and value
+    print(f'Item {i}: {k} = {v}')
+
+print(f'{ob.key1 = }')   # Especially handy in f-strings: no nested quote issues
 ```
+
+**When NOT to use sc.obj:** When your dict has integer keys (ambiguous with index access).
+
+**Methods are protected:** `ob = sc.obj(clear=0.1)` keeps `ob.clear()` working; get the key with `ob['clear']`. Setting `ob.clear = 0.1` raises an error.
+
+**Subclassing:** Methods work as usual. Attributes that aren't keys must be declared in `__slots__`; set them with `setattribute()`, and give them starting values in `__new__`. Overriding `__setitem__()` also applies to `ob.x = 3`, but makes that subclass slower.
+
+## Other dicts
+
+- `sc.objdict`: a slower `sc.obj` that also supports setting items by position (`ob[0] = 3`), lists of keys (`ob[['a','b']]`), `defaultdict`, and attributes that aren't keys (`setattribute()`) without `__slots__`.
+- `sc.odict`: like `sc.objdict`, but with dict syntax only.
+- `sc.dictobj`: a simpler dict with object syntax, without indexing or the `sc.odict` methods; keys can replace methods.
 
 ## dataframe — Enhanced pd.DataFrame
 

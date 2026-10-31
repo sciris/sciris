@@ -1,9 +1,10 @@
 """
-The "odict" class, combining features from an OrderedDict and a list/array.
+Dictionaries such as `sc.obj`, combining features from dicts, objects, lists, and arrays.
 
 Highlights:
-    - `sc.odict()`: flexible container representing the best-of-all-worlds across dicts, lists, and arrays
-    - `sc.obj()`: like an odict, but allows get/set via e.g. `foo.bar` instead of `foo['bar']`
+    - `sc.obj()`: fast and flexible container representing the best-of-all-worlds across objects, dicts, lists, and arrays
+    - `sc.objdict()`: a slower `sc.obj()` with more features, such as setting items by position
+    - `sc.odict()`: like `sc.objdict()`, but with dict syntax only, e.g. `foo['bar']` instead of `foo.bar`
 """
 import re
 import sys

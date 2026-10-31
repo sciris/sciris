@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Standard import:** `import sciris as sc`
 
 ### Core Functions
-- **Containers:** `sc.odict()`, `sc.dcp()` (deep copy)
+- **Containers:** `sc.obj()`, `sc.objdict()`, `sc.dcp()` (deep copy)
 - **I/O:** `sc.save()`, `sc.load()`, `sc.savejson()`, `sc.loadjson()`
 - **Arrays:** `sc.toarray()`, `sc.findinds()`, `sc.findnearest()`
 - **Parallel:** `sc.parallelize()`, `sc.loadbalancer()`
@@ -82,14 +82,14 @@ Users can install the plugin by adding `https://github.com/sciris/sciris` as a C
 The plugin provides 10 skills covering all major Sciris domains:
 - **sciris-intro** - Basic Sciris features and quick reference
 - **sciris-arrays** - Array operations (`sc.findinds()`, `sc.findnearest()`, `sc.toarray()`, etc.)
-- **sciris-dicts** - Containers (`sc.odict()`, `sc.objdict()`, `sc.counter()`, etc.)
+- **sciris-dicts** - Containers (`sc.obj()`, `sc.objdict()`, `sc.counter()`, etc.)
 - **sciris-files** - File I/O (`sc.save()`, `sc.load()`, `sc.savejson()`, etc.)
 - **sciris-plotting** - Matplotlib extensions (`sc.boxoff()`, `sc.dateformatter()`, etc.)
 - **sciris-parallel** - Parallelization (`sc.parallelize()`, `sc.loadbalancer()`)
 - **sciris-dates** - Date/time handling (`sc.date()`, `sc.daterange()`, `sc.timer()`)
 - **sciris-printing** - Printing and formatting (`sc.heading()`, `sc.sigfig()`, `sc.progressbar()`)
 - **sciris-utils** - Utilities (`sc.mergedicts()`, `sc.tryexcept()`, `sc.checkmem()`, etc.)
-- **sciris-advanced** - Advanced features (`sc.odict` subclassing, nested operations, versioning)
+- **sciris-advanced** - Advanced features (`sc.obj` subclassing, nested operations, versioning)
 
 ### MCP Servers
 The plugin also configures Context7 and GitMCP servers for accessing up-to-date Sciris documentation.
@@ -111,7 +111,7 @@ Sciris is a scientific Python utilities library with a modular design organized 
 
 Sciris follows four core principles:
 
-**Brevity through simple interfaces**: Packages common patterns requiring multiple lines of code into single, simple functions. Provides succinct plotting tasks, ensures consistent types and containers, and extends functionality of established objects like `OrderedDict` via `sc.odict`.
+**Brevity through simple interfaces**: Packages common patterns requiring multiple lines of code into single, simple functions. Provides succinct plotting tasks, ensures consistent types and containers, and extends functionality of established objects like `dict` via `sc.obj`.
 
 **Dejargonification**: Uses plain function names (e.g., `sc.smooth`, `sc.findnearest`, `sc.safedivide`) to make code scientifically clear and human-readable. Provides MATLAB-like functionality with familiar names (e.g., `sc.tic`/`sc.toc`, `sc.boxoff`).
 
@@ -121,11 +121,11 @@ Sciris follows four core principles:
 
 ## Key Features and Examples
 
-### Feature-rich Containers (`sc.odict`)
-The `odict` class combines the best features of lists, dictionaries, and numeric arrays:
+### Feature-rich Containers (`sc.obj`)
+The `sc.obj` class combines the best features of objects, lists, dictionaries, and numeric arrays, at the speed of a plain object:
 ```python
-data = sc.odict(a=[1,2,3], b=[4,5,6]) 
-assert data['a'] == data[0]  # Integer indexing
+data = sc.obj(a=[1,2,3], b=[4,5,6]) 
+assert data.a == data['a'] == data[0]  # Attribute, key, and integer indexing
 assert data[:].sum() == 21   # Slicing and array operations
 ```
 
@@ -175,7 +175,7 @@ import numpy as np
 # Load and process experimental data
 sc.tic()
 raw_data = sc.loadspreadsheet('experiment_data.xlsx')
-processed = sc.odict()
+processed = sc.obj()
 
 for condition in raw_data.keys():
     # Clean and standardize data
@@ -199,7 +199,7 @@ sc.toc('Data processing pipeline')
 ```python
 # Generate date range and load time series data
 dates = sc.daterange('2023-01-01', '2023-12-31', as_date=True)
-timeseries = sc.odict()
+timeseries = sc.obj()
 
 for dataset in ['temperature', 'humidity', 'pressure']:
     # Load and smooth noisy sensor data
@@ -226,7 +226,7 @@ Sciris functions accept multiple input types (lists, arrays, scalars) and handle
 
 ### Core Module Structure
 - **sc_utils.py** - Fundamental utilities, type checking, convenience functions
-- **sc_odict.py** - Enhanced dictionary class (OrderedDict + list features)
+- **sc_odict.py** - Enhanced dictionary classes (`sc.obj`, `sc.objdict`, `sc.odict`, `sc.dictobj`)
 - **sc_nested.py** - Nested dictionary and complex object operations
 - **sc_math.py** - Mathematical operations and array manipulations
 - **sc_dataframe.py** - DataFrame utilities and extensions
@@ -244,13 +244,14 @@ Sciris functions accept multiple input types (lists, arrays, scalars) and handle
 
 **Unified Namespace:**
 - All functions accessible via `import sciris as sc`
-- Flat namespace design (e.g., `sc.odict()`, `sc.save()`, `sc.parallelize()`)
+- Flat namespace design (e.g., `sc.obj()`, `sc.save()`, `sc.parallelize()`)
 - Common import pattern: `import sciris as sc` used internally
 
 **Core Data Structure:**
-- `odict` class is central - combines dict, list, and array features
-- Supports integer indexing, slicing, and key-based access
-- Used throughout library as flexible container
+- `sc.obj` is the default container - combines object, dict, list, and array features, as fast as `sc.dictobj`
+- Supports attribute, key, and integer access, and slicing on Python 3.12+; it's a subclass of `sc.odict`
+- Methods are read-only (a key can't replace one), using data descriptors rather than Python code, so speed depends on not adding `__setattr__`, `__getattr__`, or `__getitem__` to it
+- `sc.objdict` is the slower version with more features: setting by position, lists of keys, `defaultdict`, and attributes that aren't keys; used throughout the library
 
 **API Consistency:**
 - Save/load function pairs (e.g., `save()`/`load()`, `savejson()`/`loadjson()`)
@@ -341,7 +342,7 @@ All I/O functions handle both file paths and file objects, with automatic compre
 ## Common Gotchas and Limitations
 
 ### When NOT to Use Sciris
-- **Performance-critical inner loops**: `sc.odict` adds small overhead vs built-in `dict` (~500ms per million operations)
+- **Performance-critical inner loops**: `sc.obj` is about as fast as a plain object, but `sc.objdict` and `sc.odict` add overhead vs built-in `dict` (e.g. ~200ms per million attribute sets)
 - **Strict typing requirements**: Sciris's flexibility can mask type errors in low-level libraries  
 - **Large-scale distributed computing**: Use Dask, Ray, or Celery instead of `sc.parallelize` for multi-machine setups
 - **Memory-constrained environments**: Sciris's convenience features use additional memory

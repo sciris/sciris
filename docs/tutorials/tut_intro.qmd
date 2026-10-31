@@ -52,7 +52,7 @@ print(f'The data had mean {mean} and there were {data.outliers.sum()} outliers.'
 Can't decide if something should be a dict or an object? Do you want the flexibility of a dict, but the convenience and explicitness of an object? Well, why not use both?
 
 ```{python}
-data = sc.objdict(a=[1,2,3], b=[4,5,6]) 
+data = sc.obj(a=[1,2,3], b=[4,5,6]) 
 
 assert data.a == data['a'] == data[0] # Flexible options for indexing
 assert data[:].sum() == 21 # You can sum a dict!
@@ -97,7 +97,7 @@ Have you ever thought "Gosh, I should really parallelize this code, but it's goi
 # Define the function to parallelize
 def func(scale, x_offset, y_offset):
     np.random.seed(scale)
-    data = sc.objdict()
+    data = sc.obj()
     data.scale = scale
     data.x = x_offset+scale*np.random.randn(100)
     data.y = y_offset+scale*np.random.randn(100)
@@ -137,7 +137,7 @@ waves = sc.parallelize(randwave, np.linspace(0, 1, 11))
 filenames = [sc.save(f'wave{i}.obj', wave) for i,wave in enumerate(waves)]
 
 # Create dict from files
-data = sc.odict({fname:sc.load(fname) for fname in filenames})
+data = sc.obj({fname:sc.load(fname) for fname in filenames})
 
 # Create 3D plot
 sc.surf3d(data[:], cmap='orangeblue')
