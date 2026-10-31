@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.19">
+<meta name="generator" content="quarto-1.10.20">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -45,9 +45,9 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-29e00c98bbba659d91ab3844292f79dc.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-86fc916b84669629367aabb2a24c5117.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-29e00c98bbba659d91ab3844292f79dc.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -451,6 +451,7 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#whats-new" id="toc-whats-new" class="nav-link active" data-scroll-target="#whats-new">What’s new</a>
   <ul>
+  <li><a href="#version-3.7.0-2026-10-31" id="toc-version-3.7.0-2026-10-31" class="nav-link" data-scroll-target="#version-3.7.0-2026-10-31">Version 3.7.0 (2026-10-31)</a></li>
   <li><a href="#version-3.6.2-2026-10-29" id="toc-version-3.6.2-2026-10-29" class="nav-link" data-scroll-target="#version-3.6.2-2026-10-29">Version 3.6.2 (2026-10-29)</a></li>
   <li><a href="#version-3.6.1-2026-10-26" id="toc-version-3.6.1-2026-10-26" class="nav-link" data-scroll-target="#version-3.6.1-2026-10-26">Version 3.6.1 (2026-10-26)</a></li>
   <li><a href="#version-3.6.0-2026-10-19" id="toc-version-3.6.0-2026-10-19" class="nav-link" data-scroll-target="#version-3.6.0-2026-10-19">Version 3.6.0 (2026-10-19)</a></li>
@@ -645,6 +646,12 @@ ul.task-list li input[type="checkbox"] {
 <h1>What’s new</h1>
 <p>All major updates to Sciris are documented here.</p>
 <p>By import convention, components of the Sciris library are listed beginning with <code>sc.</code>, e.g.&nbsp;<a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>.</p>
+<section id="version-3.7.0-2026-10-31" class="level2">
+<h2 class="anchored" data-anchor-id="version-3.7.0-2026-10-31">Version 3.7.0 (2026-10-31)</h2>
+<ol type="1">
+<li><a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> and <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a> are separate classes again (their union was brief, and forgettable!). <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a> keeps all of its features; <a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> is now as fast as <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj</code></a> or <code>SimpleNamespace</code> (attribute reads 3 times faster, attribute sets 13 times faster), and has the same methods and integer indexing, but it does not support setting items by position, lists of keys, or <code>defaultdict</code>, and subclasses need <code>__slots__</code> for attributes that aren’t keys. Code that relies on these should use <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a>. Otherwise, code should use <a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> for performance. In virtually all cases, <a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> can be used instead of <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj</code></a> as well.</li>
+</ol>
+</section>
 <section id="version-3.6.2-2026-10-29" class="level2">
 <h2 class="anchored" data-anchor-id="version-3.6.2-2026-10-29">Version 3.6.2 (2026-10-29)</h2>
 <ol type="1">
@@ -662,7 +669,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="version-3.6.0-2026-10-19" class="level2">
 <h2 class="anchored" data-anchor-id="version-3.6.0-2026-10-19">Version 3.6.0 (2026-10-19)</h2>
 <ol type="1">
-<li><a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> is now the class name, and <code>sc.objdict</code> an alias for it (previously the reverse). Files saved with earlier versions of Sciris still load, but files saved with this version need Sciris 3.5.0 or later to load. New code should use <a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> rather than <code>sc.objdict()</code>.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> is now the class name, and <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a> an alias for it (previously the reverse). Files saved with earlier versions of Sciris still load, but files saved with this version need Sciris 3.5.0 or later to load. New code should use <a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> rather than <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>.</li>
 <li><a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> has a new repr: short ones are shown on one line, e.g.&nbsp;<code>sc.obj(a=3, b=5)</code>, and longer ones with one key per line, in the same keyword style. <code>sc.obj.disp()</code> still shows the previous numbered format. Subclasses (e.g.&nbsp;<code>Pars</code> in Starsim) show their own class name.</li>
 <li><a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> is faster: creating one is about twice as fast, setting a key about 40% faster, indexing by position (<code>obj[0]</code>) about twice as fast, and failed attribute lookups (e.g.&nbsp;<code>hasattr(obj, 'x')</code>) about 6 times faster. Pickles and copies no longer include the cached list of keys.</li>
 <li>Keys of <a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> now tab-complete in IPython and Jupyter.</li>
@@ -689,11 +696,11 @@ ul.task-list li input[type="checkbox"] {
 <section id="version-3.5.0-2026-10-13" class="level2">
 <h2 class="anchored" data-anchor-id="version-3.5.0-2026-10-13">Version 3.5.0 (2026-10-13)</h2>
 <ol type="1">
-<li><a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> is a new, shorter name for <code>sc.objdict()</code>, e.g.&nbsp;<code>pars = sc.obj(a=1, b=2)</code>. It is the preferred name for new code.</li>
-<li><code>sc.objdict()</code> is now much faster: reading a key as an attribute (<code>obj.a</code>) is about 10 times faster, setting one (<code>obj.a = 1</code>) is about 4 times faster, and looking up a method (<code>obj.items</code>) is about 3 times faster. Creating an <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> or <code>sc.objdict()</code> is about twice as fast, and <a href="./api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> and <a href="./api/sc_nested.html#sciris.sc_nested.search" title="0"><code>sc.search()</code></a> are faster too.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> is a new, shorter name for <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>, e.g.&nbsp;<code>pars = sc.obj(a=1, b=2)</code>. It is the preferred name for new code.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> is now much faster: reading a key as an attribute (<code>obj.a</code>) is about 10 times faster, setting one (<code>obj.a = 1</code>) is about 4 times faster, and looking up a method (<code>obj.items</code>) is about 3 times faster. Creating an <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> or <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> is about twice as fast, and <a href="./api/sc_nested.html#sciris.sc_nested.iterobj" title="0"><code>sc.iterobj()</code></a> and <a href="./api/sc_nested.html#sciris.sc_nested.search" title="0"><code>sc.search()</code></a> are faster too.</li>
 <li><a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> now stores its keys in the dict itself, so it works with <a href="https://docs.python.org/3/library/json.html#json.dumps" title="1"><code>json.dumps()</code></a> and other functions that expect a plain dict. Item access (<code>obj['a']</code>) is about 5 times faster. Files saved with earlier versions can still be loaded.</li>
-<li>As a guide to which to use: <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> is nearly as fast as a plain <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> (about 15–20 ns to get or set a key either way, versus 10–15 ns for a <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>), while <code>sc.objdict()</code> takes about 40–50 ns to get a key and 200–300 ns to set one, in exchange for the extra features of <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> (such as indexing by position) and for protecting its methods from being overwritten by keys. So use <code>sc.objdict()</code> by default, and <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> or a <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> in loops that run millions of times.</li>
-<li>For subclasses of <code>sc.objdict()</code> with properties: if a property raises an exception, that exception is now always raised (previously, a key with the same name would be returned instead); and if a property fails because an attribute is missing, the error message names the property rather than the missing attribute.</li>
+<li>As a guide to which to use: <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> is nearly as fast as a plain <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> (about 15–20 ns to get or set a key either way, versus 10–15 ns for a <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>), while <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> takes about 40–50 ns to get a key and 200–300 ns to set one, in exchange for the extra features of <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> (such as indexing by position) and for protecting its methods from being overwritten by keys. So use <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> by default, and <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> or a <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> in loops that run millions of times.</li>
+<li>For subclasses of <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> with properties: if a property raises an exception, that exception is now always raised (previously, a key with the same name would be returned instead); and if a property fails because an attribute is missing, the error message names the property rather than the missing attribute.</li>
 </ol>
 </section>
 <section id="version-3.4.0-2026-09-28" class="level2">
@@ -936,7 +943,7 @@ ul.task-list li input[type="checkbox"] {
 <li><a href="./api/sc_versioning.html#sciris.sc_versioning.compareversions" title="0"><code>sc.compareversions()</code></a> treats <code>~=</code> as a compatible release (e.g.&nbsp;<code>~=1.2.3</code> means <code>&gt;=1.2.3, ==1.2.*</code>) rather than as “not equal”.</li>
 <li><code>sc.savearchive(user=False)</code> no longer stores the username, and archives no longer contain a spurious <code>frame</code> field.</li>
 <li><a href="./api/sc_versioning.html#sciris.sc_versioning.loadarchive" title="0"><code>sc.loadarchive()</code></a> retries loading as intended (rather than raising an <a href="https://docs.python.org/3/builtins/exceptions.html#AttributeError" title="1"><code>AttributeError</code></a>), and re-raises the original error type if that fails.</li>
-<li><a href="./api/sc_versioning.html#sciris.sc_versioning.loadmetadata" title="0"><code>sc.loadmetadata()</code></a> returns an <code>sc.objdict</code> for PNG files (as for JSON and ZIP files).</li>
+<li><a href="./api/sc_versioning.html#sciris.sc_versioning.loadmetadata" title="0"><code>sc.loadmetadata()</code></a> returns an <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a> for PNG files (as for JSON and ZIP files).</li>
 </ol>
 </section>
 <section id="nested-objects" class="level3">
@@ -1002,7 +1009,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="version-3.2.8-2026-02-28" class="level2">
 <h2 class="anchored" data-anchor-id="version-3.2.8-2026-02-28">Version 3.2.8 (2026-02-28)</h2>
 <ol type="1">
-<li>Changed resolution order in <code>sc.objdict()</code> so that dunder attributes (e.g.&nbsp;<code>__await__</code>) are never accidentally set as dict keys. Attempting to set an existing attribute as a key now raises <a href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="1"><code>KeyError</code></a> instead of <a href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="1"><code>ValueError</code></a>.</li>
+<li>Changed resolution order in <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> so that dunder attributes (e.g.&nbsp;<code>__await__</code>) are never accidentally set as dict keys. Attempting to set an existing attribute as a key now raises <a href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="1"><code>KeyError</code></a> instead of <a href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="1"><code>ValueError</code></a>.</li>
 <li>Fixed a bug in <a href="./api/sc_profiling.html#sciris.sc_profiling.profile" title="0"><code>sc.profile()</code></a> that prevented profiling information from being printed for certain combinations of filenames.</li>
 </ol>
 </section>
@@ -1015,8 +1022,8 @@ ul.task-list li input[type="checkbox"] {
 <section id="version-3.2.6-2026-02-12" class="level2">
 <h2 class="anchored" data-anchor-id="version-3.2.6-2026-02-12">Version 3.2.6 (2026-02-12)</h2>
 <ol type="1">
-<li>Added <a href="./api/sc_odict.html#sciris.sc_odict.argparse" title="0"><code>sc.argparse()</code></a>, a simple argument parser based on <code>sc.objdict</code>.</li>
-<li><code>sc.objdict()</code> now has an <code>update()</code> method, as well as improved pickling support via <code>__reduce__()</code> and <code>__setstate__()</code>.</li>
+<li>Added <a href="./api/sc_odict.html#sciris.sc_odict.argparse" title="0"><code>sc.argparse()</code></a>, a simple argument parser based on <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a>.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> now has an <code>update()</code> method, as well as improved pickling support via <code>__reduce__()</code> and <code>__setstate__()</code>.</li>
 <li><a href="./api/sc_printing.html#sciris.sc_printing.sigfig" title="0"><code>sc.sigfig()</code></a> now has a <code>formats</code> argument for customizing SI unit formatting, and uses <code>'g'</code> format when <code>sigfigs=None</code>.</li>
 <li><a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> now has improved exception handling, providing clearer error messages when tasks fail.</li>
 <li><a href="./api/sc_profiling.html#sciris.sc_profiling.profile" title="0"><code>sc.profile()</code></a> now properly disables the profiler after running, and has improved function name parsing.</li>
@@ -1178,7 +1185,7 @@ ul.task-list li input[type="checkbox"] {
 <li>Fixed incorrect keyword arguments (<code>iterkwargs</code>) in <a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> when using <code>thread</code> or another non-copying parallelizer, when the <code>iterkwargs</code> are <em>not</em> consistent between iterations.</li>
 <li>Fixed incorrect printout on the final iteration of <a href="./api/sc_asd.html#sciris.sc_asd.asd" title="0"><code>sc.asd()</code></a> in verbose mode.</li>
 <li>Fixed incorrect plotting of non-cumulative data in <a href="./api/sc_plotting.html#sciris.sc_plotting.stackedbar" title="0"><code>sc.stackedbar()</code></a>.</li>
-<li><code>sc.download(..., save=False)</code> now returns an <code>sc.objdict</code> (instead of an <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a>).</li>
+<li><code>sc.download(..., save=False)</code> now returns an <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a> (instead of an <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a>).</li>
 <li><code>sc.checktype(obj, 'arraylike')</code> is now more robust to handling non-array-like objects (e.g., a ragged list of lists now returns <a href="https://docs.python.org/3/builtins/constants.html#False" title="1"><code>False</code></a> instead of raising an exception).</li>
 <li><a href="./api/sc_versioning.html#sciris.sc_versioning.require" title="0"><code>sc.require()</code></a> now takes an optional <code>message</code> argument, allowing for a custom message if the requirement(s) aren’t met.</li>
 <li>Removed <a href="https://docs.python.org/3/builtins/functions.html#object" title="1"><code>object</code></a> from the list of classes shown by <a href="./api/sc_printing.html#sciris.sc_printing.prepr" title="0"><code>sc.prepr()</code></a> (since all objects derive from <a href="https://docs.python.org/3/builtins/functions.html#object" title="1"><code>object</code></a>).</li>
@@ -1221,7 +1228,7 @@ ul.task-list li input[type="checkbox"] {
 <li>Sciris is now compatible with a broader range of dependencies (e.g., Python, NumPy, pandas, and Matplotlib); in most cases, the latest version of Sciris is now backwards-compatible with all dependency versions since January 2021.</li>
 <li>Updated <a href="./api/sc_printing.html#sciris.sc_printing.pr" title="0"><code>sc.pr()</code></a> to include class attributes (as well as instance attributes), and added a new function <a href="./api/sc_printing.html#sciris.sc_printing.classatt" title="0"><code>sc.classatt()</code></a> to list them.</li>
 <li><a href="./api/sc_datetime.html#sciris.sc_datetime.readdate" title="0"><code>sc.readdate()</code></a> now returns <a href="https://docs.python.org/3/library/datetime.html#module-datetime" title="1"><code>datetime</code></a> objects unchanged, rather than raising an exception.</li>
-<li>Fixed <a href="https://docs.python.org/3/builtins/functions.html#repr" title="1"><code>repr</code></a> for empty <code>sc.objdict()</code>.</li>
+<li>Fixed <a href="https://docs.python.org/3/builtins/functions.html#repr" title="1"><code>repr</code></a> for empty <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>.</li>
 <li>Fixed transposed ordering for <a href="./api/sc_plotting.html#sciris.sc_plotting.bar3d" title="0"><code>sc.bar3d()</code></a>.</li>
 </ol>
 </section>
@@ -1384,7 +1391,7 @@ ul.task-list li input[type="checkbox"] {
 <li>Fixed <code>&lt;=</code> comparison in <a href="./api/sc_versioning.html#sciris.sc_versioning.compareversions" title="0"><code>sc.compareversions()</code></a> not handling equality.</li>
 <li>Fixed the implementation of the <code>midpoint</code> argument in <a href="./api/sc_colors.html#sciris.sc_colors.vectocolor" title="0"><code>sc.vectocolor()</code></a>.</li>
 <li>Fixed corner cases where some <a href="./api/sc_dataframe.html#sciris.sc_dataframe.dataframe" title="0"><code>sc.dataframe</code></a> methods returned <a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pd.DataFrame" title="1"><code>pd.DataFrame</code></a> objects instead.</li>
-<li>Fixed corner cases where some <code>sc.objdict</code> methods returned <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a> objects instead.</li>
+<li>Fixed corner cases where some <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a> methods returned <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a> objects instead.</li>
 <li><a href="./api/sc_math.html#sciris.sc_math.findinds" title="0"><code>sc.findinds()</code></a> now returns a tuple for multidimensional arrays, allowing it to be used directly for indexing.</li>
 <li><code>sc.rmnans()</code> now returns a zero-length array if all input is NaNs.</li>
 <li><code>sc.options.with_style(style)</code> now correctly applies the style.</li>
@@ -1669,7 +1676,7 @@ ul.task-list li input[type="checkbox"] {
 <ol type="1">
 <li>Major improvements to <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> performance: key lookup (e.g.&nbsp;<code>my_odict['key']</code>) is ~30% faster, nearly identical to native <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict()</code></a>; integer lookup (<code>my_odict[3]</code>) is now 10-100x faster. This was achieved by caching the keys rather than looking them up each time.</li>
 <li>Allow dicts with integer keys to be converted to odicts via the <code>makefrom()</code> method, e.g.&nbsp;<code>sc.odict.makefrom({0:'foo', 1:'bar'})</code>. If an odict has integer keys, then these take precedence.</li>
-<li>Added <code>force</code> option to <code>objdict.setattribute()</code> to allow attributes to be set even if they already exist. Added <code>objdict.delattribute()</code> to delete attributes.</li>
+<li>Added <code>force</code> option to <a href="./api/sc_odict.html#sciris.sc_odict.objdict.setattribute" title="0"><code>objdict.setattribute()</code></a> to allow attributes to be set even if they already exist. Added <a href="./api/sc_odict.html#sciris.sc_odict.objdict.delattribute" title="0"><code>objdict.delattribute()</code></a> to delete attributes.</li>
 <li>Removed the <code>to_OD()</code> method (since dicts preserve order, <code>dict(my_odict)</code> is now much more common).</li>
 <li>Made <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> a subclass of <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>, so <code>isinstance(my_dictobj, dict)</code> is now <a href="https://docs.python.org/3/builtins/constants.html#True" title="1"><code>True</code></a>.</li>
 <li>Added <code>sc.ddict()</code> as an alias to <a href="https://docs.python.org/3/library/collections.html#collections.defaultdict" title="1"><code>collections.defaultdict()</code></a>.</li>
@@ -1718,7 +1725,7 @@ ul.task-list li input[type="checkbox"] {
 <li>Added <a href="./api/sc_math.html#sciris.sc_math.convolve" title="0"><code>sc.convolve()</code></a>, a simple fix to <a href="https://numpy.org/doc/stable/reference/generated/numpy.convolve.html#np.convolve" title="1"><code>np.convolve()</code></a> that avoids edge effects (see update to <a href="./api/sc_math.html#sciris.sc_math.smooth" title="0"><code>sc.smooth()</code></a> below).</li>
 <li>Added <a href="./api/sc_math.html#sciris.sc_math.gauss1d" title="0"><code>sc.gauss1d()</code></a> and <a href="./api/sc_math.html#sciris.sc_math.gauss2d" title="0"><code>sc.gauss2d()</code></a> as additional (high-performance) smoothing functions.</li>
 <li>Added <a href="./api/sc_plotting.html#sciris.sc_plotting.fonts" title="0"><code>sc.fonts()</code></a>, to easily list or add fonts for use in plotting.</li>
-<li>Added <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a>, the inverse of <code>sc.objdict()</code> – an object that acts like a dictionary (instead of a dictionary that acts like an object). Compared to <code>sc.objdict()</code>, <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> is lighter-weight and slightly faster but less powerful.</li>
+<li>Added <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a>, the inverse of <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> – an object that acts like a dictionary (instead of a dictionary that acts like an object). Compared to <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>, <a href="./api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> is lighter-weight and slightly faster but less powerful.</li>
 <li>Added <a href="./api/sc_utils.html#sciris.sc_utils.swapdict" title="0"><code>sc.swapdict()</code></a>, a shortcut for swapping the keys and values of a dictionary.</li>
 <li>Added <code>sc.loadobj2or3()</code>, for legacy support for loading Python 2 pickles. (Support had been removed in version 1.1.1.)</li>
 <li>Added <a href="./api/sc_settings.html#sciris.sc_settings.help" title="0"><code>sc.help()</code></a>, to quickly allow searching of Sciris’ docstrings.</li>
@@ -1833,7 +1840,7 @@ ul.task-list li input[type="checkbox"] {
 <h3 class="anchored" data-anchor-id="odict-updates"><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> updates</h3>
 <ol type="1">
 <li>Defined <code>+</code> for <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a> and derived classes; adding two dictionaries is the same as calling <a href="./api/sc_utils.html#sciris.sc_utils.mergedicts" title="0"><code>sc.mergedicts()</code></a> on them.</li>
-<li>Updated nested dictionary functions, and added them as methods to <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> and derived classes (like <code>sc.objdict()</code>); for example, you can now do <code>nestedobj = sc.objdict(); nestedobj.setnested(['a','b','c'], 4)</code>.</li>
+<li>Updated nested dictionary functions, and added them as methods to <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> and derived classes (like <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>); for example, you can now do <code>nestedobj = sc.objdict(); nestedobj.setnested(['a','b','c'], 4)</code>.</li>
 <li>Added <a href="./api/sc_odict.html#sciris.sc_odict.odict.enumvalues" title="0"><code>sc.odict.enumvalues()</code></a> as an alias to <a href="./api/sc_odict.html#sciris.sc_odict.odict.enumvals" title="0"><code>sc.odict.enumvals()</code></a>.</li>
 </ol>
 </section>
@@ -1858,7 +1865,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="version-1.1.1-2021-03-17" class="level2">
 <h2 class="anchored" data-anchor-id="version-1.1.1-2021-03-17">Version 1.1.1 (2021-03-17)</h2>
 <ol type="1">
-<li>The implementations of <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> and <code>sc.objdict()</code> have been updated, to allow for more flexible use of the <code>defaultdict</code> argument, including better nesting and subclassing.</li>
+<li>The implementations of <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> and <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> have been updated, to allow for more flexible use of the <code>defaultdict</code> argument, including better nesting and subclassing.</li>
 <li>A new <code>serial</code> argument has been added to <a href="./api/sc_parallel.html#sciris.sc_parallel.parallelize" title="0"><code>sc.parallelize()</code></a> to allow for quick debugging.</li>
 <li>Legacy support for Python 2 has been removed from <code>sc.loadobj()</code> and <code>sc.saveobj()</code>.</li>
 <li>A fallback method for <a href="./api/sc_versioning.html#sciris.sc_versioning.gitinfo" title="0"><code>sc.gitinfo()</code></a> (based on <code>gitpython</code>) has been added, in case reading from the filesystem fails.</li>
@@ -1891,7 +1898,7 @@ ul.task-list li input[type="checkbox"] {
 <li>A fallback option for <a href="./api/sc_math.html#sciris.sc_math.findinds" title="0"><code>sc.findinds()</code></a> has been implemented, allowing it to work even if the input array isn’t numeric.</li>
 <li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> now has a <code>defaultdict</code> argument, which lets you use it like a defaultdict as well as an ordered dict.</li>
 <li><a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a> has a <code>transpose</code> argument for methods like <code>items()</code> and <code>enumvalues()</code>, which will return a tuple of lists instead of a list of tuples.</li>
-<li><code>sc.objdict()</code> now prints out differently, to distinguish it from an <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a>.</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> now prints out differently, to distinguish it from an <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a>.</li>
 <li><code>sc.promotetolist()</code> has a new <code>coerce</code> argument, which will convert that data type into a list (instead of wrapping it).</li>
 </ol>
 </section>
@@ -1928,7 +1935,7 @@ ul.task-list li input[type="checkbox"] {
 <li>Fixed recursion issue with printing <a href="./api/sc_fileio.html#sciris.sc_fileio.Failed" title="0"><code>sc.Failed</code></a> objects.</li>
 <li>Changed <a href="./api/sc_math.html#sciris.sc_math.approx" title="0"><code>sc.approx()</code></a> to be an alias to <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#np.isclose" title="1"><code>np.isclose()</code></a>; this function may be removed in future versions.</li>
 <li>Changed <a href="./api/sc_math.html#sciris.sc_math.findinds" title="0"><code>sc.findinds()</code></a> to call <a href="https://numpy.org/doc/stable/reference/generated/numpy.isclose.html#np.isclose" title="1"><code>np.isclose()</code></a>, allowing for greater flexibility.</li>
-<li>Changed the <a href="https://docs.python.org/3/builtins/functions.html#repr" title="1"><code>repr</code></a> for <code>sc.objdict()</code> to differ from <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>.</li>
+<li>Changed the <a href="https://docs.python.org/3/builtins/functions.html#repr" title="1"><code>repr</code></a> for <a href="./api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> to differ from <a href="./api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>.</li>
 <li>Improved <a href="./api/sc_plotting.html#sciris.sc_plotting.maximize" title="0"><code>sc.maximize()</code></a> to work on more platforms (but still not inline or on Macs).</li>
 <li>Improved the flexiblity of <a href="./api/sc_utils.html#sciris.sc_utils.htmlify" title="0"><code>sc.htmlify()</code></a> to handle tabs and other kinds of newlines.</li>
 <li>Added additional checks to <a href="./api/sc_printing.html#sciris.sc_printing.prepr" title="0"><code>sc.prepr()</code></a> to avoid failing on recursive objects.</li>
@@ -2499,7 +2506,7 @@ ul.task-list li input[type="checkbox"] {
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.6.2 (2026-10-29).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.7.0 (2026-10-31).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

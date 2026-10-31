@@ -1,5 +1,5 @@
 {
-  "version": "3.6.2",
+  "version": "3.7.0",
   "description": "Fast, flexible tools to simplify scientific Python",
   "notes": [
     "Sciris is a library of utilities for scientific computing: containers, file I/O, dates, arrays, plotting, parallelization, and profiling.",
@@ -24,7 +24,7 @@
       "description": "Sciris: Simplifying scientific software in Python (JOSS 2023)"
     }
   ],
-  "n_entries": 276,
+  "n_entries": 277,
   "aliases": {
     "Timer": "timer",
     "cpu_load": "cpuload",
@@ -33,7 +33,6 @@
     "glob": "getfilelist",
     "loadobj": "load",
     "mem_load": "memload",
-    "objdict": "obj",
     "promotetoarray": "toarray",
     "promotetolist": "tolist",
     "rmnans": "sanitize",
@@ -1602,11 +1601,9 @@
       "kind": "class",
       "module": "sc_odict",
       "signature": "(*args, **kwargs)",
-      "summary": "An `odict` that acts like an object -- allow keys to be set/retrieved by object notation.",
-      "example": "import sciris as sc\n\nobj = sc.obj(foo=3, bar=2)\nobj.foo + obj.bar # Gives 5\nfor key in obj.keys(): # It's still a dict\n    obj[key] = 10\n\nod = sc.obj({'height':1.65, 'mass':59})\nod.bmi = od.mass/od.height**2\nod['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works\nod.keys = 3 # This raises an exception (you can't overwrite the keys() method)",
-      "aliases": [
-        "objdict"
-      ],
+      "summary": "An object that is also a dict, as fast as a plain object and a plain dict.",
+      "example": "import sciris as sc\n\nobj = sc.obj(foo=3, bar=2)\nobj.foo + obj.bar # Gives 5\nobj.baz = 7\nobj[0] # Gives 3\nfor key in obj.keys(): # It's still a dict\n    obj[key] = 10",
+      "aliases": [],
       "deprecated": false
     },
     {
@@ -1616,6 +1613,16 @@
       "signature": "(obj, strlen=22, ncol=3, private=False, sort=True, _keys=None, return_keys=False)",
       "summary": "Return a sorted string of object attributes for the Python __repr__ method; see `sc.prepr()` for options",
       "example": "",
+      "aliases": [],
+      "deprecated": false
+    },
+    {
+      "name": "objdict",
+      "kind": "class",
+      "module": "sc_odict",
+      "signature": "(*args, **kwargs)",
+      "summary": "An `odict` that acts like an object -- allow keys to be set/retrieved by object notation.",
+      "example": "import sciris as sc\n\nobj = sc.objdict(foo=3, bar=2)\nobj.foo + obj.bar # Gives 5\nfor key in obj.keys(): # It's still a dict\n    obj[key] = 10\n\nod = sc.objdict({'height':1.65, 'mass':59})\nod.bmi = od.mass/od.height**2\nod['bmi'] = od['mass']/od['height']**2 # Vanilla syntax still works\nod.keys = 3 # This raises an exception (you can't overwrite the keys() method)",
       "aliases": [],
       "deprecated": false
     },

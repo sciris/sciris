@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.19">
+<meta name="generator" content="quarto-1.10.20">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-29e00c98bbba659d91ab3844292f79dc.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-86fc916b84669629367aabb2a24c5117.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-29e00c98bbba659d91ab3844292f79dc.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -484,10 +484,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#the-odict" id="toc-the-odict" class="nav-link active" data-scroll-target="#the-odict">The <code>odict</code></a></li>
-  <li><a href="#the-objdict" id="toc-the-objdict" class="nav-link" data-scroll-target="#the-objdict">The <code>objdict</code></a>
+  <li><a href="#sc.obj" id="toc-sc.obj" class="nav-link active" data-scroll-target="#sc.obj"><code>sc.obj</code></a>
   <ul>
+  <li><a href="#keys-and-methods" id="toc-keys-and-methods" class="nav-link" data-scroll-target="#keys-and-methods">Keys and methods</a></li>
   <li><a href="#performance" id="toc-performance" class="nav-link" data-scroll-target="#performance">Performance</a></li>
+  <li><a href="#other-dicts" id="toc-other-dicts" class="nav-link" data-scroll-target="#other-dicts">Other dicts</a></li>
   </ul></li>
   <li><a href="#dataframes" id="toc-dataframes" class="nav-link" data-scroll-target="#dataframes">Dataframes</a>
   <ul>
@@ -521,173 +522,182 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Needing a better way of ordering dictionaries was one of the original inspirations for Sciris back in 2014. In those dark days of Python &lt;=3.6, dictionaries were unordered, which meant that <a href="https://docs.python.org/3/builtins/stdtypes.html#dict.keys" title="1"><code>dict.keys()</code></a> could give you anything. (And you still can’t do <code>dict.keys()[0]</code>, much less <code>dict[0]</code>). This tutorial describes Sciris’ ordered dict, the <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>, its close cousin the <code>objdict</code>, and its pandas-powered pseudorelative, the <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe" title="0"><code>dataframe</code></a>.</p>
-<section id="the-odict" class="level2">
-<h2 class="anchored" data-anchor-id="the-odict">The <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a></h2>
-<p>In basically every situation except one, an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> can be used like a <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>. (Since this is a tutorial, see if you can intuit what that one situation is!) For example, creating an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>works just like creating a regular dict:</p>
-<div id="a6f33827" class="cell" data-execution_count="1">
+<p>Needing a better way of ordering dictionaries was one of the original inspirations for Sciris back in 2014. In those dark days of Python &lt;=3.6, dictionaries were unordered, which meant that <a href="https://docs.python.org/3/builtins/stdtypes.html#dict.keys" title="1"><code>dict.keys()</code></a> could give you anything. (And you still can’t do <code>dict.keys()[0]</code>, much less <code>dict[0]</code>). This tutorial describes <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a>, Sciris’ dict that is also an object, and its pandas-powered pseudorelative, <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe" title="0"><code>sc.dataframe</code></a>.</p>
+<section id="sc.obj" class="level2">
+<h2 class="anchored" data-anchor-id="sc.obj"><a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a></h2>
+<p>In basically every situation except one, an <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> can be used like a <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>. (Since this is a tutorial, see if you can intuit what that one situation is!) For example, creating an <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> works just like creating a regular dict:</p>
+<div id="3a58793b" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>od <span class="op">=</span> sc.odict(a<span class="op">=</span>[<span class="st">'some'</span>, <span class="st">'strings'</span>], b<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>])</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(od)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>ob <span class="op">=</span> sc.obj(a<span class="op">=</span>[<span class="st">'some'</span>, <span class="st">'strings'</span>], b<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>])</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ob)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>#0: 'a': ['some', 'strings']
-#1: 'b': [1, 2, 3]</code></pre>
+<pre><code>sc.obj(a=['some', 'strings'], b=[1, 2, 3])</code></pre>
 </div>
 </div>
-<p>Okay, it doesn’t exactly <em>look</em> like a dict, but it is one:</p>
-<div id="b02be3dc" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Keys:   </span><span class="sc">{</span>od<span class="sc">.</span>keys()<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Values: </span><span class="sc">{</span>od<span class="sc">.</span>values()<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Items:  </span><span class="sc">{</span>od<span class="sc">.</span>items()<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>And it is one:</p>
+<div id="b0db518d" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">isinstance</span>(ob, <span class="bu">dict</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Keys:   </span><span class="sc">{</span>ob<span class="sc">.</span>keys()<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Values: </span><span class="sc">{</span>ob<span class="sc">.</span>values()<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Items:  </span><span class="sc">{</span>ob<span class="sc">.</span>items()<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Keys:   ['a', 'b']
+<pre><code>True
+Keys:   ['a', 'b']
 Values: [['some', 'strings'], [1, 2, 3]]
 Items:  [('a', ['some', 'strings']), ('b', [1, 2, 3])]</code></pre>
 </div>
 </div>
-<p>Looks pretty much the same as a regular dict, except that <code>od.keys()</code> returns a regular list (so, yes, you can do <code>od.keys()[0]</code>). But, you can do things you can’t do with a regular dict, such as:</p>
-<div id="b1315e3a" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,k,v <span class="kw">in</span> od.enumitems():</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Item </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss"> is called </span><span class="sc">{</span>k<span class="sc">}</span><span class="ss"> and has value </span><span class="sc">{</span>v<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Looks pretty much the same as a regular dict, except that <code>ob.keys()</code> returns a regular list (so, yes, you can do <code>ob.keys()[0]</code>).</p>
+<p>When you’re just writing throwaway analysis code, it can be a pain to type <code>mydict['key1']['key2']</code> over and over. (Right-pinky overuse is a <a href="https://www.math.ucdavis.edu/~greg/pinky-rsi.html">real medical issue</a>.) With an <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a>, keys and attributes are the same thing, so you can use “object syntax” (<code>a.b</code>) instead of “dict syntax” (<code>a['b']</code>). This is especially handy for using f-strings, since you don’t have to worry about nested quotes:</p>
+<div id="f787973e" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Checking </span><span class="sc">{</span>ob<span class="sc">.</span>a <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Checking </span><span class="sc">{</span>ob[<span class="st">"a"</span>] <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>) <span class="co"># We need to use double-quotes inside since single quotes are taken!</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>ob.c <span class="op">=</span> <span class="st">'a new key'</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ob.keys())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Checking ob.a = ['some', 'strings']
+Checking ob["a"] = ['some', 'strings']
+['a', 'b', 'c']</code></pre>
+</div>
+</div>
+<p>You can also do things you can’t do with a regular dict, such as:</p>
+<div id="46e8fc65" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,k,v <span class="kw">in</span> ob.enumitems():</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Item </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss"> is called </span><span class="sc">{</span>k<span class="sc">}</span><span class="ss"> and has value </span><span class="sc">{</span>v<span class="sc">}</span><span class="ss">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Item 0 is called a and has value ['some', 'strings']
-Item 1 is called b and has value [1, 2, 3]</code></pre>
+Item 1 is called b and has value [1, 2, 3]
+Item 2 is called c and has value a new key</code></pre>
 </div>
 </div>
 <p>We can, as you probably guessed, also retrieve items by <em>index</em> as well:</p>
-<div id="286e8184" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(od[<span class="st">'a'</span>])</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(od[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="24c0b17e" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ob[<span class="st">'a'</span>])</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ob[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>['some', 'strings']
 ['some', 'strings']</code></pre>
 </div>
 </div>
-<p>Remember the question about the situation where you wouldn’t use an odict? The answer is if your dict has integer keys, then although you still <em>could</em> use an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>, it’s probably best to use a regular <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>. But even float keys are fine to use (if somewhat strange).</p>
-<p>You might’ve noticed that the <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> has more verbose output than a regular dict. This is because its primary purpose is as a high-level container for storing large(ish) objects.</p>
-<p>For example, let’s say we want to store a number of named simulation results. Look at how we’re able to leverage the <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> in the loop that creates the plots</p>
-<div id="4ffc4e00" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Sim:</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n<span class="op">=</span><span class="dv">20</span>, n_factors<span class="op">=</span><span class="dv">6</span>):</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.results <span class="op">=</span> sc.odict()</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.n <span class="op">=</span> n</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.n_factors <span class="op">=</span> n_factors</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> run(<span class="va">self</span>):</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="va">self</span>.n_factors):</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>            label <span class="op">=</span> <span class="ss">f'y = N^</span><span class="sc">{</span>i<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">'</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>            result <span class="op">=</span> np.random.randn(<span class="va">self</span>.n)<span class="op">**</span>(i<span class="op">+</span><span class="dv">1</span>)</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.results[label] <span class="op">=</span> result</span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> plot(<span class="va">self</span>):</span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> sc.options.context(jupyter<span class="op">=</span><span class="va">True</span>): <span class="co"># Jupyter-optimized plotting</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>            plt.figure()</span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>            rows,cols <span class="op">=</span> sc.getrowscols(<span class="bu">len</span>(<span class="va">self</span>.results))</span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> i,label,result <span class="kw">in</span> <span class="va">self</span>.results.enumitems(): <span class="co"># odict magic!</span></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>                plt.subplot(rows, cols, i<span class="op">+</span><span class="dv">1</span>)</span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>                plt.scatter(np.arange(<span class="va">self</span>.n), result, c<span class="op">=</span>result, cmap<span class="op">=</span><span class="st">'parula'</span>)</span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>                plt.title(label)</span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>            sc.figlayout() <span class="co"># Trim whitespace from the figure</span></span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> Sim()</span>
-<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>sim.run()</span>
-<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>sim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Remember the question about the situation where you wouldn’t use an <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a>? The answer is if your dict has integer keys, then although you still <em>could</em> use an <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a>, it’s probably best to use a regular <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>. But even float keys are fine to use (if somewhat strange).</p>
+<p>For example, let’s say we want to store a number of named simulation results. Look at how we’re able to leverage <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> in the loop that creates the plots:</p>
+<div id="2e69e415" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Sim:</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n<span class="op">=</span><span class="dv">20</span>, n_factors<span class="op">=</span><span class="dv">6</span>):</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.results <span class="op">=</span> sc.obj()</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.n <span class="op">=</span> n</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.n_factors <span class="op">=</span> n_factors</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> run(<span class="va">self</span>):</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="va">self</span>.n_factors):</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>            label <span class="op">=</span> <span class="ss">f'y = N^</span><span class="sc">{</span>i<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">'</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>            result <span class="op">=</span> np.random.randn(<span class="va">self</span>.n)<span class="op">**</span>(i<span class="op">+</span><span class="dv">1</span>)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.results[label] <span class="op">=</span> result</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> plot(<span class="va">self</span>):</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> sc.options.context(jupyter<span class="op">=</span><span class="va">True</span>): <span class="co"># Jupyter-optimized plotting</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>            plt.figure()</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>            rows,cols <span class="op">=</span> sc.getrowscols(<span class="bu">len</span>(<span class="va">self</span>.results))</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> i,label,result <span class="kw">in</span> <span class="va">self</span>.results.enumitems(): <span class="co"># sc.obj magic!</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>                plt.subplot(rows, cols, i<span class="op">+</span><span class="dv">1</span>)</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>                plt.scatter(np.arange(<span class="va">self</span>.n), result, c<span class="op">=</span>result, cmap<span class="op">=</span><span class="st">'parula'</span>)</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>                plt.title(label)</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>            sc.figlayout() <span class="co"># Trim whitespace from the figure</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>sim <span class="op">=</span> Sim()</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>sim.run()</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>sim.plot()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="tut_dicts_files/figure-html/cell-6-output-1.png" width="662" height="470" class="figure-img"></p>
+<p><img src="tut_dicts_files/figure-html/cell-7-output-1.png" width="662" height="470" class="figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>We can quickly access these results for exploratory data analysis without having to remember and type the labels explicitly:</p>
-<div id="8ea023d1" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Sim results are'</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sim.results)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'The first set of results is'</span>)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sim.results[<span class="dv">0</span>])</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'The first set of results has median'</span>)</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>sc.printmedian(sim.results[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="eed2b878" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'Sim results are'</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sim.results)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'The first set of results is'</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sim.results[<span class="dv">0</span>])</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'The first set of results has median'</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>sc.printmedian(sim.results[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Sim results are
-#0: 'y = N^1':
-array([-0.10995621,  0.01206122, -0.47331415,  1.09253077, -1.5159119 ,
-        1.04268264, -1.09075707, -2.20881423, -0.08905848,  0.37871829,
-       -0.19894148, -1.48509735,  0.47770769, -1.67350683,  2.13157535,
-       -0.39272938, -1.45811389, -0.10557489,  0.5160006 , -0.42136609])
-#1: 'y = N^2':
-array([3.12988329e-01, 1.54540314e+00, 4.93531790e-01, 4.20070989e-02,
-       1.88479870e-03, 3.25965045e+00, 4.80730497e-05, 1.48724929e+00,
-       6.39428739e-01, 1.27456267e+00, 1.84497130e+00, 3.04213918e+00,
-       1.10974275e+01, 1.57773550e+00, 2.34352330e+00, 7.23145415e-01,
-       2.08100391e-01, 6.07915573e-02, 7.88488598e-03, 1.24631708e-01])
-#2: 'y = N^3':
-array([ 1.50803269e-04, -1.79479667e-01,  2.59267678e-02,  9.77023376e-01,
-        1.20182874e+00, -2.50456814e-01, -1.12447767e-01, -1.13492469e+01,
-       -6.48218010e-01, -3.15060504e-04,  5.55050031e+00, -7.61626417e-02,
-       -1.09116547e-02,  2.93954755e-04,  2.51484036e+00,  6.62596751e-02,
-        4.47907841e-02,  7.00511453e-01,  2.40660286e-01, -5.95300009e-02])
-#3: 'y = N^4':
-array([3.46479095e-01, 2.65707817e-01, 3.17245919e-01, 2.31108207e-01,
-       3.99813166e+01, 5.37957478e+00, 4.35015618e-01, 1.97075890e+00,
-       9.51121087e-03, 9.73471174e+00, 7.18598018e+00, 3.53181915e+00,
-       1.99387417e-04, 3.41713947e-04, 1.09423639e+01, 2.60057854e+00,
-       1.14283107e+00, 5.68547488e-01, 9.30709892e-02, 1.21388929e+01])
-#4: 'y = N^5':
-array([ 1.56583554e-02,  7.74608885e-02,  1.43071262e+01,  1.71108543e-02,
-        8.83133345e-01, -1.17721001e+01,  8.97920111e+00, -3.95590024e+00,
-        1.39881439e-03, -1.07329561e+00,  3.10187270e-04,  5.72293874e-03,
-        1.11003948e-03, -7.39197842e+00,  5.89396649e-05, -3.40044126e-02,
-       -1.01598889e+02,  1.85425980e-06,  3.29125599e+01, -8.21166570e-01])
-#5: 'y = N^6':
-array([6.49730051e-03, 1.09372804e-03, 1.21696428e+00, 2.03806874e+00,
-       3.98343023e+00, 3.58933046e-05, 1.02107035e-05, 3.46270390e+00,
-       2.42376447e-01, 1.29045836e-01, 1.20644783e-02, 2.11158348e-02,
-       7.17611610e-06, 2.20174888e-02, 1.69346480e-02, 3.89857131e+00,
-       1.58612711e-17, 1.34776547e-01, 5.35572923e-06, 1.50379887e-01])
+sc.obj({
+    'y = N^1': array([ 0.66847037, -0.47830707,  0.96683675,  0.47749227,  0.63324288,
+                      -1.31397901,  0.32885402, -0.59747817, -2.43382569,  2.18421311,
+                       1.64482691,  1.34890424,  0.57995814, -1.04066773,  1.84060117,
+                      -0.60941228,  0.62429512,  0.29793462, -2.25063603,  0.76045932]),
+    'y = N^2': array([0.14826615, 0.16861623, 2.1004975 , 0.53615476, 0.78615566,
+                      2.40928397, 2.90354735, 2.04020939, 0.24382593, 0.66410148,
+                      0.09179223, 1.75222409, 1.04767173, 0.84359586, 0.66230717,
+                      3.10343981, 0.01677748, 1.02975139, 0.70992916, 1.54838751]),
+    'y = N^3': array([ 2.39617564e-01, -2.89374284e-01, -1.02868307e+00, -1.16983096e+00,
+                       6.87135636e-02,  2.28319444e+00, -6.20128788e+01,  6.88443558e-01,
+                       5.05917962e-02, -3.65751436e-01,  3.67892478e-02, -4.84213293e+00,
+                       1.21439943e-01, -4.39144137e+00, -2.08748782e+01, -4.25057884e-04,
+                       6.95938521e-03,  7.54348120e-01, -7.94910555e+00, -1.14381731e+00]),
+    'y = N^4': array([6.04967846e-01, 2.87420563e+00, 2.83633332e+00, 8.94275612e-03,
+                      9.85067250e-01, 5.50669865e-02, 1.16354448e-03, 5.24619060e-02,
+                      7.64712367e-03, 2.76549411e-06, 2.39854845e-01, 1.93589946e-05,
+                      3.80564986e-07, 2.48208806e-01, 1.95208110e-01, 1.06951905e-01,
+                      6.72131348e-02, 9.91139630e+00, 1.10983397e-04, 3.91363568e+00]),
+    'y = N^5': array([ 1.63059518e-02,  7.05818399e+00, -2.29667833e+01, -2.88437907e-04,
+                      -1.50031847e+00, -4.27321819e-03,  9.45825727e+00,  1.02783690e-05,
+                       9.35986842e-01, -1.00232116e+00,  3.68544341e-01,  2.33170564e+01,
+                      -5.13901713e-01, -2.70844694e-02, -7.51017843e-01,  5.44575965e+01,
+                       1.77305810e-01,  4.45831947e-01,  5.00679255e-02,  5.54343058e+00]),
+    'y = N^6': array([2.98096687e-02, 2.99833700e-03, 2.99768670e-02, 9.41288082e-03,
+                      1.72819148e+00, 5.86812814e-02, 2.02529314e+01, 1.47790241e-01,
+                      3.07732643e+02, 4.50498600e-04, 7.89250572e-08, 1.22261423e+00,
+                      4.11473447e-02, 4.40248233e+01, 3.46528209e+00, 3.59255319e-02,
+                      5.69077195e-05, 1.76625835e-06, 6.42774708e-16, 9.31909938e-02]),
+})
 The first set of results is
-[-0.10995621  0.01206122 -0.47331415  1.09253077 -1.5159119   1.04268264
- -1.09075707 -2.20881423 -0.08905848  0.37871829 -0.19894148 -1.48509735
-  0.47770769 -1.67350683  2.13157535 -0.39272938 -1.45811389 -0.10557489
-  0.5160006  -0.42136609]
+[ 0.66847037 -0.47830707  0.96683675  0.47749227  0.63324288 -1.31397901
+  0.32885402 -0.59747817 -2.43382569  2.18421311  1.64482691  1.34890424
+  0.57995814 -1.04066773  1.84060117 -0.60941228  0.62429512  0.29793462
+ -2.25063603  0.76045932]
 The first set of results has median
--0.154 (95% CI: -1.955, 1.638)</code></pre>
+0.529 (95% CI: -2.347, 2.021)</code></pre>
 </div>
 </div>
 <p>This is a have-your-cake-and-eat-it-too situation: the first set of results is correctly labeled (<code>sim.results['y = N^1']</code>), but you can easily access it without having to type all that (<code>sim.results[0]</code>).</p>
-</section>
-<section id="the-objdict" class="level2">
-<h2 class="anchored" data-anchor-id="the-objdict">The <code>objdict</code></h2>
-<p>When you’re just writing throwaway analysis code, it can be a pain to type <code>mydict['key1']['key2']</code> over and over. (Right-pinky overuse is a <a href="https://www.math.ucdavis.edu/~greg/pinky-rsi.html">real medical issue</a>.) Wouldn’t it be nice if you could just type <code>mydict.key1.key2</code>, but otherwise have everything work exactly like a dict? This is where the <code>objdict</code> comes in: it’s identical to an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> (and hence like a regular <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>), except you can use “object syntax” (<code>a.b</code>) instead of “dict syntax” (<code>a['b']</code>). This is especially handy for using f-strings, since you don’t have to worry about nested quotes:</p>
-<div id="8e4269b8" class="cell" data-execution_count="7">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ob <span class="op">=</span> sc.objdict(key1<span class="op">=</span>[<span class="st">'some'</span>, <span class="st">'strings'</span>], key2<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>])</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Checking </span><span class="sc">{</span>ob[<span class="dv">0</span>] <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Checking </span><span class="sc">{</span>ob<span class="sc">.</span>key1 <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Checking </span><span class="sc">{</span>ob[<span class="st">"key1"</span>] <span class="op">=</span> <span class="sc">}</span><span class="ss">'</span>) <span class="co"># We need to use double-quotes inside since single quotes are taken!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="keys-and-methods" class="level3">
+<h3 class="anchored" data-anchor-id="keys-and-methods">Keys and methods</h3>
+<p>What if a key has the same name as a method? Methods are protected, so the method keeps working, and you get the key using dict syntax:</p>
+<div id="11314ec7" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>rates <span class="op">=</span> sc.obj(infect<span class="op">=</span><span class="fl">0.3</span>, clear<span class="op">=</span><span class="fl">0.1</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(rates[<span class="st">'clear'</span>])</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>rates.clear()</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(rates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Checking ob[0] = ['some', 'strings']
-Checking ob.key1 = ['some', 'strings']
-Checking ob["key1"] = ['some', 'strings']</code></pre>
+<pre><code>0.1
+sc.obj()</code></pre>
 </div>
 </div>
-<p>In most cases, you probably want to use <code>objdict</code>s rather than <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>s just to have the extra flexibility. Since they’re so common, <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> is a shorter name for <code>sc.objdict()</code>.</p>
+<p>This matters if your keys come from somewhere else, such as a data file, since you don’t have to worry about one of them being called <code>clear</code> or <code>pop</code>. Trying to set <code>rates.clear = 0.1</code> raises an error; <code>rates['clear'] = 0.1</code> is fine.</p>
+</section>
 <section id="performance" class="level3">
 <h3 class="anchored" data-anchor-id="performance">Performance</h3>
-<p>All this flexibility has a cost, although a small one. If you only need attribute access and not the other <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> features (such as indexing by position), <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> is a lighter-weight alternative that is nearly as fast as a plain <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>. Approximate times per operation, in nanoseconds:</p>
+<p><a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> is about as fast as a plain Python object, and nearly as fast as a plain <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a>. Approximate times per operation, in nanoseconds:</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
 <th></th>
-<th><code>obj['a']</code></th>
-<th><code>obj.a</code></th>
-<th><code>obj['a'] = 1</code></th>
-<th><code>obj.a = 1</code></th>
+<th><code>ob['a']</code></th>
+<th><code>ob.a</code></th>
+<th><code>ob['a'] = 1</code></th>
+<th><code>ob.a = 1</code></th>
 <th>Create</th>
 </tr>
 </thead>
@@ -701,24 +711,34 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 <td>50</td>
 </tr>
 <tr class="even">
-<td><a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a></td>
+<td><a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a></td>
 <td>20</td>
 <td>15</td>
 <td>15</td>
 <td>20</td>
-<td>450</td>
+<td>300</td>
 </tr>
 <tr class="odd">
-<td><code>sc.objdict()</code></td>
+<td><a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a></td>
 <td>40</td>
 <td>50</td>
-<td>190</td>
-<td>330</td>
-<td>600</td>
+<td>120</td>
+<td>240</td>
+<td>650</td>
 </tr>
 </tbody>
 </table>
-<p>These differences won’t matter unless you’re doing millions of operations. But if you’re reading this, chances are high that you <em>do</em> sometimes need to do millions of dict operations, in which case use <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> or a plain <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> inside the loop. The other difference is that an <code>sc.objdict()</code> protects its methods (<code>obj.keys = 3</code> raises an error, and <code>obj['keys'] = 3</code> leaves <code>obj.keys()</code> working), whereas in an <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a> a key replaces a method of the same name.</p>
+<p>These differences won’t matter unless you’re doing millions of operations. But if you’re reading this, chances are high that you <em>do</em> sometimes need to do millions of dict operations, so it’s nice not to have to choose between speed and convenience.</p>
+</section>
+<section id="other-dicts" class="level3">
+<h3 class="anchored" data-anchor-id="other-dicts">Other dicts</h3>
+<p>Sciris has three other dicts, for less common needs:</p>
+<ul>
+<li><a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a> is a slower version of <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> with a few more features: setting items by position (<code>ob[0] = 3</code>), getting them with a list of keys (<code>ob[['a','b']]</code>), and default values (<code>defaultdict</code>).</li>
+<li><a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict</code></a> is like <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict</code></a>, but with dict syntax only, and more verbose output for storing large(ish) objects.</li>
+<li><a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj</code></a> is a simpler dict with object syntax, without the methods or indexing of <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a>, and a key can replace a method of the same name.</li>
+</ul>
+<p>You can also subclass <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a>; see its documentation for how to add attributes that aren’t keys.</p>
 </section>
 </section>
 <section id="dataframes" class="level2">
@@ -727,20 +747,20 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 <section id="dataframe-creation" class="level3">
 <h3 class="anchored" data-anchor-id="dataframe-creation">Dataframe creation</h3>
 <p>Any valid <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> dataframe initialization works exactly the same in Sciris. However, Sciris is a bit more flexible about how you can create the dataframe, again optimized for letting you make them quickly with minimal code. For example:</p>
-<div id="26a45d7c" class="cell" data-execution_count="8">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> [<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>]</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>]</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>]</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(<span class="bu">dict</span>(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z)) <span class="co"># Pandas</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z) <span class="co"># Sciris</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="ba36b15b" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> [<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>]</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>]</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>]</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(<span class="bu">dict</span>(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z)) <span class="co"># Pandas</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z) <span class="co"># Sciris</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>It’s not a huge difference, but the Sciris one is shorter. Sciris also makes it easier to define types on dataframe creation:</p>
-<div id="2b6c8cff" class="cell" data-execution_count="9">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z, dtypes<span class="op">=</span>[<span class="bu">str</span>, <span class="bu">float</span>, <span class="bu">bool</span>])</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="e333006f" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(x<span class="op">=</span>x, y<span class="op">=</span>y, z<span class="op">=</span>z, dtypes<span class="op">=</span>[<span class="bu">str</span>, <span class="bu">float</span>, <span class="bu">bool</span>])</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   x    y      z
 0  a  1.0   True
@@ -749,15 +769,15 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 </div>
 </div>
 <p>You can also define data types along with the columns:</p>
-<div id="9a693897" class="cell" data-execution_count="10">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>columns <span class="op">=</span> <span class="bu">dict</span>(x<span class="op">=</span><span class="bu">str</span>, y<span class="op">=</span><span class="bu">float</span>, z<span class="op">=</span><span class="bu">bool</span>)</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> [</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    [<span class="st">'a'</span>, <span class="dv">1</span>, <span class="dv">1</span>],</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    [<span class="st">'b'</span>, <span class="dv">2</span>, <span class="dv">0</span>],</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    [<span class="st">'c'</span>, <span class="dv">3</span>, <span class="dv">1</span>],</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(columns<span class="op">=</span>columns, data<span class="op">=</span>data)</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>df.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="563aba84" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>columns <span class="op">=</span> <span class="bu">dict</span>(x<span class="op">=</span><span class="bu">str</span>, y<span class="op">=</span><span class="bu">float</span>, z<span class="op">=</span><span class="bu">bool</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> [</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    [<span class="st">'a'</span>, <span class="dv">1</span>, <span class="dv">1</span>],</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    [<span class="st">'b'</span>, <span class="dv">2</span>, <span class="dv">0</span>],</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    [<span class="st">'c'</span>, <span class="dv">3</span>, <span class="dv">1</span>],</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(columns<span class="op">=</span>columns, data<span class="op">=</span>data)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>df.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   x    y      z
 0  a  1.0   True
@@ -766,132 +786,132 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 </div>
 </div>
 <p>The <code>df.disp()</code> command will do its best to show the full dataframe. By default, Sciris dataframes (just like pandas) are shown in abbreviated form:</p>
-<div id="361cec4b" class="cell" data-execution_count="11">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(data<span class="op">=</span>np.random.rand(<span class="dv">70</span>,<span class="dv">10</span>))</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="8200956d" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(data<span class="op">=</span>np.random.rand(<span class="dv">70</span>,<span class="dv">10</span>))</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>           0         1         2         3         4         5         6  \
-0   0.318385  0.100812  0.353375  0.469484  0.045067  0.145549  0.296171   
-1   0.536550  0.648932  0.162674  0.957701  0.054990  0.687051  0.469110   
-2   0.808351  0.714158  0.049395  0.044782  0.788122  0.725036  0.909887   
-3   0.472091  0.225317  0.198323  0.532501  0.820908  0.948049  0.289680   
-4   0.981788  0.825425  0.504067  0.000583  0.223823  0.739076  0.418315   
+0   0.029026  0.585952  0.255995  0.534887  0.108738  0.689691  0.185298   
+1   0.928069  0.023061  0.926114  0.571395  0.952071  0.969978  0.056782   
+2   0.562852  0.502663  0.911621  0.751980  0.689734  0.493675  0.013242   
+3   0.813209  0.978221  0.349184  0.814885  0.963655  0.029203  0.390641   
+4   0.559774  0.798570  0.671349  0.871844  0.032180  0.395298  0.303383   
 ..       ...       ...       ...       ...       ...       ...       ...   
-65  0.925300  0.845888  0.626316  0.750887  0.610373  0.594916  0.400106   
-66  0.069683  0.991814  0.714730  0.609026  0.421254  0.692626  0.721460   
-67  0.724152  0.719182  0.325731  0.148825  0.814891  0.109804  0.681367   
-68  0.337714  0.725129  0.195622  0.755605  0.505687  0.507584  0.832483   
-69  0.599689  0.251154  0.019310  0.354365  0.405967  0.381411  0.281236   
+65  0.891641  0.312288  0.499528  0.811273  0.589942  0.475723  0.542509   
+66  0.928461  0.641405  0.109657  0.417291  0.090017  0.549158  0.920346   
+67  0.233007  0.067183  0.073577  0.968391  0.914368  0.919930  0.406790   
+68  0.790867  0.356334  0.640005  0.197173  0.646891  0.423401  0.561110   
+69  0.650919  0.417577  0.533324  0.421256  0.098470  0.459574  0.327122   
 
            7         8         9  
-0   0.757794  0.901310  0.329445  
-1   0.869616  0.222806  0.836517  
-2   0.768553  0.039604  0.483354  
-3   0.872362  0.775908  0.479402  
-4   0.891098  0.992541  0.999498  
+0   0.342482  0.648130  0.833506  
+1   0.271223  0.303643  0.083861  
+2   0.114327  0.293954  0.059156  
+3   0.148459  0.212401  0.656561  
+4   0.222765  0.505333  0.218903  
 ..       ...       ...       ...  
-65  0.043513  0.511624  0.855568  
-66  0.158549  0.807071  0.869922  
-67  0.507114  0.393636  0.829837  
-68  0.443716  0.037255  0.207004  
-69  0.130330  0.840654  0.476816  
+65  0.051704  0.942246  0.899768  
+66  0.394797  0.537389  0.522939  
+67  0.190090  0.089426  0.516978  
+68  0.770520  0.183947  0.707197  
+69  0.864601  0.641957  0.100144  
 
 [70 rows x 10 columns]</code></pre>
 </div>
 </div>
 <p>But sometimes you just want to see the whole thing. The official way to do it in pandas is with <code>pd.options_context</code>, but this is a lot of effort if you’re just poking around in a script or terminal (which, if you’re printing a dataframe, you probably are). By default, <code>df.disp()</code> shows the whole damn thing:</p>
-<div id="e4696bfc" class="cell" data-execution_count="12">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="3ff5e646" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>df.disp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>         0       1       2       3       4       5       6       7       8       9
-0   0.3184  0.1008  0.3534  0.4695  0.0451  0.1455  0.2962  0.7578  0.9013  0.3294
-1   0.5365  0.6489  0.1627  0.9577  0.0550  0.6871  0.4691  0.8696  0.2228  0.8365
-2   0.8084  0.7142  0.0494  0.0448  0.7881  0.7250  0.9099  0.7686  0.0396  0.4834
-3   0.4721  0.2253  0.1983  0.5325  0.8209  0.9480  0.2897  0.8724  0.7759  0.4794
-4   0.9818  0.8254  0.5041  0.0006  0.2238  0.7391  0.4183  0.8911  0.9925  0.9995
-5   0.4741  0.4195  0.5926  0.7375  0.4283  0.0182  0.9777  0.8040  0.0376  0.9978
-6   0.4042  0.6694  0.7417  0.1096  0.5479  0.7225  0.7385  0.0418  0.1847  0.8822
-7   0.9170  0.5177  0.4194  0.3830  0.3375  0.4965  0.8247  0.8840  0.9435  0.7456
-8   0.6369  0.4100  0.3308  0.3583  0.5131  0.9519  0.1268  0.5374  0.3298  0.6679
-9   0.1076  0.6330  0.3334  0.9981  0.1182  0.9630  0.9354  0.5712  0.0836  0.9554
-10  0.4408  0.0385  0.0641  0.9893  0.9537  0.9174  0.4334  0.5318  0.7529  0.2141
-11  0.9299  0.7362  0.6753  0.1680  0.0482  0.5334  0.6220  0.2648  0.8349  0.4259
-12  0.2790  0.1683  0.0789  0.4739  0.9253  0.3186  0.1411  0.4237  0.1185  0.6538
-13  0.6974  0.8696  0.8307  0.8026  0.3173  0.8330  0.2352  0.2585  0.9205  0.2192
-14  0.4585  0.3865  0.5928  0.6177  0.7082  0.2742  0.8091  0.9068  0.3728  0.1790
-15  0.9751  0.1716  0.0563  0.7856  0.2762  0.1364  0.8873  0.1714  0.1728  0.2688
-16  0.3002  0.8072  0.4063  0.3601  0.8786  0.7979  0.9782  0.4422  0.8171  0.0424
-17  0.8605  0.8191  0.8562  0.1577  0.0461  0.0689  0.2654  0.1888  0.9851  0.3705
-18  0.7726  0.1246  0.7128  0.7170  0.5467  0.3623  0.1402  0.0106  0.4014  0.1000
-19  0.7415  0.3147  0.1272  0.6643  0.7926  0.6535  0.1628  0.3005  0.3467  0.2866
-20  0.8137  0.4470  0.1714  0.1546  0.0223  0.8492  0.0799  0.3597  0.7128  0.9349
-21  0.6500  0.8768  0.7009  0.9985  0.6859  0.2465  0.6653  0.3798  0.4442  0.1093
-22  0.9436  0.7394  0.3892  0.1051  0.3125  0.2373  0.9715  0.2744  0.1068  0.7987
-23  0.3401  0.5310  0.3779  0.8684  0.4456  0.5233  0.1042  0.5258  0.2637  0.4244
-24  0.6483  0.6726  0.9443  0.5156  0.0520  0.9893  0.6962  0.2609  0.5719  0.7792
-25  0.7863  0.4616  0.6602  0.5357  0.5013  0.2734  0.5408  0.4622  0.3890  0.9688
-26  0.7405  0.4491  0.0196  0.4937  0.8663  0.5591  0.6858  0.6721  0.4300  0.6857
-27  0.5493  0.6524  0.7960  0.8529  0.4285  0.9164  0.4009  0.3198  0.4902  0.6195
-28  0.9078  0.0169  0.0348  0.8523  0.6670  0.7042  0.5080  0.7200  0.7565  0.0353
-29  0.8722  0.0612  0.3518  0.5778  0.7573  0.4823  0.1964  0.6833  0.2583  0.5715
-30  0.9028  0.2870  0.1465  0.9537  0.4722  0.6117  0.4762  0.2869  0.9457  0.9351
-31  0.7690  0.9188  0.5423  0.1103  0.4905  0.4706  0.2522  0.6463  0.9853  0.6566
-32  0.7148  0.8832  0.1771  0.4887  0.9744  0.5122  0.4742  0.1215  0.6901  0.7376
-33  0.5283  0.1294  0.5708  0.7698  0.1925  0.0467  0.9142  0.8215  0.0367  0.8704
-34  0.1109  0.2764  0.7068  0.1235  0.6154  0.5181  0.4973  0.1998  0.5543  0.6160
-35  0.8877  0.0363  0.1396  0.4246  0.8136  0.0886  0.7691  0.0490  0.3626  0.8985
-36  0.8433  0.0733  0.4971  0.9220  0.8385  0.5863  0.4961  0.9728  0.9838  0.5244
-37  0.1085  0.4656  0.8777  0.5113  0.9209  0.9144  0.8688  0.8132  0.7021  0.7524
-38  0.5915  0.4379  0.4514  0.7140  0.3078  0.2743  0.7024  0.6228  0.7547  0.8828
-39  0.8219  0.6355  0.5420  0.3845  0.4234  0.3074  0.0386  0.9168  0.7667  0.6678
-40  0.0207  0.9892  0.8580  0.8426  0.3576  0.4173  0.2107  0.9790  0.3355  0.7620
-41  0.9813  0.1501  0.9246  0.9984  0.9585  0.4201  0.3582  0.7142  0.4054  0.1631
-42  0.3972  0.9012  0.8196  0.5183  0.9226  0.1234  0.1325  0.0995  0.7721  0.3752
-43  0.1720  0.9921  0.2208  0.2224  0.3816  0.3828  0.0516  0.4828  0.9959  0.7258
-44  0.5808  0.4147  0.9781  0.9390  0.8396  0.1662  0.5163  0.4124  0.2111  0.3518
-45  0.9853  0.7520  0.4149  0.4123  0.1927  0.5798  0.1883  0.6446  0.7880  0.0825
-46  0.3072  0.3873  0.1848  0.2763  0.6242  0.7062  0.8251  0.3680  0.1333  0.3228
-47  0.0814  0.3440  0.4964  0.0709  0.0033  0.8472  0.7973  0.5156  0.1800  0.6559
-48  0.2125  0.0409  0.3051  0.3994  0.9589  0.0128  0.8002  0.8176  0.0754  0.2635
-49  0.7096  0.5638  0.8949  0.1516  0.2115  0.4062  0.8479  0.1948  0.8041  0.6428
-50  0.3455  0.3059  0.8298  0.7682  0.4422  0.1874  0.2019  0.1369  0.8481  0.1171
-51  0.8341  0.3868  0.9294  0.0399  0.5186  0.0628  0.4744  0.6764  0.5081  0.0443
-52  0.1272  0.2854  0.3200  0.8274  0.2934  0.0069  0.4181  0.7015  0.4542  0.1054
-53  0.9808  0.8488  0.9897  0.3766  0.2442  0.1038  0.2025  0.8843  0.1257  0.1001
-54  0.1513  0.9092  0.1873  0.4083  0.2096  0.1078  0.1471  0.4234  0.1944  0.6805
-55  0.2953  0.7515  0.0490  0.7807  0.4691  0.4595  0.7886  0.3008  0.9752  0.5553
-56  0.5702  0.2420  0.2384  0.2053  0.7982  0.8137  0.6573  0.1953  0.9761  0.2743
-57  0.7252  0.6981  0.4717  0.8551  0.2924  0.1796  0.6629  0.3206  0.0635  0.9339
-58  0.5910  0.5224  0.1619  0.6484  0.2210  0.5456  0.6103  0.6762  0.2436  0.8721
-59  0.8966  0.4347  0.1835  0.1156  0.0561  0.4422  0.5980  0.3332  0.7988  0.2862
-60  0.6171  0.5464  0.3378  0.0614  0.0474  0.4002  0.5058  0.2188  0.4499  0.5087
-61  0.2816  0.7183  0.5213  0.8418  0.7363  0.4207  0.4127  0.5500  0.4772  0.7703
-62  0.8652  0.2470  0.9001  0.4652  0.9768  0.6018  0.4516  0.6697  0.7829  0.2637
-63  0.7418  0.0561  0.6418  0.3182  0.7403  0.1162  0.7785  0.1545  0.9279  0.1657
-64  0.1141  0.3809  0.2713  0.5566  0.1572  0.5599  0.4903  0.3785  0.5792  0.0952
-65  0.9253  0.8459  0.6263  0.7509  0.6104  0.5949  0.4001  0.0435  0.5116  0.8556
-66  0.0697  0.9918  0.7147  0.6090  0.4213  0.6926  0.7215  0.1585  0.8071  0.8699
-67  0.7242  0.7192  0.3257  0.1488  0.8149  0.1098  0.6814  0.5071  0.3936  0.8298
-68  0.3377  0.7251  0.1956  0.7556  0.5057  0.5076  0.8325  0.4437  0.0373  0.2070
-69  0.5997  0.2512  0.0193  0.3544  0.4060  0.3814  0.2812  0.1303  0.8407  0.4768</code></pre>
+0   0.0290  0.5860  0.2560  0.5349  0.1087  0.6897  0.1853  0.3425  0.6481  0.8335
+1   0.9281  0.0231  0.9261  0.5714  0.9521  0.9700  0.0568  0.2712  0.3036  0.0839
+2   0.5629  0.5027  0.9116  0.7520  0.6897  0.4937  0.0132  0.1143  0.2940  0.0592
+3   0.8132  0.9782  0.3492  0.8149  0.9637  0.0292  0.3906  0.1485  0.2124  0.6566
+4   0.5598  0.7986  0.6713  0.8718  0.0322  0.3953  0.3034  0.2228  0.5053  0.2189
+5   0.2878  0.3637  0.4654  0.2912  0.8538  0.5159  0.2858  0.2628  0.7153  0.9503
+6   0.9747  0.1558  0.0607  0.8757  0.2664  0.4232  0.8990  0.3732  0.6509  0.9647
+7   0.3622  0.1655  0.4402  0.7150  0.0191  0.9927  0.6593  0.5848  0.9493  0.7436
+8   0.5331  0.9320  0.9358  0.4868  0.5707  0.1803  0.5735  0.1516  0.5053  0.0263
+9   0.3279  0.9999  0.4802  0.9398  0.2758  0.0416  0.0365  0.1584  0.2369  0.5643
+10  0.1664  0.2748  0.2652  0.9245  0.2313  0.4464  0.5023  0.6139  0.6779  0.4479
+11  0.8778  0.1222  0.2162  0.9806  0.5005  0.7837  0.2873  0.8467  0.7037  0.7546
+12  0.1744  0.5021  0.0320  0.5246  0.5265  0.5951  0.6044  0.3202  0.5026  0.5922
+13  0.9618  0.9736  0.9503  0.1373  0.2747  0.3145  0.5852  0.1405  0.2452  0.5349
+14  0.9918  0.7039  0.9682  0.2923  0.7331  0.5960  0.7839  0.8138  0.7281  0.3989
+15  0.6589  0.9561  0.9586  0.0015  0.9978  0.6426  0.6003  0.3196  0.0489  0.2855
+16  0.9815  0.0086  0.2894  0.8547  0.2903  0.9741  0.6234  0.8738  0.5778  0.0295
+17  0.2072  0.4984  0.2765  0.1265  0.6128  0.4615  0.2681  0.5825  0.9799  0.3471
+18  0.8164  0.2179  0.8809  0.6865  0.7122  0.8813  0.8035  0.2615  0.7038  0.3473
+19  0.8507  0.9847  0.1569  0.9390  0.7826  0.3583  0.8827  0.3449  0.2854  0.7540
+20  0.0998  0.7288  0.3482  0.2141  0.2848  0.1148  0.8627  0.7346  0.7380  0.9504
+21  0.4665  0.8026  0.7779  0.7458  0.8063  0.2268  0.9474  0.8037  0.8756  0.1001
+22  0.8186  0.8774  0.2593  0.6574  0.7184  0.9446  0.6080  0.2054  0.6373  0.4763
+23  0.4554  0.3537  0.8973  0.4329  0.8089  0.2282  0.7992  0.3216  0.1825  0.0249
+24  0.0821  0.8861  0.1942  0.6951  0.2420  0.5608  0.0507  0.5775  0.4473  0.1438
+25  0.8929  0.9686  0.5532  0.9879  0.9073  0.4495  0.8584  0.5873  0.0831  0.6857
+26  0.6399  0.9443  0.3503  0.9695  0.4907  0.7200  0.6953  0.0396  0.3451  0.5796
+27  0.8734  0.6400  0.4338  0.2201  0.6509  0.4454  0.5869  0.1335  0.9359  0.4819
+28  0.9512  0.4511  0.1914  0.2776  0.5018  0.9950  0.6003  0.3418  0.6031  0.4848
+29  0.9522  0.2950  0.7308  0.2384  0.3446  0.9846  0.0752  0.3838  0.6620  0.5981
+30  0.3009  0.4187  0.1345  0.4221  0.0124  0.5016  0.8283  0.3836  0.8206  0.9877
+31  0.7816  0.5261  0.9739  0.7536  0.3297  0.2745  0.9653  0.6911  0.6091  0.4928
+32  0.8217  0.6375  0.6195  0.8561  0.7312  0.9558  0.2039  0.7930  0.2468  0.2082
+33  0.3437  0.5561  0.1115  0.0001  0.8979  0.0501  0.2534  0.2608  0.5261  0.3829
+34  0.7426  0.7551  0.7074  0.6409  0.1838  0.1545  0.0518  0.1096  0.4741  0.2700
+35  0.4248  0.0554  0.4960  0.6691  0.5936  0.9339  0.4766  0.5388  0.0189  0.0724
+36  0.4235  0.3347  0.4449  0.6484  0.1622  0.8256  0.2326  0.2696  0.5474  0.8008
+37  0.2130  0.0619  0.9749  0.8840  0.8356  0.7283  0.7857  0.0575  0.5184  0.4544
+38  0.3231  0.2104  0.3875  0.4925  0.1593  0.1910  0.7848  0.8114  0.2539  0.7163
+39  0.7292  0.2201  0.1709  0.4998  0.9385  0.3486  0.9374  0.8145  0.2758  0.6901
+40  0.9424  0.3998  0.3801  0.7548  0.5710  0.6711  0.9686  0.3866  0.6536  0.8260
+41  0.6932  0.4880  0.3487  0.2837  0.8416  0.7541  0.6593  0.4880  0.1818  0.7857
+42  0.2627  0.6832  0.3435  0.8330  0.9556  0.6258  0.6065  0.5730  0.6473  0.7872
+43  0.1672  0.1662  0.2687  0.4110  0.0659  0.4889  0.4595  0.1604  0.0947  0.7168
+44  0.6824  0.3896  0.0838  0.4587  0.7331  0.3071  0.2041  0.9822  0.5020  0.4663
+45  0.0027  0.8613  0.3128  0.8699  0.8619  0.3720  0.5898  0.8573  0.8999  0.6431
+46  0.1305  0.0617  0.8911  0.6179  0.3415  0.5300  0.5610  0.7708  0.7271  0.5861
+47  0.2436  0.9499  0.3119  0.8105  0.6862  0.2183  0.0321  0.3441  0.8257  0.9610
+48  0.7030  0.3539  0.6659  0.5728  0.7804  0.6252  0.9365  0.3720  0.0653  0.1102
+49  0.0043  0.8222  0.8896  0.6322  0.2196  0.5040  0.8056  0.3306  0.1504  0.3463
+50  0.7819  0.2632  0.9509  0.6734  0.7086  0.1866  0.1325  0.2353  0.6832  0.9413
+51  0.4075  0.3387  0.2954  0.5475  0.8765  0.2202  0.6740  0.6346  0.7295  0.6130
+52  0.9596  0.1106  0.3169  0.4564  0.2625  0.1070  0.2728  0.2975  0.2131  0.8735
+53  0.9373  0.6233  0.5208  0.9066  0.7721  0.7780  0.3014  0.2775  0.3344  0.8869
+54  0.9182  0.9081  0.9488  0.6633  0.6160  0.7769  0.4750  0.8970  0.6322  0.0342
+55  0.5201  0.0666  0.2439  0.6944  0.7832  0.7973  0.9797  0.6473  0.6978  0.3870
+56  0.2493  0.7664  0.2093  0.0986  0.0749  0.1954  0.9187  0.6762  0.6400  0.2781
+57  0.4214  0.7150  0.3883  0.3382  0.5534  0.4620  0.4201  0.3279  0.6687  0.9505
+58  0.1403  0.7261  0.8475  0.6610  0.6904  0.1326  0.1414  0.9072  0.5579  0.1549
+59  0.3832  0.0741  0.1131  0.1212  0.6675  0.3782  0.3765  0.7235  0.4266  0.8356
+60  0.2823  0.5073  0.8429  0.5289  0.1689  0.7756  0.6276  0.7525  0.6945  0.8109
+61  0.6443  0.5672  0.6720  0.4866  0.0171  0.7044  0.8854  0.4945  0.7713  0.5965
+62  0.8824  0.0368  0.3316  0.8573  0.9242  0.9171  0.0811  0.0728  0.0840  0.9027
+63  0.9583  0.1002  0.4647  0.5605  0.3818  0.1811  0.6091  0.8166  0.0675  0.2291
+64  0.7106  0.6749  0.7255  0.1120  0.0727  0.8169  0.7534  0.7574  0.7978  0.1879
+65  0.8916  0.3123  0.4995  0.8113  0.5899  0.4757  0.5425  0.0517  0.9422  0.8998
+66  0.9285  0.6414  0.1097  0.4173  0.0900  0.5492  0.9203  0.3948  0.5374  0.5229
+67  0.2330  0.0672  0.0736  0.9684  0.9144  0.9199  0.4068  0.1901  0.0894  0.5170
+68  0.7909  0.3563  0.6400  0.1972  0.6469  0.4234  0.5611  0.7705  0.1839  0.7072
+69  0.6509  0.4176  0.5333  0.4213  0.0985  0.4596  0.3271  0.8646  0.6420  0.1001</code></pre>
 </div>
 </div>
 <p>You can also pass other options if you want to customize it further:</p>
-<div id="580a7e75" class="cell" data-execution_count="13">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>df.disp(precision<span class="op">=</span><span class="dv">1</span>, ncols<span class="op">=</span><span class="dv">5</span>, nrows<span class="op">=</span><span class="dv">10</span>, colheader_justify<span class="op">=</span><span class="st">'left'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="a0c82f19" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>df.disp(precision<span class="op">=</span><span class="dv">1</span>, ncols<span class="op">=</span><span class="dv">5</span>, nrows<span class="op">=</span><span class="dv">10</span>, colheader_justify<span class="op">=</span><span class="st">'left'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>    0        1    ...  8        9  
-0   3.2e-01  0.1  ...  9.0e-01  0.3
-1   5.4e-01  0.6  ...  2.2e-01  0.8
-2   8.1e-01  0.7  ...  4.0e-02  0.5
-3   4.7e-01  0.2  ...  7.8e-01  0.5
-4   9.8e-01  0.8  ...  9.9e-01  1.0
-..      ...  ...  ...      ...  ...
-65  9.3e-01  0.8  ...  5.1e-01  0.9
-66  7.0e-02  1.0  ...  8.1e-01  0.9
-67  7.2e-01  0.7  ...  3.9e-01  0.8
-68  3.4e-01  0.7  ...  3.7e-02  0.2
-69  6.0e-01  0.3  ...  8.4e-01  0.5
+<pre><code>    0        1        ...  8        9      
+0   2.9e-02  5.9e-01  ...  6.5e-01  8.3e-01
+1   9.3e-01  2.3e-02  ...  3.0e-01  8.4e-02
+2   5.6e-01  5.0e-01  ...  2.9e-01  5.9e-02
+3   8.1e-01  9.8e-01  ...  2.1e-01  6.6e-01
+4   5.6e-01  8.0e-01  ...  5.1e-01  2.2e-01
+..      ...      ...  ...      ...      ...
+65  8.9e-01  3.1e-01  ...  9.4e-01  9.0e-01
+66  9.3e-01  6.4e-01  ...  5.4e-01  5.2e-01
+67  2.3e-01  6.7e-02  ...  8.9e-02  5.2e-01
+68  7.9e-01  3.6e-01  ...  1.8e-01  7.1e-01
+69  6.5e-01  4.2e-01  ...  6.4e-01  1.0e-01
 
 [70 rows x 10 columns]</code></pre>
 </div>
@@ -900,21 +920,21 @@ Checking ob["key1"] = ['some', 'strings']</code></pre>
 <section id="dataframe-indexing" class="level3">
 <h3 class="anchored" data-anchor-id="dataframe-indexing">Dataframe indexing</h3>
 <p>All the regular <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> methods (<code>df['mycol']</code>, <code>df.mycol</code>, <code>df.loc</code>, <code>df.iloc</code>, etc.) work exactly the same. But Sciris gives additional options for indexing. Specifically, <code>getitem</code> commands (what happens under the hood when you call <code>df[thing]</code>) will first try the standard pandas <code>getitem</code>, but then fall back to <code>iloc</code> if that fails. For example:</p>
-<div id="6b14eec6" class="cell" data-execution_count="14">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    x      <span class="op">=</span> [<span class="dv">1</span>,   <span class="dv">2</span>,  <span class="dv">3</span>], </span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> [<span class="dv">45</span>, <span class="dv">23</span>, <span class="dv">37</span>], </span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    valid  <span class="op">=</span> [<span class="dv">1</span>,   <span class="dv">0</span>,  <span class="dv">1</span>]</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>sc.heading(<span class="st">'Regular pandas indexing'</span>)</span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df[<span class="st">'values'</span>,<span class="dv">1</span>])</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>sc.heading(<span class="st">'Pandas-like iloc indexing'</span>)</span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df.iloc[<span class="dv">1</span>])</span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>sc.heading(<span class="st">'Automatic iloc indexing'</span>)</span>
-<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df[<span class="dv">1</span>]) <span class="co"># Would be a KeyError in regular pandas</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="9d2924fa" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    x      <span class="op">=</span> [<span class="dv">1</span>,   <span class="dv">2</span>,  <span class="dv">3</span>], </span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> [<span class="dv">45</span>, <span class="dv">23</span>, <span class="dv">37</span>], </span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    valid  <span class="op">=</span> [<span class="dv">1</span>,   <span class="dv">0</span>,  <span class="dv">1</span>]</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>sc.heading(<span class="st">'Regular pandas indexing'</span>)</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df[<span class="st">'values'</span>,<span class="dv">1</span>])</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>sc.heading(<span class="st">'Pandas-like iloc indexing'</span>)</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df.iloc[<span class="dv">1</span>])</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>sc.heading(<span class="st">'Automatic iloc indexing'</span>)</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df[<span class="dv">1</span>]) <span class="co"># Would be a KeyError in regular pandas</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <div class="ansi-escaped-output">
 <pre><span class="ansi-cyan-fg">
@@ -978,22 +998,22 @@ Name: 1, dtype: int64
 <section id="dataframe-manipulation" class="level3">
 <h3 class="anchored" data-anchor-id="dataframe-manipulation">Dataframe manipulation</h3>
 <p>One quirk of <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> dataframes is that almost every operation creates a copy rather than modifies the original dataframe in-place (leading to the infamous <a href="https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas">SettingWithCopyWarning</a>.) This is extremely helpful, and yet, sometimes you <em>do</em> want to modify a dataframe in place. For example, to append a row:</p>
-<div id="1a5f7e6f" class="cell" data-execution_count="15">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the dataframe</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> [<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>],</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>],</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>],</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the new row</span></span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>newrow <span class="op">=</span> [<span class="st">'d'</span>, <span class="dv">4</span>, <span class="dv">0</span>]</span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Append it in-place</span></span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>df.appendrow(newrow)</span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Show the result</span></span>
-<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="cd0fca4a" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the dataframe</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe(</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> [<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>],</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>],</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>],</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the new row</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>newrow <span class="op">=</span> [<span class="st">'d'</span>, <span class="dv">4</span>, <span class="dv">0</span>]</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Append it in-place</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>df.appendrow(newrow)</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Show the result</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   x  y  z
 0  a  1  1
@@ -1003,25 +1023,25 @@ Name: 1, dtype: int64
 </div>
 </div>
 <p>That was easy! For reference, here’s the <a href="https://pandas.pydata.org/pandas-docs/stable/index.html#module-pandas" title="1"><code>pandas</code></a> equivalent (since <code>append</code> was <a href="https://github.com/pandas-dev/pandas/issues/35407">deprecated</a>):</p>
-<div id="ac815297" class="cell" data-execution_count="16">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to a vanilla dataframe</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> df.to_pandas() </span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the new row</span></span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>newrow <span class="op">=</span> [<span class="st">'e'</span>, <span class="dv">5</span>, <span class="dv">1</span>]</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Append it</span></span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> pd.concat([pdf, pd.DataFrame([newrow], columns<span class="op">=</span>pdf.columns)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="0aae9dcf" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to a vanilla dataframe</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> df.to_pandas() </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the new row</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>newrow <span class="op">=</span> [<span class="st">'e'</span>, <span class="dv">5</span>, <span class="dv">1</span>]</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Append it</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>pdf <span class="op">=</span> pd.concat([pdf, pd.DataFrame([newrow], columns<span class="op">=</span>pdf.columns)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>That’s rather a pain to type, and if you mess up (e.g.&nbsp;type <code>newrow</code> instead of <code>[newrow]</code>), in some cases it won’t even fail, just give you the wrong result! Crikey.</p>
 <p>Just like how <a href="../api/sc_math.html#sciris.sc_math.cat" title="0"><code>sc.cat()</code></a> will take anything vaguely arrayish and turn it into an actual array, <a href="../api/sc_dataframe.html#sciris.sc_dataframe.dataframe.cat" title="0"><code>sc.dataframe.cat()</code></a> will do the same thing:</p>
-<div id="3c754032" class="cell" data-execution_count="17">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe.cat(</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    sc.dataframe(x<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>], y<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>]), <span class="co"># Actual dataframe</span></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">dict</span>(x<span class="op">=</span>[<span class="st">'c'</span>,<span class="st">'d'</span>], y<span class="op">=</span>[<span class="dv">3</span>,<span class="dv">4</span>]),         <span class="co"># Dict of data</span></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    [[<span class="st">'e'</span>,<span class="dv">5</span>], [<span class="st">'f'</span>, <span class="dv">6</span>]],                <span class="co"># Or just the data!</span></span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="2bca51de" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sc.dataframe.cat(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    sc.dataframe(x<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>], y<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>]), <span class="co"># Actual dataframe</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">dict</span>(x<span class="op">=</span>[<span class="st">'c'</span>,<span class="st">'d'</span>], y<span class="op">=</span>[<span class="dv">3</span>,<span class="dv">4</span>]),         <span class="co"># Dict of data</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    [[<span class="st">'e'</span>,<span class="dv">5</span>], [<span class="st">'f'</span>, <span class="dv">6</span>]],                <span class="co"># Or just the data!</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   x  y
 0  a  1
@@ -1470,7 +1490,7 @@ Name: 1, dtype: int64
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.6.2 (2026-10-29).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.7.0 (2026-10-31).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

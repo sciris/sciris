@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.19">
+<meta name="generator" content="quarto-1.10.20">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -45,9 +45,9 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-29e00c98bbba659d91ab3844292f79dc.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-86fc916b84669629367aabb2a24c5117.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-29e00c98bbba659d91ab3844292f79dc.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -492,7 +492,7 @@ ul.task-list li input[type="checkbox"] {
 <h3 class="anchored" data-anchor-id="highlights">Highlights</h3>
 <p>Some highlights of Sciris (<code>import sciris as sc</code>):</p>
 <ul>
-<li><strong>Powerful containers</strong> – The <a href="./api/sc_odict.html#sciris.sc_odict.odict"><span><code>sc.odict</code></span></a> class is what <code>OrderedDict</code> (almost) could have been, allowing reference by position or key, casting to a NumPy array, sorting and enumeration functions, etc.</li>
+<li><strong>Powerful containers</strong> – The <a href="./api/sc_odict.html#sciris.sc_odict.obj"><span><code>sc.obj</code></span></a> class is what <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> (almost) could have been, allowing reference by key, attribute, or position, casting to a NumPy array, sorting and enumeration functions, etc.</li>
 <li><strong>Array operations</strong> – Want to find the indices of an array that match a certain value or condition? <a href="./api/sc_math.html#sciris.sc_math.findinds"><span><code>sc.findinds()</code></span></a> will do that. How about just the nearest value, regardless of exact match? <a href="./api/sc_math.html#sciris.sc_math.findnearest"><span><code>sc.findnearest()</code></span></a>. What about the last matching value? <a href="./api/sc_math.html#sciris.sc_math.findlast"><span><code>sc.findlast()</code></span></a>. Yes, you could do <a href="https://numpy.org/doc/stable/reference/generated/numpy.nonzero.html#numpy.nonzero"><code>np.nonzero()[0][-1]</code></a> instead, but <a href="./api/sc_math.html#sciris.sc_math.findlast"><span><code>sc.findlast()</code></span></a> is easier to read, type, and remember, and handles edge cases more elegantly.</li>
 <li><strong>File I/O</strong> – One-liner functions for saving and loading text, JSON, spreadsheets, or even arbitrary Python objects.</li>
 <li><strong>Plotting recipes</strong> – Simple functions for mapping sequential or qualitative data onto colors, manipulating color data, and updating axis limits and tick labels, plus several new colormaps.</li>
@@ -518,7 +518,7 @@ ul.task-list li input[type="checkbox"] {
 <section id="where-did-sciris-come-from" class="level3">
 <h3 class="anchored" data-anchor-id="where-did-sciris-come-from">Where did Sciris come from?</h3>
 <p>Development of Sciris began in 2014 to support development of the <a href="http://optimamodel.com">Optima</a> suite of models. We kept encountering the same issues and inconveniences over and over while building scientific webapps, and began collecting the tools we used to overcome these issues into a shared library. This library evolved into Sciris. (Note: while “Sciris” doesn’t mean anything, “iris” means “rainbow” in Greek, and the name was loosely inspired by the wide spectrum of scientific computing features included in Sciris.)</p>
-<p>To give a based-on-a-true-story example, let’s say you have a dictionary of results for multiple runs of your model, called <code>results</code>. The output of each model run is itself a dictionary, with keys such as <code>name</code> and <code>data</code>. Now let’s say you want to access the data from the first model run. Using plain Python dictionaries, this would be <code>results[list(results.keys())[0]]['data']</code>. Using a Sciris <code>sc.objdict</code>, this is <code>results[0].data</code> – almost 3x shorter.</p>
+<p>To give a based-on-a-true-story example, let’s say you have a dictionary of results for multiple runs of your model, called <code>results</code>. The output of each model run is itself a dictionary, with keys such as <code>name</code> and <code>data</code>. Now let’s say you want to access the data from the first model run. Using plain Python dictionaries, this would be <code>results[list(results.keys())[0]]['data']</code>. Using a Sciris <a href="./api/sc_odict.html#sciris.sc_odict.obj"><span><code>sc.obj</code></span></a>, this is <code>results[0].data</code> – almost 3x shorter.</p>
 </section>
 <section id="where-has-sciris-been-used" class="level3">
 <h3 class="anchored" data-anchor-id="where-has-sciris-been-used">Where has Sciris been used?</h3>
@@ -531,8 +531,8 @@ ul.task-list li input[type="checkbox"] {
 <section id="containers" class="level3">
 <h3 class="anchored" data-anchor-id="containers">Containers</h3>
 <ul>
-<li><a href="./api/sc_odict.html#sciris.sc_odict.odict"><span><code>sc.odict()</code></span></a>: flexible container representing the best-of-all-worlds across lists, dicts, and arrays</li>
-<li><code>sc.objdict()</code>: like an odict, but allows get/set via e.g.&nbsp;<code>foo.bar</code> instead of <code>foo['bar']</code></li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.obj"><span><code>sc.obj()</code></span></a>: fast and flexible container representing the best-of-all-worlds across objects, lists, dicts, and arrays</li>
+<li><a href="./api/sc_odict.html#sciris.sc_odict.dictobj"><span><code>sc.dictobj()</code></span></a>: like <code>SimpleNamespace</code>, but allows dict-like access as well</li>
 </ul>
 </section>
 <section id="array-operations" class="level3">
@@ -1049,7 +1049,7 @@ ul.task-list li input[type="checkbox"] {
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.6.2 (2026-10-29).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.7.0 (2026-10-31).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

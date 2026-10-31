@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.19">
+<meta name="generator" content="quarto-1.10.20">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-29e00c98bbba659d91ab3844292f79dc.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-86fc916b84669629367aabb2a24c5117.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-29e00c98bbba659d91ab3844292f79dc.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -520,7 +520,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="simple-data-operations" class="level2">
 <h2 class="anchored" data-anchor-id="simple-data-operations">Simple data operations</h2>
 <p>While Sciris does add some new features (we’ll get to those later), its main purpose is to let you do the things you’re already doing more easily. For example, finding values in an array:</p>
-<div id="f8e09c0b" class="cell" data-execution_count="1">
+<div id="014811ac" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -531,7 +531,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'there were </span><span class="sc">{</span><span class="bu">len</span>(inds)<span class="sc">}</span><span class="ss"> values over 0.9: '</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f'these were </span><span class="sc">{</span>sc<span class="sc">.</span>strjoin(inds)<span class="sc">}</span><span class="ss">.'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>While the mean of the data was 0.50 ± 0.57, there were 7 values over 0.9: these were 3, 4, 9, 11, 18, 19, 37.</code></pre>
+<pre><code>While the mean of the data was 0.44 ± 0.55, there were 4 values over 0.9: these were 10, 13, 16, 27.</code></pre>
 </div>
 </div>
 <p>I’m sure you already knew how to find indices of an array, calculate the mean and standard deviation, and turn a list of values into a string. But it’s nice if those things can be made easier, right?</p>
@@ -539,7 +539,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="simple-data-containers-and-plotting" class="level2">
 <h2 class="anchored" data-anchor-id="simple-data-containers-and-plotting">Simple data containers and plotting</h2>
 <p>Matplotlib, NumPy, and pandas are all fantastic – but often they provide lower-level interfaces than what is commonly needed, meaning that some tasks can be made even simpler.</p>
-<div id="a1661db6" class="cell" data-execution_count="2">
+<div id="5ed59f40" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create some data</span></span>
@@ -565,15 +565,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>The data had mean 1,170,000 and there were 10 outliers.</code></pre>
+<pre><code>The data had mean 1,090,000 and there were 11 outliers.</code></pre>
 </div>
 </div>
 </section>
 <section id="simple-containers" class="level2">
 <h2 class="anchored" data-anchor-id="simple-containers">Simple containers</h2>
 <p>Can’t decide if something should be a dict or an object? Do you want the flexibility of a dict, but the convenience and explicitness of an object? Well, why not use both?</p>
-<div id="16fa8118" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.objdict(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], b<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]) </span>
+<div id="b4a63226" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.obj(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], b<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]) </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> data.a <span class="op">==</span> data[<span class="st">'a'</span>] <span class="op">==</span> data[<span class="dv">0</span>] <span class="co"># Flexible options for indexing</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> data[:].<span class="bu">sum</span>() <span class="op">==</span> <span class="dv">21</span> <span class="co"># You can sum a dict!</span></span>
@@ -588,7 +588,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <section id="loading-and-saving" class="level2">
 <h2 class="anchored" data-anchor-id="loading-and-saving">Loading and saving</h2>
 <p>Do you have a custom object that it would be nice to be able to save and pick up where you left off?</p>
-<div id="3905dccd" class="cell" data-execution_count="4">
+<div id="60b6386f" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Sim:</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, days, trials):</span>
@@ -614,7 +614,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="tut_intro_files/figure-html/cell-5-output-1.png" width="578" height="411" class="figure-img"></p>
+<p><img src="tut_intro_files/figure-html/cell-5-output-1.png" width="586" height="411" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -623,11 +623,11 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <section id="parallelization" class="level2">
 <h2 class="anchored" data-anchor-id="parallelization">Parallelization</h2>
 <p>Have you ever thought “Gosh, I should really parallelize this code, but it’s going to take too long, and besides doctors say you should get up and stretch everyone once in a while, so it’s OK that I’m waiting for 9 minutes out of every 10 while my code runs”? This might be for you.</p>
-<div id="bfaaf1cf" class="cell" data-execution_count="5">
+<div id="530691a9" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the function to parallelize</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> func(scale, x_offset, y_offset):</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    np.random.seed(scale)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> sc.objdict()</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> sc.obj()</span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    data.scale <span class="op">=</span> scale</span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    data.x <span class="op">=</span> x_offset<span class="op">+</span>scale<span class="op">*</span>np.random.randn(<span class="dv">100</span>)</span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    data.y <span class="op">=</span> y_offset<span class="op">+</span>scale<span class="op">*</span>np.random.randn(<span class="dv">100</span>)</span>
@@ -655,7 +655,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <section id="putting-it-all-together" class="level2">
 <h2 class="anchored" data-anchor-id="putting-it-all-together">Putting it all together</h2>
 <p>Here’s the “showcase” example of the wave generator from the <a href="http://docs.sciris.org/overview.html">getting started</a> page, which hopefully now makes more sense!</p>
-<div id="45a20207" class="cell" data-execution_count="6">
+<div id="8fd5e423" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define random wave generator</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> randwave(std, xmin<span class="op">=</span><span class="dv">0</span>, xmax<span class="op">=</span><span class="dv">10</span>, npts<span class="op">=</span><span class="dv">50</span>):</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    np.random.seed(<span class="bu">int</span>(<span class="dv">100</span><span class="op">*</span>std)) <span class="co"># Ensure differences between runs</span></span>
@@ -673,7 +673,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>filenames <span class="op">=</span> [sc.save(<span class="ss">f'wave</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">.obj'</span>, wave) <span class="cf">for</span> i,wave <span class="kw">in</span> <span class="bu">enumerate</span>(waves)]</span>
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Create dict from files</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.odict({fname:sc.load(fname) <span class="cf">for</span> fname <span class="kw">in</span> filenames})</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> sc.obj({fname:sc.load(fname) <span class="cf">for</span> fname <span class="kw">in</span> filenames})</span>
 <span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Create 3D plot</span></span>
 <span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>sc.surf3d(data[:], cmap<span class="op">=</span><span class="st">'orangeblue'</span>)</span>
@@ -689,7 +689,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Congratulations, you finished the first tutorial: 0.215 s</code></pre>
+<pre><code>Congratulations, you finished the first tutorial: 0.269 s</code></pre>
 </div>
 </div>
 
@@ -1129,7 +1129,7 @@ Item 1 is named "b" and has value [4, 5, 6]</code></pre>
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.6.2 (2026-10-29).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.7.0 (2026-10-31).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

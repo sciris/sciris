@@ -1,7 +1,7 @@
 {
   "project": "sciris",
   "version": "0.0.9999",
-  "count": 496,
+  "count": 499,
   "items": [
     {
       "name": "sciris.sc_math.approx",
@@ -348,14 +348,6 @@
       "dispname": "-"
     },
     {
-      "name": "sciris.sc_odict.obj.delattribute",
-      "domain": "py",
-      "role": "function",
-      "priority": "1",
-      "uri": "api/sc_odict.html#sciris.sc_odict.obj.delattribute",
-      "dispname": "-"
-    },
-    {
       "name": "sciris.sc_odict.obj.getattribute",
       "domain": "py",
       "role": "function",
@@ -377,6 +369,38 @@
       "role": "class",
       "priority": "1",
       "uri": "api/sc_odict.html#sciris.sc_odict.obj",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_odict.objdict.delattribute",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.objdict.delattribute",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_odict.objdict.getattribute",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.objdict.getattribute",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_odict.objdict.setattribute",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.objdict.setattribute",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.sc_odict.objdict",
+      "domain": "py",
+      "role": "class",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.objdict",
       "dispname": "-"
     },
     {
@@ -4300,14 +4324,6 @@
       "dispname": "-"
     },
     {
-      "name": "sciris.obj.delattribute",
-      "domain": "py",
-      "role": "function",
-      "priority": "1",
-      "uri": "api/sc_odict.html#sciris.sc_odict.obj.delattribute",
-      "dispname": "-"
-    },
-    {
       "name": "sciris.obj.getattribute",
       "domain": "py",
       "role": "function",
@@ -4329,6 +4345,38 @@
       "role": "class",
       "priority": "1",
       "uri": "api/sc_odict.html#sciris.sc_odict.obj",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.objdict.delattribute",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.objdict.delattribute",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.objdict.getattribute",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.objdict.getattribute",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.objdict.setattribute",
+      "domain": "py",
+      "role": "function",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.objdict.setattribute",
+      "dispname": "-"
+    },
+    {
+      "name": "sciris.objdict",
+      "domain": "py",
+      "role": "class",
+      "priority": "1",
+      "uri": "api/sc_odict.html#sciris.sc_odict.objdict",
       "dispname": "-"
     },
     {

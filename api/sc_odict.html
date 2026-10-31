@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.19">
+<meta name="generator" content="quarto-1.10.20">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -80,9 +80,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-6453f418aeef366c23116eb9cb0b6816.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5c1318cf63eba56dbef7ba16bc7d56f5.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-29e00c98bbba659d91ab3844292f79dc.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-86fc916b84669629367aabb2a24c5117.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-29e00c98bbba659d91ab3844292f79dc.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-582cfef5570e4bde6d8f9f4a3258b827.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
@@ -559,15 +559,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#methods-2" id="toc-methods-2" class="nav-link" data-scroll-target="#methods-2">Methods</a>
   <ul class="collapse">
-  <li><a href="#sciris.sc_odict.obj.delattribute" id="toc-sciris.sc_odict.obj.delattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.obj.delattribute">delattribute</a></li>
   <li><a href="#sciris.sc_odict.obj.getattribute" id="toc-sciris.sc_odict.obj.getattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.obj.getattribute">getattribute</a></li>
   <li><a href="#sciris.sc_odict.obj.setattribute" id="toc-sciris.sc_odict.obj.setattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.obj.setattribute">setattribute</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#sciris.sc_odict.objdict" id="toc-sciris.sc_odict.objdict" class="nav-link" data-scroll-target="#sciris.sc_odict.objdict">objdict</a>
+  <ul class="collapse">
+  <li><a href="#methods-3" id="toc-methods-3" class="nav-link" data-scroll-target="#methods-3">Methods</a>
+  <ul class="collapse">
+  <li><a href="#sciris.sc_odict.objdict.delattribute" id="toc-sciris.sc_odict.objdict.delattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.objdict.delattribute">delattribute</a></li>
+  <li><a href="#sciris.sc_odict.objdict.getattribute" id="toc-sciris.sc_odict.objdict.getattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.objdict.getattribute">getattribute</a></li>
+  <li><a href="#sciris.sc_odict.objdict.setattribute" id="toc-sciris.sc_odict.objdict.setattribute" class="nav-link" data-scroll-target="#sciris.sc_odict.objdict.setattribute">setattribute</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#sciris.sc_odict.odict" id="toc-sciris.sc_odict.odict" class="nav-link" data-scroll-target="#sciris.sc_odict.odict">odict</a>
   <ul class="collapse">
   <li><a href="#parameters-1" id="toc-parameters-1" class="nav-link" data-scroll-target="#parameters-1">Parameters</a></li>
-  <li><a href="#methods-3" id="toc-methods-3" class="nav-link" data-scroll-target="#methods-3">Methods</a>
+  <li><a href="#methods-4" id="toc-methods-4" class="nav-link" data-scroll-target="#methods-4">Methods</a>
   <ul class="collapse">
   <li><a href="#sciris.sc_odict.odict.append" id="toc-sciris.sc_odict.odict.append" class="nav-link" data-scroll-target="#sciris.sc_odict.odict.append">append</a></li>
   <li><a href="#sciris.sc_odict.odict.clear" id="toc-sciris.sc_odict.odict.clear" class="nav-link" data-scroll-target="#sciris.sc_odict.odict.clear">clear</a></li>
@@ -639,12 +647,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="sciris.sc_odict" class="level1">
 <h1>sc_odict</h1>
 <p><a href="../api/sc_odict.html#sciris.sc_odict" title="0"><code>sc_odict</code></a></p>
-<p>The “odict” class, combining features from an OrderedDict and a list/array.</p>
+<p>Dictionaries such as <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a>, combining features from dicts, objects, lists, and arrays.</p>
 <section id="highlights" class="level2 doc-section doc-section-highlights">
 <h2 class="doc-section doc-section-highlights anchored" data-anchor-id="highlights">Highlights</h2>
 <ul>
-<li><a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>: flexible container representing the best-of-all-worlds across dicts, lists, and arrays</li>
-<li><a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a>: like an odict, but allows get/set via e.g.&nbsp;<code>foo.bar</code> instead of <code>foo['bar']</code></li>
+<li><a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a>: fast and flexible container representing the best-of-all-worlds across objects, dicts, lists, and arrays</li>
+<li><a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>: a slower <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> with more features, such as setting items by position</li>
+<li><a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>: like <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>, but with dict syntax only, e.g.&nbsp;<code>foo['bar']</code> instead of <code>foo.bar</code></li>
 </ul>
 </section>
 <section id="classes" class="level2">
@@ -671,9 +680,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#sciris.sc_odict.obj">obj</a></td>
-<td>An <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> that acts like an object – allow keys to be set/retrieved by object</td>
+<td>An object that is also a dict, as fast as a plain object and a plain dict.</td>
 </tr>
 <tr class="odd">
+<td><a href="#sciris.sc_odict.objdict">objdict</a></td>
+<td>An <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> that acts like an object – allow keys to be set/retrieved by object</td>
+</tr>
+<tr class="even">
 <td><a href="#sciris.sc_odict.odict">odict</a></td>
 <td>Ordered dictionary with integer indexing</td>
 </tr>
@@ -828,7 +841,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>obj.a <span class="op">=</span> <span class="dv">5</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>obj[<span class="st">'b'</span>] <span class="op">=</span> <span class="dv">10</span></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(obj.items())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>For a more powerful alternative, see <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a>.</p>
+<p>For the same speed with more features, see <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a>.</p>
 <p>The keys and the attributes are the same thing (the dict is its own <code>__dict__</code>), so it is as fast as a plain object for attributes and nearly as fast as a plain dict for items. This also means that keys can overwrite methods (e.g.&nbsp;<code>obj.items = 5</code>).</p>
 <ul>
 <li><em>New in version 1.3.0.</em></li>
@@ -873,27 +886,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="sciris.sc_odict.obj" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_odict.obj">obj</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>sc_odict.obj(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>An <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> that acts like an object – allow keys to be set/retrieved by object notation.</p>
-<p>In general, operations that would normally act on attributes (e.g.&nbsp;<code>obj.x = 3</code>) instead act on dict keys (e.g.&nbsp;<code>obj['x'] = 3</code>). If you want to actually get/set an attribute, use <a href="../api/sc_odict.html#sciris.sc_odict.obj.getattribute" title="0"><code>obj.getattribute()</code></a>/<a href="../api/sc_odict.html#sciris.sc_odict.obj.setattribute" title="0"><code>obj.setattribute()</code></a>.</p>
-<p><code>sc.objdict()</code> is an alias for <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a>.</p>
-<p>For a lighter-weight example (an object that acts like a dict), see <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a>.</p>
+<p>An object that is also a dict, as fast as a plain object and a plain dict.</p>
+<p>The keys and the attributes are the same thing: <code>obj.x</code> is <code>obj['x']</code>. It is an <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>sc.odict()</code></a>, so it has the same methods (e.g.&nbsp;<code>obj.sort()</code>, <code>obj.enumitems()</code>, <code>obj.filter()</code>) and can read values by position (e.g.&nbsp;<code>obj[0]</code>).</p>
 <p><strong>Examples</strong>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>obj <span class="op">=</span> sc.obj(foo<span class="op">=</span><span class="dv">3</span>, bar<span class="op">=</span><span class="dv">2</span>)</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>obj.foo <span class="op">+</span> obj.bar <span class="co"># Gives 5</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key <span class="kw">in</span> obj.keys(): <span class="co"># It's still a dict</span></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    obj[key] <span class="op">=</span> <span class="dv">10</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>od <span class="op">=</span> sc.obj({<span class="st">'height'</span>:<span class="fl">1.65</span>, <span class="st">'mass'</span>:<span class="dv">59</span>})</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>od.bmi <span class="op">=</span> od.mass<span class="op">/</span>od.height<span class="op">**</span><span class="dv">2</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>od[<span class="st">'bmi'</span>] <span class="op">=</span> od[<span class="st">'mass'</span>]<span class="op">/</span>od[<span class="st">'height'</span>]<span class="op">**</span><span class="dv">2</span> <span class="co"># Vanilla syntax still works</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>od.keys <span class="op">=</span> <span class="dv">3</span> <span class="co"># This raises an exception (you can't overwrite the keys() method)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Nested logic based in part on addict: https://github.com/mewwts/addict</p>
-<p>For a lighter-weight equivalent (based on <a href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="1"><code>dict</code></a> instead of <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a>), see <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a>.</p>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>obj.baz <span class="op">=</span> <span class="dv">7</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>obj[<span class="dv">0</span>] <span class="co"># Gives 3</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key <span class="kw">in</span> obj.keys(): <span class="co"># It's still a dict</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    obj[key] <span class="op">=</span> <span class="dv">10</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>As with <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>, methods are read-only: <code>obj.keys = 3</code> raises an exception, and a key with the name of a method can only be used as an item, e.g.&nbsp;<code>obj['keys']</code>.</p>
+<p>To be this fast, it has no code that runs when an attribute or item is set, so it differs from <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a> as follows:</p>
 <ul>
-<li><em>New in version 3.5.0:</em> <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> alias; much faster attribute access</li>
-<li><em>New in version 3.6.0:</em> <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> is the class and <code>sc.objdict</code> the alias; faster creation, integer indexing, and failed attribute lookups</li>
+<li>There are no attributes other than keys, unless a subclass declares them with <code>__slots__</code> (see below).</li>
+<li>Position only works for reading: <code>obj[0] = 3</code> makes a new key <code>0</code>, and <code>del obj[0]</code> raises a <a href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="1"><code>KeyError</code></a>.</li>
+<li>Lists of keys (e.g.&nbsp;<code>obj[['a','b']]</code>) aren’t supported, and nor are slices (e.g.&nbsp;<code>obj[:2]</code>) before Python 3.12.</li>
+<li>There is no <code>defaultdict</code> argument.</li>
+</ul>
+<p>For these, use <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a>, which is 2 to 13 times slower per operation.</p>
+<p>Subclasses are as fast as <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a>. A subclass can define methods, which are read-only too, and can keep attributes that aren’t keys by declaring them in <code>__slots__</code>. If it overrides <code>__setitem__()</code>, <code>obj.x = 3</code> calls it, at the cost of that subclass’s attributes being slower to set:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Locked(sc.obj):</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">__slots__</span> <span class="op">=</span> (<span class="st">'locked'</span>,) <span class="co"># An attribute, not a key</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, <span class="op">*</span>args, <span class="op">**</span>kwargs):</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.locked <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__setitem__</span>(<span class="va">self</span>, key, value):</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.locked:</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">raise</span> <span class="pp">KeyError</span>(key)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__setitem__</span>(key, value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><em>New in version 3.5.0:</em> <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a> alias of <a href="../api/sc_odict.html#sciris.sc_odict.objdict" title="0"><code>sc.objdict()</code></a></li>
+<li><em>New in version 3.7.0:</em> a separate class, as fast as <a href="../api/sc_odict.html#sciris.sc_odict.dictobj" title="0"><code>sc.dictobj()</code></a></li>
 </ul>
 <section id="methods-2" class="level4">
 <h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
@@ -906,39 +933,95 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#sciris.sc_odict.obj.delattribute">delattribute</a></td>
+<td><a href="#sciris.sc_odict.obj.getattribute">getattribute</a></td>
+<td>Get an attribute, not a key</td>
+</tr>
+<tr class="even">
+<td><a href="#sciris.sc_odict.obj.setattribute">setattribute</a></td>
+<td>Set an attribute declared in <code>__slots__</code></td>
+</tr>
+</tbody>
+</table>
+<section id="sciris.sc_odict.obj.getattribute" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_odict.obj.getattribute">getattribute</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sc_odict.obj.getattribute(name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Get an attribute, not a key</p>
+</section>
+<section id="sciris.sc_odict.obj.setattribute" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_odict.obj.setattribute">setattribute</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sc_odict.obj.setattribute(name, value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Set an attribute declared in <code>__slots__</code></p>
+</section>
+</section>
+</section>
+<section id="sciris.sc_odict.objdict" class="level3">
+<h3 class="anchored" data-anchor-id="sciris.sc_odict.objdict">objdict</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sc_odict.objdict(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>An <a href="../api/sc_odict.html#sciris.sc_odict.odict" title="0"><code>odict</code></a> that acts like an object – allow keys to be set/retrieved by object notation.</p>
+<p>In general, operations that would normally act on attributes (e.g.&nbsp;<code>obj.x = 3</code>) instead act on dict keys (e.g.&nbsp;<code>obj['x'] = 3</code>). If you want to actually get/set an attribute, use <a href="../api/sc_odict.html#sciris.sc_odict.obj.getattribute" title="0"><code>obj.getattribute()</code></a>/<a href="../api/sc_odict.html#sciris.sc_odict.obj.setattribute" title="0"><code>obj.setattribute()</code></a>.</p>
+<p>For a much faster alternative with fewer features, see <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj()</code></a>.</p>
+<p><strong>Examples</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sciris <span class="im">as</span> sc</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>obj <span class="op">=</span> sc.objdict(foo<span class="op">=</span><span class="dv">3</span>, bar<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>obj.foo <span class="op">+</span> obj.bar <span class="co"># Gives 5</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key <span class="kw">in</span> obj.keys(): <span class="co"># It's still a dict</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    obj[key] <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>od <span class="op">=</span> sc.objdict({<span class="st">'height'</span>:<span class="fl">1.65</span>, <span class="st">'mass'</span>:<span class="dv">59</span>})</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>od.bmi <span class="op">=</span> od.mass<span class="op">/</span>od.height<span class="op">**</span><span class="dv">2</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>od[<span class="st">'bmi'</span>] <span class="op">=</span> od[<span class="st">'mass'</span>]<span class="op">/</span>od[<span class="st">'height'</span>]<span class="op">**</span><span class="dv">2</span> <span class="co"># Vanilla syntax still works</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>od.keys <span class="op">=</span> <span class="dv">3</span> <span class="co"># This raises an exception (you can't overwrite the keys() method)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Nested logic based in part on addict: https://github.com/mewwts/addict</p>
+<ul>
+<li><em>New in version 3.5.0:</em> much faster attribute access</li>
+<li><em>New in version 3.6.0:</em> faster creation, integer indexing, and failed attribute lookups</li>
+<li><em>New in version 3.7.0:</em> <a href="../api/sc_odict.html#sciris.sc_odict.obj" title="0"><code>sc.obj</code></a> is a separate, faster class, rather than an alias</li>
+</ul>
+<section id="methods-3" class="level4">
+<h4 class="anchored" data-anchor-id="methods-3">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#sciris.sc_odict.objdict.delattribute">delattribute</a></td>
 <td>Delete attribute if truly desired</td>
 </tr>
 <tr class="even">
-<td><a href="#sciris.sc_odict.obj.getattribute">getattribute</a></td>
+<td><a href="#sciris.sc_odict.objdict.getattribute">getattribute</a></td>
 <td>Get attribute if truly desired</td>
 </tr>
 <tr class="odd">
-<td><a href="#sciris.sc_odict.obj.setattribute">setattribute</a></td>
+<td><a href="#sciris.sc_odict.objdict.setattribute">setattribute</a></td>
 <td>Set attribute if truly desired</td>
 </tr>
 </tbody>
 </table>
-<section id="sciris.sc_odict.obj.delattribute" class="level5">
-<h5 class="anchored" data-anchor-id="sciris.sc_odict.obj.delattribute">delattribute</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>sc_odict.obj.delattribute(name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="sciris.sc_odict.objdict.delattribute" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_odict.objdict.delattribute">delattribute</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>sc_odict.objdict.delattribute(name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Delete attribute if truly desired</p>
 </section>
-<section id="sciris.sc_odict.obj.getattribute" class="level5">
-<h5 class="anchored" data-anchor-id="sciris.sc_odict.obj.getattribute">getattribute</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>sc_odict.obj.getattribute(name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="sciris.sc_odict.objdict.getattribute" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_odict.objdict.getattribute">getattribute</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>sc_odict.objdict.getattribute(name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Get attribute if truly desired</p>
 </section>
-<section id="sciris.sc_odict.obj.setattribute" class="level5">
-<h5 class="anchored" data-anchor-id="sciris.sc_odict.obj.setattribute">setattribute</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>sc_odict.obj.setattribute(name, value, force<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="sciris.sc_odict.objdict.setattribute" class="level5">
+<h5 class="anchored" data-anchor-id="sciris.sc_odict.objdict.setattribute">setattribute</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sc_odict.objdict.setattribute(name, value, force<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Set attribute if truly desired</p>
 </section>
 </section>
 </section>
 <section id="sciris.sc_odict.odict" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_odict.odict">odict</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict(<span class="op">*</span>args, defaultdict<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict(<span class="op">*</span>args, defaultdict<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Ordered dictionary with integer indexing</p>
 <p>An ordered dictionary, like the OrderedDict class, but supports list methods like integer indexing, key slicing, and item inserting. It can also replicate defaultdict behavior via the <code>defaultdict</code> argument.</p>
 <section id="parameters-1" class="level4 doc-section doc-section-parameters">
@@ -974,35 +1057,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Examples</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simple example</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>mydict <span class="op">=</span> sc.odict(foo<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], bar<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]) <span class="co"># Assignment is the same as ordinary dictionaries</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>mydict[<span class="st">'foo'</span>] <span class="op">==</span> mydict[<span class="dv">0</span>] <span class="co"># Access by key or by index</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>mydict[:].<span class="bu">sum</span>() <span class="op">==</span> <span class="dv">21</span> <span class="co"># Slices are returned as numpy arrays by default</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,key,value <span class="kw">in</span> mydict.enumitems(): <span class="co"># Additional methods for iteration</span></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Item </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss"> is named </span><span class="sc">{</span>key<span class="sc">}</span><span class="ss"> and has value </span><span class="sc">{</span>value<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Detailed example</span></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>foo <span class="op">=</span> sc.odict({<span class="st">'ant'</span>:<span class="dv">3</span>,<span class="st">'bear'</span>:<span class="dv">4</span>, <span class="st">'clam'</span>:<span class="dv">6</span>, <span class="st">'donkey'</span>: <span class="dv">8</span>}) <span class="co"># Create odict</span></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>bar <span class="op">=</span> foo.<span class="bu">sorted</span>() <span class="co"># Sort the dict</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> bar[<span class="st">'bear'</span>] <span class="op">==</span> <span class="dv">4</span> <span class="co"># Show get item by value</span></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> bar[<span class="dv">1</span>] <span class="op">==</span> <span class="dv">4</span> <span class="co"># Show get item by index</span></span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (bar[<span class="dv">0</span>:<span class="dv">2</span>] <span class="op">==</span> [<span class="dv">3</span>,<span class="dv">4</span>]).<span class="bu">all</span>() <span class="co"># Show get item by slice</span></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (bar[<span class="st">'clam'</span>:<span class="st">'donkey'</span>] <span class="op">==</span> [<span class="dv">6</span>,<span class="dv">8</span>]).<span class="bu">all</span>() <span class="co"># Show alternate slice notation</span></span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (bar[np.array([<span class="dv">2</span>,<span class="dv">1</span>])] <span class="op">==</span> [<span class="dv">6</span>,<span class="dv">4</span>]).<span class="bu">all</span>() <span class="co"># Show get item by list</span></span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (bar[:] <span class="op">==</span> [<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">8</span>]).<span class="bu">all</span>() <span class="co"># Show slice with everything</span></span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (bar[<span class="dv">2</span>:] <span class="op">==</span> [<span class="dv">6</span>,<span class="dv">8</span>]).<span class="bu">all</span>() <span class="co"># Show slice without end</span></span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>bar[<span class="dv">3</span>] <span class="op">=</span> [<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>] <span class="co"># Show assignment by item</span></span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>bar[<span class="dv">0</span>:<span class="dv">2</span>] <span class="op">=</span> [<span class="st">'the'</span>, <span class="st">'power'</span>] <span class="co"># Show assignment by slice</span></span>
-<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>bar[[<span class="dv">0</span>,<span class="dv">3</span>]] <span class="op">=</span> [<span class="st">'hill'</span>, <span class="st">'trip'</span>] <span class="co"># Show assignment by list</span></span>
-<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>bar.rename(<span class="st">'clam'</span>,<span class="st">'oyster'</span>) <span class="co"># Show rename</span></span>
-<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(bar) <span class="co"># Print results</span></span>
-<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Defaultdict examples</span></span>
-<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>dd <span class="op">=</span> sc.odict(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], defaultdict<span class="op">=</span><span class="bu">list</span>)</span>
-<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>dd[<span class="st">'c'</span>].append(<span class="dv">4</span>)</span>
-<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>nested <span class="op">=</span> sc.odict(a<span class="op">=</span><span class="dv">0</span>, defaultdict<span class="op">=</span><span class="st">'nested'</span>) <span class="co"># Create a infinitely nested dictionary (NB: may behave strangely on IPython)</span></span>
-<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>nested[<span class="st">'b'</span>][<span class="st">'c'</span>][<span class="st">'d'</span>] <span class="op">=</span> <span class="dv">2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simple example</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>mydict <span class="op">=</span> sc.odict(foo<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], bar<span class="op">=</span>[<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]) <span class="co"># Assignment is the same as ordinary dictionaries</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>mydict[<span class="st">'foo'</span>] <span class="op">==</span> mydict[<span class="dv">0</span>] <span class="co"># Access by key or by index</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>mydict[:].<span class="bu">sum</span>() <span class="op">==</span> <span class="dv">21</span> <span class="co"># Slices are returned as numpy arrays by default</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,key,value <span class="kw">in</span> mydict.enumitems(): <span class="co"># Additional methods for iteration</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Item </span><span class="sc">{</span>i<span class="sc">}</span><span class="ss"> is named </span><span class="sc">{</span>key<span class="sc">}</span><span class="ss"> and has value </span><span class="sc">{</span>value<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Detailed example</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>foo <span class="op">=</span> sc.odict({<span class="st">'ant'</span>:<span class="dv">3</span>,<span class="st">'bear'</span>:<span class="dv">4</span>, <span class="st">'clam'</span>:<span class="dv">6</span>, <span class="st">'donkey'</span>: <span class="dv">8</span>}) <span class="co"># Create odict</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>bar <span class="op">=</span> foo.<span class="bu">sorted</span>() <span class="co"># Sort the dict</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> bar[<span class="st">'bear'</span>] <span class="op">==</span> <span class="dv">4</span> <span class="co"># Show get item by value</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> bar[<span class="dv">1</span>] <span class="op">==</span> <span class="dv">4</span> <span class="co"># Show get item by index</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (bar[<span class="dv">0</span>:<span class="dv">2</span>] <span class="op">==</span> [<span class="dv">3</span>,<span class="dv">4</span>]).<span class="bu">all</span>() <span class="co"># Show get item by slice</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (bar[<span class="st">'clam'</span>:<span class="st">'donkey'</span>] <span class="op">==</span> [<span class="dv">6</span>,<span class="dv">8</span>]).<span class="bu">all</span>() <span class="co"># Show alternate slice notation</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (bar[np.array([<span class="dv">2</span>,<span class="dv">1</span>])] <span class="op">==</span> [<span class="dv">6</span>,<span class="dv">4</span>]).<span class="bu">all</span>() <span class="co"># Show get item by list</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (bar[:] <span class="op">==</span> [<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">8</span>]).<span class="bu">all</span>() <span class="co"># Show slice with everything</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (bar[<span class="dv">2</span>:] <span class="op">==</span> [<span class="dv">6</span>,<span class="dv">8</span>]).<span class="bu">all</span>() <span class="co"># Show slice without end</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>bar[<span class="dv">3</span>] <span class="op">=</span> [<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>] <span class="co"># Show assignment by item</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>bar[<span class="dv">0</span>:<span class="dv">2</span>] <span class="op">=</span> [<span class="st">'the'</span>, <span class="st">'power'</span>] <span class="co"># Show assignment by slice</span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>bar[[<span class="dv">0</span>,<span class="dv">3</span>]] <span class="op">=</span> [<span class="st">'hill'</span>, <span class="st">'trip'</span>] <span class="co"># Show assignment by list</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>bar.rename(<span class="st">'clam'</span>,<span class="st">'oyster'</span>) <span class="co"># Show rename</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(bar) <span class="co"># Print results</span></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Defaultdict examples</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>dd <span class="op">=</span> sc.odict(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], defaultdict<span class="op">=</span><span class="bu">list</span>)</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>dd[<span class="st">'c'</span>].append(<span class="dv">4</span>)</span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>nested <span class="op">=</span> sc.odict(a<span class="op">=</span><span class="dv">0</span>, defaultdict<span class="op">=</span><span class="st">'nested'</span>) <span class="co"># Create a infinitely nested dictionary (NB: may behave strangely on IPython)</span></span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>nested[<span class="st">'b'</span>][<span class="st">'c'</span>][<span class="st">'d'</span>] <span class="op">=</span> <span class="dv">2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Note: by default, integers are used as an alias to string keys, so cannot be used as keys directly. However, you can force regular-dict behavior using <code>setitem()</code>, and you can convert a dictionary with integer keys to an odict using <a href="../api/sc_odict.html#sciris.sc_odict.odict.makefrom" title="0"><code>sc.odict.makefrom()</code></a>. If an odict has integer keys and the keys do not match the key positions, then the key itself will take precedence (e.g., <code>od[3]</code> is equivalent to <code>dict(od)[3]</code>, not <code>dict(od)[od.keys()[3]]</code>). This usage is discouraged.</p>
 <ul>
 <li><em>New in version 1.1.0:</em> “defaultdict” argument</li>
@@ -1012,8 +1095,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><em>New in version 3.1.1:</em> allow steps in slices; <a href="https://docs.python.org/3/library/copy.html#module-copy" title="1"><code>copy()</code></a> now behaves as a standard dict</li>
 </ul>
 </section>
-<section id="methods-3" class="level4">
-<h4 class="anchored" data-anchor-id="methods-3">Methods</h4>
+<section id="methods-4" class="level4">
+<h4 class="anchored" data-anchor-id="methods-4">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -1210,17 +1293,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <section id="sciris.sc_odict.odict.append" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.append">append</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.append(key<span class="op">=</span>_not_given, value<span class="op">=</span>_not_given)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.append(key<span class="op">=</span>_not_given, value<span class="op">=</span>_not_given)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Support an append method, like a list</p>
 </section>
 <section id="sciris.sc_odict.odict.clear" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.clear">clear</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.clear()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.clear()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Default clear, except set stale to true</p>
 </section>
 <section id="sciris.sc_odict.odict.copy" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.copy">copy</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.copy(deep<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.copy(deep<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Make a (shallow) copy of the dict.</p>
 <section id="parameters-2" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
@@ -1243,17 +1326,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Examples</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> sc.odict(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], b<span class="op">=</span><span class="st">'foo'</span>)</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>d2 <span class="op">=</span> d1.copy()</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>d3 <span class="op">=</span> d1.copy(deep<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>d1.pop(<span class="st">'b'</span>) <span class="co"># affects d1 but not d2 or d3</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>d1[<span class="dv">0</span>].append(<span class="dv">4</span>) <span class="co"># affects d1 and d2 but not d3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> sc.odict(a<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>], b<span class="op">=</span><span class="st">'foo'</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>d2 <span class="op">=</span> d1.copy()</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>d3 <span class="op">=</span> d1.copy(deep<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>d1.pop(<span class="st">'b'</span>) <span class="co"># affects d1 but not d2 or d3</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>d1[<span class="dv">0</span>].append(<span class="dv">4</span>) <span class="co"># affects d1 and d2 but not d3</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="sciris.sc_odict.odict.dcp" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.dcp">dcp</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.dcp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.dcp()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Shortcut to odict.copy(deep=True).</p>
 <ul>
 <li><em>New in version 3.2.3.</em></li>
@@ -1261,69 +1344,69 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sciris.sc_odict.odict.dict_items" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.dict_items">dict_items</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.dict_items()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.dict_items()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return an iterator (not a list) over items (as in Python 2).</p>
 </section>
 <section id="sciris.sc_odict.odict.dict_keys" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.dict_keys">dict_keys</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.dict_keys()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.dict_keys()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return an iterator (not a list) over keys (as in Python 2).</p>
 </section>
 <section id="sciris.sc_odict.odict.dict_values" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.dict_values">dict_values</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.dict_values()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.dict_values()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return an iterator (not a list) over values (as in Python 2).</p>
 </section>
 <section id="sciris.sc_odict.odict.disp" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.disp">disp</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.disp(</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    maxlen<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    showmultilines<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    divider<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    dividerthresh<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    numindents<span class="op">=</span><span class="dv">0</span>,</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    sigfigs<span class="op">=</span><span class="dv">5</span>,</span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    numformat<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    maxitems<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.disp(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    maxlen<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    showmultilines<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    divider<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    dividerthresh<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    numindents<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    sigfigs<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    numformat<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    maxitems<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Print out flexible representation, short by default.</p>
 <p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict().make(keys<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>], vals<span class="op">=</span>[<span class="fl">4.293487</span>,<span class="dv">3</span>,<span class="dv">6</span>])</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>z.disp(sigfigs<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>z.disp(numformat<span class="op">=</span><span class="st">'</span><span class="sc">%0.6f</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict().make(keys<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>], vals<span class="op">=</span>[<span class="fl">4.293487</span>,<span class="dv">3</span>,<span class="dv">6</span>])</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>z.disp(sigfigs<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>z.disp(numformat<span class="op">=</span><span class="st">'</span><span class="sc">%0.6f</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="sciris.sc_odict.odict.enumitems" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.enumitems">enumitems</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.enumitems(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.enumitems(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Returns tuple of 3 things: index, key, value.</p>
 <p>If transpose=True, return a tuple of lists rather than a list of tuples.</p>
 </section>
 <section id="sciris.sc_odict.odict.enumkeys" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.enumkeys">enumkeys</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.enumkeys(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.enumkeys(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Shortcut for enumerate(odict.keys()).</p>
 <p>If transpose=True, return a tuple of lists rather than a list of tuples.</p>
 </section>
 <section id="sciris.sc_odict.odict.enumvals" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.enumvals">enumvals</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.enumvals(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.enumvals(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Shortcut for enumerate(odict.values())</p>
 <p>If transpose=True, return a tuple of lists rather than a list of tuples.</p>
 </section>
 <section id="sciris.sc_odict.odict.enumvalues" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.enumvalues">enumvalues</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.enumvalues(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.enumvalues(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Alias for enumvals(). <em>New in version 1.2.0.</em></p>
 </section>
 <section id="sciris.sc_odict.odict.export" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.export">export</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.export(doprint<span class="op">=</span><span class="va">True</span>, classname<span class="op">=</span><span class="st">'odict'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.export(doprint<span class="op">=</span><span class="va">True</span>, classname<span class="op">=</span><span class="st">'odict'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Export the odict in a form that is valid Python code</p>
 </section>
 <section id="sciris.sc_odict.odict.filter" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.filter">filter</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.<span class="bu">filter</span>(keys<span class="op">=</span><span class="va">None</span>, pattern<span class="op">=</span><span class="va">None</span>, method<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.<span class="bu">filter</span>(keys<span class="op">=</span><span class="va">None</span>, pattern<span class="op">=</span><span class="va">None</span>, method<span class="op">=</span><span class="va">None</span>, exclude<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Find matching keys in the odict, and return a new odict</p>
 <p>Filter the odict keys and return a new odict which is a subset. If keys is a list, then uses that for matching. If the first argument is a string, then treats as a pattern for matching using <code>findkeys() &lt;odict.findkeys</code>.</p>
 <section id="parameters-3" class="level6 doc-section doc-section-parameters">
@@ -1369,31 +1452,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sciris.sc_odict.odict.filtervals" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.filtervals">filtervals</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.filtervals(value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.filtervals(value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Like filter, but filters by value rather than key</p>
 </section>
 <section id="sciris.sc_odict.odict.findbykey" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.findbykey">findbykey</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.findbykey(pattern<span class="op">=</span><span class="va">None</span>, method<span class="op">=</span><span class="va">None</span>, first<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.findbykey(pattern<span class="op">=</span><span class="va">None</span>, method<span class="op">=</span><span class="va">None</span>, first<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Same as findkeys, but returns values instead</p>
 </section>
 <section id="sciris.sc_odict.odict.findbyval" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.findbyval">findbyval</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.findbyval(value, first<span class="op">=</span><span class="va">True</span>, strict<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.findbyval(value, first<span class="op">=</span><span class="va">True</span>, strict<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Returns the key(s) that match a given value – reverse of findbykey, except here uses exact matches to the value or values provided.</p>
 <p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict({<span class="st">'dog'</span>:[<span class="dv">2</span>,<span class="dv">3</span>], <span class="st">'cat'</span>:[<span class="dv">4</span>,<span class="dv">6</span>], <span class="st">'mongoose'</span>:[<span class="dv">4</span>,<span class="dv">6</span>]})</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>z.findbyval([<span class="dv">4</span>,<span class="dv">6</span>]) <span class="co"># returns 'cat'</span></span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>z.findbyval([<span class="dv">4</span>,<span class="dv">6</span>], first<span class="op">=</span><span class="va">False</span>) <span class="co"># returns ['cat', 'mongoose']</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict({<span class="st">'dog'</span>:[<span class="dv">2</span>,<span class="dv">3</span>], <span class="st">'cat'</span>:[<span class="dv">4</span>,<span class="dv">6</span>], <span class="st">'mongoose'</span>:[<span class="dv">4</span>,<span class="dv">6</span>]})</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>z.findbyval([<span class="dv">4</span>,<span class="dv">6</span>]) <span class="co"># returns 'cat'</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>z.findbyval([<span class="dv">4</span>,<span class="dv">6</span>], first<span class="op">=</span><span class="va">False</span>) <span class="co"># returns ['cat', 'mongoose']</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="sciris.sc_odict.odict.findkeys" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.findkeys">findkeys</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.findkeys(pattern<span class="op">=</span><span class="va">None</span>, method<span class="op">=</span><span class="va">None</span>, first<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.findkeys(pattern<span class="op">=</span><span class="va">None</span>, method<span class="op">=</span><span class="va">None</span>, first<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Find all keys that match a given pattern. By default uses regex, but other options are ‘find’, ‘startswith’, ‘endswith’. Can also specify whether or not to only return the first result (default false). If the key is a tuple instead of a string, it will search each element of the tuple.</p>
 </section>
 <section id="sciris.sc_odict.odict.fromeach" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.fromeach">fromeach</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.fromeach(ind<span class="op">=</span><span class="va">None</span>, asdict<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.fromeach(ind<span class="op">=</span><span class="va">None</span>, asdict<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Take a “slice” across all the keys of an odict, picking the same index (or indices) from each entry. To apply a function to each entry instead, use <a href="https://docs.python.org/3/builtins/functions.html#map" title="1"><code>map()</code></a>.</p>
 <section id="parameters-4" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
@@ -1422,59 +1505,59 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Examples</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict({<span class="st">'a'</span>:np.array([<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>]), <span class="st">'b'</span>:np.array([<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>])})</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>z.fromeach(<span class="dv">2</span>) <span class="co"># Returns odict({'a':3, 'b':7})</span></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>z.fromeach(<span class="dv">2</span>, asdict<span class="op">=</span><span class="va">False</span>) <span class="co"># Returns array([3,7])</span></span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>z.fromeach([<span class="dv">1</span>,<span class="dv">3</span>]) <span class="co"># Returns odict({'a':array([2,4]), 'b':array([6,8])})</span></span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict({<span class="st">'a'</span>:[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>], <span class="st">'b'</span>:[<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>]})</span>
-<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>z.fromeach([<span class="dv">1</span>,<span class="dv">3</span>]) <span class="co"># Returns odict({'a':[2,4], 'b':[6,8]})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict({<span class="st">'a'</span>:np.array([<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>]), <span class="st">'b'</span>:np.array([<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>])})</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>z.fromeach(<span class="dv">2</span>) <span class="co"># Returns odict({'a':3, 'b':7})</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>z.fromeach(<span class="dv">2</span>, asdict<span class="op">=</span><span class="va">False</span>) <span class="co"># Returns array([3,7])</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>z.fromeach([<span class="dv">1</span>,<span class="dv">3</span>]) <span class="co"># Returns odict({'a':array([2,4]), 'b':array([6,8])})</span></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict({<span class="st">'a'</span>:[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>], <span class="st">'b'</span>:[<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>]})</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>z.fromeach([<span class="dv">1</span>,<span class="dv">3</span>]) <span class="co"># Returns odict({'a':[2,4], 'b':[6,8]})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="sciris.sc_odict.odict.getnested" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.getnested">getnested</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.getnested(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.getnested(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Alias to sc.getnested(odict); see sc.makenested() for full documentation. <em>New in version 1.2.0.</em></p>
 </section>
 <section id="sciris.sc_odict.odict.index" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.index">index</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.index(value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.index(value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return the index of a given key</p>
 </section>
 <section id="sciris.sc_odict.odict.insert" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.insert">insert</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.insert(pos<span class="op">=</span><span class="va">None</span>, key<span class="op">=</span>_not_given, value<span class="op">=</span>_not_given)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.insert(pos<span class="op">=</span><span class="va">None</span>, key<span class="op">=</span>_not_given, value<span class="op">=</span>_not_given)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Function to do insert a key – note, computationally inefficient.</p>
 <p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict()</span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>z[<span class="st">'foo'</span>] <span class="op">=</span> <span class="dv">1492</span></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>z.insert(<span class="dv">1604</span>)</span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>z.insert(<span class="dv">0</span>, <span class="st">'ganges'</span>, <span class="dv">1444</span>)</span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>z.insert(<span class="dv">2</span>, <span class="st">'mekong'</span>, <span class="dv">1234</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict()</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>z[<span class="st">'foo'</span>] <span class="op">=</span> <span class="dv">1492</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>z.insert(<span class="dv">1604</span>)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>z.insert(<span class="dv">0</span>, <span class="st">'ganges'</span>, <span class="dv">1444</span>)</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>z.insert(<span class="dv">2</span>, <span class="st">'mekong'</span>, <span class="dv">1234</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="sciris.sc_odict.odict.items" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.items">items</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.items(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.items(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return a list of items (as in Python 2).</p>
 </section>
 <section id="sciris.sc_odict.odict.iteritems" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.iteritems">iteritems</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.iteritems(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.iteritems(transpose<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Alias to items()</p>
 </section>
 <section id="sciris.sc_odict.odict.iternested" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.iternested">iternested</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.iternested(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.iternested(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Alias to sc.iternested(odict); see sc.makenested() for full documentation. <em>New in version 1.2.0.</em></p>
 </section>
 <section id="sciris.sc_odict.odict.keys" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.keys">keys</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.keys()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.keys()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return a list of keys (as in Python 2), not a dict_keys object.</p>
 </section>
 <section id="sciris.sc_odict.odict.make" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.make">make</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.make(keys<span class="op">=</span><span class="va">None</span>, vals<span class="op">=</span><span class="va">None</span>, keys2<span class="op">=</span><span class="va">None</span>, keys3<span class="op">=</span><span class="va">None</span>, <span class="bu">coerce</span><span class="op">=</span><span class="st">'full'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.make(keys<span class="op">=</span><span class="va">None</span>, vals<span class="op">=</span><span class="va">None</span>, keys2<span class="op">=</span><span class="va">None</span>, keys3<span class="op">=</span><span class="va">None</span>, <span class="bu">coerce</span><span class="op">=</span><span class="st">'full'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>An alternate way of making or adding to an odict.</p>
 <section id="parameters-5" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h6>
@@ -1521,27 +1604,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Examples</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> sc.odict().make(<span class="dv">5</span>) <span class="co"># Make an odict of length 5, populated with empty lists and default key names</span></span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> sc.odict().make(<span class="st">'foo'</span>,<span class="dv">34</span>) <span class="co"># Make an odict with a single key 'foo' of value 34</span></span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>c <span class="op">=</span> sc.odict().make([<span class="st">'a'</span>,<span class="st">'b'</span>]) <span class="co"># Make an odict with keys 'a' and 'b', initialized to empty lists</span></span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> sc.odict().make([<span class="st">'a'</span>,<span class="st">'b'</span>], <span class="dv">0</span>) <span class="co"># Make an odict with keys 'a' and 'b', initialized to 0</span></span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>e <span class="op">=</span> sc.odict().make(keys<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>], vals<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>]) <span class="co"># Make an odict with 'a':1 and 'b':2</span></span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> sc.odict().make(keys<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>], vals<span class="op">=</span>np.array([<span class="dv">1</span>,<span class="dv">2</span>])) <span class="co"># As above, since arrays are coerced into lists</span></span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> sc.odict({<span class="st">'a'</span>:<span class="dv">34</span>, <span class="st">'b'</span>:<span class="dv">58</span>}).make([<span class="st">'c'</span>,<span class="st">'d'</span>],[<span class="dv">99</span>,<span class="dv">45</span>]) <span class="co"># Add extra keys to an exising odict</span></span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>h <span class="op">=</span> sc.odict().make(keys<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>], keys2<span class="op">=</span>[<span class="st">'A'</span>,<span class="st">'B'</span>,<span class="st">'C'</span>], keys3<span class="op">=</span>[<span class="st">'x'</span>,<span class="st">'y'</span>,<span class="st">'z'</span>], vals<span class="op">=</span><span class="dv">0</span>) <span class="co"># Make a triply nested odict</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> sc.odict().make(<span class="dv">5</span>) <span class="co"># Make an odict of length 5, populated with empty lists and default key names</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> sc.odict().make(<span class="st">'foo'</span>,<span class="dv">34</span>) <span class="co"># Make an odict with a single key 'foo' of value 34</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>c <span class="op">=</span> sc.odict().make([<span class="st">'a'</span>,<span class="st">'b'</span>]) <span class="co"># Make an odict with keys 'a' and 'b', initialized to empty lists</span></span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> sc.odict().make([<span class="st">'a'</span>,<span class="st">'b'</span>], <span class="dv">0</span>) <span class="co"># Make an odict with keys 'a' and 'b', initialized to 0</span></span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>e <span class="op">=</span> sc.odict().make(keys<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>], vals<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">2</span>]) <span class="co"># Make an odict with 'a':1 and 'b':2</span></span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> sc.odict().make(keys<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>], vals<span class="op">=</span>np.array([<span class="dv">1</span>,<span class="dv">2</span>])) <span class="co"># As above, since arrays are coerced into lists</span></span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> sc.odict({<span class="st">'a'</span>:<span class="dv">34</span>, <span class="st">'b'</span>:<span class="dv">58</span>}).make([<span class="st">'c'</span>,<span class="st">'d'</span>],[<span class="dv">99</span>,<span class="dv">45</span>]) <span class="co"># Add extra keys to an exising odict</span></span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>h <span class="op">=</span> sc.odict().make(keys<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>,<span class="st">'c'</span>], keys2<span class="op">=</span>[<span class="st">'A'</span>,<span class="st">'B'</span>,<span class="st">'C'</span>], keys3<span class="op">=</span>[<span class="st">'x'</span>,<span class="st">'y'</span>,<span class="st">'z'</span>], vals<span class="op">=</span><span class="dv">0</span>) <span class="co"># Make a triply nested odict</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><em>New in version 1.2.2:</em> “coerce” argument</p>
 </section>
 </section>
 <section id="sciris.sc_odict.odict.makefrom" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.makefrom">makefrom</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.makefrom(</span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    keynames<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>    force<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args,</span>
-<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
-<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.makefrom(</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>    keynames<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>    force<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>args,</span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>kwargs,</span>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Create an odict from entries in another dictionary. If keys is None, then use all keys from the current dictionary.</p>
 <section id="parameters-6" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h6>
@@ -1582,89 +1665,89 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Examples</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> <span class="st">'cat'</span></span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> <span class="st">'dog'</span></span>
-<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> sc.odict.makefrom(source<span class="op">=</span><span class="bu">locals</span>(), include<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>]) <span class="co"># Make use of fact that variables are stored in a dictionary</span></span>
-<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> {<span class="st">'a'</span>:<span class="st">'cat'</span>, <span class="st">'b'</span>:<span class="st">'dog'</span>}</span>
-<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> sc.odict.makefrom(d) <span class="co"># Same as sc.odict(d)</span></span>
-<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>l <span class="op">=</span> [<span class="st">'cat'</span>, <span class="st">'monkey'</span>, <span class="st">'dog'</span>]</span>
-<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> sc.odict.makefrom(source<span class="op">=</span>l, include<span class="op">=</span>[<span class="dv">0</span>,<span class="dv">2</span>], keynames<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>])</span>
-<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> {<span class="dv">12</span>:<span class="st">'monkeys'</span>, <span class="dv">3</span>:<span class="st">'musketeers'</span>}</span>
-<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> sc.odict.makefrom(d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span> <span class="st">'cat'</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span> <span class="st">'dog'</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> sc.odict.makefrom(source<span class="op">=</span><span class="bu">locals</span>(), include<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>]) <span class="co"># Make use of fact that variables are stored in a dictionary</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> {<span class="st">'a'</span>:<span class="st">'cat'</span>, <span class="st">'b'</span>:<span class="st">'dog'</span>}</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> sc.odict.makefrom(d) <span class="co"># Same as sc.odict(d)</span></span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>l <span class="op">=</span> [<span class="st">'cat'</span>, <span class="st">'monkey'</span>, <span class="st">'dog'</span>]</span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> sc.odict.makefrom(source<span class="op">=</span>l, include<span class="op">=</span>[<span class="dv">0</span>,<span class="dv">2</span>], keynames<span class="op">=</span>[<span class="st">'a'</span>,<span class="st">'b'</span>])</span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> {<span class="dv">12</span>:<span class="st">'monkeys'</span>, <span class="dv">3</span>:<span class="st">'musketeers'</span>}</span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> sc.odict.makefrom(d)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="sciris.sc_odict.odict.makenested" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.makenested">makenested</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.makenested(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.makenested(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Alias to sc.makenested(odict); see sc.makenested() for full documentation. <em>New in version 1.2.0.</em></p>
 </section>
 <section id="sciris.sc_odict.odict.map" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.map">map</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.<span class="bu">map</span>(func<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.<span class="bu">map</span>(func<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Apply a function to each element of the odict, returning a new odict with the same keys.</p>
 <p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>cat <span class="op">=</span> sc.odict({<span class="st">'a'</span>:[<span class="dv">1</span>,<span class="dv">2</span>], <span class="st">'b'</span>:[<span class="dv">3</span>,<span class="dv">4</span>]})</span>
-<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> myfunc(mylist): <span class="cf">return</span> [i<span class="op">**</span><span class="dv">2</span> <span class="cf">for</span> i <span class="kw">in</span> mylist]</span>
-<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>dog <span class="op">=</span> cat.<span class="bu">map</span>(myfunc) <span class="co"># Returns odict({'a':[1,4], 'b':[9,16]})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>cat <span class="op">=</span> sc.odict({<span class="st">'a'</span>:[<span class="dv">1</span>,<span class="dv">2</span>], <span class="st">'b'</span>:[<span class="dv">3</span>,<span class="dv">4</span>]})</span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> myfunc(mylist): <span class="cf">return</span> [i<span class="op">**</span><span class="dv">2</span> <span class="cf">for</span> i <span class="kw">in</span> mylist]</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>dog <span class="op">=</span> cat.<span class="bu">map</span>(myfunc) <span class="co"># Returns odict({'a':[1,4], 'b':[9,16]})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="sciris.sc_odict.odict.pop" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.pop">pop</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.pop(key, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.pop(key, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Allows pop to support strings, integers, slices, lists, or arrays</p>
 </section>
 <section id="sciris.sc_odict.odict.popitem" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.popitem">popitem</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.popitem()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.popitem()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Default popitem, except set stale to true</p>
 </section>
 <section id="sciris.sc_odict.odict.promote" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.promote">promote</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.promote(obj<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.promote(obj<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Like promotetolist, but for odicts.</p>
 <p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>od <span class="op">=</span> sc.odict.promote([<span class="st">'There'</span>,<span class="st">'are'</span>,<span class="dv">4</span>,<span class="st">'keys'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>od <span class="op">=</span> sc.odict.promote([<span class="st">'There'</span>,<span class="st">'are'</span>,<span class="dv">4</span>,<span class="st">'keys'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Note, in most cases sc.odict(obj) or sc.odict().make(obj) can be used instead.</p>
 </section>
 <section id="sciris.sc_odict.odict.remove" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.remove">remove</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.remove(key, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.remove(key, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Remove an item by key and do not return it</p>
 </section>
 <section id="sciris.sc_odict.odict.rename" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.rename">rename</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.rename(oldkey, newkey)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.rename(oldkey, newkey)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Change a key name (note: not optimized for speed)</p>
 </section>
 <section id="sciris.sc_odict.odict.reverse" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.reverse">reverse</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.reverse(copy<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.reverse(copy<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Reverse the order of an odict</p>
 </section>
 <section id="sciris.sc_odict.odict.reversed" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.reversed">reversed</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.<span class="bu">reversed</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb68"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.<span class="bu">reversed</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Shortcut for making a copy of the sorted odict</p>
 </section>
 <section id="sciris.sc_odict.odict.setdefault" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.setdefault">setdefault</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.setdefault(key, default<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb69"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.setdefault(key, default<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Default setdefault, except set stale to true</p>
 </section>
 <section id="sciris.sc_odict.odict.setitem" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.setitem">setitem</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.setitem(key, value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.setitem(key, value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Use regular dictionary <code>setitem</code>, rather than odict’s</p>
 </section>
 <section id="sciris.sc_odict.odict.setnested" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.setnested">setnested</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.setnested(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.setnested(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Alias to sc.setnested(odict); see sc.makenested() for full documentation. <em>New in version 1.2.0.</em></p>
 </section>
 <section id="sciris.sc_odict.odict.sort" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.sort">sort</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.sort(sortby<span class="op">=</span><span class="va">None</span>, reverse<span class="op">=</span><span class="va">False</span>, copy<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb72"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.sort(sortby<span class="op">=</span><span class="va">None</span>, reverse<span class="op">=</span><span class="va">False</span>, copy<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Create a sorted version of the odict.</p>
 <p>By default, this method sorts alphabetically by key, but many other options are possible:</p>
 <pre><code>- 'keys' sorts alphabetically by key
@@ -1712,31 +1795,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sciris.sc_odict.odict.sorted" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.sorted">sorted</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb69"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.<span class="bu">sorted</span>(sortby<span class="op">=</span><span class="va">None</span>, reverse<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb74"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.<span class="bu">sorted</span>(sortby<span class="op">=</span><span class="va">None</span>, reverse<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Shortcut for making a copy of the sorted odict – see <code>sort()</code> for options</p>
 </section>
 <section id="sciris.sc_odict.odict.toeach" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.toeach">toeach</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.toeach(ind<span class="op">=</span><span class="va">None</span>, val<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.toeach(ind<span class="op">=</span><span class="va">None</span>, val<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The inverse of fromeach: partially reset elements within each odict key.</p>
 <p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb71"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict({<span class="st">'a'</span>:[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>], <span class="st">'b'</span>:[<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>]})</span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>z.toeach(<span class="dv">2</span>, [<span class="dv">10</span>,<span class="dv">20</span>])    <span class="co"># z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})</span></span>
-<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>z.toeach(ind<span class="op">=</span><span class="dv">3</span>,val<span class="op">=</span><span class="dv">666</span>) <span class="co">#  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb76"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> sc.odict({<span class="st">'a'</span>:[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>], <span class="st">'b'</span>:[<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>]})</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>z.toeach(<span class="dv">2</span>, [<span class="dv">10</span>,<span class="dv">20</span>])    <span class="co"># z is now odict({'a':[1,2,10,4], 'b':[5,6,20,8]})</span></span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>z.toeach(ind<span class="op">=</span><span class="dv">3</span>,val<span class="op">=</span><span class="dv">666</span>) <span class="co">#  z is now odict({'a':[1,2,10,666], 'b':[5,6,20,666]})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="sciris.sc_odict.odict.update" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.update">update</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb72"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.update(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb77"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.update(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Update dict contents; set _stale so _cached_keys is refreshed on next use</p>
 </section>
 <section id="sciris.sc_odict.odict.valind" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.valind">valind</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.valind(value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb78"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.valind(value)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return the index of a given value</p>
 </section>
 <section id="sciris.sc_odict.odict.values" class="level5">
 <h5 class="anchored" data-anchor-id="sciris.sc_odict.odict.values">values</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb74"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.values()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb79"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>sc_odict.odict.values()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Return a list of values (as in Python 2).</p>
 </section>
 </section>
@@ -1760,7 +1843,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <section id="sciris.sc_odict.asobj" class="level3">
 <h3 class="anchored" data-anchor-id="sciris.sc_odict.asobj">asobj</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>sc_odict.asobj(obj, strict<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb80"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>sc_odict.asobj(obj, strict<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Convert any object for which you would normally do <code>a['b']</code> to one where you can do <code>a.b</code>.</p>
 <p>Note: this may lead to unexpected behavior in some cases. Use at your own risk. At minimum, objects created using this function have an extremely odd type – namely <code>sciris.sc_odict.asobj.&lt;locals&gt;.objobj</code>.</p>
 <section id="parameters-8" class="level4 doc-section doc-section-parameters">
@@ -1790,9 +1873,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p><strong>Example</strong>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb76"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> <span class="bu">dict</span>(foo<span class="op">=</span><span class="dv">1</span>, bar<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>d_obj <span class="op">=</span> sc.asobj(d)</span>
-<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>d_obj.foo <span class="op">=</span> <span class="dv">10</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb81"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> <span class="bu">dict</span>(foo<span class="op">=</span><span class="dv">1</span>, bar<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>d_obj <span class="op">=</span> sc.asobj(d)</span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>d_obj.foo <span class="op">=</span> <span class="dv">10</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><em>New in version 1.0.0.</em></p>
 
 
@@ -2234,7 +2317,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       &nbsp;
     </div>   
     <div class="nav-footer-center">
-<p>Docs built for Sciris v3.6.2 (2026-10-29).<br>© 2014–2026 by the Sciris Development Team.</p>
+<p>Docs built for Sciris v3.7.0 (2026-10-31).<br>© 2014–2026 by the Sciris Development Team.</p>
 <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/sciris/sciris/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div>
     <div class="nav-footer-right">
       <ul class="footer-items list-unstyled">

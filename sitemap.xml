@@ -2,134 +2,134 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://docs.sciris.org/style_guide.html</loc>
-    <lastmod>2026-10-30T02:26:13.407Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.326Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/index.html</loc>
-    <lastmod>2026-10-30T02:26:13.407Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.326Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/conduct.html</loc>
-    <lastmod>2026-10-30T02:26:13.407Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.326Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/contributing.html</loc>
-    <lastmod>2026-10-30T02:26:13.407Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.326Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials/tut_dicts.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials/tut_parallel.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials/tut_advanced.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials/tut_utils.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials/tut_intro.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/index.html</loc>
-    <lastmod>2026-10-30T02:27:00.083Z</lastmod>
+    <lastmod>2026-10-31T04:57:10.881Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_printing.html</loc>
-    <lastmod>2026-10-30T02:27:00.368Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.231Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_datetime.html</loc>
-    <lastmod>2026-10-30T02:27:00.589Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.533Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_parallel.html</loc>
-    <lastmod>2026-10-30T02:27:00.466Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.365Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_fileio.html</loc>
-    <lastmod>2026-10-30T02:27:00.305Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.147Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_versioning.html</loc>
-    <lastmod>2026-10-30T02:27:00.322Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.170Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_nested.html</loc>
-    <lastmod>2026-10-30T02:27:00.613Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.567Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_math.html</loc>
-    <lastmod>2026-10-30T02:27:00.129Z</lastmod>
+    <lastmod>2026-10-31T04:57:10.946Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials.html</loc>
-    <lastmod>2026-10-30T02:26:13.407Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.326Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_plotting.html</loc>
-    <lastmod>2026-10-30T02:27:00.423Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.307Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_colors.html</loc>
-    <lastmod>2026-10-30T02:27:00.443Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.334Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_asd.html</loc>
-    <lastmod>2026-10-30T02:27:00.135Z</lastmod>
+    <lastmod>2026-10-31T04:57:10.953Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_dataframe.html</loc>
-    <lastmod>2026-10-30T02:27:00.232Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.060Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_settings.html</loc>
-    <lastmod>2026-10-30T02:27:00.629Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.589Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_profiling.html</loc>
-    <lastmod>2026-10-30T02:27:00.499Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.409Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_odict.html</loc>
-    <lastmod>2026-10-30T02:27:00.173Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.007Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/api/sc_utils.html</loc>
-    <lastmod>2026-10-30T02:27:00.554Z</lastmod>
+    <lastmod>2026-10-31T04:57:11.486Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials/tut_plotting.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials/tut_arrays.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials/tut_printing.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials/tut_dates.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/tutorials/tut_files.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/overview.html</loc>
-    <lastmod>2026-10-30T02:26:13.407Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.326Z</lastmod>
   </url>
   <url>
     <loc>https://docs.sciris.org/whatsnew.html</loc>
-    <lastmod>2026-10-30T02:26:13.413Z</lastmod>
+    <lastmod>2026-10-31T04:56:14.333Z</lastmod>
   </url>
 </urlset>
