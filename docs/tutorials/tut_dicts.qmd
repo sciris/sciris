@@ -101,7 +101,7 @@ print(f'Checking {ob.key1 = }')
 print(f'Checking {ob["key1"] = }') # We need to use double-quotes inside since single quotes are taken!
 ```
 
-In most cases, you probably want to use `objdict`s rather than `odict`s just to have the extra flexibility. Since they're so common, `sc.obj()` is a shorter name for `sc.objdict()`.
+In most cases, you probably want to use `objdict`s rather than `odict`s just to have the extra flexibility. If speed matters, `sc.obj()` is a version of `sc.objdict()` that is as fast as a plain object: it has the same methods, but no support for setting items by position, lists of keys, or attributes that aren't keys.
 
 ### Performance
 
