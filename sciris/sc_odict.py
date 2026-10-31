@@ -1586,7 +1586,6 @@ class obj(odict):
     """
 
     # Use the dict methods directly, since there are no cached keys to update
-    __init__ = dict.__init__
     __getitem__ = dict.__getitem__
     __setitem__ = dict.__setitem__
     __delitem__ = dict.__delitem__
@@ -1597,6 +1596,10 @@ class obj(odict):
     __repr__ = objdict.__repr__
     _repr = objdict._repr
     _stale = property(lambda self: True, lambda self, value: None) # Always stale; ignored when odict methods set it
+
+    def __init__(self, *args, **kwargs):
+        """ Create the obj, with the same arguments as `dict()`; replaced by `dict.__init__` below """
+        dict.__init__(self, *args, **kwargs)
 
     def __new__(cls, *args, **kwargs):
         if 'defaultdict' in kwargs:
@@ -1668,6 +1671,7 @@ class obj(odict):
             raise IndexError(errormsg) from None # Don't show the traceback
 
 
+obj.__init__ = dict.__init__ # Set here since quartodoc can't read __init__ from an assignment in the class
 _protect_methods(obj, {**vars(dict), **vars(odict), **vars(obj)})
 
 
